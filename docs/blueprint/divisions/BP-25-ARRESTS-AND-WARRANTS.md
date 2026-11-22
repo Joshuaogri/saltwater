@@ -402,7 +402,7 @@ The original 52-division source JSON remains unchanged. IDs below refer to origi
 | S37.R01 | Represent grounds, authority, applications, approvals, execution, person/property searches, seizure, transport, booking, detention, welfare, reviews and release. | Sections 4–22 and 26; BP-25 owns grounds, authority, applications, execution, search and seizure. BP-26 owns custody, welfare, reviews and release. |
 | S37.R02 | Maintain custody clock and property continuity. | Sections 16–17, 23 and 25; BP-25 handover references BP-26 custody clock and BP-23 property continuity; it does not take ownership of either. |
 | S37.R03 | Separate operational action from later legal decision. | Sections 3, 21–22 and 30; operational arrest/search/seizure records remain separate from BP-27/BP-28 legal outcomes. |
-| S37.T01 | Custody and warrant events satisfy configured fictional rules and chronological constraints. | ARREST-AT-060–076, 153–157; warrant version/scope/time checks, custody handover, configured authority and canonical clock. |
+| S37.T01 | Custody and warrant events satisfy configured fictional rules and chronological constraints. | ARREST-AT-061–075, 121–125, 167–172; warrant version/scope/time checks, custody handover, configured authority and canonical clock. |
 
 Cross-cutting X03 applies: every time-dependent fact is effective-dated and historically queryable; BP-37 remains the sole clock and pause freezes all time-dependent action. X05 preserves fact/allegation/estimate/inference/intelligence/opinion/conclusion/finding distinctions. X08 requires text-first gameplay and optional visuals derived from canonical records. Global constraints include one-city Saltwater, 10,000 living-person cap, permanent promotion of case-connected people, player agency and exact bingo reveal firewall.
 
@@ -458,7 +458,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 - [ ] NPC knowledge, player agency and bingo firewall specified.
 - [ ] Time freeze, population cap and permanent person promotion specified.
 - [ ] Text-first workflow and optional visual support specified.
-- [ ] All 160 acceptance tests await BP-43 execution.
+- [ ] All 187 acceptance tests await BP-43 execution.
 - [ ] Open decisions remain explicit; no real-world law silently imported.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
