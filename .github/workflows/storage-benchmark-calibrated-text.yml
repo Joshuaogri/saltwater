@@ -59,7 +59,7 @@ jobs:
           echo "database_bytes=$DB_BYTES relation_bytes=$RELATION_BYTES rows=$ROWS text_documents=$TEXT_DOCS words=$TEXT_WORDS raw_text_bytes=$RAW_TEXT_BYTES tables=$TABLE_COUNT"
           test "$TEXT_DOCS" = "33500"
           test "$ROWS" -gt 2400000
-          test "$TABLE_COUNT" -eq 52
+          test "$TABLE_COUNT" -eq 53
           test "$TEXT_WORDS" -gt 20000000
           echo "db_bytes=$DB_BYTES" >> "$GITHUB_OUTPUT"
           echo "relation_bytes=$RELATION_BYTES" >> "$GITHUB_OUTPUT"
