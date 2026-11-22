@@ -125,3 +125,26 @@ The capacity report must state:
 - Safety reserve and expected headroom.
 - Whether 1 GB is sufficient; if not, the required alternative capacity.
 - Reproducible SQL, scripts, test outputs and commit references.
+
+
+## 10. Benchmark stage 2 — institutional and police lifecycle (2026-11-22)
+
+The extended synthetic benchmark completed successfully:
+
+- Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45049121196
+- Benchmark report: [benchmark-run-0002.md](benchmark-run-0002.md)
+- Tested commit: `4accdd8ba88174176a2e357f4b886e4ffc381db2`
+- Temporary tables: 24
+- Synthetic rows: 1,114,854
+- Measured heap: 245,047,296 bytes (245.047 MB)
+- Measured indexes: 61,792,256 bytes (61.792 MB)
+- Total temporary relation footprint: 307,052,544 bytes (307.053 MB)
+- PostgreSQL `ANALYZE`: completed successfully.
+
+The largest measured categories were interviews (50.766 MB), police reports (44.573 MB), dispatch actions (41.140 MB), commercial transactions (34.447 MB), intelligence (28.705 MB), and patrol events (28.189 MB).
+
+Database size readings around the session were 8,347,648 bytes before and 8,814,592 bytes after. The 466,944-byte difference is not the temporary dataset's storage cost. Temporary relations were removed when the connection closed; use the 307.053 MB relation measurement for this benchmark.
+
+This stage improves coverage but does not yet represent final production schemas, complete resident biographies, all business and institutional history, every police workflow, or binary media. The benchmark remains synthetic and temporary. No production population, business, case or evidence data was loaded.
+
+**Capacity status remains NOT APPROVED.** Next: measure persistent relation growth in an isolated benchmark schema or Neon branch, including heap, indexes and TOAST, and add missing lifecycle categories and media-volume assumptions before projecting the 1 GB limit.
