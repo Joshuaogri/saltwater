@@ -195,3 +195,18 @@ The exact-count audit was rerun successfully after the per-table `COUNT(*)` quer
 - Updated run report: [benchmark-run-0003.md](benchmark-run-0003.md).
 
 This rerun resolves the exact row-count discrepancy but does not expand benchmark coverage. **1 GB remains NOT APPROVED** for the full Saltwater lifecycle. Production seeding remains blocked pending complete category coverage, defined duration scenarios, binary-media sizing, realistic activity assumptions, growth projection and safety reserve.
+
+
+## 13. Benchmark stage 4 — longitudinal world and police records (prepared 2026-11-22)
+
+Stage 4 is prepared but has **not yet been executed**. It adds 15 persistent synthetic tables in a separately isolated schema and a dedicated manual workflow.
+
+- Workflow: https://github.com/Joshuaogri/saltwater/actions/workflows/storage-benchmark-stage-4.yml
+- SQL: `db/benchmarks/0004_longitudinal_world_and_police_benchmark.sql`
+- Report template: [benchmark-run-0004.md](benchmark-run-0004.md)
+- Expected rows from generation parameters: **600,560**.
+- Coverage: household profiles and memberships; resident address and life-event history; business staffing and commercial transactions; public organisations and office history; public-service encounters; education; police training and discipline; radio communications; forensic examinations; legal proceedings.
+- Synthetic event dates span up to 35 years from the benchmark start date. This is a sizing test only, not an approved game-lifetime or event-rate assumption.
+- The workflow measures exact per-table counts, aggregate rows, heap, indexes, TOAST/auxiliary, relation totals, full database size before/during/after, and removes the isolated schema.
+
+No stage 4 storage result is recorded until the workflow has completed and its logs have been inspected. Stage 4 must not be added to stage 3 measurements as a simple sum until the measured scope and overlap are reconciled. **1 GB remains NOT APPROVED; production seeding remains blocked.**
