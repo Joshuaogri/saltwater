@@ -129,7 +129,7 @@ The capacity report must state:
 
 ## 10. Benchmark stage 2 — institutional and police lifecycle (2026-11-22)
 
-The extended synthetic benchmark completed successfully:
+The extended synthetic benchmark completed successfully (1,034,842 rows across 24 temporary tables):
 
 - Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45049121196
 - Benchmark report: [benchmark-run-0002.md](benchmark-run-0002.md)
