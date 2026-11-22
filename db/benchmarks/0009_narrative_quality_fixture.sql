@@ -195,7 +195,7 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM fixture_record
-    WHERE record_id='R-016' AND body ILIKE '%does not determine who damaged%'
+    WHERE record_id='R-016' AND body ILIKE '%police incident remains unresolved%'
   ) THEN RAISE EXCEPTION 'Unresolved outcome is missing'; END IF;
 
   IF NOT EXISTS (
