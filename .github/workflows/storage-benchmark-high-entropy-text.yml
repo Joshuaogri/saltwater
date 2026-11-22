@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "db/benchmarks/0008_calibrated_text_lifecycle_benchmark.sql"
+      - "db/benchmarks/0008_high_entropy_text_lifecycle_benchmark.sql"
       - ".github/workflows/storage-benchmark-high-entropy-text.yml"
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
       - name: Build calibrated workload on disposable PostgreSQL
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_bench
-        run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0008_calibrated_text_lifecycle_benchmark.sql
+        run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0008_high_entropy_text_lifecycle_benchmark.sql
       - name: Measure and enforce benchmark integrity
         id: measure
         env:
