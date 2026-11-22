@@ -14,7 +14,7 @@
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
 | BP-06 | Police Personnel | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-06](divisions/BP-06-POLICE-PERSONNEL.md) |
 | BP-07 | Career System | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-07](divisions/BP-07-CAREER-SYSTEM.md) |
-| BP-08 | Units and Deployment | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-08 | Units and Deployment | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-08](divisions/BP-08-UNITS-AND-DEPLOYMENT.md) |
 | BP-09 | Police Resources | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-10 | Patrol Operations | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-11 | Emergency Communications | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -75,6 +75,6 @@ Statuses are independent across specification, implementation, testing and verif
 6. BP-05: full police institutional architecture specification draft created; command titles, unit structure and staffing allocation remain open.
 7. BP-06: full police personnel specification draft created; category taxonomy, service-number format, probation and restricted-record policy decisions remain open.
 8. BP-07: full career system specification draft created; rank ladder, promotion thresholds, service-credit rules and several Chief-tenure implementation details remain open.
-9. Continue BP-08 through BP-44 in numeric order, preserving the same specification contract and traceability.
+9. BP-08: full units and deployment specification draft created; exact unit hierarchy, establishment, staffing, geographic coverage and readiness policies remain open.\n10. Continue BP-09 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
