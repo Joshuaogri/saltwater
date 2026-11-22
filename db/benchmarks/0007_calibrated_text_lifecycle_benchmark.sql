@@ -93,7 +93,7 @@ INSERT INTO text_record(record_type,source_id,case_id,created_at,word_count,body
 SELECT 'police_report',p.report_id,((p.report_id-1)%2000+1)::integer,p.submitted_at,
        CASE WHEN p.report_id%10=0 THEN 1800+(p.report_id%1201) ELSE 500+(p.report_id%701) END,
        make_calibrated_prose(CASE WHEN p.report_id%10=0 THEN 1800+(p.report_id%1201) ELSE 500+(p.report_id%701) END,p.report_id,'police_report')
-FROM police_report p WHERE p.report_id%20=0 OR p.report_id%20=1 OR p.report_id%20=2;
+FROM police_report p WHERE p.report_id%20=0;
 
 -- Supplementary reports: 2,000, usually one per case.
 INSERT INTO text_record(record_type,source_id,case_id,created_at,word_count,body)
@@ -119,7 +119,7 @@ SELECT 'interview_transcript',v.interview_id,v.case_id,v.resident_id,v.interview
        make_calibrated_prose(CASE WHEN v.interview_id%100=0 THEN 25000
             WHEN v.interview_id%10=0 THEN 6000+(v.interview_id%4001)
             ELSE 1200+(v.interview_id%1801) END,v.interview_id,'interview_transcript')
-FROM interview_record v WHERE v.interview_id%6=0 OR v.interview_id%6=1;
+FROM interview_record v WHERE v.interview_id%6=0;
 
 -- Written evidence descriptions: 8,000 exhibits.
 INSERT INTO text_record(record_type,source_id,case_id,created_at,word_count,body)
