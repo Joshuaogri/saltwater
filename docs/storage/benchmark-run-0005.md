@@ -1,6 +1,6 @@
 # Integrated lifecycle capacity benchmark — run 0005
 
-Status: PostgreSQL 16 validation successful; Neon measurement workflow prepared. Synthetic-only.
+Status: PostgreSQL 16 validation and Neon integrated measurement successful. Synthetic-only.
 
 ## Reconciliation rules
 
@@ -81,3 +81,40 @@ Using the measured integrated PostgreSQL relation footprint and the last measure
 - SQL: [0005_integrated_lifecycle_capacity_benchmark.sql](../../db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql)
 - The workflow measures Neon database size before, during and after the integrated dataset, captures relation size, and removes the isolated schema.
 - No production population, business, case or evidence records are inserted.
+
+
+## Neon measurement — successful
+
+- GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/45053385138
+- Tested commit: `7621b19eb6ad540ff0407576d8c33938cfbc8909`
+- Result: success; integrated schema created, measured and removed.
+- Exact rows: **2,516,342** across 54 data tables.
+- Table count measured in schema: 55 (54 data tables plus exact-count audit table).
+- Relation footprint: **569,417,728 bytes (569.418 MB)**.
+- Full Neon database before benchmark: **9,281,536 bytes (9.282 MB)**.
+- Full Neon database during benchmark: **579,084,288 bytes (579.084 MB)**.
+- Full Neon database after schema cleanup: **9,666,560 bytes (9.667 MB)**.
+- Net database-size change after cleanup: **385,024 bytes (0.385 MB)**. This is residual database/ledger overhead, not the benchmark relation footprint.
+- Database size after the persistent storage-operation ledger entry: **9,666,560 bytes (9.667 MB)**.
+- The workflow inserted a successful measurement record into `sw_ops.storage_operation`; input/compressed/submitted file bytes are not applicable because SQL generated the synthetic data inside PostgreSQL.
+- External media payload references: **1,950,015,000 bytes (1,950.015 MB)** across 30,000 assets; not stored in Neon.
+
+## Final capacity decision
+
+**YES — 1 GB is sufficient for this defined 35-year integrated relational benchmark, conditionally.**
+
+Using the measured full Neon database size while the complete integrated dataset existed:
+- Occupied: 579.084 MB.
+- 1 GB decimal allowance: 1,000 MB.
+- Remaining: 420.916 MB.
+- Protected 20% reserve: 200 MB.
+- Additional growth headroom after protecting that reserve: **220.916 MB**.
+
+Conditions:
+1. Binary media (about 1.95 GB in this benchmark) must be stored outside Neon in object storage.
+2. Keep at least 200 MB free; do not seed or retain data that consumes the reserve.
+3. Treat the 35-year synthetic workload as the tested planning envelope, not an unlimited-growth guarantee.
+4. Re-run this benchmark after major increases in event rates, text lengths, indexes or retention scope.
+5. Do not store full CCTV/BWC/audio/photo/video payloads in Neon under this 1 GB plan.
+
+If binary media is stored in Neon, or the 35-year event workload grows materially beyond this measured dataset, **1 GB is not sufficient**.
