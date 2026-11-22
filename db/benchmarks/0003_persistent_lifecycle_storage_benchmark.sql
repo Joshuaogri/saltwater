@@ -525,6 +525,80 @@ FROM pg_catalog.pg_statio_user_tables
 WHERE schemaname = 'sw_bench_run' AND relname LIKE 'pbench_%';
 \echo BENCHMARK_0002_PERSISTENT_TABLES_INCLUDED
 
+\echo BENCHMARK_0003_EXACT_COUNTS_ALL_TABLES
+SELECT table_name, row_count
+FROM (
+  SELECT 'pbench_person' AS table_name, count(*)::bigint AS row_count FROM pbench_person
+  UNION ALL SELECT 'pbench_business', count(*) FROM pbench_business
+  UNION ALL SELECT 'pbench_relationship', count(*) FROM pbench_relationship
+  UNION ALL SELECT 'pbench_employment', count(*) FROM pbench_employment
+  UNION ALL SELECT 'pbench_case', count(*) FROM pbench_case
+  UNION ALL SELECT 'pbench_incident', count(*) FROM pbench_incident
+  UNION ALL SELECT 'pbench_evidence', count(*) FROM pbench_evidence
+  UNION ALL SELECT 'pbench_event', count(*) FROM pbench_event
+  UNION ALL SELECT 'pbench_district', count(*) FROM pbench_district
+  UNION ALL SELECT 'pbench_street', count(*) FROM pbench_street
+  UNION ALL SELECT 'pbench_junction', count(*) FROM pbench_junction
+  UNION ALL SELECT 'pbench_building', count(*) FROM pbench_building
+  UNION ALL SELECT 'pbench_property_history', count(*) FROM pbench_property_history
+  UNION ALL SELECT 'pbench_organisation', count(*) FROM pbench_organisation
+  UNION ALL SELECT 'pbench_institutional_staff', count(*) FROM pbench_institutional_staff
+  UNION ALL SELECT 'pbench_police_personnel', count(*) FROM pbench_police_personnel
+  UNION ALL SELECT 'pbench_duty_shift', count(*) FROM pbench_duty_shift
+  UNION ALL SELECT 'pbench_call', count(*) FROM pbench_call
+  UNION ALL SELECT 'pbench_dispatch_action', count(*) FROM pbench_dispatch_action
+  UNION ALL SELECT 'pbench_patrol_event', count(*) FROM pbench_patrol_event
+  UNION ALL SELECT 'pbench_police_report', count(*) FROM pbench_police_report
+  UNION ALL SELECT 'pbench_interview', count(*) FROM pbench_interview
+  UNION ALL SELECT 'pbench_intelligence', count(*) FROM pbench_intelligence
+  UNION ALL SELECT 'pbench_surveillance', count(*) FROM pbench_surveillance
+  UNION ALL SELECT 'pbench_warrant', count(*) FROM pbench_warrant
+  UNION ALL SELECT 'pbench_arrest', count(*) FROM pbench_arrest
+  UNION ALL SELECT 'pbench_custody', count(*) FROM pbench_custody
+  UNION ALL SELECT 'pbench_forensic_exam', count(*) FROM pbench_forensic_exam
+  UNION ALL SELECT 'pbench_court_proceeding', count(*) FROM pbench_court_proceeding
+  UNION ALL SELECT 'pbench_transaction', count(*) FROM pbench_transaction
+  UNION ALL SELECT 'pbench_address_history', count(*) FROM pbench_address_history
+  UNION ALL SELECT 'pbench_household_membership', count(*) FROM pbench_household_membership
+) exact_counts
+ORDER BY table_name;
+\echo BENCHMARK_0003_EXACT_TOTAL
+SELECT sum(row_count)::bigint AS exact_row_total
+FROM (
+  SELECT count(*) AS row_count FROM pbench_person
+  UNION ALL SELECT count(*) FROM pbench_business
+  UNION ALL SELECT count(*) FROM pbench_relationship
+  UNION ALL SELECT count(*) FROM pbench_employment
+  UNION ALL SELECT count(*) FROM pbench_case
+  UNION ALL SELECT count(*) FROM pbench_incident
+  UNION ALL SELECT count(*) FROM pbench_evidence
+  UNION ALL SELECT count(*) FROM pbench_event
+  UNION ALL SELECT count(*) FROM pbench_district
+  UNION ALL SELECT count(*) FROM pbench_street
+  UNION ALL SELECT count(*) FROM pbench_junction
+  UNION ALL SELECT count(*) FROM pbench_building
+  UNION ALL SELECT count(*) FROM pbench_property_history
+  UNION ALL SELECT count(*) FROM pbench_organisation
+  UNION ALL SELECT count(*) FROM pbench_institutional_staff
+  UNION ALL SELECT count(*) FROM pbench_police_personnel
+  UNION ALL SELECT count(*) FROM pbench_duty_shift
+  UNION ALL SELECT count(*) FROM pbench_call
+  UNION ALL SELECT count(*) FROM pbench_dispatch_action
+  UNION ALL SELECT count(*) FROM pbench_patrol_event
+  UNION ALL SELECT count(*) FROM pbench_police_report
+  UNION ALL SELECT count(*) FROM pbench_interview
+  UNION ALL SELECT count(*) FROM pbench_intelligence
+  UNION ALL SELECT count(*) FROM pbench_surveillance
+  UNION ALL SELECT count(*) FROM pbench_warrant
+  UNION ALL SELECT count(*) FROM pbench_arrest
+  UNION ALL SELECT count(*) FROM pbench_custody
+  UNION ALL SELECT count(*) FROM pbench_forensic_exam
+  UNION ALL SELECT count(*) FROM pbench_court_proceeding
+  UNION ALL SELECT count(*) FROM pbench_transaction
+  UNION ALL SELECT count(*) FROM pbench_address_history
+  UNION ALL SELECT count(*) FROM pbench_household_membership
+) all_tables;
+
 \echo BENCHMARK_0003_ROW_COUNTS_AND_TABLES
 SELECT schemaname, count(*) AS table_count,
        sum(n_live_tup)::bigint AS estimated_live_rows
