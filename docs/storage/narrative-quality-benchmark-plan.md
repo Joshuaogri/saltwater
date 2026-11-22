@@ -1,6 +1,6 @@
 # Saltwater record narrative-quality benchmark plan
 
-Status: fixture implemented; automated disposable-PostgreSQL validation is running. Manual narrative review remains pending. No production records or Neon data are loaded.
+Status: fixture implemented; automated structural validation passed once on disposable PostgreSQL. A follow-up run is validating chronology refinements. Manual narrative review remains pending. No production records or Neon data are loaded.
 
 ## Purpose
 
@@ -93,3 +93,17 @@ Passing this test establishes only that the sampled record workflow meets the st
 ### Validation boundary
 
 A green CI run will mean the fixture loads and its structural assertions pass. It will not mean the 16 records have passed the 0–2 human quality rubric. The next quality step is to review every record against the rubric, record scores and reviewer notes, and fail the fixture if any record scores below 11/14 or receives zero for chronology, provenance or uncertainty. Only after that review should this same fixture be used for a measured small-scale storage/query test. No Neon writes are permitted.
+
+
+### First automated validation result
+
+- Successful run: https://github.com/Joshuaogri/saltwater/actions/runs/45062664898
+- Commit tested: `de036d620f010fa6f4abb1962cd29513784c67fa`.
+- 16 records, 19 record links, 10 entities.
+- All 16 manual-review rows remained `pending`.
+- No media/image/audio/video/CCTV/body-worn-video tables were present.
+- Raw UTF-8 narrative text: **8,525 bytes** (approximately 1,351 whitespace-delimited words).
+- Diagnostic relation footprint: **196,608 bytes**; heap 49,152 bytes; indexes 81,920 bytes; TOAST/auxiliary 65,536 bytes.
+- Disposable database size after fixture creation: **8,109,079 bytes**.
+
+These storage figures are diagnostic measurements from the first structurally passing version, not a final before/after storage experiment and not capacity evidence. A subsequent editorial chronology review found that the intelligence assessment was dated after the arrest despite being cited in the arrest decision. The fixture was corrected so the assessment precedes the arrest, the arrest record is created before custody booking, and explicit assertions guard both orderings. The corrected run must pass before the fixture is considered structurally stable.
