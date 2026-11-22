@@ -276,16 +276,25 @@ CREATE INDEX s4_legal_person_idx ON s4_legal_proceeding(person_id);
 ANALYZE;
 
 \echo BENCHMARK_0004_EXACT_COUNTS
-SELECT relname AS table_name,
-       (xpath('/row/c/text()',query_to_xml(format('SELECT count(*) AS c FROM %I',relname),false,true,'')))[1]::text::bigint AS exact_rows
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='sw_bench_run_0004' AND c.relkind='r'
-ORDER BY relname;
+CREATE TEMP TABLE s4_exact_row_counts(table_name text PRIMARY KEY, exact_rows bigint NOT NULL);
+DO $
+DECLARE r record;
+BEGIN
+  FOR r IN
+    SELECT c.relname
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid=c.relnamespace
+    WHERE n.nspname='sw_bench_run_0004' AND c.relkind='r'
+    ORDER BY c.relname
+  LOOP
+    EXECUTE format('INSERT INTO s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
+                   r.relname, 'sw_bench_run_0004', r.relname);
+  END LOOP;
+END $;
+SELECT table_name, exact_rows FROM s4_exact_row_counts ORDER BY table_name;
 
 \echo BENCHMARK_0004_EXACT_TOTAL
-SELECT sum((xpath('/row/c/text()',query_to_xml(format('SELECT count(*) AS c FROM %I',c.relname),false,true,'')))[1]::text::bigint) AS exact_total_rows
-FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-WHERE n.nspname='sw_bench_run_0004' AND c.relkind='r';
+SELECT sum(exact_rows) AS exact_total_rows FROM s4_exact_row_counts;
 
 \echo BENCHMARK_0004_STORAGE_BY_TABLE
 SELECT c.relname AS table_name, pg_relation_size(c.oid) AS heap_bytes,
