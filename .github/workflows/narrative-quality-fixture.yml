@@ -1,0 +1,58 @@
+name: Saltwater narrative quality fixture 0001
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "db/benchmarks/0009_narrative_quality_fixture.sql"
+      - ".github/workflows/narrative-quality-fixture.yml"
+      - "docs/storage/narrative-quality-benchmark-plan.md"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltwater_quality
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saltwater_quality"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Build and validate fictional narrative fixture
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_quality
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0009_narrative_quality_fixture.sql
+      - name: Verify pending manual review and text-only fixture totals
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_quality
+        run: |
+          set -euo pipefail
+          RECORDS=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM sw_narrative_quality.fixture_record;")
+          PENDING=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM sw_narrative_quality.manual_review WHERE review_status='pending';")
+          LINKS=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM sw_narrative_quality.record_link;")
+          ENTITIES=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM sw_narrative_quality.fixture_entity;")
+          MEDIA_TABLES=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_narrative_quality' AND c.relkind='r' AND c.relname ~* '(media|image|audio|video|cctv|body.?worn)';")
+          echo "records=$RECORDS pending_manual_reviews=$PENDING links=$LINKS entities=$ENTITIES media_tables=$MEDIA_TABLES"
+          test "$RECORDS" = "16"
+          test "$PENDING" = "16"
+          test "$LINKS" -ge 15
+          test "$ENTITIES" = "10"
+          test "$MEDIA_TABLES" = "0"
