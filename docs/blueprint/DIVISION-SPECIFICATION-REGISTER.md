@@ -19,7 +19,7 @@
 | BP-10 | Patrol Operations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-10](divisions/BP-10-PATROL-OPERATIONS.md) |
 | BP-11 | Emergency Communications | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-11](divisions/BP-11-EMERGENCY-COMMUNICATIONS.md) |
 | BP-12 | Incident Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-12](divisions/BP-12-INCIDENT-MANAGEMENT.md) |
-| BP-13 | Crime Architecture | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-13 | Crime Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-13](divisions/BP-13-CRIME-ARCHITECTURE.md) |
 | BP-14 | Crime Generation | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-15 | Case Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-16 | Investigation | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -79,6 +79,8 @@ Statuses are independent across specification, implementation, testing and verif
 10. BP-09: full police resources specification draft created; exact resource catalogue, fleet, facility, stock, maintenance and readiness policies remain open.
 11. BP-10: full patrol operations specification draft created; exact beat structure, coverage, response, contact, field-reporting and patrol policy decisions remain open.
 12. BP-11: full emergency communications specification draft created; centre staffing, call priorities, channel catalogue, recording/retention, outage fallback and dispatch policy decisions remain open.
-13. BP-12: full incident-management specification draft created; priority taxonomy, command doctrine, major-incident thresholds, closure review, retention and other policy decisions remain open.\n14. Continue BP-13 through BP-44 in numeric order, preserving the same specification contract and traceability.
+13. BP-12: full incident-management specification draft created; priority taxonomy, command doctrine, major-incident thresholds, closure review, retention and other policy decisions remain open.
+14. BP-13: full crime-architecture specification draft created; initial offence catalogue, fictional legal framework, element schemas, severity descriptors and taxonomy governance decisions remain open.
+15. Continue BP-14 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
