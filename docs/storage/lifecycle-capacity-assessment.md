@@ -175,3 +175,23 @@ The 507,904-byte (0.508 MB) difference between database size after cleanup and b
 This benchmark combines the earlier synthetic resident/business/case/event dataset with the extended city, institutional, police and justice dataset. It remains incomplete as a full lifecycle model: biographies and histories are simplified; many government, service and police workflows are missing or sampled; the intended simulation duration is not fixed; binary media is not included; and backup/archival/object-storage costs are not yet measured.
 
 **Capacity status remains NOT APPROVED.** The persistent benchmark is a useful measured sizing point, not a lifetime capacity proof. Continue with complete category coverage, realistic record distributions, 10-/20-/35-year scenario modelling, media-storage strategy and a documented safety reserve before production seeding.
+
+
+## 12. Benchmark stage 3 exact-count rerun — verified (2026-11-22)
+
+The exact-count audit was rerun successfully after the per-table `COUNT(*)` queries were added.
+
+- Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45050714671
+- Tested commit: `71beee01cb4794b56f8b15d50940f157b5ebeba4`
+- Workflow conclusion: success; all 32 tables measured and isolated schema dropped.
+- Exact count across all 32 tables: **1,276,842 rows**.
+- This matches the sum of stage 0001 (242,000) and stage 0002 (1,034,842) exactly.
+- `pg_stat_user_tables.n_live_tup` still estimates 1,318,842; the 42,000 difference is a statistics-estimate discrepancy, not additional exact rows. The direct counts are authoritative.
+- Database before benchmark: 9,347,072 bytes (9.347 MB).
+- Persistent relation footprint: 381,214,720 bytes (381.215 MB): heap 304.529 MB, indexes 76.202 MB, TOAST/auxiliary 0.483 MB.
+- Full database while benchmark was present: 390,832,128 bytes (390.832 MB).
+- Database after cleanup: 9,617,408 bytes (9.617 MB); post-cleanup residual vs pre-run: 270,336 bytes (0.270 MB).
+- The 0.270 MB residual is not the benchmark dataset footprint. Use the measured 381.215 MB relation total.
+- Updated run report: [benchmark-run-0003.md](benchmark-run-0003.md).
+
+This rerun resolves the exact row-count discrepancy but does not expand benchmark coverage. **1 GB remains NOT APPROVED** for the full Saltwater lifecycle. Production seeding remains blocked pending complete category coverage, defined duration scenarios, binary-media sizing, realistic activity assumptions, growth projection and safety reserve.
