@@ -1,0 +1,148 @@
+name: Saltwater text-depth lifecycle capacity benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "db/benchmarks/0006_text_depth_lifecycle_benchmark.sql"
+      - ".github/workflows/storage-benchmark-text-depth.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      relation_bytes: ${{ steps.measure.outputs.relation_bytes }}
+      db_bytes: ${{ steps.measure.outputs.db_bytes }}
+      exact_rows: ${{ steps.measure.outputs.exact_rows }}
+      total_words: ${{ steps.measure.outputs.total_words }}
+      raw_text_bytes: ${{ steps.measure.outputs.raw_text_bytes }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltwater_bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saltwater_bench"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Build text-depth benchmark on disposable PostgreSQL 16
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_bench
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0006_text_depth_lifecycle_benchmark.sql
+      - name: Measure disposable benchmark and enforce row/text checks
+        id: measure
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_bench
+        run: |
+          set -euo pipefail
+          DB_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          RELATION_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          ROWS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(exact_rows),0) FROM sw_bench_integrated.benchmark_exact_counts;")
+          TEXT_WORDS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(word_count),0) FROM sw_bench_integrated.text_record;")
+          RAW_TEXT_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(octet_length(body)),0) FROM sw_bench_integrated.text_record;")
+          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          echo "database_size_bytes=$DB_BYTES"
+          echo "relation_bytes=$RELATION_BYTES"
+          echo "exact_rows=$ROWS"
+          echo "table_count_including_audit=$TABLE_COUNT"
+          echo "total_text_words=$TEXT_WORDS"
+          echo "raw_text_bytes=$RAW_TEXT_BYTES"
+          test "$ROWS" = "2653342"
+          test "$TABLE_COUNT" = "53"
+          test "$TEXT_WORDS" -gt 100000000
+          echo "db_bytes=$DB_BYTES" >> "$GITHUB_OUTPUT"
+          echo "relation_bytes=$RELATION_BYTES" >> "$GITHUB_OUTPUT"
+          echo "exact_rows=$ROWS" >> "$GITHUB_OUTPUT"
+          echo "total_words=$TEXT_WORDS" >> "$GITHUB_OUTPUT"
+          echo "raw_text_bytes=$RAW_TEXT_BYTES" >> "$GITHUB_OUTPUT"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA sw_bench_integrated CASCADE;"
+
+  neon_measurement:
+    needs: validate
+    if: needs.validate.outputs.relation_bytes != '' && fromJSON(needs.validate.outputs.relation_bytes) <= 790000000
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Build, measure, record and remove text-depth benchmark in Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          FOUNDATION=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version=1);")
+          if [ "$FOUNDATION" != "t" ]; then
+            echo "::error::Saltwater foundation migration 0001 is not installed."
+            exit 1
+          fi
+          cleanup() {
+            psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS sw_bench_integrated CASCADE;" || true
+          }
+          trap cleanup EXIT
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS sw_bench_integrated CASCADE;"
+          DB_BEFORE=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          echo "database_size_before_bytes=$DB_BEFORE"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0006_text_depth_lifecycle_benchmark.sql
+          DB_DURING=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          RELATION_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=n.oid AND n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          ROW_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(exact_rows),0) FROM sw_bench_integrated.benchmark_exact_counts;")
+          TEXT_WORDS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(word_count),0) FROM sw_bench_integrated.text_record;")
+          RAW_TEXT_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(octet_length(body)),0) FROM sw_bench_integrated.text_record;")
+          echo "database_size_during_bytes=$DB_DURING"
+          echo "text_depth_relation_bytes=$RELATION_BYTES"
+          echo "text_depth_table_count_including_audit=$TABLE_COUNT"
+          echo "text_depth_exact_rows=$ROW_COUNT"
+          echo "text_depth_total_words=$TEXT_WORDS"
+          echo "text_depth_raw_text_bytes=$RAW_TEXT_BYTES"
+          test "$ROW_COUNT" = "2653342"
+          test "$TABLE_COUNT" = "53"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA sw_bench_integrated CASCADE;"
+          DB_AFTER=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          NET_DB_BYTES=$((DB_AFTER - DB_BEFORE))
+          echo "database_size_after_cleanup_bytes=$DB_AFTER"
+          echo "net_database_size_change_bytes=$NET_DB_BYTES"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "INSERT INTO sw_ops.storage_operation (operation_kind, description, status, measured_at, database_bytes_before, database_bytes_after, net_database_bytes, measurement_notes) VALUES ('other', 'Text-depth lifecycle capacity benchmark 0006; text-only synthetic dataset; schema removed after measurement', 'succeeded', now(), $DB_BEFORE, $DB_AFTER, $NET_DB_BYTES, 'No binary media or external media payloads; 10,000 residents; exact_rows=$ROW_COUNT; table_count_including_audit=$TABLE_COUNT; relation_bytes=$RELATION_BYTES; total_words=$TEXT_WORDS; raw_text_bytes=$RAW_TEXT_BYTES; generated inside PostgreSQL; no file upload or transfer payload; all MB decimal.');"
+          DB_AFTER_LEDGER=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          echo "database_size_after_ledger_bytes=$DB_AFTER_LEDGER"
+          if [ "$DB_DURING" -le 800000000 ]; then
+            echo "capacity_gate=within_1GB_with_200MB_reserve"
+          else
+            echo "capacity_gate=exceeds_1GB_200MB_reserve"
+          fi
+          trap - EXIT
+
+  capacity_gate_exceeded:
+    needs: validate
+    if: needs.validate.outputs.relation_bytes != '' && fromJSON(needs.validate.outputs.relation_bytes) > 790000000
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report that 1 GB cannot retain the required reserve
+        run: |
+          echo "The disposable PostgreSQL benchmark exceeds the 790 MB relation-footprint gate."
+          echo "The Neon test was intentionally not run to avoid consuming the 1 GB project allowance."
+          echo "The 1 GB capacity decision is NOT APPROVED for this text workload."
