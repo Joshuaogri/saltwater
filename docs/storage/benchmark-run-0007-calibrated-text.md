@@ -1,6 +1,6 @@
 # Calibrated text lifecycle benchmark — run 0007
 
-Status: awaiting GitHub Actions execution. This is a disposable PostgreSQL 16 benchmark; it does not write to Neon.
+Status: disposable PostgreSQL 16 validation succeeded on run 45057029582. The capacity-gate follow-on jobs were skipped because output interpolation in the workflow was escaped; this was corrected in commit 1d00c5c566fd4fa9696d72ca775a4a1f9440986a. Neon was not touched.
 
 ## Purpose and fixed world
 
@@ -62,3 +62,26 @@ The disposable workflow reports whether the relation footprint is at or below 79
 ## Decision
 
 No capacity approval is made until the workflow completes and measured results are reviewed. The 10,000-resident and 10,000-business design targets remain unchanged.
+
+
+## First successful measured run (2026-11-22)
+
+GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/45057029582
+
+- Database size: 656,833,559 bytes = 656.834 MB.
+- Relation footprint: 647,839,744 bytes = 647.840 MB.
+- Heap: 463,036,416 bytes = 463.036 MB.
+- Indexes: 145,195,008 bytes = 145.195 MB.
+- TOAST/auxiliary: 39,616,512 bytes = 39.617 MB.
+- Text-record table total: 95.756 MB (heap 39.895 MB; indexes 18.129 MB; remainder TOAST/auxiliary).
+- Text documents: 33,500.
+- Text words: 49,897,629.
+- Raw UTF-8 text: 341,425,062 bytes = 341.425 MB.
+- Integrated row count: 2,449,842.
+- Base-world resident/business counts remain 10,000 each.
+- Largest linked case history: 517,809 words; median: 12,373; p95: approximately 152,711.
+- Full-text sample query: 50 rows in approximately 43.9 ms, but planner selected sequential scan; index/search tuning remains open.
+
+The relation footprint is 142.160 MB below the 790 MB safety threshold. The full database is 143.166 MB below the 800 MB working target. These results are for a disposable benchmark database, not Neon. The workflow's capacity-gate jobs did not run due to an escaped output-expression defect; the defect has been fixed and must be confirmed in the next run.
+
+No submitted Neon payload, Neon storage increase, before/after Neon database size, or Neon compression measurement exists for this benchmark because no Neon import was performed. Mark those measurements not applicable/not measured, not zero.
