@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "db/benchmarks/0008_high_entropy_text_lifecycle_benchmark.sql"
+      - "db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql"
       - ".github/workflows/storage-benchmark-high-entropy-text.yml"
 
 permissions:
