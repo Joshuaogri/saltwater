@@ -365,3 +365,16 @@ The relation footprint is 142.160 MB below the 790 MB safety gate, and full data
 ### Current decision
 
 Benchmark 0007 is a promising calibrated disposable result, not yet a final 1 GB capacity approval. No benchmark data has been inserted into Neon. Neon before/during/after measurements, submitted payload, actual Neon storage increase and Neon compression are not measured for 0007. Production seeding remains blocked until the corrected gate is verified and a separately controlled Neon measurement is completed.
+
+## 20. High-entropy text lifecycle benchmark 0008 — pending
+
+Benchmark 0008 retains the 10,000-resident, 10,000-business and 33,500-document calibrated workload from 0007, but replaces its small phrase bank with deterministic combinatorial vocabulary and record-type-specific sentence framing. The purpose is to test whether 0007's storage result depended on unusually repetitive, highly compressible prose.
+
+- SQL: [0008_high_entropy_text_lifecycle_benchmark.sql](../../db/benchmarks/0008_high_entropy_text_lifecycle_benchmark.sql)
+- Workflow: [storage-benchmark-high-entropy-text.yml](../../.github/workflows/storage-benchmark-high-entropy-text.yml)
+- Report: [benchmark-run-0008-high-entropy-text.md](benchmark-run-0008-high-entropy-text.md)
+- Corrected disposable workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45058337044
+
+The workflow adds a distinct-opening sample assertion and checks for an index-assisted full-text query plan. It measures text bytes, words, heap, indexes, TOAST/auxiliary storage, total relation footprint and full database size. All benchmark data remains in disposable PostgreSQL; Neon is not touched.
+
+**Status: pending validation.** No 0008 storage measurements or capacity conclusion are available yet. The 0007 result remains a benchmark gate pass only. The 1 GB production-capacity decision remains NOT APPROVED, and production seeding remains blocked.
