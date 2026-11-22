@@ -1,18 +1,15 @@
 # Saltwater benchmark run 0004 — longitudinal world and police records
 
-Status: prepared; awaiting manual GitHub Actions execution. No measurements are claimed yet.
+Status: **completed successfully** (2026-11-22).
 
-## Scope
+- Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45052214555
+- Tested commit: `7413ce7fa0e75f672c99a9d1266f2ff6131bc6ed`
+- Workflow conclusion: success.
+- Isolated schema: `sw_bench_run_0004`; all 16 objects (15 benchmark tables plus exact-count audit table) were dropped after measurement.
 
-Workflow: [Run stage 4 benchmark](https://github.com/Joshuaogri/saltwater/actions/workflows/storage-benchmark-stage-4.yml)
+## Exact generated dataset
 
-SQL: [0004 longitudinal world and police benchmark](../../db/benchmarks/0004_longitudinal_world_and_police_benchmark.sql)
-
-The benchmark creates 15 persistent synthetic tables in the isolated schema `sw_bench_run_0004`, then measures exact row counts, heap, indexes, TOAST/auxiliary storage, total relation footprint and full database size. The workflow drops the isolated schema after measurement, including on failure where cleanup is possible.
-
-## Planned generated dataset
-
-| Category | Rows |
+| Table | Exact rows |
 |---|---:|
 | Household profiles | 5,000 |
 | Household memberships | 10,000 |
@@ -29,21 +26,34 @@ The benchmark creates 15 persistent synthetic tables in the isolated schema `sw_
 | Police radio communications | 80,000 |
 | Forensic examinations | 15,000 |
 | Legal proceedings | 8,000 |
-| **Expected total** | **600,560** |
+| **Exact total** | **600,560** |
 
 Dates span up to 35 years from the synthetic start date. These are benchmark distributions, not approved gameplay activity assumptions or an official simulation duration.
 
-## Measurement fields to capture
+## Measured PostgreSQL storage
 
-- Exact per-table counts and exact combined total.
-- Database size before and while the schema is present.
-- Per-table heap, index and total relation bytes.
-- Aggregate heap, index, TOAST/auxiliary and relation total.
-- Database size after cleanup and cleanup confirmation.
-- Workflow run ID, tested commit and execution conclusion.
+All sizes use decimal MB (1 MB = 1,000,000 bytes); raw bytes are authoritative.
 
-## Important limitations
+| Measurement | Bytes | Decimal MB |
+|---|---:|---:|
+| Heap | 133,021,696 | 133.022 |
+| Indexes | 33,185,792 | 33.186 |
+| TOAST/auxiliary | 507,904 | 0.508 |
+| **Total relation footprint** | **166,715,392** | **166.715** |
+| Full database before benchmark | 9,355,264 | 9.355 |
+| Full database while benchmark present | 176,185,344 | 176.185 |
+| Full database after cleanup | 9,469,952 | 9.470 |
 
-This stage adds depth for household membership, addresses, resident life events, business staffing and transactions, public organisations and services, education, police professional history, radio, forensics and legal proceedings. It is still a sample and does not yet include full binary media payloads, complete detailed financial ledgers, every health/social-service subtype, or a complete 35-year event-rate model.
+The relation footprint is the measured cost of this benchmark schema. The database-size delta before/after cleanup (114,688 bytes) is not the benchmark dataset footprint and must not be substituted for it.
 
-**Capacity decision remains NOT APPROVED.** Await measured workflow output before recording any storage result or combining this stage with other benchmark measurements.
+Largest measured table: resident longitudinal life events, 75.571 MB total (63.005 MB heap; 12.526 MB indexes). Commercial transactions used 24.486 MB; radio communications 18.842 MB.
+
+## Method and cleanup
+
+The workflow connected to Neon, confirmed foundation migration 0001, created and populated the isolated benchmark schema, ran exact `COUNT(*)` audits for all 15 tables, measured per-table and aggregate storage, measured full database size, and dropped the schema. The exact-count audit used psql `\\gexec`; no PL/pgSQL dollar-quoted block was needed. Logs confirm the exact total of 600,560 and successful removal of all 16 objects.
+
+## Limitations
+
+This stage adds household membership, address and life-event history, business staffing and transactions, public organisations/services, education, police professional history, radio, forensics and legal proceedings. It remains a representative sample, not a complete 35-year lifecycle. It does not include full binary media payloads, complete detailed financial ledgers, every healthcare/social-service subtype, full CAD/BWC/GPS/interview/surveillance media, or complete event-rate assumptions.
+
+**Capacity decision remains NOT APPROVED.** This measured 166.715 MB stage must not simply be added to stage 3 as though all records are disjoint; overlap and coverage must be reconciled before a combined lifecycle projection. No production population, business, case or evidence data was loaded.
