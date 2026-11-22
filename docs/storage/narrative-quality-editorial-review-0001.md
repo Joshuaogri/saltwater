@@ -55,10 +55,10 @@ The revised draft scores 13/14 on the AI-assisted editorial rubric. Its remainin
 
 - **R-003:** The 20:42 event timestamp is ambiguous because the statement describes an observation beginning around 20:35. Define the timestamp as the start of the relevant observation window or separate the observed times.
 - **R-005:** Separate interview start and finish times and clarify when the transcript correction was made. Do not invent unrecorded pauses or answers.
-- **R-006–R-008:** Add actual seal numbers, receiving property officer, transfer time and storage location, or explicit references to the records that contain them.
+- **R-006–R-008:** The fixture now explicitly discloses that seal numbers, receiving property officer, transfer time and storage location are not reproduced or independently verified. It no longer claims the seals were checked or asserts an uninterrupted chain. Production acceptance still requires retrieval and verification of ER-2026-551 and the property receipt; do not fill these fields by invention.
 - **R-009–R-010:** Identify the source/authority for reference footwear and give sufficient detail about the polymer screening method to make the examination understandable and reproducible.
 - **R-012:** Identify the authorised observation point and cross-reference the coverage interval to the coverage plan.
-- **R-013:** State or cross-reference the actual case-specific necessity grounds for arrest; do not treat witness descriptions or low-reliability intelligence as proof.
+- **R-013:** The fixture now explicitly states that the arresting officer's factual grounds and case-specific necessity reasons are absent from the sample and cannot be evaluated. DR-204 must be retrieved before production acceptance; witness descriptions and low-reliability intelligence must not be treated as proof or as a substitute for recorded necessity reasoning.
 - **R-006 and R-013 remain borderline** at 11/14 and need the above improvements before production-quality acceptance.
 
 ## Result
