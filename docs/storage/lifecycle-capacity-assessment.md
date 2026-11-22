@@ -1,6 +1,6 @@
 # Saltwater lifecycle storage-capacity assessment
 
-Status: baseline measured; lifetime capacity not approved.
+Status: baseline and four synthetic benchmark stages measured; lifetime capacity not approved.
 
 ## 1. Verified starting point
 
@@ -11,7 +11,7 @@ On 2026-11-22, GitHub Actions workflow `Neon connection and storage baseline` co
 - Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45047512732
 - This is a measured database baseline, not a forecast and not proof that the 1 GB allowance is sufficient.
 - The baseline workflow did not apply the Saltwater foundation migration.
-- No population, business, case, evidence, or other simulation seed data has been loaded.
+- No production population, business, case, evidence or other simulation seed data has been loaded.
 
 ## 2. Capacity decision gate
 
@@ -73,7 +73,6 @@ All measurements use decimal MB: 1 MB = 1,000,000 bytes. Preserve raw byte count
 ## 5. Storage accounting
 
 For each upload, import or bulk migration, record:
-
 - Original input bytes and MB.
 - Compressed input bytes and MB, where compression is used.
 - Submitted/transfer bytes and MB.
@@ -126,87 +125,89 @@ The capacity report must state:
 - Whether 1 GB is sufficient; if not, the required alternative capacity.
 - Reproducible SQL, scripts, test outputs and commit references.
 
-
 ## 10. Benchmark stage 2 — institutional and police lifecycle (2026-11-22)
 
 The extended synthetic benchmark completed successfully (1,034,842 rows across 24 temporary tables):
-
 - Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45049121196
 - Benchmark report: [benchmark-run-0002.md](benchmark-run-0002.md)
 - Tested commit: `4accdd8ba88174176a2e357f4b886e4ffc381db2`
-- Temporary tables: 24
-- Synthetic rows: 1,034,842
 - Measured heap: 245,047,296 bytes (245.047 MB)
 - Measured indexes: 61,792,256 bytes (61.792 MB)
 - Total temporary relation footprint: 307,052,544 bytes (307.053 MB)
 - PostgreSQL `ANALYZE`: completed successfully.
 
-The largest measured categories were interviews (50.766 MB), police reports (44.573 MB), dispatch actions (41.140 MB), commercial transactions (34.447 MB), intelligence (28.705 MB), and patrol events (28.189 MB).
+Largest categories: interviews (50.766 MB), police reports (44.573 MB), dispatch actions (41.140 MB), commercial transactions (34.447 MB), intelligence (28.705 MB), and patrol events (28.189 MB).
 
-Database size readings around the session were 8,347,648 bytes before and 8,814,592 bytes after. The 466,944-byte difference is not the temporary dataset's storage cost. Temporary relations were removed when the connection closed; use the 307.053 MB relation measurement for this benchmark.
+The 466,944-byte difference between database-size readings around the session is not the temporary dataset's storage cost. Temporary relations were removed when the connection closed; use the 307.053 MB relation measurement for this benchmark.
 
-This stage improves coverage but does not yet represent final production schemas, complete resident biographies, all business and institutional history, every police workflow, or binary media. The benchmark remains synthetic and temporary. No production population, business, case or evidence data was loaded.
-
-**Capacity status remains NOT APPROVED.** Next: measure persistent relation growth in an isolated benchmark schema or Neon branch, including heap, indexes and TOAST, and add missing lifecycle categories and media-volume assumptions before projecting the 1 GB limit.
-
+**Capacity status remains NOT APPROVED.** The benchmark is synthetic and temporary, and does not include complete biographies, all business/institutional history, every police workflow or binary media.
 
 ## 11. Benchmark stage 3 — combined persistent lifecycle (2026-11-22)
 
-The combined persistent benchmark completed successfully against Neon:
-
+The combined persistent benchmark completed successfully:
 - Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45049960061
 - Benchmark report: [benchmark-run-0003.md](benchmark-run-0003.md)
-- Tested workflow commit: `d14a03e354f5fe1d56821484a2d3fb796f78e863`
 - Persistent benchmark tables: 32
-- Exact generated-row total from stage counts: 1,276,842 (stage 0001: 242,000; stage 0002: 1,034,842)
-- Relation heap: 304,529,408 bytes (304.529 MB)
-- Relation indexes: 76,201,984 bytes (76.202 MB)
+- Exact generated-row total: 1,276,842 (stage 0001: 242,000; stage 0002: 1,034,842)
+- Heap: 304,529,408 bytes (304.529 MB)
+- Indexes: 76,201,984 bytes (76.202 MB)
 - TOAST/auxiliary: 483,328 bytes (0.483 MB)
-- **Persistent benchmark relation footprint: 381,214,720 bytes (381.215 MB)**
-- Full database size while benchmark was present: 390,815,744 bytes (390.816 MB)
-- Database before benchmark: 8,953,856 bytes (8.954 MB)
-- Database after cleanup: 9,461,760 bytes (9.462 MB)
-- The isolated `sw_bench_run` schema and all 32 tables were successfully dropped.
+- **Relation footprint: 381,214,720 bytes (381.215 MB)**
+- Full database while benchmark was present: 390,832,128 bytes (390.832 MB) on the exact-count rerun
+- Database before benchmark: 9,347,072 bytes (9.347 MB)
+- Database after cleanup: 9,617,408 bytes (9.617 MB)
+- All 32 benchmark tables were dropped.
 
-The supplementary `pg_stat_user_tables.n_live_tup` estimate reported 1,318,842, which is 42,000 above the exact generated-row total. It is explicitly treated as an estimate, not an exact count. The stage-specific count queries and generate-series inputs support the 1,276,842 generated-row figure.
+The direct count audit is authoritative; the `pg_stat_user_tables.n_live_tup` estimate differed by 42,000. The 0.270 MB post-cleanup residual is not the benchmark dataset footprint.
 
-The 507,904-byte (0.508 MB) difference between database size after cleanup and before the benchmark is not the benchmark dataset footprint. Use the measured 381.215 MB relation footprint and 390.816 MB full database size during the persistent test.
+This stage remains incomplete: biographies and histories are simplified; many government, service and police workflows are sampled or missing; simulation duration is not fixed; binary media is not included.
 
-This benchmark combines the earlier synthetic resident/business/case/event dataset with the extended city, institutional, police and justice dataset. It remains incomplete as a full lifecycle model: biographies and histories are simplified; many government, service and police workflows are missing or sampled; the intended simulation duration is not fixed; binary media is not included; and backup/archival/object-storage costs are not yet measured.
-
-**Capacity status remains NOT APPROVED.** The persistent benchmark is a useful measured sizing point, not a lifetime capacity proof. Continue with complete category coverage, realistic record distributions, 10-/20-/35-year scenario modelling, media-storage strategy and a documented safety reserve before production seeding.
-
+**Capacity status remains NOT APPROVED.**
 
 ## 12. Benchmark stage 3 exact-count rerun — verified (2026-11-22)
 
-The exact-count audit was rerun successfully after the per-table `COUNT(*)` queries were added.
-
 - Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45050714671
 - Tested commit: `71beee01cb4794b56f8b15d50940f157b5ebeba4`
-- Workflow conclusion: success; all 32 tables measured and isolated schema dropped.
 - Exact count across all 32 tables: **1,276,842 rows**.
-- This matches the sum of stage 0001 (242,000) and stage 0002 (1,034,842) exactly.
-- `pg_stat_user_tables.n_live_tup` still estimates 1,318,842; the 42,000 difference is a statistics-estimate discrepancy, not additional exact rows. The direct counts are authoritative.
-- Database before benchmark: 9,347,072 bytes (9.347 MB).
-- Persistent relation footprint: 381,214,720 bytes (381.215 MB): heap 304.529 MB, indexes 76.202 MB, TOAST/auxiliary 0.483 MB.
-- Full database while benchmark was present: 390,832,128 bytes (390.832 MB).
-- Database after cleanup: 9,617,408 bytes (9.617 MB); post-cleanup residual vs pre-run: 270,336 bytes (0.270 MB).
-- The 0.270 MB residual is not the benchmark dataset footprint. Use the measured 381.215 MB relation total.
-- Updated run report: [benchmark-run-0003.md](benchmark-run-0003.md).
+- Database before: 9,347,072 bytes (9.347 MB).
+- Relation footprint: 381,214,720 bytes (381.215 MB): heap 304.529 MB, indexes 76.202 MB, TOAST/auxiliary 0.483 MB.
+- Full database during benchmark: 390,832,128 bytes (390.832 MB).
+- Database after cleanup: 9,617,408 bytes (9.617 MB); residual vs pre-run: 270,336 bytes (0.270 MB).
+- Report: [benchmark-run-0003.md](benchmark-run-0003.md).
 
-This rerun resolves the exact row-count discrepancy but does not expand benchmark coverage. **1 GB remains NOT APPROVED** for the full Saltwater lifecycle. Production seeding remains blocked pending complete category coverage, defined duration scenarios, binary-media sizing, realistic activity assumptions, growth projection and safety reserve.
+This confirms exact row counts but not complete lifecycle coverage. **1 GB remains NOT APPROVED.**
 
+## 13. Benchmark stage 4 — longitudinal world and police records (verified 2026-11-22)
 
-## 13. Benchmark stage 4 — longitudinal world and police records (prepared 2026-11-22)
+Stage 4 completed successfully against Neon:
+- Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45052214555
+- Tested commit: `7413ce7fa0e75f672c99a9d1266f2ff6131bc6ed`
+- Report: [benchmark-run-0004.md](benchmark-run-0004.md)
+- 15 benchmark tables plus one exact-count audit table were created and subsequently removed.
+- Exact audited total: **600,560 rows** across the 15 benchmark tables.
+- Relation heap: 133,021,696 bytes (133.022 MB).
+- Relation indexes: 33,185,792 bytes (33.186 MB).
+- TOAST/auxiliary: 507,904 bytes (0.508 MB).
+- **Stage 4 relation footprint: 166,715,392 bytes (166.715 MB).**
+- Full database before benchmark: 9,355,264 bytes (9.355 MB).
+- Full database while benchmark present: 176,185,344 bytes (176.185 MB).
+- Full database after cleanup: 9,469,952 bytes (9.470 MB).
+- Cleanup log confirms all 16 objects were dropped.
 
-Stage 4 is prepared but has **not yet been executed**. It adds 15 persistent synthetic tables in a separately isolated schema and a dedicated manual workflow.
+The 114,688-byte difference between database size after cleanup and before the run is not the benchmark dataset footprint. Use the measured 166.715 MB relation total.
 
-- Workflow: https://github.com/Joshuaogri/saltwater/actions/workflows/storage-benchmark-stage-4.yml
-- SQL: `db/benchmarks/0004_longitudinal_world_and_police_benchmark.sql`
-- Report template: [benchmark-run-0004.md](benchmark-run-0004.md)
-- Expected rows from generation parameters: **600,560**.
-- Coverage: household profiles and memberships; resident address and life-event history; business staffing and commercial transactions; public organisations and office history; public-service encounters; education; police training and discipline; radio communications; forensic examinations; legal proceedings.
-- Synthetic event dates span up to 35 years from the benchmark start date. This is a sizing test only, not an approved game-lifetime or event-rate assumption.
-- The workflow measures exact per-table counts, aggregate rows, heap, indexes, TOAST/auxiliary, relation totals, full database size before/during/after, and removes the isolated schema.
+Stage 4 adds household profiles/memberships, resident address and life-event history, business staffing and transactions, public organisations/office history, public-service encounters, education, police training/discipline, radio communications, forensic examinations and legal proceedings. Its synthetic dates span up to 35 years, but this is not an approved simulation duration or event-rate assumption.
 
-No stage 4 storage result is recorded until the workflow has completed and its logs have been inspected. Stage 4 must not be added to stage 3 measurements as a simple sum until the measured scope and overlap are reconciled. **1 GB remains NOT APPROVED; production seeding remains blocked.**
+**Do not simply add stage 4's 166.715 MB to stage 3's 381.215 MB:** the benchmark scopes overlap in several categories, and the datasets are synthetic. Reconcile overlap and complete missing categories before calculating a combined lifecycle projection.
+
+## 14. Remaining work before a 1 GB decision
+
+- Define the official game lifecycle and retention assumptions; model 10-, 20- and 35-year scenarios without silently treating any as approved.
+- Reconcile overlap among all benchmark stages and create a single representative integrated dataset.
+- Complete coverage for detailed government/institutional structures, financial/banking/tax ledgers, healthcare and social services, foreign relations, full police staffing and recruitment, CAD/call recordings, BWC/GPS, interviews, intelligence links, surveillance, chain-of-custody, prosecution/courts/corrections and business employment history.
+- Benchmark realistic biography, report, interview, case and evidence text lengths.
+- Measure binary photo/audio/video/CCTV/BWC/scan/forensic media volumes separately and choose/test an object-storage strategy where appropriate.
+- Test deduplication, compression, archival, backups/recovery, index overhead and representative query performance.
+- Project full lifecycle storage, including PostgreSQL overhead and a substantial safety reserve.
+
+**Final capacity decision: NOT APPROVED YET.** No production population, business, case or evidence seeding until the integrated lifecycle benchmark and capacity gate are complete.
