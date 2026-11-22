@@ -72,11 +72,11 @@ INSERT INTO fixture_record VALUES
 'The laboratory is asked to assess whether the partial footwear impression in SW-NQ-001 contains sufficient class characteristics for comparison with the reference footwear supplied under separate authority. The laboratory is also asked to describe the polymer fragment SW-NQ-002 and assess whether its composition is consistent with the submitted latch material. No request is made to identify a person. The submission records the scene conditions, recovery locations, packaging and seal identifiers.'),
 ('R-010','forensic_report','Dr Ivo Sen; laboratory report LAB-2026-883','2026-10-18 15:00+00','2026-10-18 16:12+00','Laboratory report LAB-2026-883; examination worksheet EXAM-883; seals intact on receipt.',
 'The footwear lift contains a partial pattern with limited class features. The available area is insufficient for a reliable individual comparison, and the damp recovery surface may have affected detail. The polymer fragment was examined visually and by a non-destructive material screening method. Its characteristics are consistent with several common clear polymers; the results do not uniquely associate it with the pharmacy door. No individual identification or source attribution can be made from either exhibit. The limitations are material and should accompany any summary of these findings.'),
-('R-011','intelligence_assessment','Intelligence analyst IA-22; assessment IA-2026-091','2026-10-19 11:00+00','2026-10-19 11:38+00','Source report SR-2026-441, graded low reliability; assessment version 1.',
+('R-011','intelligence_assessment','Intelligence analyst IA-22; assessment IA-2026-091','2026-10-15 08:00+00','2026-10-15 08:38+00','Source report SR-2026-441, graded low reliability; assessment version 1.',
 'An uncorroborated source report states that a person matching Tomas Rell''s general build was seen near Harbour Street during the evening. The source could not provide a precise time and did not describe clothing. The report has not been independently corroborated and the source reliability is assessed as low. The information is recorded for context only; it does not establish that Rell was at the pharmacy or involved in the reported damage. No operational conclusion should rely on this source alone.'),
 ('R-012','surveillance_observation_log','Text observation officer SO-08; log SUR-2026-14','2026-10-14 20:30+00','2026-10-15 08:20+00','Written observation log SUR-2026-14; coverage plan CP-14; no video or image retained.',
 'The written observation log records that the public street-facing entrance was visible from the authorised observation point between 20:30 and 20:55. The rear service lane was not continuously visible; a delivery vehicle obstructed the view from 20:40 to 20:45. At 20:46 an unidentified person was noted moving toward the junction, but the observer could not establish the person''s direction of travel before entering the visible area. No reliable facial description was obtained. The log distinguishes direct observation from the observer''s unverified interpretation.'),
-('R-013','arrest_record','PC L. Oran; arrest record AR-2026-204','2026-10-16 09:22+00','2026-10-16 10:05+00','Arrest record AR-2026-204; decision review DR-204.',
+('R-013','arrest_record','PC L. Oran; arrest record AR-2026-204','2026-10-16 09:22+00','2026-10-16 09:30+00','Arrest record AR-2026-204; decision review DR-204.',
 'Tomas Rell was arrested at 09:22 on 16 October 2026 on suspicion of criminal damage and attempted burglary. The arrest record states the information then available, including the witness descriptions and the uncorroborated intelligence report. The officer recorded why arrest rather than voluntary attendance was considered necessary at that time. The record does not treat the footwear or polymer examination as identifying Rell. The grounds and necessity assessment are attributed to the arresting officer and remain open to later review.'),
 ('R-014','custody_record','Custody sergeant M. Pell; custody record CR-2026-204','2026-10-16 09:41+00','2026-10-16 09:49+00','Custody record CR-2026-204; booking and review entries.',
 'Rell arrived at the custody suite at 09:41. The custody sergeant recorded the arresting officer, stated grounds, booking time, property declaration, welfare questions and access to legal advice. Rell requested legal advice and the interview was not resumed until the recorded consultation had taken place. A review at 13:41 confirmed the continuing detention decision and recorded the reasons supplied. Rell was released under investigation at 17:10, subject to the written conditions recorded in the disposal entry.'),
@@ -197,6 +197,20 @@ BEGIN
     SELECT 1 FROM fixture_record
     WHERE record_id='R-016' AND body ILIKE '%does not determine who damaged%'
   ) THEN RAISE EXCEPTION 'Unresolved outcome is missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM fixture_record intelligence
+    JOIN fixture_record arrest ON arrest.record_id='R-013'
+    WHERE intelligence.record_id='R-011'
+      AND intelligence.created_at < arrest.event_at
+  ) THEN RAISE EXCEPTION 'Intelligence assessment post-dates arrest decision'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM fixture_record arrest
+    JOIN fixture_record custody ON custody.record_id='R-014'
+    WHERE arrest.record_id='R-013'
+      AND arrest.created_at < custody.event_at
+  ) THEN RAISE EXCEPTION 'Arrest record was not created before custody booking'; END IF;
 END $$;
 
 -- Human review is deliberately pending; SQL cannot certify prose quality.
