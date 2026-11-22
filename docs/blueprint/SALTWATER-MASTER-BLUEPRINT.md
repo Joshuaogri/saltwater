@@ -63,6 +63,13 @@
 | BP-43 | Testing and Quality Assurance | Unit, integration, replay, edge, population, storage and acceptance tests |
 | BP-44 | Configuration and Change Control | Canon versions, settings, traceability, controlled amendments; no world expansion |
 
+## Specification progress
+
+- [52→44 crosswalk and semantic audit](SALTWATER-52-TO-44-CROSSWALK.md)
+- [44-division specification register](DIVISION-SPECIFICATION-REGISTER.md)
+- BP-01, BP-02 and BP-03 have full specification drafts; user review/approval pending.
+- Implementation, testing and verification remain separate and are not claimed by these design documents.
+
 ## Division specification contract
 Every BP division must define: purpose; scope/exclusions; entities and fields; lifecycle/state transitions; rules and invariants; inputs/outputs; dependencies and ownership; permissions; exceptions/edge cases; cross-system effects; acceptance tests; evidence. No placeholder coverage or implied implementation.
 
