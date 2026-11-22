@@ -14,11 +14,11 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     outputs:
-      relation_bytes: \${{ steps.measure.outputs.relation_bytes }}
-      db_bytes: \${{ steps.measure.outputs.db_bytes }}
-      exact_rows: \${{ steps.measure.outputs.exact_rows }}
-      text_words: \${{ steps.measure.outputs.text_words }}
-      raw_text_bytes: \${{ steps.measure.outputs.raw_text_bytes }}
+      relation_bytes: ${{ steps.measure.outputs.relation_bytes }}
+      db_bytes: ${{ steps.measure.outputs.db_bytes }}
+      exact_rows: ${{ steps.measure.outputs.exact_rows }}
+      text_words: ${{ steps.measure.outputs.text_words }}
+      raw_text_bytes: ${{ steps.measure.outputs.raw_text_bytes }}
     services:
       postgres:
         image: postgres:16
