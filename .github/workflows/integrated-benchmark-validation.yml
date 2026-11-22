@@ -1,0 +1,53 @@
+name: Validate integrated lifecycle benchmark SQL
+
+on:
+  push:
+    paths:
+      - "db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql"
+      - ".github/workflows/integrated-benchmark-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: saltwater_test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Execute integrated benchmark and assert counts
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -f db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql
+          TOTAL=$(psql -X -Atc "SELECT sum(exact_rows) FROM sw_bench_integrated.benchmark_exact_counts;")
+          TABLES=$(psql -X -Atc "SELECT count(*) FROM sw_bench_integrated.benchmark_exact_counts;")
+          echo "integrated_exact_rows=$TOTAL"
+          echo "integrated_table_count=$TABLES"
+          test "$TOTAL" = "2516342"
+          test "$TABLES" = "54"
+          psql -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA sw_bench_integrated CASCADE;"
+          echo "validation=passed; all 54 data tables and audit table removed"
