@@ -1,0 +1,60 @@
+name: Saltwater Neon read-only storage baseline
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/neon-readonly-storage-baseline.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Measure Neon storage without writes
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "${DATABASE_URL:-}"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL' | tee neon-storage-baseline.txt
+          BEGIN READ ONLY;
+          SELECT 'measurement_time_utc' AS metric, clock_timestamp()::text AS value;
+          SELECT 'database_name' AS metric, current_database() AS value;
+          SELECT 'database_bytes' AS metric, pg_database_size(current_database())::text AS value;
+          SELECT 'database_mb_decimal' AS metric, round(pg_database_size(current_database())::numeric / 1000000, 3)::text AS value;
+          SELECT 'relation_bytes' AS metric, COALESCE(sum(pg_total_relation_size(c.oid)),0)::text AS value
+          FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+          WHERE c.relkind IN ('r','m','p') AND n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%';
+          SELECT n.nspname AS schema_name, c.relname AS relation_name,
+                 pg_relation_size(c.oid) AS heap_bytes,
+                 pg_indexes_size(c.oid) AS index_bytes,
+                 pg_total_relation_size(c.oid) AS total_bytes
+          FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+          WHERE c.relkind IN ('r','m','p') AND n.nspname NOT IN ('pg_catalog','information_schema') AND n.nspname NOT LIKE 'pg_toast%'
+          ORDER BY pg_total_relation_size(c.oid) DESC
+          LIMIT 30;
+          ROLLBACK;
+          SQL
+          {
+            echo "## Neon read-only storage baseline"
+            echo
+            echo 'No rows were inserted, updated, or deleted. Measurement ran inside a READ ONLY transaction.'
+            echo
+            echo '~~~text'
+            cat neon-storage-baseline.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain measurement report
+        uses: actions/upload-artifact@v4
+        with:
+          name: neon-readonly-storage-baseline
+          path: neon-storage-baseline.txt
+          if-no-files-found: error
+          retention-days: 30
