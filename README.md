@@ -15,11 +15,15 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Development principles
 
-- Preserve meaningful detail and exact recoverability while minimising storage use.
+- Preserve meaningful detail and exact recoverability while minimising storage use; the simulation is text-first and narrative may be extensive.
+- Prefer the smallest lossless representation (compact JSON, short keys/IDs/enums, normalisation, references and event/delta records); compress structure, never meaning.
+- Avoid every unnecessary byte: duplicate payloads, repeated boilerplate, derivable fields, needless indexes/snapshots and oversized database blobs.
+- HARD GATE: before every Neon migration, schema change, seed/import, bulk write or upload, calculate and show expected incremental bytes/MB, assumptions/range, current baseline and projected total; wait for explicit user approval. If the estimate is not credible, do not deploy—benchmark first.
+- After approval, measure actual database/table/index/TOAST growth and compare it with the estimate.
 - Normalise shared facts and reference them rather than duplicating them.
 - Use compact identifiers where useful; never sacrifice human-readable records or provenance.
 - Record meaningful state changes and chronology without indiscriminate full snapshots.
-- Measure actual database growth; never substitute estimates for measurements.
+- Measure actual database growth after each approved deployment; report actual delta against the pre-deployment estimate.
 - Do not upload simulation seed data until the schema, validation and storage baseline are ready.
 - Never commit credentials. The Neon connection string belongs in a protected secret named `DATABASE_URL`.
 
