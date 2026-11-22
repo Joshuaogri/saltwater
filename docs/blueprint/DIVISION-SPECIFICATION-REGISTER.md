@@ -94,6 +94,7 @@ Statuses are independent across specification, implementation, testing and verif
 25. BP-24: full forensics specification draft created; discipline catalogue, capability/competency levels, triage priorities, method validation, contamination controls, quality review, reporting and turnaround policy decisions remain open.
 26. BP-25: full arrests-and-warrants specification draft created; fictional authority matrix, warrant categories/issuer roles, duration/variation rules, search/consent scope, seizure procedures, safeguards and force-review policy decisions remain open.
 27. BP-26: full custody-management specification draft created; custody authority and clock start, detention limits/review intervals, facility/cell baseline, risk/observation standards, welfare, healthcare, communication, search/property, transfer and release policy decisions remain open.
-28. BP-27: full legal-process specification draft created; fictional legal hierarchy, charging authority, disclosure rules, representation, deadlines, bail/remand and appeal policy decisions remain open.\n29. Continue BP-28 through BP-44 in numeric order, preserving the same specification contract and traceability.
+28. BP-27: full legal-process specification draft created; fictional legal hierarchy, charging authority, disclosure rules, representation, deadlines, bail/remand and appeal policy decisions remain open.
+29. Continue BP-28 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
