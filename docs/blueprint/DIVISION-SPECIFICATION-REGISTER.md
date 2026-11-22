@@ -88,6 +88,8 @@ Statuses are independent across specification, implementation, testing and verif
 19. BP-18: full suspects-and-offenders specification draft created; suspect designation threshold, POI category, offender basis, role transitions, identity-confidence vocabulary and access policy remain open.
 20. BP-19: full interviews-and-interrogations specification draft created; fictional caution/rights notices, interviewer authority, recording/retention, statement adoption, interpreter standards and related policy decisions remain open.
 21. BP-20: full surveillance specification draft created; fictional surveillance authority matrix, permitted technical methods, retention, preservation holds, source-quality and identity-resolution standards remain open.
-22. BP-21: full intelligence specification draft created; source/content grading scales, analytical confidence, source handling, dissemination, retention and collection-request policy decisions remain open.\n23. Continue BP-22 through BP-44 in numeric order, preserving the same specification contract and traceability.
+22. BP-21: full intelligence specification draft created; source/content grading scales, analytical confidence, source handling, dissemination, retention and collection-request policy decisions remain open.
+23. BP-22: full crime-scenes specification draft created; scene authority, boundary standards, search protocols, access logging, release authority and media retention decisions remain open.
+24. Continue BP-23 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
