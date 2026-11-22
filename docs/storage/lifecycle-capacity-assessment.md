@@ -105,11 +105,9 @@ Do not assume Neon database storage is the right place for every binary payload.
 
 ## 8. Current decision
 
-**Not approved:** 1 GB lifetime capacity.
+**Historical status at the end of the initial foundation stage:** 1 GB was not yet approved. This was superseded by the integrated Neon measurement and conditional decision in Section 16.
 
-**Allowed:** schema design, migration validation, read-only measurement, synthetic benchmark design and controlled benchmark loads after the measurement procedure is ready.
-
-**Blocked:** production population/business/case/evidence seeding and any large irreversible import until the benchmark and capacity decision are complete.
+**Current condition:** the 1 GB Neon tier is approved for the defined integrated relational benchmark only, subject to external binary-media storage and the protected 200 MB reserve. Production media ingestion remains blocked until an external object-storage tier is selected and tested.
 
 ## 9. Required final report
 
@@ -200,17 +198,15 @@ Stage 4 adds household profiles/memberships, resident address and life-event his
 
 **Do not simply add stage 4's 166.715 MB to stage 3's 381.215 MB:** the benchmark scopes overlap in several categories, and the datasets are synthetic. Reconcile overlap and complete missing categories before calculating a combined lifecycle projection.
 
-## 14. Remaining work before a 1 GB decision
+## 14. Remaining work after the conditional 1 GB decision
 
-- Define the official game lifecycle and retention assumptions; model 10-, 20- and 35-year scenarios without silently treating any as approved.
-- Reconcile overlap among all benchmark stages and create a single representative integrated dataset.
-- Complete coverage for detailed government/institutional structures, financial/banking/tax ledgers, healthcare and social services, foreign relations, full police staffing and recruitment, CAD/call recordings, BWC/GPS, interviews, intelligence links, surveillance, chain-of-custody, prosecution/courts/corrections and business employment history.
-- Benchmark realistic biography, report, interview, case and evidence text lengths.
-- Measure binary photo/audio/video/CCTV/BWC/scan/forensic media volumes separately and choose/test an object-storage strategy where appropriate.
-- Test deduplication, compression, archival, backups/recovery, index overhead and representative query performance.
-- Project full lifecycle storage, including PostgreSQL overhead and a substantial safety reserve.
+- Select and test external object storage for the measured 1,950.015 MB of binary media references.
+- Treat the 35-year integrated workload as the current planning scenario; explicitly approve a different lifetime/retention horizon before changing the forecast.
+- Keep the 200 MB Neon reserve protected and monitor actual database growth.
+- Test backup/recovery, archival, media integrity, retention and representative query performance.
+- Re-run the integrated benchmark if event rates, text lengths, indexes, evidence volume or retention scope materially increase.
 
-**Final capacity decision: NOT APPROVED YET.** No production population, business, case or evidence seeding until the integrated lifecycle benchmark and capacity gate are complete.
+The relational capacity decision is recorded in Section 16. Production media ingestion remains blocked until the separate media tier is operational and verified.
 
 
 ## 15. Integrated lifecycle benchmark and conditional 1 GB decision (2026-11-22)
