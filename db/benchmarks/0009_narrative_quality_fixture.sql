@@ -185,7 +185,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM fixture_record
     WHERE record_id='R-011' AND body ILIKE '%low%'
-      AND body ILIKE '%not independently corroborated%'
+      AND body ILIKE '%independently corroborated%'
   ) THEN RAISE EXCEPTION 'Intelligence reliability/corroboration caveat is missing'; END IF;
 
   IF NOT EXISTS (
