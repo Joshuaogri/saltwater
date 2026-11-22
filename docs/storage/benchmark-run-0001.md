@@ -17,7 +17,7 @@ Benchmark commit: 40be822f49ff07b1a0fc46507155bcf7ff5e3982
 | Incidents | 10,000 |
 | Evidence metadata | 10,000 |
 | Historical events | 150,000 |
-| **Total** | **232,000** |
+| **Total** | **242,000** |
 
 ## Measured temporary relation footprint
 
@@ -48,7 +48,7 @@ The 76.710 MB relation footprint is measured while the temporary relations exist
 ## What this test proves
 
 - Neon successfully executed the synthetic workload.
-- The test generated the specified resident, business, relationship, employment, case, incident, evidence-metadata and event row counts.
+- The test generated the specified resident, business, relationship, employment, case, incident, evidence-metadata and event row counts (242,000 rows in total).
 - The measured temporary table and index footprint for this particular row mix is 76.710 MB.
 - The event table dominates this sample.
 
