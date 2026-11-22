@@ -405,7 +405,7 @@ The original 52-division source JSON remains unchanged. Source IDs refer to orig
 | S37.R01 | Represent grounds, authority, applications, approvals, execution, person/property searches, seizure, transport, booking, detention, welfare, reviews and release. | Sections 3–23 and 29; BP-25 owns grounds, warrants, searches and seizure; BP-26 owns booking, detention, welfare, custody review and release. |
 | S37.R02 | Maintain custody clock and property continuity. | Sections 10–11, 17, 25 and 29; BP-26 owns custody clock and personal property while in custody; BP-23 retains exhibit continuity. |
 | S37.R03 | Separate operational action from later legal decision. | Sections 3, 4, 21–23 and 29; operational booking/detention/release events remain distinct from BP-27/BP-28 legal decisions. |
-| S37.T01 | Custody and warrant events satisfy configured fictional rules and chronological constraints. | CUSTODY-AT-037–063, 157–163; configured authority, clock, review and canonical chronology. |
+| S37.T01 | Custody and warrant events satisfy configured fictional rules and chronological constraints. | CUSTODY-AT-037–063 and CUSTODY-AT-178–180; configured authority, custody clock, review deadlines, pause behaviour and canonical chronology. |
 | S39.R02 | Maintain continuity between custody, court and person records. | Sections 3, 21–23, 25 and 28; BP-03 identity, BP-28 court orders and BP-29 corrections are linked without ownership overlap. |
 
 Cross-cutting X03 applies: every time-dependent fact is effective-dated and historically queryable; BP-37 is the sole clock and pause freezes all time-dependent activity. X04 requires capacity and resource changes to reconcile atomically. X05 preserves fact/allegation/intelligence/evidence/opinion/conclusion distinctions. Global constraints include one-city Saltwater, 10,000 living-person cap, permanent promotion of case-connected people, player agency and exact bingo reveal firewall.
@@ -462,7 +462,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 - [ ] Disclosure, permissions, NPC knowledge and bingo firewall specified.
 - [ ] Pause, population cap and permanent person promotion specified.
 - [ ] Text-first workflow and optional visual support specified.
-- [ ] All 180 acceptance tests await BP-43 execution.
+- [ ] All 193 acceptance tests await BP-43 execution.
 - [ ] Open decisions remain explicit; no real-world law silently imported.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
