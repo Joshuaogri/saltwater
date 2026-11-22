@@ -20,7 +20,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes postgresql-client
-      - name: Build, measure, audit and remove integrated benchmark
+      - name: Build, measure, audit, record and remove integrated benchmark
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
@@ -39,12 +39,28 @@ jobs:
           }
           trap cleanup EXIT
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA IF EXISTS sw_bench_integrated CASCADE;"
-          echo "database_size_before_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")"
+          DB_BEFORE=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          echo "database_size_before_bytes=$DB_BEFORE"
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql
-          echo "database_size_during_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")"
-          echo "integrated_relation_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")"
-          echo "integrated_table_count=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")"
+          DB_DURING=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          RELATION_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          ROW_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(exact_rows),0) FROM sw_bench_integrated.benchmark_exact_counts;")
+          MEDIA_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(payload_bytes),0) FROM sw_bench_integrated.media_asset_metadata;")
+          echo "database_size_during_bytes=$DB_DURING"
+          echo "integrated_relation_bytes=$RELATION_BYTES"
+          echo "integrated_table_count=$TABLE_COUNT"
+          echo "integrated_exact_rows=$ROW_COUNT"
+          echo "external_media_payload_bytes=$MEDIA_BYTES"
+          test "$ROW_COUNT" = "2516342"
+          test "$TABLE_COUNT" = "55"
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA sw_bench_integrated CASCADE;"
-          echo "database_size_after_cleanup_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")"
+          DB_AFTER=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          NET_DB_BYTES=$((DB_AFTER - DB_BEFORE))
+          echo "database_size_after_cleanup_bytes=$DB_AFTER"
+          echo "net_database_size_change_bytes=$NET_DB_BYTES"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "INSERT INTO sw_ops.storage_operation (operation_kind, description, status, measured_at, database_bytes_before, database_bytes_after, net_database_bytes, measurement_notes) VALUES ('other', 'Integrated lifecycle capacity benchmark 0005; synthetic dataset; schema removed after measurement', 'succeeded', now(), $DB_BEFORE, $DB_AFTER, $NET_DB_BYTES, '54 data tables; exact_rows=$ROW_COUNT; relation_bytes=$RELATION_BYTES; table_count_including_audit=$TABLE_COUNT; external_media_payload_bytes=$MEDIA_BYTES; generated inside PostgreSQL; no file upload or transfer payload; all MB decimal.');"
+          DB_AFTER_LEDGER=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          echo "database_size_after_ledger_bytes=$DB_AFTER_LEDGER"
           trap - EXIT
-          echo "note=All integrated benchmark relations were measured before cleanup; no production records were inserted."
+          echo "note=Integrated synthetic relations were measured, recorded in sw_ops.storage_operation and removed; no production records were inserted."
