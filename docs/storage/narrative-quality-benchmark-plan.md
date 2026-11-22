@@ -137,3 +137,11 @@ The earlier successful run 45062664898 is superseded for chronology purposes. Th
 - R-016 now identifies the 20 October defence application to vary the no-contact condition. It records that the condition had already been cancelled on 3 November, so the application was withdrawn as moot at the 10 November hearing. The court closes the application without deciding its merits or making any finding about the alleged offences.
 - Updated editorial assessment: `docs/storage/narrative-quality-editorial-review-0001.md`. All 16 records now meet the numeric threshold in the revised AI-assisted assessment; R-006 and R-013 remain borderline and specific quality improvements are outstanding.
 - The fixture is conditionally ready for independent human sign-off, **not approved**. Database manual-review rows remain pending. No Neon writes or production seeding.
+
+
+### Explicit disclosure of missing source particulars — 22 November 2026
+
+- R-006 no longer claims that seal numbers were checked by a receiving property officer. The fixture explicitly states that package identifiers, seal numbers, receiving officer identity, transfer time and storage location are not reproduced or independently verified; it does not assert an uninterrupted chain of custody. The underlying evidence register and property receipt must be retrieved before production acceptance.
+- R-013 explicitly states that the arresting officer's specific factual grounds and case-specific necessity reasoning are not reproduced, and that decision review DR-204 is not included. The fixture does not claim those grounds can be evaluated from this sample. DR-204 must be retrieved before production acceptance.
+- SQL structural assertions now protect both disclosures. These are transparency safeguards, not proof that the missing source records are adequate.
+- R-006 and R-013 remain borderline in the AI-assisted rubric; no score has been upgraded merely because omissions are now disclosed. Manual review remains pending. No Neon writes or production seeding.
