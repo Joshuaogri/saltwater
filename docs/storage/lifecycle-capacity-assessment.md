@@ -414,3 +414,8 @@ The first clean text-only repeat (run 45058809884) failed during workload setup,
 ## 23. Corrected benchmark 0008 repeat passed
 
 Run 45059118741 completed successfully after fixing the stray SQL clause. Measurements: disposable database 651.779 MB; relation footprint 642.728 MB; heap 457.146 MB; indexes 138.838 MB; TOAST/auxiliary 46.744 MB; raw UTF-8 text 244.366 MB; 33,500 text records; 49,897,629 words; 2,449,842 integrated rows; 53 tables. The 1,000-document opening sample was 100% distinct. Recorded full-text query execution was 2.019 ms; index-path forcing does not establish normal planner selection. The result differs from the first 0008 run by only 0.057 MB in full DB size and 0.008 MB in relation footprint. This validates repeatability of the deterministic benchmark, not independent narrative variety or Neon billed capacity. Production seeding remains blocked pending further repeat/realism review and Neon reserve assessment.
+
+
+## 24. Narrative realism is not established by benchmark 0008
+
+Benchmark 0008 uses deterministic actor/verb/subject/qualifier combinations and repeated caveat sentences. This creates high lexical variation and a useful storage workload, but the prose can remain semantically generic or awkward. Its 100% distinct-opening sample is not a quality measure. Before production approval, create a separate record-type-specific narrative quality test covering coherent chronology, grounded entities, cross-record consistency, non-duplicative facts and reviewed samples. Do not treat synthetic text entropy as proof of authentic police records.
