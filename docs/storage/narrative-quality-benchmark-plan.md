@@ -119,3 +119,13 @@ These storage figures are diagnostic measurements from the first structurally pa
 - The workflow completed successfully, including the 16-record, 19-link, 10-entity, 16-pending-review and zero-media-table checks.
 
 The earlier successful run 45062664898 is superseded for chronology purposes. The fixture's automated structure is now stable, but its narrative quality is not yet approved: the 16 human-review scores remain pending. The next task is to complete a record-by-record editorial review against the seven-part 0–2 rubric, preserve any unresolved weaknesses as review notes, and only then decide whether to accept the fixture for the small-scale storage/query experiment.
+
+
+### AI-assisted editorial review — 22 November 2026
+
+- Review: `docs/storage/narrative-quality-editorial-review-0001.md`.
+- The 16 records were scored individually against the seven-part rubric. Fourteen meet the numeric threshold; R-016 fails at 10/14 because the court application and procedural disposition are not sufficiently identified.
+- R-014's record-creation timestamp was corrected in `db/benchmarks/0009_narrative_quality_fixture.sql`: the consolidated custody record is now created at 17:18, after the 17:10 release entry. The booking, review and disposal chronology is retained.
+- R-003, R-005, R-006–R-010, R-012 and R-013 have specific improvement notes in the review document. R-006 and R-013 are borderline passes.
+- This is an AI-assisted editorial assessment, not independent human sign-off. The 16 SQL `manual_review` rows remain pending; do not change them to passed on the strength of this assessment.
+- Overall fixture release status remains **NOT APPROVED** until R-016 is repaired and the complete record set receives human sign-off. No Neon writes or production seeding.
