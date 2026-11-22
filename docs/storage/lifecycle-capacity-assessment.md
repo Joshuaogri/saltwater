@@ -103,11 +103,9 @@ Evidence, interviews, surveillance, dispatch, forensic examinations, reports and
 - Deduplicate identical payloads using content hashes where appropriate.
 - Preserve provenance, chronology, identity resolution and full recoverability. Storage savings must not erase meaningful simulation detail.
 
-## 8. Current decision
+## 8. Historical decision — superseded
 
-**Historical status at the end of the initial foundation stage:** 1 GB was not yet approved. This was superseded by the integrated Neon measurement and conditional decision in Section 16.
-
-**Current condition:** the 1 GB Neon tier is approved for the defined integrated relational benchmark only, subject to external binary-media storage and the protected 200 MB reserve. Production media ingestion remains blocked until an external object-storage tier is selected and tested.
+The original integrated relational benchmark's conditional 1 GB approval was withdrawn after the text-only lifecycle workload was added. See Sections 17–18 and benchmark run 0006 for the current decision.
 
 ## 9. Required final report
 
@@ -198,7 +196,7 @@ Stage 4 adds household profiles/memberships, resident address and life-event his
 
 **Do not simply add stage 4's 166.715 MB to stage 3's 381.215 MB:** the benchmark scopes overlap in several categories, and the datasets are synthetic. Reconcile overlap and complete missing categories before calculating a combined lifecycle projection.
 
-## 14. Remaining work after the conditional 1 GB decision
+## 14. Historical remaining work — superseded after text-only correction
 
 - Select and test external object storage for the measured 1,950.015 MB of binary media references.
 - Treat the 35-year integrated workload as the current planning scenario; explicitly approve a different lifetime/retention horizon before changing the forecast.
@@ -209,7 +207,7 @@ Stage 4 adds household profiles/memberships, resident address and life-event his
 The relational capacity decision is recorded in Section 16. Production media ingestion remains blocked until the separate media tier is operational and verified.
 
 
-## 15. Integrated lifecycle benchmark and conditional 1 GB decision (2026-11-22)
+## 15. Historical integrated lifecycle benchmark and conditional 1 GB decision (2026-11-22) — superseded
 
 The four earlier stages have now been reconciled into one coherent synthetic dataset. The benchmark does not sum duplicate stage footprints or repeat stable entities. It uses one 10,000-resident population, one 10,000-business population, shared geographic/institutional/police/case/evidence identifiers, and one consolidated history per overlapping category.
 
@@ -241,7 +239,7 @@ The Neon-specific integrated workflow is prepared at https://github.com/Joshuaog
 Report: [benchmark-run-0005.md](benchmark-run-0005.md).
 
 
-## 16. Neon integrated benchmark — measured and final decision (2026-11-22)
+## 16. Historical Neon integrated benchmark — measured decision (2026-11-22) — superseded
 
 The integrated 0005 benchmark was successfully executed against the actual Neon database:
 - Run: https://github.com/Joshuaogri/saltwater/actions/runs/45053385138
@@ -274,17 +272,60 @@ The 35-year dates are a benchmark planning scenario, not a change to the game's 
 
 ## 17. Text-only capacity decision reset and benchmark 0006
 
-The earlier conditional 1 GB approval in Sections 15–16 is **withdrawn**. It measured the 0005 integrated relational workload but did not measure realistic full-length written reports, witness statements, interviews, evidence descriptions, forensic reports, legal submissions, judgments or cumulative long-running case histories.
+The earlier conditional 1 GB approval in Sections 15–16 is **withdrawn**. It measured the 0005 integrated relational workload but did not include realistic full-length written reports, witness statements, interviews, evidence descriptions, forensic reports, legal submissions, judgments or cumulative long-running case histories.
 
-The 0005 media-reference data is not a Saltwater requirement. The new benchmark removes the media-asset, CCTV-footage-reference and body-worn-video-reference tables before the text-depth storage measurement. No binary media or external object storage is included.
+Saltwater is entirely text-based. It stores no photographs, audio, CCTV footage, body-camera footage, video, scanned documents, binary attachments or other binary media. No external media/object-storage tier is part of the design or capacity calculation. The 0006 benchmark removes the 0005 media-asset, CCTV-observation-reference and body-worn-video-reference tables before measuring.
 
-Benchmark 0006:
+## 18. Benchmark 0006 — measured text-depth result (2026-11-22)
+
+Two independent PostgreSQL 16.16 disposable benchmark runs completed successfully:
+- Run 1: https://github.com/Joshuaogri/saltwater/actions/runs/45055330210
+- Run 2: https://github.com/Joshuaogri/saltwater/actions/runs/45055343838
+- Full report: [benchmark-run-0006-text-depth.md](benchmark-run-0006-text-depth.md)
 - SQL: [0006_text_depth_lifecycle_benchmark.sql](../../db/benchmarks/0006_text_depth_lifecycle_benchmark.sql)
 - Workflow: [storage-benchmark-text-depth.yml](../../.github/workflows/storage-benchmark-text-depth.yml)
-- Specification and report: [benchmark-run-0006-text-depth.md](benchmark-run-0006-text-depth.md)
-- World size: 10,000 residents, 10,000 businesses and the integrated 35-year synthetic planning workload.
-- Long-form text: varied routine, complex and exceptional document lengths, including a 250,000-word major case history and a 500,000-word exceptional case history represented as linked dated event narratives.
-- Measurements: exact words and raw text bytes; heap, indexes and TOAST; full database size; case-history distribution; full-text search performance; cleanup and storage-ledger measurements.
-- Capacity gate: full Neon database must remain at or below 800,000,000 bytes (800 MB), preserving 200 MB of the nominal 1,000 MB allowance. The disposable PostgreSQL validation uses a conservative 790,000,000-byte relation-footprint gate before Neon is loaded.
 
-**Current decision: 1 GB NOT APPROVED until benchmark 0006 passes.** The 10,000-resident design target remains unchanged. Production population, business, case and evidence seeding remains blocked pending measured results.
+### Exact workload
+
+- Residents: 10,000.
+- Businesses: 10,000.
+- Text documents: **237,000**.
+- Generated text: **283,702,825 words**.
+- Raw UTF-8 text: **2,081,698,917 bytes (2,081.699 MB)**.
+- Integrated total: **2,653,342 rows**.
+- Cases with linked text: 2,000.
+- Case-history words: minimum 64,716; median 111,245.5; p95 309,125.05; maximum 752,119.
+
+### Measured disposable PostgreSQL storage
+
+| Measurement | Run 1 | Run 2 |
+|---|---:|---:|
+| Full database | 1,149.173 MB | 1,149.353 MB |
+| Relation footprint | 1,140.179 MB | 1,140.318 MB |
+| Heap | 762.233 MB | not separately recorded |
+| Indexes | 207.716 MB | not separately recorded |
+| TOAST/auxiliary | 170.230 MB | not separately recorded |
+
+The text_record table alone occupied **588.087 MB** in Run 1. It held 237,000 written documents and 283.7 million words. Its storage comprised 339.091 MB heap, 80.650 MB indexes and 168.346 MB TOAST/auxiliary. The full relation footprint also includes the 10,000-resident world, 10,000 businesses, institutions, finance, police operations and other lifecycle records.
+
+The sample full-text query returned 50 rows in 42.881 ms on the disposable PostgreSQL instance. The observed plan used a sequential scan; search-index selection and performance require further tuning.
+
+### Capacity decision
+
+**The defined 0006 benchmark workload does not fit within a 1 GB project.** The full disposable database occupied approximately 1,149 MB before any Neon measurement, and the relation footprint exceeded the 790 MB pre-Neon safety gate. The workflow therefore skipped the Neon load. This protected the live Neon project; no benchmark data was inserted into it and no Neon storage was consumed by this test.
+
+The 200 MB reserve was not met. The earlier 1 GB approval is no longer valid for this workload.
+
+**Important interpretation:** this result does not prove that 10,000 residents alone require more than 1 GB, and it does not establish that reducing the resident population would solve the problem. The result is driven by the chosen volume of long-form text records and case histories as well as the underlying world data. The benchmark assigned 237,000 text documents across 2,000 cases, resulting in a median linked case history of 111,245.5 words and a maximum of 752,119 words. Those prevalence and distribution assumptions must be calibrated before making a population decision.
+
+### Next step
+
+Retain the 10,000-resident and 10,000-business design targets. Build a calibrated lifecycle workload that:
+- Defines realistic annual case volumes and the prevalence of minor, ordinary, serious, major and exceptional cases.
+- Assigns interviews, reports, witness statements, evidence and court documents according to case type rather than distributing high volumes uniformly by modulo.
+- Preserves the proposed maximum document lengths and full case-history reconstruction.
+- Avoids storing duplicate narrative content while retaining separate authored reports and transcripts where they represent distinct records.
+- Measures raw text, PostgreSQL compression, heap, indexes, TOAST, search performance and full database size.
+- Runs on disposable PostgreSQL first; Neon is tested only if the disposable result leaves at least 200 MB of nominal capacity in reserve.
+
+**Current decision: 1 GB is NOT APPROVED for the 0006 workload. The 10,000-resident target remains unchanged pending a calibrated second benchmark. Production seeding remains blocked.**
