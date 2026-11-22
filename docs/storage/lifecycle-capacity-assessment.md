@@ -404,3 +404,8 @@ The full database is 348.278 MB below a nominal 1,000 MB; the relation footprint
 **Decision remains NOT APPROVED:** the first 0008 run is a benchmark gate pass, not final 1 GB production approval. A clean repeat and another repeat are required, along with review of prose realism, query behavior and the storage reserve. Production seeding remains blocked; Neon has not received benchmark data.
 
 Report: [Benchmark 0008](benchmark-run-0008-high-entropy-text.md). First run: https://github.com/Joshuaogri/saltwater/actions/runs/45058337044.
+
+
+## 22. Benchmark 0008 clean-repeat setup failure and correction
+
+The first clean text-only repeat (run 45058809884) failed during workload setup, before measurement. The cause was a stray standalone `WHERE true;` left in shared benchmark SQL after removing obsolete media-reference tables. This was a SQL syntax/setup failure, not a capacity-gate failure. The invalid clause was removed in commit `fc23353ac6995aa42b05504f18ab3aa7be63066f`; a corrected disposable run is queued at https://github.com/Joshuaogri/saltwater/actions/runs/45059118741. The first 0008 result remains provisional; no clean repeat measurements exist yet. Production seeding remains blocked and Neon remains unchanged.
