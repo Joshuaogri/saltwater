@@ -63,7 +63,7 @@ typed AS (
 raw AS (SELECT string_agg(sentence,' ' ORDER BY n) AS prose FROM typed),
 tokens AS (
  SELECT token,ord FROM raw
- CROSS JOIN LATERAL regexp_split_to_table(raw.prose,'\\s+') WITH ORDINALITY t(token,ord)
+ CROSS JOIN LATERAL regexp_split_to_table(raw.prose,'\s+') WITH ORDINALITY t(token,ord)
 )
 SELECT string_agg(token,' ' ORDER BY ord) FROM tokens WHERE ord<=p_words;
 $function$;
@@ -259,7 +259,7 @@ WHERE to_tsvector('english',body) @@ plainto_tsquery('english','forensic exhibit
 LIMIT 50;
 RESET enable_seqscan;
 
-\\echo TEXT_ENTROPY_SAMPLE
+\echo TEXT_ENTROPY_SAMPLE
 SELECT count(*) sampled_documents,count(DISTINCT left(body,240)) distinct_openings,
        round(count(DISTINCT left(body,240))::numeric/count(*)*100,2) distinct_opening_pct
 FROM (SELECT body FROM text_record ORDER BY text_record_id LIMIT 1000) sample;
