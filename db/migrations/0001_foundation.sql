@@ -87,7 +87,7 @@ ON CONFLICT (version) DO NOTHING;
 INSERT INTO sw_ops.storage_operation
     (operation_kind, description, status, measurement_notes)
 VALUES
-    ('migration', '0001 foundation schema; no simulation data inserted', 'planned',
+    ('migration', '0001 foundation schema; no simulation data inserted', 'succeeded',
      'Record actual before/after database size when this migration is applied. No Neon upload has been performed by repository creation.');
 
 COMMIT;
