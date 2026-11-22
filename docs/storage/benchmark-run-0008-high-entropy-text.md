@@ -76,3 +76,8 @@ The corrected text-only repeat completed successfully on commit `fc23353ac6995aa
 - Largest case: 517,809 words; median case: 12,373 words; p95: approximately 152,711 words.
 
 Compared with the first 0008 run (651.722 MB full database; 642.720 MB relation footprint), the corrected clean repeat differs by only 0.057 MB full-database and 0.008 MB relation footprint. This is a strong reproducibility result for this generated workload. Both runs are disposable PostgreSQL measurements, not Neon billed-storage measurements. The workload generator is deterministic, so repeated storage similarity establishes repeatability, not independent narrative diversity. Production capacity remains unapproved pending a further independent/repeated run, content-realism review and a defensible Neon reserve assessment.
+
+
+## Narrative realism limitation
+
+The high-entropy generator is a storage stress fixture, not production-grade authored case content. Its actor/verb/subject/qualifier combinations and repeated caveat sentences increase textual variety, but combinations can be semantically generic or awkward and do not model a fully coherent witness account, interview transcript, forensic finding or court judgment. The 100% distinct-opening sample is a lexical-variation metric only. It must not be used as proof of realistic narrative quality. Production content generation requires a separate record-type-specific quality benchmark with coherent chronology, grounded entities, cross-record consistency, non-duplicative facts and human-reviewed samples. Keep this limitation explicit in any capacity decision.
