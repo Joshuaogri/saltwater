@@ -1,6 +1,6 @@
 # Integrated lifecycle capacity benchmark — run 0005
 
-Status: prepared; execution pending. Synthetic-only, isolated schema.
+Status: PostgreSQL 16 validation successful; Neon measurement workflow prepared. Synthetic-only.
 
 ## Reconciliation rules
 
@@ -16,7 +16,7 @@ This is one coherent benchmark, not a sum of the four prior stages. Stable entit
 - Public organisations are one 80-row set (not 80 + 60).
 - All police and city records refer back to shared entity IDs.
 
-## Added coverage
+## Coverage
 
 Institutional: office-holder history, public-service encounters, education, healthcare, social services, foreign relations.
 
@@ -28,13 +28,56 @@ Investigations/evidence/justice: cases, incidents, interviews, intelligence repo
 
 Media: metadata and integrity hashes only. Binary payloads are separately measured as references; they are not stored in PostgreSQL by this benchmark.
 
-## Execution
+## Integrated dataset validation
+
+- Validation workflow: https://github.com/Joshuaogri/saltwater/actions/runs/45052956900
+- Validation commit: `960528fa97c80d31295419095d9f6a9b5e0db896`
+- PostgreSQL 16, disposable GitHub Actions database; workflow succeeded.
+- Exact data tables: **54**.
+- Exact total: **2,516,342 rows**.
+- Heap: **439,623,680 bytes (439.624 MB)**.
+- Indexes: **131,866,624 bytes (131.867 MB)**.
+- TOAST/auxiliary: **1,908,736 bytes (1.909 MB)**.
+- **Integrated relation footprint: 573,399,040 bytes (573.399 MB)**.
+- External media references: 30,000 assets; referenced payload total **1,950,015,000 bytes (1,950.015 MB)**. These payloads are excluded from PostgreSQL storage and require separate object storage.
+- The test asserted the exact row total and table count, then dropped all 55 objects (54 data tables plus the audit table).
+
+Largest tables:
+- Financial ledger entries: 73.441 MB.
+- Resident life events: 60.703 MB.
+- Dispatch actions: 40.649 MB.
+- Commercial transactions: 38.150 MB.
+- Police reports: 34.120 MB.
+- Patrol events: 30.728 MB.
+- Healthcare encounters: 28.025 MB.
+- GPS track points: 22.938 MB.
+- Emergency calls: 22.913 MB.
+- Interview records: 22.487 MB.
+- Evidence custody events: 18.588 MB.
+- Police shifts: 16.490 MB.
+- Radio communications: 16.458 MB.
+
+## Capacity arithmetic and decision
+
+Using the measured integrated PostgreSQL relation footprint and the last measured Neon post-cleanup baseline:
+- Integrated relations: 573.399 MB.
+- Existing Neon baseline: 9.470 MB.
+- Indicative occupied total: **582.869 MB**.
+- 1 GB decimal allowance: 1,000 MB.
+- 20% protected reserve: 200 MB.
+- Indicative remaining headroom after reserve: **217.131 MB**.
+
+**Decision for this defined relational benchmark: 1 GB is sufficient, conditionally.** This conclusion assumes:
+1. The 35-year synthetic workload represented by this benchmark is the planning envelope, not unlimited future growth.
+2. Binary photos, audio, CCTV, BWC, scans and forensic media are stored outside Neon. The benchmark references about 1.95 GB of such payloads.
+3. The 200 MB reserve remains protected for PostgreSQL overhead, growth and operational headroom.
+4. No major unbenchmarked data class or materially higher event rate is introduced without a new measurement.
+
+**1 GB is not sufficient if binary media is stored in the database**, and this is not approval for unlimited lifetime growth. The integrated Neon workflow must still be run once to capture Neon-specific full-database before/during/after sizes and confirm that its measured usage fits the same reserve.
+
+## Neon measurement workflow
 
 - Workflow: [integrated lifecycle capacity benchmark](../../actions/workflows/storage-benchmark-integrated.yml)
 - SQL: [0005_integrated_lifecycle_capacity_benchmark.sql](../../db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql)
-- Database before/during/after, exact row counts, per-table heap/index/TOAST and aggregate relation footprint will be recorded after a successful run.
-- The schema is removed after measurement.
-
-## Capacity decision
-
-No integrated run has yet been executed. Existing stage measurements are not added together. 1 GB is **not approved for production** pending the integrated measurement, a defined retention horizon and binary-media storage decision.
+- The workflow measures Neon database size before, during and after the integrated dataset, captures relation size, and removes the isolated schema.
+- No production population, business, case or evidence records are inserted.
