@@ -276,25 +276,37 @@ CREATE INDEX s4_legal_person_idx ON s4_legal_proceeding(person_id);
 ANALYZE;
 
 \echo BENCHMARK_0004_EXACT_COUNTS
-CREATE TEMP TABLE s4_exact_row_counts(table_name text PRIMARY KEY, exact_rows bigint NOT NULL);
-DO $$
+-- Keep the audit helper inside the disposable schema. This avoids collisions
+-- with temporary relations that may survive on a reused pooled backend session.
+CREATE TABLE sw_bench_run_0004.s4_exact_row_counts(
+  table_name text PRIMARY KEY,
+  exact_rows bigint NOT NULL
+);
+DO $
 DECLARE r record;
 BEGIN
   FOR r IN
     SELECT c.relname
     FROM pg_class c
     JOIN pg_namespace n ON n.oid=c.relnamespace
-    WHERE n.nspname='sw_bench_run_0004' AND c.relkind='r'
+    WHERE n.nspname='sw_bench_run_0004'
+      AND c.relkind='r'
+      AND c.relname <> 's4_exact_row_counts'
     ORDER BY c.relname
   LOOP
-    EXECUTE format('INSERT INTO s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
-                   r.relname, 'sw_bench_run_0004', r.relname);
+    EXECUTE format(
+      'INSERT INTO sw_bench_run_0004.s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
+      r.relname, 'sw_bench_run_0004', r.relname
+    );
   END LOOP;
-END $$;
-SELECT table_name, exact_rows FROM s4_exact_row_counts ORDER BY table_name;
+END $;
+SELECT table_name, exact_rows
+FROM sw_bench_run_0004.s4_exact_row_counts
+ORDER BY table_name;
 
 \echo BENCHMARK_0004_EXACT_TOTAL
-SELECT sum(exact_rows) AS exact_total_rows FROM s4_exact_row_counts;
+SELECT sum(exact_rows) AS exact_total_rows
+FROM sw_bench_run_0004.s4_exact_row_counts;
 
 \echo BENCHMARK_0004_STORAGE_BY_TABLE
 SELECT c.relname AS table_name, pg_relation_size(c.oid) AS heap_bytes,
