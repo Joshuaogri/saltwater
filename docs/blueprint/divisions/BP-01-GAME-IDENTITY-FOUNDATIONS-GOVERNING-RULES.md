@@ -438,43 +438,43 @@ BP-01 is design-complete only when all applicable criteria below are specified a
 - **B08:** Outcomes follow the authoritative state, constraints and domain rules.
 
 ### C. Knowledge and hidden truth
-- **C01:** Character-visible information is permission- and knowledge-bounded.
-- **C02:** NPCs cannot know facts outside their plausible information history.
-- **C03:** Hidden culprit/accomplice identity remains undisclosed before exact `bingo`.
-- **C04:** Near-match, quoted, accidental or substring uses do not trigger reveal.
-- **C05:** Reports, summaries, metadata, notifications, search results and generated text cannot leak hidden identity indirectly.
-- **C06:** No unsolicited investigative solution hints or next-step instructions are supplied.
-- **C07:** Legitimately obtained evidence remains available without disclosing hidden truth beyond its actual content.
+- **AC-C01:** Character-visible information is permission- and knowledge-bounded.
+- **AC-C02:** NPCs cannot know facts outside their plausible information history.
+- **AC-C03:** Hidden culprit/accomplice identity remains undisclosed before exact `bingo`.
+- **AC-C04:** Near-match, quoted, accidental or substring uses do not trigger reveal.
+- **AC-C05:** Reports, summaries, metadata, notifications, search results and generated text cannot leak hidden identity indirectly.
+- **AC-C06:** No unsolicited investigative solution hints or next-step instructions are supplied.
+- **AC-C07:** Legitimately obtained evidence remains available without disclosing hidden truth beyond its actual content.
 
 ### D. Time and continuity
-- **D01:** One canonical in-game clock is used across all divisions.
-- **D02:** Closing/exiting/absence causes zero simulation-time advancement and zero background world-state progression.
-- **D03:** Reopening resumes at the last saved in-game time/state, without offline catch-up.
-- **D04:** Queued events remain paused while absent.
-- **D05:** Time advancement requires an explicit permitted in-game action.
-- **D06:** Corrections do not rewrite original timestamps or erase history.
+- **AC-D01:** One canonical in-game clock is used across all divisions.
+- **AC-D02:** Closing/exiting/absence causes zero simulation-time advancement and zero background world-state progression.
+- **AC-D03:** Reopening resumes at the last saved in-game time/state, without offline catch-up.
+- **AC-D04:** Queued events remain paused while absent.
+- **AC-D05:** Time advancement requires an explicit permitted in-game action.
+- **AC-D06:** Corrections do not rewrite original timestamps or erase history.
 
 ### E. Persistence and causality
-- **E01:** Stable IDs persist across name, job, address, role and relationship changes.
-- **E02:** Promoted persons never downgrade or lose established facts.
-- **E03:** Every consequential state change has source, actor/system, time and reason.
-- **E04:** Original records and later amendments remain distinguishable.
-- **E05:** No contradictory duplicate authoritative records can be created.
-- **E06:** Cross-domain resource, money, time, capacity and location changes reconcile.
-- **E07:** Replaying a deterministic event sequence produces the same authoritative state where deterministic replay is specified.
-- **E08:** A contradiction or invalid transition is surfaced and blocked/recorded, not silently overwritten.
+- **AC-E01:** Stable IDs persist across name, job, address, role and relationship changes.
+- **AC-E02:** Promoted persons never downgrade or lose established facts.
+- **AC-E03:** Every consequential state change has source, actor/system, time and reason.
+- **AC-E04:** Original records and later amendments remain distinguishable.
+- **AC-E05:** No contradictory duplicate authoritative records can be created.
+- **AC-E06:** Cross-domain resource, money, time, capacity and location changes reconcile.
+- **AC-E07:** Replaying a deterministic event sequence produces the same authoritative state where deterministic replay is specified.
+- **AC-E08:** A contradiction or invalid transition is surfaced and blocked/recorded, not silently overwritten.
 
 ### F. Interface, architecture and governance
-- **F01:** Essential gameplay is possible through text alone.
-- **F02:** Optional visuals trace to authoritative records and cannot override them.
-- **F03:** Neon/GitHub/ChatGPT roles are documented without claiming untested live connectivity.
-- **F04:** No Neon write is executed without measured baseline, credible estimate and explicit user approval.
-- **F05:** Post-write actual storage delta is measured and compared to estimate.
-- **F06:** Every requirement maps to design, implementation, test and evidence references.
-- **F07:** DESIGN, IMPLEMENTED, TESTED and VERIFIED remain distinct.
-- **F08:** No division is VERIFIED without passing tests, reconciled dependencies and reproducible evidence.
-- **F09:** Canon/structure amendments are user-approved and versioned.
-- **F10:** BP-01–BP-44 structure is not altered by implementation convenience.
+- **AC-F01:** Essential gameplay is possible through text alone.
+- **AC-F02:** Optional visuals trace to authoritative records and cannot override them.
+- **AC-F03:** Neon/GitHub/ChatGPT roles are documented without claiming untested live connectivity.
+- **AC-F04:** No Neon write is executed without measured baseline, credible estimate and explicit user approval.
+- **AC-F05:** Post-write actual storage delta is measured and compared to estimate.
+- **AC-F06:** Every requirement maps to design, implementation, test and evidence references.
+- **AC-F07:** DESIGN, IMPLEMENTED, TESTED and VERIFIED remain distinct.
+- **AC-F08:** No division is VERIFIED without passing tests, reconciled dependencies and reproducible evidence.
+- **AC-F09:** Canon/structure amendments are user-approved and versioned.
+- **AC-F10:** BP-01–BP-44 structure is not altered by implementation convenience.
 
 ### G. Test classes required
 Positive, negative, boundary, adversarial, permission, concurrency/race, replay, recovery, integration, population-scale, business-scale, storage-growth, narrative leakage and regression tests. Each test must specify preconditions, action/input, expected state/result, prohibited side effects, evidence and traceable requirement IDs.
