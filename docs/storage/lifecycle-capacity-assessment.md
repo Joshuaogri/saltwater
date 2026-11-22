@@ -378,3 +378,29 @@ Benchmark 0008 retains the 10,000-resident, 10,000-business and 33,500-document 
 The workflow adds a distinct-opening sample assertion and checks for an index-assisted full-text query plan. It measures text bytes, words, heap, indexes, TOAST/auxiliary storage, total relation footprint and full database size. All benchmark data remains in disposable PostgreSQL; Neon is not touched.
 
 **Status: pending validation.** No 0008 storage measurements or capacity conclusion are available yet. The 0007 result remains a benchmark gate pass only. The 1 GB production-capacity decision remains NOT APPROVED, and production seeding remains blocked.
+
+
+## 21. Benchmark 0008 first run — clean repeat required
+
+The first high-entropy disposable PostgreSQL run passed the 790,000,000-byte relation-footprint gate.
+
+- Full disposable database: **651.722 MB**
+- Relation footprint: **642.720 MB**
+- Heap: **457.146 MB**
+- Indexes: **138.838 MB**
+- TOAST/auxiliary: **46.735 MB**
+- Raw UTF-8 text: **244.366 MB**
+- Text documents: **33,500**
+- Words: **49,897,629**
+- Integrated rows: **2,449,842**
+- Tables: **53**
+- Distinct openings in 1,000-document sample: **1,000 (100%)**
+- Forced GIN index query execution: **2.484 ms**
+
+The full database is 348.278 MB below a nominal 1,000 MB; the relation footprint is 147.280 MB below the 790 MB gate. These are disposable PostgreSQL measurements, not Neon billed-storage measurements.
+
+**Text-only correction:** the first run's shared setup emitted an obsolete media-reference diagnostic before 0008 dropped those reference tables. That diagnostic is not part of any capacity calculation. The shared 0005 setup has now been corrected to omit media, CCTV and body-worn-video reference tables entirely. The workflow will rerun after this change, producing a clean text-only result. Binary-media payload sizes and media-reference counts are excluded from all future Saltwater capacity reports.
+
+**Decision remains NOT APPROVED:** the first 0008 run is a benchmark gate pass, not final 1 GB production approval. A clean repeat and another repeat are required, along with review of prose realism, query behavior and the storage reserve. Production seeding remains blocked; Neon has not received benchmark data.
+
+Report: [Benchmark 0008](benchmark-run-0008-high-entropy-text.md). First run: https://github.com/Joshuaogri/saltwater/actions/runs/45058337044.
