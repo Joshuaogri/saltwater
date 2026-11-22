@@ -28,62 +28,45 @@ Each criterion is scored 0–2: factual grounding, record-type fit, chronology, 
 | R-013 Arrest record | 1 | 1 | 2 | 2 | 1 | 2 | 2 | **11/14** | Borderline pass; necessity grounds insufficiently explicit |
 | R-014 Custody record | 1 | 2 | 2 | 2 | 1 | 2 | 2 | **12/14** | Pass after timestamp correction; see below |
 | R-015 Prosecution review | 2 | 2 | 2 | 2 | 2 | 2 | 1 | **13/14** | Pass |
-| R-016 Court disposition | 1 | 1 | 2 | 2 | 1 | 2 | 1 | **10/14** | **Fail — procedural basis insufficiently specified** |
+| R-016 Court disposition (revised) | 2 | 2 | 2 | 2 | 2 | 2 | 1 | **13/14** | Pass on revised draft; independent sign-off pending |
 
 ## Material findings and corrections
 
-### R-014 — custody chronology corrected
+### R-014 — custody and bail chronology clarified
 
-The original row gave the custody record a creation time of 09:49 but included a 13:41 detention review and a 17:10 release. That was internally impossible if the record was represented as a completed record created at 09:49.
+The original custody record included later detention-review and release events despite an earlier record-creation time. The record was first corrected to a consolidated 17:18 creation time. It has now been further clarified to include the pre-charge bail decision, return date and no-contact condition, followed by cancellation after the prosecution review.
 
-The fixture has now been corrected:
-- Booking remains at 09:41, with the booking entry at 09:49 described in provenance.
-- The 13:41 review and 17:10 disposal remain in the narrative.
-- The consolidated record creation time is now 17:18, after the final recorded event.
-- Provenance identifies the booking, review and disposal entries and the consolidation time.
+The consolidated custody record now records:
+- Booking at 09:41, with the booking entry at 09:49 on 16 October.
+- Detention review at 13:41.
+- Release on pre-charge police bail at 17:10, with a 10 November return date and a no-contact condition covering the two named witnesses.
+- Cancellation of bail and its conditions at 09:05 on 3 November, after the prosecution review, with notification to Rell.
+- Consolidation of the custody/bail record at 09:10 on 3 November.
 
-This resolves the chronology defect without inventing a new event or changing the underlying case outcome.
+This provides the factual basis for the later court application. The fictional jurisdiction's bail process remains a simulation rule, not a statement about real-world procedure.
 
-### R-003 — witness event timestamp
+### R-016 — court application and disposition repaired
 
-The record's event timestamp is 20:42, but its narrative says the witness first heard the impact at about 20:35 and then saw a person moments later. The timestamp's meaning is unclear. Define it as the start of the witness's relevant observation window, or represent the observation times separately. The account itself is distinct and appropriately limits what the witness could see.
+The revised court record now identifies the application as Rell's 20 October application to vary the no-contact condition attached to pre-charge bail. It records the later cancellation of bail and its conditions on 3 November, explains why the application was withdrawn as moot at the 10 November hearing, and states that the court closed the application without deciding its merits. It expressly avoids a finding on the alleged offences and leaves the underlying police incident unresolved.
 
-### R-005 — interview transcript detail
+The revised draft scores 13/14 on the AI-assisted editorial rubric. Its remaining point is non-duplication: some procedural facts are repeated from the custody/bail record, but the court record needs to state the basis for its own disposition.
 
-The transcript preserves question-and-answer order, a correction and the absence of an admission. It would be stronger if it identified the interview start and finish times separately and made clear whether the correction was made during the interview or on subsequent transcript review. Do not add pauses or answers that are not in the source.
+### Other improvement notes retained
 
-### R-006 to R-008 — exhibit continuity
-
-The recovery descriptions are useful and appropriately avoid attributing either item to a person. The evidence register should identify actual seal numbers, the receiving property officer, transfer time and storage location, or explicitly cross-reference the record that contains those details. The current wording says these checks occurred but does not expose the particulars.
-
-### R-009 and R-010 — forensic scope
-
-The submission asks about reference footwear and latch material, but the reference footwear authority/source is not identified in this fixture. The report describes a non-destructive screening method without naming the method or giving enough detail to reproduce the examination. The limitations and non-identification conclusions are correctly retained; improve method transparency without overstating what the results establish.
-
-### R-012 — observation metadata
-
-The log distinguishes observation from interpretation and records a five-minute obstruction. Add the observer's exact authorised observation point and the basis for the coverage interval by cross-reference to the coverage plan. Do not imply continuous coverage of the rear lane.
-
-### R-013 — arrest decision
-
-The record says the officer considered arrest necessary instead of voluntary attendance but does not state the actual case-specific necessity grounds. It should reproduce the recorded reasons or clearly cross-reference the decision review containing them. The witness accounts and low-reliability intelligence must remain described as information available to the officer, not proof of guilt.
-
-### R-016 — court disposition fails
-
-The record refers to an “administrative review of the arrest-related application” but does not identify:
-- what application was before the court;
-- who made it and what order or relief was sought;
-- the procedural basis for listing it;
-- what the court formally recorded when it was withdrawn.
-
-The record correctly avoids a finding of guilt and keeps the police incident unresolved. However, the legal event is too vague to function as a credible court disposition. Specify the actual application and procedural outcome from the fictional case design; do not invent a conviction, charge or judicial finding merely to complete the narrative.
+- **R-003:** The 20:42 event timestamp is ambiguous because the statement describes an observation beginning around 20:35. Define the timestamp as the start of the relevant observation window or separate the observed times.
+- **R-005:** Separate interview start and finish times and clarify when the transcript correction was made. Do not invent unrecorded pauses or answers.
+- **R-006–R-008:** Add actual seal numbers, receiving property officer, transfer time and storage location, or explicit references to the records that contain them.
+- **R-009–R-010:** Identify the source/authority for reference footwear and give sufficient detail about the polymer screening method to make the examination understandable and reproducible.
+- **R-012:** Identify the authorised observation point and cross-reference the coverage interval to the coverage plan.
+- **R-013:** State or cross-reference the actual case-specific necessity grounds for arrest; do not treat witness descriptions or low-reliability intelligence as proof.
+- **R-006 and R-013 remain borderline** at 11/14 and need the above improvements before production-quality acceptance.
 
 ## Result
 
-- **14 records pass** the published numeric threshold on this editorial assessment.
-- **R-016 fails** at 10/14.
-- R-006 and R-013 meet the threshold but are borderline and require the noted improvements before production-quality acceptance.
-- R-014's material chronology defect has been corrected in the fixture source.
+- **All 16 records now meet the numeric threshold** on this revised AI-assisted editorial assessment.
+- R-016's prior 10/14 failure has been addressed by specifying the bail-variation application and its withdrawal after bail cancellation; revised score 13/14.
+- R-006 and R-013 remain borderline at 11/14 and need the noted improvements before production-quality acceptance.
+- R-014 now contains the complete booking, review, bail, cancellation and consolidation chronology.
 - The two witness accounts retain their clothing discrepancy; the forensic results remain non-identifying; the intelligence report remains low reliability and uncorroborated; the surveillance gap remains explicit; no perpetrator is identified.
 
-**Overall fixture status: NOT APPROVED.** The fixture does not pass the published all-records release gate because R-016 fails. The assessment is an AI-assisted editorial review; independent human sign-off remains pending. No production seeding and no Neon writes are authorised by this review.
+**Overall fixture status: CONDITIONALLY READY FOR HUMAN SIGN-OFF — NOT YET APPROVED.** The AI-assisted review no longer identifies a numeric rubric failure, but the manual-review rows remain pending. A human reviewer must independently confirm the scores, particularly R-006, R-013 and R-016, and the identified improvements should be incorporated before production-quality acceptance. No production seeding and no Neon writes are authorised by this review.
