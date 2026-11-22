@@ -129,3 +129,11 @@ The earlier successful run 45062664898 is superseded for chronology purposes. Th
 - R-003, R-005, R-006–R-010, R-012 and R-013 have specific improvement notes in the review document. R-006 and R-013 are borderline passes.
 - This is an AI-assisted editorial assessment, not independent human sign-off. The 16 SQL `manual_review` rows remain pending; do not change them to passed on the strength of this assessment.
 - Overall fixture release status remains **NOT APPROVED** until R-016 is repaired and the complete record set receives human sign-off. No Neon writes or production seeding.
+
+
+### Revised court/custody narrative — 22 November 2026
+
+- R-014 now records release on pre-charge police bail on 16 October, a return date of 10 November, a no-contact condition concerning the two named witnesses, and cancellation of bail and its conditions on 3 November after the prosecution review. The consolidated custody/bail record is timestamped after the cancellation entry.
+- R-016 now identifies the 20 October defence application to vary the no-contact condition. It records that the condition had already been cancelled on 3 November, so the application was withdrawn as moot at the 10 November hearing. The court closes the application without deciding its merits or making any finding about the alleged offences.
+- Updated editorial assessment: `docs/storage/narrative-quality-editorial-review-0001.md`. All 16 records now meet the numeric threshold in the revised AI-assisted assessment; R-006 and R-013 remain borderline and specific quality improvements are outstanding.
+- The fixture is conditionally ready for independent human sign-off, **not approved**. Database manual-review rows remain pending. No Neon writes or production seeding.
