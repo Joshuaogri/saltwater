@@ -29,7 +29,7 @@
 | BP-20 | Surveillance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-20](divisions/BP-20-SURVEILLANCE.md) |
 | BP-21 | Intelligence | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-21](divisions/BP-21-INTELLIGENCE.md) |
 | BP-22 | Crime Scenes | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-22](divisions/BP-22-CRIME-SCENES.md) |
-| BP-23 | Evidence Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-23 | Evidence Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-23](divisions/BP-23-EVIDENCE-MANAGEMENT.md) |
 | BP-24 | Forensics | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-25 | Arrests and Warrants | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-26 | Custody Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -90,6 +90,7 @@ Statuses are independent across specification, implementation, testing and verif
 21. BP-20: full surveillance specification draft created; fictional surveillance authority matrix, permitted technical methods, retention, preservation holds, source-quality and identity-resolution standards remain open.
 22. BP-21: full intelligence specification draft created; source/content grading scales, analytical confidence, source handling, dissemination, retention and collection-request policy decisions remain open.
 23. BP-22: full crime-scenes specification draft created; scene authority, boundary standards, search protocols, access logging, release authority and media retention decisions remain open.
-24. Continue BP-23 through BP-44 in numeric order, preserving the same specification contract and traceability.
+24. BP-23: full evidence-management specification draft created; exhibit ID conventions, category taxonomy, packaging/seal standards, transfer acceptance, digital acquisition, retention and disposal policy decisions remain open.
+25. Continue BP-24 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
