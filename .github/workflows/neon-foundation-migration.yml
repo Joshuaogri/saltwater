@@ -1,0 +1,72 @@
+name: Apply Saltwater foundation migration with storage measurement
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apply-foundation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Measure, apply migration, and record actual database growth
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+
+          if psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT to_regclass('sw_ops.schema_migration') IS NOT NULL AND EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 1);" 2>/dev/null | grep -qx t; then
+            echo "::error::Migration 0001 is already recorded. Refusing to apply it again."
+            exit 1
+          fi
+
+          DB_BEFORE=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT pg_database_size(current_database());")
+          echo "database_bytes_before=$DB_BEFORE"
+          echo "database_mb_before=$(awk "BEGIN {printf \"%.3f\", $DB_BEFORE/1000000}")"
+
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+
+          DB_AFTER=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT pg_database_size(current_database());")
+          NET_BYTES=$((DB_AFTER - DB_BEFORE))
+
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 \
+            -v db_before="$DB_BEFORE" \
+            -v db_after="$DB_AFTER" \
+            -v net_bytes="$NET_BYTES" <<'SQL'
+          UPDATE sw_ops.storage_operation
+          SET measured_at = now(),
+              database_bytes_before = :'db_before'::bigint,
+              database_bytes_after = :'db_after'::bigint,
+              net_database_bytes = :'net_bytes'::bigint,
+              measurement_notes = 'Measured by GitHub Actions immediately before and after applying migration 0001; values are actual pg_database_size readings.'
+          WHERE operation_kind = 'migration'
+            AND description = '0001 foundation schema; no simulation data inserted'
+            AND measured_at IS NULL;
+          SQL
+
+          echo "database_bytes_after=$DB_AFTER"
+          echo "database_mb_after=$(awk "BEGIN {printf \"%.3f\", $DB_AFTER/1000000}")"
+          echo "net_database_bytes=$NET_BYTES"
+          echo "net_database_mb=$(awk "BEGIN {printf \"%.3f\", $NET_BYTES/1000000}")"
+
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT 'migration_version=' || version || E'\\nname=' || migration_name FROM sw_ops.schema_migration WHERE version = 1;"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT 'storage_ledger_rows=' || count(*) FROM sw_ops.storage_operation WHERE operation_kind = 'migration' AND description = '0001 foundation schema; no simulation data inserted' AND measured_at IS NOT NULL;"
