@@ -36,4 +36,4 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Current status
 
-Repository bootstrap is underway. Neon project creation and the GitHub `DATABASE_URL` secret were reported by the project owner; this repository has not yet independently verified a live database connection. No simulation data has been uploaded, and the initial database storage baseline remains **not measured**.
+Repository bootstrap is underway. Neon project creation and the GitHub `DATABASE_URL` secret were reported by the project owner. Neon project metadata reports a production-branch logical size of **33,611,776 bytes (33.61 MB / 32.05 MiB), measured 2026-11-22**. This is a provider-reported logical-size baseline, not a measurement from a live SQL query; live SQL connectivity has not yet been independently verified. No simulation data has been uploaded.
