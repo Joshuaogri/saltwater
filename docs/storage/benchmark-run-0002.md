@@ -10,7 +10,7 @@
 
 ## Dataset
 
-24 temporary tables; 1,114,854 rows:
+24 temporary tables; 1,034,842 rows:
 
 | Category | Rows |
 |---|---:|
@@ -38,7 +38,7 @@
 | Commercial transactions | 200,000 |
 | Address history | 30,000 |
 | Household memberships | 12,000 |
-| **Total** | **1,114,854** |
+| **Total** | **1,034,842** |
 
 ## Measured storage
 
