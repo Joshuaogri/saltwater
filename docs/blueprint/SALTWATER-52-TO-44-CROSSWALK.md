@@ -1,6 +1,6 @@
 # Saltwater 52→44 Requirement Crosswalk
 
-**Version:** 1.1 — semantic audit amendments  
+**Version:** 1.2 — division-by-division semantic audit register  
 **Date:** 2026-11-22  
 **Source:** `docs/governance/SALTWATER_MASTER_BLUEPRINT.json` (52 divisions; unchanged)  
 **Target:** `docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md` (BP-01–BP-44; fixed structure)  
@@ -213,3 +213,64 @@ After this crosswalk passes its audit, develop BP-01 through BP-44 in the fixed 
 | A13 | Some broad cross-cutting mappings were too narrow to ensure universal application. | Expanded X01–X10 destinations. | Each BP specification must state which global invariants it implements and how. |
 
 **Audit conclusion:** v1.1 resolves identified omissions in traceability and clarifies ownership interfaces without changing BP-01–BP-44. This is a documentary semantic audit, not proof that the full target specifications are complete. Requirements with multi-domain destinations remain subject to division-level interface and acceptance-test design. No Neon changes are authorised.
+
+## 8. Division-by-division semantic audit register
+
+Each source division was reviewed against its complete requirement and test text, its mapped BP destinations, and the target ownership boundaries. “Reviewed” means no further mapping change was identified in this pass; it does not mean target design or implementation is complete.
+
+| Source | Domain | Audit result | Ownership / resolution |
+|---|---|---|---|
+| S01 | Sovereignty | Revised | Clarified canon/jurisdiction, authority and change ownership. |
+| S02 | Geography | Reviewed | BP-02 owns canonical spatial IDs; operational divisions consume them. |
+| S03 | Population accounting | Reviewed | BP-03 owns unique-person ledger and atomic capacity; BP-06 is a subset. |
+| S04 | Person identity | Revised | Added BP-04 for business/employer relationships; BP-03 remains identity owner. |
+| S05 | Households/relationships | Reviewed | BP-36 owns relationship semantics; BP-03 owns person identity. |
+| S06 | Housing/property/tenancy | Revised | Added BP-34 for rent/payment records; BP-04 owns tenancy and occupancy. |
+| S07 | Businesses/economy | Reviewed | BP-04 owns business registry; other divisions consume stable business references. |
+| S08 | Employment/labour | Reviewed | BP-33 owns employment; BP-04, BP-06/BP-07 and BP-34 own business/police/finance interfaces. |
+| S09 | Markets/trade/logistics | Revised | Added BP-02 to route/logistics mapping; off-map dependencies remain non-playable. |
+| S10 | Public finance | Reviewed | BP-34 owns accounting and transaction reconciliation. |
+| S11 | Government/public administration | Reviewed | BP-30 owns public institutions and authority; BP-04 represents entities; BP-31/BP-34 handle oversight/procurement. |
+| S12 | Civil registry/public records | Reviewed | BP-38 owns record standards; source-domain owners retain authoritative facts. |
+| S13 | Healthcare/public health | Reviewed | BP-04 represents providers; BP-17/BP-24/BP-26/BP-42 own police/medical interfaces and access. |
+| S14 | Education/training/research | Reviewed | BP-32 owns general training; BP-07 owns police career gates; BP-04 represents providers. |
+| S15 | Social care/welfare | Reviewed | BP-04 represents services; BP-17 and BP-30 own victim-support and public-service interfaces. |
+| S16 | Utilities/infrastructure | Reviewed | BP-04 owns operators/assets; BP-35 propagates outages; BP-09/BP-12 consume effects. |
+| S17 | Roads/transport/mobility | Reviewed | BP-02 owns topology; BP-04 transport actors; BP-10/BP-11/BP-12 consume routes. |
+| S18 | Buildings/facilities/assets | Reviewed | BP-04 owns buildings/access points; BP-20/BP-22/BP-23 consume access and scene facts. |
+| S19 | Environment/weather/hazards | Reviewed | BP-35 owns event causality; BP-02 supplies spatial context; domain divisions consume effects. |
+| S20 | Food/essential services | Reviewed | BP-04 represents suppliers; BP-09/BP-34/BP-35 own police dependencies, finance and disruption. |
+| S21 | Culture/media/recreation | Reviewed | BP-04 owns organisations/venues; BP-35/BP-36/BP-37 own event/social/time effects. |
+| S22 | Emergency services/civil protection | Reviewed | BP-04 represents agencies; BP-11/BP-12 coordinate dispatch/incident handoffs; BP-09 tracks police resources. |
+| S23 | Police governance/structure | Revised | Added BP-07/BP-31/BP-32/BP-33 for career, standards, training and HR ownership. |
+| S24 | Police personnel/career | Reviewed | BP-06 personnel, BP-07 career, BP-08 deployment eligibility, BP-32 qualifications. |
+| S25 | Police rosters/staffing | Revised | Added BP-09 resource readiness; BP-08 remains assignment owner and BP-33 attendance owner. |
+| S26 | Police command/policy | Reviewed | BP-30 owns policy/command decisions; BP-31 owns standards/discipline; operations consume orders. |
+| S27 | 911/CAD/dispatch | Reviewed | BP-11 owns intake/CAD/radio/dispatch; BP-12 owns incident; claims remain distinct from facts. |
+| S28 | Patrol/field operations | Reviewed | BP-10 owns patrol actions; BP-08 deployment; BP-35 time/distance/resource constraints. |
+| S29 | Incident/crime taxonomy/generation | Revised | Added geography, dispatch and victim/suspect ownership; clarified classification vs generation. |
+| S30 | Case management/investigative command | Reviewed | BP-15 owns case lifecycle; BP-16 actions/decisions; chronology remains immutable. |
+| S31 | Victims/witnesses/suspects | Reviewed | BP-17/BP-18 own distinct case roles; BP-03 identity; suspicion is not guilt. |
+| S32 | Scene/evidence collection | Revised | Added BP-09 resources and BP-19/BP-20/BP-21 source interfaces for testimonial, surveillance and intelligence material. |
+| S33 | Forensics/specialist examination | Reviewed | BP-24 owns methods/results/limitations; raw result, interpretation and inference remain separate. |
+| S34 | Interviews/statements | Reviewed | BP-19 owns interview process/source records; BP-27 procedural interface; no solution leakage. |
+| S35 | Intelligence/analysis | Reviewed | BP-21 owns source grading/confidence/dissemination; intelligence is not evidence. |
+| S36 | Surveillance/monitoring | Reviewed | BP-20 owns collection/coverage/retrieval; BP-23 owns evidential continuity. |
+| S37 | Arrest/search/warrants/custody | Reviewed | BP-25 owns arrest/warrant/search; BP-26 custody; BP-23 seized-evidence continuity. |
+| S38 | Prosecution/courts/outcomes | Reviewed | BP-27 prosecution/disclosure; BP-28 courts; BP-29 sentence execution; history is preserved. |
+| S39 | Corrections/post-sentence | Reviewed | BP-29 owns sentence/supervision/release; BP-28 sentence authority; BP-03 person lifecycle. |
+| S40 | Complaints/oversight | Reviewed | BP-31 owns complaint/misconduct lifecycle; BP-30 institutional oversight; BP-41 reporting. |
+| S41 | Time/calendar/schedules | Revised | Added BP-04 business opening hours; BP-37 clock ownership and BP-35 execution remain distinct. |
+| S42 | Simulation engine/causality | Revised | Added BP-38 integrity constraints to impossible-state/state-mutation mapping. |
+| S43 | AI generation/player agency | Reviewed | BP-01 owns agency/reveal invariants; BP-35 generation; BP-42 information boundaries. |
+| S44 | Text interface/workflow | Reviewed | BP-40 owns complete text workflows; BP-43 verifies essential actions. |
+| S45 | Maps/diagrams/visual evidence | Revised | Added BP-12/BP-15/BP-16/BP-35/BP-41 for incident/case/investigation timelines and reporting. |
+| S46 | Database/schemas/persistence | Revised | Added BP-40 interface and BP-43 connectivity/quality tests; BP-38/BP-39 remain data/persistence owners. |
+| S47 | Storage/capacity governance | Reviewed | BP-38 data/storage; BP-43 benchmarks; BP-44 change approval; no write without user approval. |
+| S48 | Security/permissions | Revised | Added BP-40 presentation enforcement, BP-43 tests and source-domain permission interfaces. |
+| S49 | Backups/recovery/integrity | Reviewed | BP-39 recovery owner; BP-38 data integrity; BP-43 restore evidence. |
+| S50 | Testing/validation/quality | Reviewed | BP-43 owns test strategy/evidence; every division supplies traceable acceptance criteria. |
+| S51 | Operations/observability | Revised | Added BP-40 operator-facing visibility; BP-41 alerts/reports; BP-43 tests. |
+| S52 | Canon/version/change control | Reviewed | BP-44 owns controlled amendments; BP-01 global rules; status/evidence remain distinct. |
+
+**Coverage result:** 52/52 source divisions reviewed; 168/168 requirement IDs mapped; 60/60 test IDs mapped; 10/10 principles, 10/10 cross-cutting rules, 9/9 canon elements and 9/9 governance metadata groups mapped; all 44 target divisions referenced. The crosswalk is semantically audited at the design-mapping level. Each division specification must still resolve field-level ownership, event contracts, exceptions and tests before design completion.
