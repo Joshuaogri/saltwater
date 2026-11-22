@@ -1,0 +1,87 @@
+name: Saltwater calibrated text lifecycle capacity benchmark 0008
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "db/benchmarks/0008_calibrated_text_lifecycle_benchmark.sql"
+      - ".github/workflows/storage-benchmark-high-entropy-text.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      relation_bytes: ${{ steps.measure.outputs.relation_bytes }}
+      db_bytes: ${{ steps.measure.outputs.db_bytes }}
+      exact_rows: ${{ steps.measure.outputs.exact_rows }}
+      text_words: ${{ steps.measure.outputs.text_words }}
+      raw_text_bytes: ${{ steps.measure.outputs.raw_text_bytes }}
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: saltwater_bench
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saltwater_bench"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Build calibrated workload on disposable PostgreSQL
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_bench
+        run: psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0008_calibrated_text_lifecycle_benchmark.sql
+      - name: Measure and enforce benchmark integrity
+        id: measure
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/saltwater_bench
+        run: |
+          set -euo pipefail
+          DB_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
+          RELATION_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          ROWS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(exact_rows),0) FROM sw_bench_integrated.benchmark_exact_counts;")
+          TEXT_DOCS=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM sw_bench_integrated.text_record;")
+          TEXT_WORDS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(word_count),0) FROM sw_bench_integrated.text_record;")
+          RAW_TEXT_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(octet_length(body)),0) FROM sw_bench_integrated.text_record;")
+          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          echo "database_bytes=$DB_BYTES relation_bytes=$RELATION_BYTES rows=$ROWS text_documents=$TEXT_DOCS words=$TEXT_WORDS raw_text_bytes=$RAW_TEXT_BYTES tables=$TABLE_COUNT"
+          test "$TEXT_DOCS" = "33500"
+          test "$ROWS" -gt 2400000
+          test "$TABLE_COUNT" -eq 53
+          test "$TEXT_WORDS" -gt 20000000
+          echo "db_bytes=$DB_BYTES" >> "$GITHUB_OUTPUT"
+          echo "relation_bytes=$RELATION_BYTES" >> "$GITHUB_OUTPUT"
+          echo "exact_rows=$ROWS" >> "$GITHUB_OUTPUT"
+          echo "text_words=$TEXT_WORDS" >> "$GITHUB_OUTPUT"
+          echo "raw_text_bytes=$RAW_TEXT_BYTES" >> "$GITHUB_OUTPUT"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "DROP SCHEMA sw_bench_integrated CASCADE;"
+
+  capacity_gate_exceeded:
+    needs: validate
+    if: needs.validate.outputs.relation_bytes != '' && fromJSON(needs.validate.outputs.relation_bytes) > 790000000
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "The calibrated disposable relation footprint exceeds 790 MB."
+          echo "Neon was not touched; the 200 MB reserve gate remains protected."
+
+  capacity_gate_passed:
+    needs: validate
+    if: needs.validate.outputs.relation_bytes != '' && fromJSON(needs.validate.outputs.relation_bytes) <= 790000000
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "The disposable relation footprint is within 790 MB."
+          echo "This is permission to conduct a separately reviewed Neon measurement, not an automatic production import."
