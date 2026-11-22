@@ -2,6 +2,10 @@ name: Saltwater integrated lifecycle capacity benchmark
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql"
+      - ".github/workflows/storage-benchmark-integrated.yml"
 
 permissions:
   contents: read
@@ -18,10 +22,10 @@ jobs:
           sudo apt-get install --yes postgresql-client
       - name: Build, measure, audit and remove integrated benchmark
         env:
-          DATABASE_URL: \${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
-          if [ -z "\${DATABASE_URL:-}" ]; then
+          if [ -z "${DATABASE_URL:-}" ]; then
             echo "::error::DATABASE_URL secret is missing or empty."
             exit 1
           fi
