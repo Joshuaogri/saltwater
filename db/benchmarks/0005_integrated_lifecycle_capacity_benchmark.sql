@@ -217,4 +217,3 @@ SELECT sum(pg_relation_size(c.oid)) AS heap_bytes,
        round(sum(pg_total_relation_size(c.oid))::numeric/1000000,3) AS relation_total_mb
 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
 WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';
-WHERE true;
