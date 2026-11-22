@@ -1,0 +1,70 @@
+name: Saltwater Neon live connection and write probe
+
+on:
+  push:
+    paths:
+      - ".github/workflows/neon-live-connection-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  neon-live-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Verify Neon connection and transactional read/write
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 <<'SQL' | tee neon-live-probe.txt
+          SELECT 'CONNECTION_OK' AS result,
+                 current_database() AS database_name,
+                 current_user AS database_user,
+                 version() AS postgres_version,
+                 pg_database_size(current_database()) AS database_bytes_before;
+          BEGIN;
+          CREATE TEMP TABLE saltwater_connection_probe (
+            probe_id integer PRIMARY KEY,
+            probe_value text NOT NULL
+          ) ON COMMIT DROP;
+          INSERT INTO saltwater_connection_probe VALUES (1, 'SALTWATER_NEON_READ_WRITE_OK');
+          DO $$
+          BEGIN
+            IF (SELECT count(*) FROM saltwater_connection_probe
+                WHERE probe_id = 1 AND probe_value = 'SALTWATER_NEON_READ_WRITE_OK') <> 1 THEN
+              RAISE EXCEPTION 'Transactional read-after-write probe failed';
+            END IF;
+          END $$;
+          SELECT 'TRANSACTIONAL_WRITE_AND_READ_OK' AS result,
+                 count(*) AS verified_rows
+          FROM saltwater_connection_probe;
+          ROLLBACK;
+          SELECT 'ROLLBACK_CONFIRMED' AS result,
+                 pg_database_size(current_database()) AS database_bytes_after,
+                 to_regclass('pg_temp.saltwater_connection_probe') IS NULL AS temp_table_removed;
+          SQL
+          {
+            echo "## Neon live connection probe"
+            echo
+            echo "The workflow connected using the GitHub DATABASE_URL secret, created a temporary table, inserted and read back a test row, then rolled back. No persistent simulation data was written."
+            echo
+            echo '~~~text'
+            cat neon-live-probe.txt
+            echo '~~~'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain probe report
+        uses: actions/upload-artifact@v4
+        with:
+          name: saltwater-neon-live-probe
+          path: neon-live-probe.txt
+          if-no-files-found: error
+          retention-days: 30
