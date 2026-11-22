@@ -447,3 +447,30 @@ Across all three successful 0008 runs, full database sizes were 651.722, 651.779
 - Neon benchmark writes: **NONE**.
 
 The benchmark does not measure Neon billed storage, actual production growth, long-term WAL/history accounting, or the final workload's real narrative quality. The 200 MB nominal reserve remains a planning requirement, not proof of sufficient capacity. Continue with the separate record-type-specific narrative quality fixture, then measure that approved-quality fixture on disposable PostgreSQL and assess query plans/latency. Do not load production data into Neon until the complete lifecycle, actual Neon storage accounting and reserve are justified.
+
+
+## 26. Final verified status — 22 November 2026
+
+This section is the current authoritative status and supersedes interim/pending statements in Sections 20–22. Those sections are retained as chronological history of the benchmark work.
+
+### Verified benchmark results
+- Benchmark 0008 completed three successful disposable PostgreSQL runs: 45058337044, 45059118741 and 45059968658.
+- Full disposable database sizes: 651.722 MB, 651.779 MB and 651.779 MB.
+- Relation footprints: 642.720 MB, 642.728 MB and 642.728 MB.
+- Workload: 33,500 text records, 49,897,629 words, 2,449,842 integrated rows and 53 tables.
+- The benchmark schema was dropped after measurement. No benchmark data was inserted into Neon.
+- Narrative fixture 0001 contains 16 linked records, 19 record links and 10 entities. Corrected chronology checks passed.
+- Latest fixture workflow: https://github.com/Joshuaogri/saltwater/actions/runs/45062895647 — completed successfully, including the disposable PostgreSQL build and text-only structural checks.
+- The fixture has 16 manual-review entries, all deliberately pending. Automated success is not a human narrative-quality approval.
+
+### Final decision
+- Text-only disposable storage benchmark repeatability: **PASSED**.
+- Narrative fixture structural validation: **PASSED**.
+- Narrative quality review: **PENDING**.
+- Neon 1 GB production-capacity approval: **NOT APPROVED**.
+- Production seeding: **BLOCKED**.
+- Neon benchmark writes: **NONE**.
+
+No binary-media storage tier is required by the current Saltwater text-only design; all media-reference and media-payload assumptions are excluded. The old Sections 20–22 describe interim states before the completed repeats and must not be read as current status.
+
+The remaining approval work is not another repeat of the same storage benchmark. It is (1) human review of the 16 narrative records against the published rubric, and (2) one controlled, read-only/measurement-led Neon capacity assessment using the final approved text workload and a justified 200 MB reserve. Until those distinct checks are complete, do not seed production data.
