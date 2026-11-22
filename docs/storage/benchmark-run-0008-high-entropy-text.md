@@ -52,3 +52,8 @@ A clean repeat is required to validate the same workload without even transient 
 - SQL: `db/benchmarks/0008_high_entropy_text_lifecycle_benchmark.sql`
 - Shared text-only setup: `db/benchmarks/0005_integrated_lifecycle_capacity_benchmark.sql`
 - Workflow: `.github/workflows/storage-benchmark-high-entropy-text.yml`
+
+
+## Clean-repeat attempt: failed before measurement
+
+The first clean text-only repeat (run 45058809884) failed during workload setup, before the measurement step. Log inspection identified a stray standalone `WHERE true;` in the shared 0005 SQL, left by the media-reference cleanup. This was a SQL syntax error, not a capacity-gate failure; no valid clean-repeat measurements were produced. The stray clause was removed in commit `fc23353ac6995aa42b05504f18ab3aa7be63066f`, which triggered a new disposable run: https://github.com/Joshuaogri/saltwater/actions/runs/45059118741. Await its completion before claiming a clean repeat. The original first-run measurements remain valid only for that original run and do not establish the corrected text-only baseline.
