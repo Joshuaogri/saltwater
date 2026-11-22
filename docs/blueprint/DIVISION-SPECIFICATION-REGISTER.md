@@ -31,7 +31,7 @@
 | BP-22 | Crime Scenes | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-22](divisions/BP-22-CRIME-SCENES.md) |
 | BP-23 | Evidence Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-23](divisions/BP-23-EVIDENCE-MANAGEMENT.md) |
 | BP-24 | Forensics | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-24](divisions/BP-24-FORENSICS.md) |
-| BP-25 | Arrests and Warrants | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-25 | Arrests and Warrants | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-25](divisions/BP-25-ARRESTS-AND-WARRANTS.md) |
 | BP-26 | Custody Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-27 | Legal Processes | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-28 | Courts and Outcomes | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -92,6 +92,7 @@ Statuses are independent across specification, implementation, testing and verif
 23. BP-22: full crime-scenes specification draft created; scene authority, boundary standards, search protocols, access logging, release authority and media retention decisions remain open.
 24. BP-23: full evidence-management specification draft created; exhibit ID conventions, category taxonomy, packaging/seal standards, transfer acceptance, digital acquisition, retention and disposal policy decisions remain open.
 25. BP-24: full forensics specification draft created; discipline catalogue, capability/competency levels, triage priorities, method validation, contamination controls, quality review, reporting and turnaround policy decisions remain open.
-26. Continue BP-25 through BP-44 in numeric order, preserving the same specification contract and traceability.
+26. BP-25: full arrests-and-warrants specification draft created; fictional authority matrix, warrant categories/issuer roles, duration/variation rules, search/consent scope, seizure procedures, safeguards and force-review policy decisions remain open.
+27. Continue BP-26 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
