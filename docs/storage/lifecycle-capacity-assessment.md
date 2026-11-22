@@ -409,3 +409,8 @@ Report: [Benchmark 0008](benchmark-run-0008-high-entropy-text.md). First run: ht
 ## 22. Benchmark 0008 clean-repeat setup failure and correction
 
 The first clean text-only repeat (run 45058809884) failed during workload setup, before measurement. The cause was a stray standalone `WHERE true;` left in shared benchmark SQL after removing obsolete media-reference tables. This was a SQL syntax/setup failure, not a capacity-gate failure. The invalid clause was removed in commit `fc23353ac6995aa42b05504f18ab3aa7be63066f`; a corrected disposable run is queued at https://github.com/Joshuaogri/saltwater/actions/runs/45059118741. The first 0008 result remains provisional; no clean repeat measurements exist yet. Production seeding remains blocked and Neon remains unchanged.
+
+
+## 23. Corrected benchmark 0008 repeat passed
+
+Run 45059118741 completed successfully after fixing the stray SQL clause. Measurements: disposable database 651.779 MB; relation footprint 642.728 MB; heap 457.146 MB; indexes 138.838 MB; TOAST/auxiliary 46.744 MB; raw UTF-8 text 244.366 MB; 33,500 text records; 49,897,629 words; 2,449,842 integrated rows; 53 tables. The 1,000-document opening sample was 100% distinct. Recorded full-text query execution was 2.019 ms; index-path forcing does not establish normal planner selection. The result differs from the first 0008 run by only 0.057 MB in full DB size and 0.008 MB in relation footprint. This validates repeatability of the deterministic benchmark, not independent narrative variety or Neon billed capacity. Production seeding remains blocked pending further repeat/realism review and Neon reserve assessment.
