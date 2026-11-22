@@ -358,9 +358,9 @@ The 52-division source JSON remains unchanged. IDs refer to original source-arra
 | S33.R03 | Support specialist resources and realistic turnaround times. | Sections 5–9, 17–18, 24; capability, triage, estimates and pause-aware queues. |
 | S45.R01 | Provide optional maps, layouts, timelines, charts and forensic scene visuals when useful or requested. | Section 23; optional traceable forensic visualisations. |
 | S45.R02 | Visuals derive from canonical spatial/evidence data and never silently contradict text records. | Sections 12, 23; source links, versions, transformation and uncertainty. |
-| S32.T01 | Every exhibit has unique ID, recovery details, continuity and current location/status. | BP-23 owns exhibit ID/recovery/custody; BP-24 acceptance test FORENSIC-AT-003 and sections 6, 15. |
-| S33.T01 | Every conclusion identifies method, source material, limitations and examiner. | FORENSIC-AT-107–110; sections 13, 16, 21. |
-| S45.T01 | Every visual can be traced to underlying canonical records. | FORENSIC-AT-125; section 23. |
+| S32.T01 | Every exhibit has unique ID, recovery details, continuity and current location/status. | BP-23 owns exhibit ID/recovery/custody; BP-24 requires exact exhibit/version references in FORENSIC-AT-003 and section 6. |
+| S33.T01 | Every conclusion identifies method, source material, limitations and examiner. | FORENSIC-AT-143; sections 13, 16, 21. |
+| S45.T01 | Every visual can be traced to underlying canonical records. | FORENSIC-AT-140–142; section 23. |
 
 Cross-cutting X05, X06 and X08 apply: preserve distinctions among fact/allegation/estimate/inference/intelligence/opinion/conclusion/finding; preserve originals and additive corrections; text-first gameplay with optional visuals that cannot contradict authoritative records. Other global rules apply through BP-01 and relevant owner divisions, including one-city canon, 10,000-person hard cap, time freeze, player agency and exact bingo reveal firewall.
 
@@ -418,7 +418,7 @@ Cross-cutting X05, X06 and X08 apply: preserve distinctions among fact/allegatio
 - [ ] Disclosure/court boundaries and protected information specified.
 - [ ] NPC knowledge and exact reveal firewall specified.
 - [ ] Text-first workflow and optional traceable visuals specified.
-- [ ] All 125 acceptance tests await BP-43 execution.
+- [ ] All 143 acceptance tests await BP-43 execution.
 - [ ] Open decisions remain explicit; no policy invented.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
