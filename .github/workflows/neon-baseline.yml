@@ -1,0 +1,28 @@
+name: Neon connection and storage baseline
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  measure-baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Verify Neon connection and measure initial database size
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc             "SELECT 'database=' || current_database() ||
+                    E'\nsize_bytes=' || pg_database_size(current_database()) ||
+                    E'\nsize_mb=' || round(pg_database_size(current_database())::numeric / 1000000, 3);"
