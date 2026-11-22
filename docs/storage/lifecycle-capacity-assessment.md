@@ -419,3 +419,31 @@ Run 45059118741 completed successfully after fixing the stray SQL clause. Measur
 ## 24. Narrative realism is not established by benchmark 0008
 
 Benchmark 0008 uses deterministic actor/verb/subject/qualifier combinations and repeated caveat sentences. This creates high lexical variation and a useful storage workload, but the prose can remain semantically generic or awkward. Its 100% distinct-opening sample is not a quality measure. Before production approval, create a separate record-type-specific narrative quality test covering coherent chronology, grounded entities, cross-record consistency, non-duplicative facts and reviewed samples. Do not treat synthetic text entropy as proof of authentic police records.
+
+
+## 25. Benchmark 0008 — third successful repeat and current decision
+
+A second corrected clean repeat completed successfully:
+- Run: https://github.com/Joshuaogri/saltwater/actions/runs/45059968658
+- Commit: `48a3cd80ca2ade0f99ab58b11f33290b2b39f880`
+- Full disposable database: **651,779,095 bytes (651.779 MB)**.
+- Relation footprint: **642,727,936 bytes (642.728 MB)**.
+- Raw UTF-8 text: **244,366,230 bytes (244.366 MB)**.
+- Text documents: **33,500**.
+- Words: **49,897,629**.
+- Integrated rows: **2,449,842**.
+- Tables: **53**.
+- Forced GIN-index query execution: **2.085 ms** in the recorded plan.
+- The 1,000-document sample again had 1,000 distinct openings.
+- The disposable benchmark schema was dropped after measurement.
+
+Across all three successful 0008 runs, full database sizes were 651.722, 651.779 and 651.779 MB; relation footprints were 642.720, 642.728 and 642.728 MB. The corrected runs agree exactly at displayed precision. This is strong evidence that the deterministic benchmark's storage measurements are repeatable. It is not evidence that the prose is realistic or independently diverse; the generator is deterministic and lexical variation is not a substitute for record-quality review.
+
+### Current decision
+
+- Benchmark 0008's disposable PostgreSQL storage gate: **PASSED across three successful runs**.
+- Neon production capacity: **NOT APPROVED**.
+- Production seeding: **BLOCKED**.
+- Neon benchmark writes: **NONE**.
+
+The benchmark does not measure Neon billed storage, actual production growth, long-term WAL/history accounting, or the final workload's real narrative quality. The 200 MB nominal reserve remains a planning requirement, not proof of sufficient capacity. Continue with the separate record-type-specific narrative quality fixture, then measure that approved-quality fixture on disposable PostgreSQL and assess query plans/latency. Do not load production data into Neon until the complete lifecycle, actual Neon storage accounting and reserve are justified.
