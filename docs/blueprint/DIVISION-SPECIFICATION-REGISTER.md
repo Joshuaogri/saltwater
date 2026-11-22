@@ -23,7 +23,7 @@
 | BP-14 | Crime Generation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-14](divisions/BP-14-CRIME-GENERATION.md) |
 | BP-15 | Case Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-15](divisions/BP-15-CASE-MANAGEMENT.md) |
 | BP-16 | Investigation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-16](divisions/BP-16-INVESTIGATION.md) |
-| BP-17 | Victims and Witnesses | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-17 | Victims and Witnesses | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-17](divisions/BP-17-VICTIMS-AND-WITNESSES.md) |
 | BP-18 | Suspects and Offenders | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-19 | Interviews and Interrogations | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-20 | Surveillance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -83,6 +83,8 @@ Statuses are independent across specification, implementation, testing and verif
 14. BP-13: full crime-architecture specification draft created; initial offence catalogue, fictional legal framework, element schemas, severity descriptors and taxonomy governance decisions remain open.
 15. BP-14: full crime-generation specification draft created; occurrence-family baselines, generation rates, causal model, NPC behaviour, discovery/reporting distributions and processing thresholds remain open.
 16. BP-15: full case-management specification draft created; case-reference format, state-transition approval matrix, priority/review thresholds, retention policy, access matrix and merge/referral policies remain open.
-17. BP-16: full investigation specification draft created; investigation reference format, workflow catalogues, NPC autonomy, review triggers, access matrix and other policy decisions remain open.\n18. Continue BP-17 through BP-44 in numeric order, preserving the same specification contract and traceability.
+17. BP-16: full investigation specification draft created; investigation reference format, workflow catalogues, NPC autonomy, review triggers, access matrix and other policy decisions remain open.
+18. BP-17: full victims-and-witnesses specification draft created; role catalogue, safeguarding authority, referral policy, risk vocabulary, access matrix and other policy decisions remain open.
+19. Continue BP-18 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
