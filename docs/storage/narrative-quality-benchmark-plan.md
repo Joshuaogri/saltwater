@@ -1,6 +1,6 @@
 # Saltwater record narrative-quality benchmark plan
 
-Status: specification only; no production records or benchmark data are loaded.
+Status: fixture implemented; automated disposable-PostgreSQL validation is running. Manual narrative review remains pending. No production records or Neon data are loaded.
 
 ## Purpose
 
@@ -76,3 +76,20 @@ After quality passes, use the same text records as a small representative storag
 ## Approval boundary
 
 Passing this test establishes only that the sampled record workflow meets the stated quality criteria. It does not by itself approve 1 GB Neon capacity, production seeding, the full 10,000-person lifecycle, or every possible case category. Capacity approval still requires measured representative volume, performance, Neon accounting and a protected storage reserve.
+
+
+## Implemented fixture 0001
+
+- SQL fixture: `db/benchmarks/0009_narrative_quality_fixture.sql`.
+- Disposable CI workflow: `.github/workflows/narrative-quality-fixture.yml`.
+- Fictional scenario: reported damage at Harbour Street Pharmacy, Saltwater, on 14 October 2026.
+- 16 linked records spanning call intake, attending officer, two independent witness statements, interview transcript, evidence register, two exhibit descriptions, forensic submission/report, intelligence assessment, text-only surveillance log, arrest, custody, prosecution review and court disposition.
+- 10 test entities and explicit record-to-record/entity links.
+- The two witness accounts retain a material clothing-description discrepancy; the forensic findings remain limited; the intelligence source remains low-reliability and uncorroborated; surveillance coverage gaps remain explicit; the final disposition does not identify a perpetrator.
+- Automated checks validate record count, link integrity, provenance presence, event/creation chronology, distinct witness text, and preservation of selected uncertainty/limitation statements.
+- The workflow runs only on disposable PostgreSQL 16. It has no Neon credentials or Neon connection path.
+- A manual review row is created for every record with status `pending`. SQL does not assign review scores or claim human review has passed.
+
+### Validation boundary
+
+A green CI run will mean the fixture loads and its structural assertions pass. It will not mean the 16 records have passed the 0–2 human quality rubric. The next quality step is to review every record against the rubric, record scores and reviewer notes, and fail the fixture if any record scores below 11/14 or receives zero for chronology, provenance or uncertainty. Only after that review should this same fixture be used for a measured small-scale storage/query test. No Neon writes are permitted.
