@@ -5,25 +5,27 @@ Status: successful; synthetic data only; isolated schema removed after measureme
 
 ## Execution
 
-- GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/45049960061
-- Workflow: Saltwater persistent isolated lifecycle benchmark
+- GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/45050714671
+- Workflow: Saltwater persistent isolated lifecycle benchmark, run 3
 - Run conclusion: success
-- Tested commit: `d14a03e354f5fe1d56821484a2d3fb796f78e863`
+- Tested commit: `71beee01cb4794b56f8b15d50940f157b5ebeba4`
 - Neon database: `neondb`
 - Isolated schema: `sw_bench_run`
 - Tables created: 32
 - All benchmark tables were persistent PostgreSQL tables during measurement, then removed by dropping the isolated schema.
 - No production residents, businesses, cases, evidence or other simulation records were seeded.
 
-## Dataset
+## Dataset and exact row-count reconciliation
 
-The benchmark combined the generated rows from benchmark stages 0001 and 0002:
+The benchmark combines the generated rows from stages 0001 and 0002:
 
 - Stage 0001: 242,000 rows across eight tables.
 - Stage 0002: 1,034,842 rows across 24 tables.
-- **Expected generated total: 1,276,842 rows across 32 tables.**
+- **Exact total: 1,276,842 rows across 32 tables.**
 
-The workflow's supplementary `pg_stat_user_tables.n_live_tup` estimate reported 1,318,842 live rows, 42,000 above the exact generated-row total. This statistic is an estimate, not an exact count; the exact generated totals above are derived from the benchmark's explicit per-table `generate_series` row counts and the stage count queries. The discrepancy is recorded rather than silently treating the estimate as exact.
+Run 3 added a direct `COUNT(*)` for every table. The exact aggregate returned **1,276,842** and therefore confirms the generated-row total with no missing or additional rows.
+
+The earlier `pg_stat_user_tables.n_live_tup` estimate reported 1,318,842, which is 42,000 higher. This is a PostgreSQL statistics estimate, not an exact count. The exact per-table counts resolve the discrepancy: use 1,276,842 as the authoritative benchmark row count and retain the statistics estimate only as a diagnostic.
 
 ## Measured storage
 
@@ -31,11 +33,11 @@ All MB values are decimal (1 MB = 1,000,000 bytes).
 
 | Measurement | Bytes | Decimal MB |
 |---|---:|---:|
-| Database before benchmark | 8,953,856 | 8.954 |
+| Database before benchmark | 9,347,072 | 9.347 |
 | Benchmark schema relation total (heap + indexes + TOAST/auxiliary) | 381,214,720 | 381.215 |
-| Database while benchmark tables existed | 390,815,744 | 390.816 |
-| Database after schema cleanup | 9,461,760 | 9.462 |
-| Net database-size difference after cleanup vs before | 507,904 | 0.508 |
+| Database while benchmark tables existed | 390,832,128 | 390.832 |
+| Database after schema cleanup | 9,617,408 | 9.617 |
+| Net database-size difference after cleanup vs before | 270,336 | 0.270 |
 
 ### Relation breakdown
 
@@ -46,30 +48,27 @@ All MB values are decimal (1 MB = 1,000,000 bytes).
 | TOAST and auxiliary | 483,328 | 0.483 |
 | **Total relation footprint** | **381,214,720** | **381.215** |
 
-The database size while the benchmark was present was 390.816 MB, which is the full-database measurement. The benchmark schema itself accounted for 381.215 MB. The remaining difference includes the foundation schema and database-level overhead.
+The full database measured 390.832 MB while the benchmark was present. The benchmark schema accounted for 381.215 MB; the difference includes the foundation schema and database-level overhead.
 
-The post-cleanup database was 0.508 MB larger than its pre-benchmark measurement. This residual is not the benchmark dataset footprint and must not be used as a substitute for the measured 381.215 MB relation total. PostgreSQL/Neon allocation and internal overhead may not return exactly to the earlier size immediately after dropping tables.
+After cleanup, the database was 0.270 MB larger than before the benchmark. This residual is not the benchmark dataset footprint and must not replace the measured 381.215 MB relation total.
 
-## Interpretation
+## Interpretation and limitations
 
-This is the first successful persistent combined benchmark and is substantially more useful than the earlier temporary-table-only measurements. It confirms that this particular synthetic representation of 10,000 residents, 10,000 businesses, relationships, employment, cases, incidents, evidence metadata, 150,000 historical events and the additional city/institutional/police/justice sample occupies approximately 381.215 MB in PostgreSQL relations, with the entire database at 390.816 MB during the test.
-
-It does **not** prove that 1 GB is sufficient for the complete Saltwater lifecycle. It is a bounded benchmark, not the complete world or all lifetime activity. In particular:
-
-- The 10,000-resident and 10,000-business samples do not yet represent every required attribute and complete lifecycle history.
-- The police and institutional samples are synthetic sizing assumptions, not a final staffing or activity forecast.
-- The event and case histories do not yet represent the full intended duration and frequency of play.
-- Several institutional and police workflows remain absent or simplified.
-- Large binary evidence and media (photographs, audio, video, scans, CCTV/BWC footage and forensic images) are not represented by these relational measurements.
-- Backup, branch, archival and external object-storage requirements have not been measured.
-- A substantial free-space reserve is still required.
+This confirms the storage footprint of this specific synthetic 1,276,842-row, 32-table dataset. It does not prove that 1 GB is sufficient for Saltwater's complete lifetime. The dataset remains a bounded sample:
+- Resident and business records do not yet represent every required attribute and complete lifecycle history.
+- Police and institutional activity distributions are synthetic sizing assumptions, not final forecasts.
+- Event and case histories do not yet represent a defined full game duration or all activity.
+- Several government, service, financial, social and police workflows remain absent or simplified.
+- Binary evidence/media (photographs, audio, video, scans, CCTV/BWC footage and forensic images) is not included in the relational measurements.
+- Backup, branch, archival and external object-storage costs have not been measured.
+- A substantial free-space reserve remains mandatory.
 
 ## Cleanup
 
-The workflow successfully dropped `sw_bench_run` and all 32 benchmark tables. The final database-size measurement was 9,461,760 bytes. The benchmark schema is not intended to persist.
+The workflow successfully dropped `sw_bench_run` and all 32 benchmark tables. The final database-size measurement was 9,617,408 bytes. The benchmark schema is not intended to persist.
 
 ## Decision
 
 **1 GB capacity remains NOT APPROVED.**
 
-No production simulation data should be seeded until the remaining lifecycle categories, binary-media strategy, defined simulation-duration scenarios, growth projection and safety reserve have been measured. The next stage should improve realism and completeness of the benchmark and model 10-, 20- and 35-year activity scenarios without silently assuming which one is the official game lifetime.
+No production simulation data should be seeded until missing lifecycle categories, binary-media strategy, defined 10-/20-/35-year scenarios, realistic activity distributions, growth projection and safety reserve have been measured.
