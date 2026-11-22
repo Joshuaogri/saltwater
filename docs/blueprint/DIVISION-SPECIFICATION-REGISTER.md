@@ -75,6 +75,8 @@ Statuses are independent across specification, implementation, testing and verif
 6. BP-05: full police institutional architecture specification draft created; command titles, unit structure and staffing allocation remain open.
 7. BP-06: full police personnel specification draft created; category taxonomy, service-number format, probation and restricted-record policy decisions remain open.
 8. BP-07: full career system specification draft created; rank ladder, promotion thresholds, service-credit rules and several Chief-tenure implementation details remain open.
-9. BP-08: full units and deployment specification draft created; exact unit hierarchy, establishment, staffing, geographic coverage and readiness policies remain open.\n10. Continue BP-09 through BP-44 in numeric order, preserving the same specification contract and traceability.
+9. BP-08: full units and deployment specification draft created; exact unit hierarchy, establishment, staffing, geographic coverage and readiness policies remain open.
+10. BP-09: full police resources specification draft created; exact resource catalogue, fleet, facility, stock, maintenance and readiness policies remain open.
+11. Continue BP-10 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
