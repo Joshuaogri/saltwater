@@ -1,4 +1,5 @@
 name: Saltwater calibrated text lifecycle capacity benchmark 0008
+# Repeatability run 2: execute the same calibrated workload on a fresh disposable database.
 
 on:
   workflow_dispatch:
