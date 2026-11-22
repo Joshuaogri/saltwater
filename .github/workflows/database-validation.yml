@@ -1,0 +1,49 @@
+name: Database migration validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/**"
+      - ".github/workflows/database-validation.yml"
+  pull_request:
+    paths:
+      - "db/migrations/**"
+      - ".github/workflows/database-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-foundation:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: saltwater
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply migrations to disposable PostgreSQL
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          for migration in db/migrations/*.sql; do
+            echo "Applying $migration"
+            psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -f "$migration"
+          done
+      - name: Verify canonical world configuration
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test             -c "SELECT 1 FROM sw_core.world_config WHERE world_id = 1 AND country_name = 'Saltwater' AND city_name = 'Saltwater' AND living_population_limit = 10000 AND playable_city_count = 1"
