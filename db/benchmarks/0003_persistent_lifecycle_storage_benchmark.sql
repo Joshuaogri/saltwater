@@ -1,8 +1,8 @@
 \set ON_ERROR_STOP on
 \timing on
--- Persistent isolated benchmark schema. Workflow drops sw_pbench_run after measurements.
-CREATE SCHEMA sw_pbench_run;
-SET search_path TO sw_pbench_run, public;
+-- Persistent isolated benchmark schema. Workflow drops sw_bench_run after measurements.
+CREATE SCHEMA sw_bench_run;
+SET search_path TO sw_bench_run, public;
 \echo BENCHMARK_0003_BUILD_BEGIN
 \set ON_ERROR_STOP on
 \timing on
@@ -209,7 +209,7 @@ SELECT relname AS table_name,
        pg_total_relation_size(relid) AS total_bytes,
        round(pg_total_relation_size(relid)::numeric / 1000000, 3) AS total_mb
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run'
+WHERE schemaname = 'sw_bench_run'
   AND relname LIKE 'pbench_%'
 ORDER BY pg_total_relation_size(relid) DESC;
 
@@ -219,7 +219,7 @@ SELECT sum(pg_total_relation_size(relid)) AS total_relation_bytes,
        sum(pg_relation_size(relid)) AS total_heap_bytes,
        sum(pg_indexes_size(relid)) AS total_index_bytes
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run'
+WHERE schemaname = 'sw_bench_run'
   AND relname LIKE 'pbench_%';
 
 \echo BENCHMARK_0003_PERSISTENT_DATA_MEASURED
@@ -228,7 +228,7 @@ WHERE schemaname = 'sw_pbench_run'
 \timing on
 
 -- Saltwater benchmark 0002: additional city, institutional, police and justice systems.
--- All rows are synthetic and isolated in the disposable sw_pbench_run schema.
+-- All rows are synthetic and isolated in the disposable sw_bench_run schema.
 
 CREATE TABLE pbench_district AS
 SELECT g::smallint AS district_id, 'District ' || g AS district_name,
@@ -512,7 +512,7 @@ SELECT relname,
        pg_total_relation_size(relid) AS total_bytes,
        round(pg_total_relation_size(relid)::numeric/1000000,3) AS total_mb
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run' AND relname LIKE 'pbench_%'
+WHERE schemaname = 'sw_bench_run' AND relname LIKE 'pbench_%'
 ORDER BY pg_total_relation_size(relid) DESC;
 
 \echo BENCHMARK_0002_TOTAL
@@ -522,14 +522,14 @@ SELECT count(*) AS table_count,
        sum(pg_total_relation_size(relid)) AS total_relation_bytes,
        round(sum(pg_total_relation_size(relid))::numeric/1000000,3) AS total_relation_mb
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run' AND relname LIKE 'pbench_%';
+WHERE schemaname = 'sw_bench_run' AND relname LIKE 'pbench_%';
 \echo BENCHMARK_0002_PERSISTENT_TABLES_INCLUDED
 
 \echo BENCHMARK_0003_ROW_COUNTS_AND_TABLES
 SELECT schemaname, count(*) AS table_count,
        sum(n_live_tup)::bigint AS estimated_live_rows
 FROM pg_stat_user_tables
-WHERE schemaname = 'sw_pbench_run'
+WHERE schemaname = 'sw_bench_run'
 GROUP BY schemaname;
 \echo BENCHMARK_0003_STORAGE_BY_TABLE
 SELECT relname AS table_name,
@@ -539,7 +539,7 @@ SELECT relname AS table_name,
        pg_total_relation_size(relid) AS total_bytes,
        round(pg_total_relation_size(relid)::numeric/1000000,3) AS total_mb
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run'
+WHERE schemaname = 'sw_bench_run'
 ORDER BY pg_total_relation_size(relid) DESC;
 \echo BENCHMARK_0003_TOTAL
 SELECT count(*) AS table_count,
@@ -549,7 +549,7 @@ SELECT count(*) AS table_count,
        sum(pg_total_relation_size(relid)) AS total_relation_bytes,
        round(sum(pg_total_relation_size(relid))::numeric/1000000,3) AS total_relation_mb
 FROM pg_catalog.pg_statio_user_tables
-WHERE schemaname = 'sw_pbench_run';
+WHERE schemaname = 'sw_bench_run';
 \echo BENCHMARK_0003_DATABASE_SIZE_WHILE_PERSISTENT
 SELECT pg_database_size(current_database()) AS database_bytes,
        round(pg_database_size(current_database())::numeric/1000000,3) AS database_mb;
