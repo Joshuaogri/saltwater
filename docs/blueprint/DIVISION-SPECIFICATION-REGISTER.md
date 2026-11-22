@@ -81,6 +81,7 @@ Statuses are independent across specification, implementation, testing and verif
 12. BP-11: full emergency communications specification draft created; centre staffing, call priorities, channel catalogue, recording/retention, outage fallback and dispatch policy decisions remain open.
 13. BP-12: full incident-management specification draft created; priority taxonomy, command doctrine, major-incident thresholds, closure review, retention and other policy decisions remain open.
 14. BP-13: full crime-architecture specification draft created; initial offence catalogue, fictional legal framework, element schemas, severity descriptors and taxonomy governance decisions remain open.
-15. BP-14: full crime-generation specification draft created; occurrence-family baselines, generation rates, causal model, NPC behaviour, discovery/reporting distributions and processing thresholds remain open.\n16. Continue BP-15 through BP-44 in numeric order, preserving the same specification contract and traceability.
+15. BP-14: full crime-generation specification draft created; occurrence-family baselines, generation rates, causal model, NPC behaviour, discovery/reporting distributions and processing thresholds remain open.
+16. Continue BP-15 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
