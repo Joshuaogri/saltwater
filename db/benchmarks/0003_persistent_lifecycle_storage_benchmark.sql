@@ -1,13 +1,13 @@
 \set ON_ERROR_STOP on
 \timing on
--- Isolated persistent benchmark. All rows are synthetic and live only in sw_bench_run.
+-- Persistent isolated benchmark schema. Workflow drops sw_bench_run after measurements.
 CREATE SCHEMA sw_bench_run;
 SET search_path TO sw_bench_run, public;
 \echo BENCHMARK_0003_BUILD_BEGIN
 \set ON_ERROR_STOP on
 \timing on
 
--- Session-local benchmark only. Temporary relations disappear when this connection closes.
+-- Persistent isolated benchmark schema; objects are dropped by the workflow after measurement.
 -- All values are synthetic. No production simulation records are inserted.
 CREATE TABLE bench_person (
   person_id integer PRIMARY KEY,
@@ -222,13 +222,13 @@ FROM pg_catalog.pg_statio_user_tables
 WHERE schemaname = 'sw_bench_run'
   AND relname LIKE 'bench_%';
 
-\echo BENCHMARK_COMPLETED_TEMPORARY_DATA_ONLY
+\echo BENCHMARK_0003_PERSISTENT_DATA_MEASURED
 
 \set ON_ERROR_STOP on
 \timing on
 
 -- Saltwater benchmark 0002: additional city, institutional, police and justice systems.
--- All rows are synthetic, temporary, and removed when this database session closes.
+-- All rows are synthetic and isolated in the disposable sw_bench_run schema.
 
 CREATE TABLE bench_district AS
 SELECT g::smallint AS district_id, 'District ' || g AS district_name,
@@ -523,7 +523,7 @@ SELECT count(*) AS table_count,
        round(sum(pg_total_relation_size(relid))::numeric/1000000,3) AS total_relation_mb
 FROM pg_catalog.pg_statio_user_tables
 WHERE schemaname = 'sw_bench_run' AND relname LIKE 'bench_%';
-\echo BENCHMARK_0002_TEMPORARY_DATA_ONLY
+\echo BENCHMARK_0002_PERSISTENT_TABLES_INCLUDED
 
 \echo BENCHMARK_0003_ROW_COUNTS_AND_TABLES
 SELECT schemaname, count(*) AS table_count,
