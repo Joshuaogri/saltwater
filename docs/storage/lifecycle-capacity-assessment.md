@@ -148,3 +148,30 @@ Database size readings around the session were 8,347,648 bytes before and 8,814,
 This stage improves coverage but does not yet represent final production schemas, complete resident biographies, all business and institutional history, every police workflow, or binary media. The benchmark remains synthetic and temporary. No production population, business, case or evidence data was loaded.
 
 **Capacity status remains NOT APPROVED.** Next: measure persistent relation growth in an isolated benchmark schema or Neon branch, including heap, indexes and TOAST, and add missing lifecycle categories and media-volume assumptions before projecting the 1 GB limit.
+
+
+## 11. Benchmark stage 3 — combined persistent lifecycle (2026-11-22)
+
+The combined persistent benchmark completed successfully against Neon:
+
+- Workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45049960061
+- Benchmark report: [benchmark-run-0003.md](benchmark-run-0003.md)
+- Tested workflow commit: `d14a03e354f5fe1d56821484a2d3fb796f78e863`
+- Persistent benchmark tables: 32
+- Exact generated-row total from stage counts: 1,276,842 (stage 0001: 242,000; stage 0002: 1,034,842)
+- Relation heap: 304,529,408 bytes (304.529 MB)
+- Relation indexes: 76,201,984 bytes (76.202 MB)
+- TOAST/auxiliary: 483,328 bytes (0.483 MB)
+- **Persistent benchmark relation footprint: 381,214,720 bytes (381.215 MB)**
+- Full database size while benchmark was present: 390,815,744 bytes (390.816 MB)
+- Database before benchmark: 8,953,856 bytes (8.954 MB)
+- Database after cleanup: 9,461,760 bytes (9.462 MB)
+- The isolated `sw_bench_run` schema and all 32 tables were successfully dropped.
+
+The supplementary `pg_stat_user_tables.n_live_tup` estimate reported 1,318,842, which is 42,000 above the exact generated-row total. It is explicitly treated as an estimate, not an exact count. The stage-specific count queries and generate-series inputs support the 1,276,842 generated-row figure.
+
+The 507,904-byte (0.508 MB) difference between database size after cleanup and before the benchmark is not the benchmark dataset footprint. Use the measured 381.215 MB relation footprint and 390.816 MB full database size during the persistent test.
+
+This benchmark combines the earlier synthetic resident/business/case/event dataset with the extended city, institutional, police and justice dataset. It remains incomplete as a full lifecycle model: biographies and histories are simplified; many government, service and police workflows are missing or sampled; the intended simulation duration is not fixed; binary media is not included; and backup/archival/object-storage costs are not yet measured.
+
+**Capacity status remains NOT APPROVED.** The persistent benchmark is a useful measured sizing point, not a lifetime capacity proof. Continue with complete category coverage, realistic record distributions, 10-/20-/35-year scenario modelling, media-storage strategy and a documented safety reserve before production seeding.
