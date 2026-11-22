@@ -12,7 +12,7 @@
 | BP-03 | Population and Individual Simulation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
 | BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
-| BP-06 | Police Personnel | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-06 | Police Personnel | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-06](divisions/BP-06-POLICE-PERSONNEL.md) |
 | BP-07 | Career System | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-08 | Units and Deployment | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-09 | Police Resources | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -71,6 +71,6 @@ Statuses are independent across specification, implementation, testing and verif
 2. BP-01: full specification draft created; user review/approval pending.
 3. BP-02: full architecture draft created; exact map canon decisions remain open.
 4. BP-03: full population architecture draft created; population-scope countability decisions remain open.
-5. Continue BP-04 through BP-44 in numeric order, preserving the same specification contract and traceability.
+5. BP-04: full built-world/property/business/organisation specification draft created; business baseline and distribution decisions remain open.\n6. BP-05: full police institutional architecture specification draft created; command titles, unit structure and staffing allocation remain open.\n7. BP-06: full police personnel specification draft created; category taxonomy, service-number format, probation and restricted-record policy decisions remain open.\n8. Continue BP-07 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
