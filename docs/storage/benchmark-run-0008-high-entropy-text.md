@@ -1,6 +1,6 @@
 # High-entropy text lifecycle benchmark — run 0008
 
-Status: **first disposable run passed; clean text-only repeat is running**. This benchmark is not a Neon import and does not authorize production seeding.
+Status: **three disposable runs passed with closely matching measurements**. This benchmark is not a Neon import and does not authorize production seeding.
 
 ## Purpose
 
@@ -81,3 +81,27 @@ Compared with the first 0008 run (651.722 MB full database; 642.720 MB relation 
 ## Narrative realism limitation
 
 The high-entropy generator is a storage stress fixture, not production-grade authored case content. Its actor/verb/subject/qualifier combinations and repeated caveat sentences increase textual variety, but combinations can be semantically generic or awkward and do not model a fully coherent witness account, interview transcript, forensic finding or court judgment. The 100% distinct-opening sample is a lexical-variation metric only. It must not be used as proof of realistic narrative quality. Production content generation requires a separate record-type-specific quality benchmark with coherent chronology, grounded entities, cross-record consistency, non-duplicative facts and human-reviewed samples. Keep this limitation explicit in any capacity decision.
+
+
+## Third repeatability run (run 45059968658)
+
+A second corrected clean repeat completed successfully on commit `48a3cd80ca2ade0f99ab58b11f33290b2b39f880`: https://github.com/Joshuaogri/saltwater/actions/runs/45059968658
+
+Measured disposable PostgreSQL results:
+
+| Measure | Result |
+|---|---:|
+| Full disposable database | 651.779 MB |
+| Total relation footprint | 642.728 MB |
+| Raw UTF-8 text | 244.366 MB |
+| Text documents | 33,500 |
+| Words | 49,897,629 |
+| Integrated rows | 2,449,842 |
+| Tables | 53 |
+| Forced GIN query execution | 2.085 ms |
+
+The 1,000-document sample again had 1,000 distinct openings (100%). The recorded query plan used `text_record_search_gin_idx`; this remains a forced index-path test, not evidence that the planner will always select the index. The benchmark schema was dropped after measurement.
+
+The corrected repeat and this third run produced identical reported database and relation sizes at the displayed precision. Together with the first run, the three full-database measurements are 651.722, 651.779 and 651.779 MB; relation footprints are 642.720, 642.728 and 642.728 MB. This establishes repeatability of the deterministic storage workload. It does not establish independent prose diversity, narrative realism, Neon billed storage, or production capacity.
+
+No benchmark data was inserted into Neon. Production seeding remains blocked.
