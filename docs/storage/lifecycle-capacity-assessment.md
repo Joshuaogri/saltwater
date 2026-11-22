@@ -243,3 +243,34 @@ Planning arithmetic (decimal MB):
 The Neon-specific integrated workflow is prepared at https://github.com/Joshuaogri/saltwater/actions/workflows/storage-benchmark-integrated.yml. It must be run once to capture Neon database size before/during/after and confirm the actual Neon footprint. Until that run confirms the reserve, production seeding remains blocked. The 35-year benchmark is a planning scenario, not a newly approved canon game-duration rule.
 
 Report: [benchmark-run-0005.md](benchmark-run-0005.md).
+
+
+## 16. Neon integrated benchmark — measured and final decision (2026-11-22)
+
+The integrated 0005 benchmark was successfully executed against the actual Neon database:
+- Run: https://github.com/Joshuaogri/saltwater/actions/runs/45053385138
+- Commit: `7621b19eb6ad540ff0407576d8c33938cfbc8909`
+- Exact total: **2,516,342 rows** across 54 data tables.
+- Relation footprint: **569,417,728 bytes (569.418 MB)**.
+- Full database before: **9,281,536 bytes (9.282 MB)**.
+- Full database during: **579,084,288 bytes (579.084 MB)**.
+- Full database after cleanup: **9,666,560 bytes (9.667 MB)**.
+- Net post-cleanup difference: **385,024 bytes (0.385 MB)**; not the benchmark dataset footprint.
+- Database after storage-ledger insert: **9,666,560 bytes (9.667 MB)**.
+- Measurement was recorded in `sw_ops.storage_operation`; SQL-generated synthetic data has no original/compressed/submitted file payload.
+- 30,000 external media references represent **1,950,015,000 bytes (1,950.015 MB)** of media payload, excluded from Neon.
+
+### Final 1 GB decision
+
+**YES — 1 GB is sufficient for the defined 35-year integrated relational workload, provided binary media is stored outside Neon and a 200 MB reserve is protected.**
+
+Actual Neon budget:
+- Database occupied during the integrated test: 579.084 MB.
+- Capacity: 1,000 MB.
+- Remaining capacity: 420.916 MB.
+- Protected reserve: 200 MB.
+- Further headroom after reserve: **220.916 MB**.
+
+**NO** if full binary media is to be stored inside Neon: the benchmark references 1,950.015 MB of binary payload alone. This is also not an unlimited-growth guarantee; any material increase in event rates, text sizes, indexes or retention scope requires another measurement.
+
+The 35-year dates are a benchmark planning scenario, not a change to the game's canon or a mandatory retirement/lifespan rule. Keep production seeding blocked until the separate media-storage tier is chosen and tested, and preserve the 200 MB Neon reserve.
