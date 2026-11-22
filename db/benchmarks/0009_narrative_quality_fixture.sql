@@ -215,23 +215,23 @@ CREATE TABLE manual_review (
 INSERT INTO manual_review(record_id)
 SELECT record_id FROM fixture_record ORDER BY record_id;
 
-\\echo NARRATIVE_QUALITY_RECORD_SUMMARY
+\echo NARRATIVE_QUALITY_RECORD_SUMMARY
 SELECT record_type,count(*) AS records,
        sum(octet_length(body)) AS raw_utf8_bytes,
-       sum(array_length(regexp_split_to_array(trim(body),'\\s+'),1)) AS approximate_words
+       sum(array_length(regexp_split_to_array(trim(body),'\s+'),1)) AS approximate_words
 FROM fixture_record GROUP BY record_type ORDER BY record_type;
 
-\\echo NARRATIVE_QUALITY_LINKS
+\echo NARRATIVE_QUALITY_LINKS
 SELECT link_type,count(*) AS links FROM record_link GROUP BY link_type ORDER BY link_type;
 
-\\echo NARRATIVE_QUALITY_MANUAL_REVIEW_STATUS
+\echo NARRATIVE_QUALITY_MANUAL_REVIEW_STATUS
 SELECT review_status,count(*) AS records FROM manual_review GROUP BY review_status;
 
-\\echo NARRATIVE_QUALITY_SAMPLE
+\echo NARRATIVE_QUALITY_SAMPLE
 SELECT record_id,record_type,author_or_source,event_at,created_at,provenance,body
 FROM fixture_record ORDER BY record_id;
 
-\\echo NARRATIVE_QUALITY_STORAGE
+\echo NARRATIVE_QUALITY_STORAGE
 SELECT pg_database_size(current_database()) AS database_bytes,
        sum(pg_total_relation_size(c.oid)) AS relation_bytes,
        sum(pg_relation_size(c.oid)) AS heap_bytes,
