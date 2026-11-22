@@ -1,0 +1,80 @@
+name: Neon pull-request database branches
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, closed]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: neon-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview-database:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create or reuse isolated Neon branch
+        id: neon
+        uses: neondatabase/create-branch-action@v6
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID || 'misty-breeze-20463094' }}
+          branch_name: saltwater-pr-${{ github.event.pull_request.number }}
+          parent_branch: production
+          api_key: ${{ secrets.NEON_API_KEY }}
+
+      - name: Check out pull-request code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Apply only migrations not already recorded on this preview branch
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::Neon did not provide a preview DATABASE_URL."
+            exit 1
+          fi
+          for migration in db/migrations/*.sql; do
+            [ -f "$migration" ] || continue
+            filename="$(basename "$migration")"
+            version="${filename%%_*}"
+            if ! [[ "$version" =~ ^[0-9]+$ ]]; then
+              echo "::error::Migration filename must begin with a numeric version: $filename"
+              exit 1
+            fi
+            already_applied="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = $((10#$version)));")"
+            if [ "$already_applied" = "t" ]; then
+              echo "Skipping recorded migration $filename"
+              continue
+            fi
+            echo "Applying $filename to isolated preview branch"
+            psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f "$migration"
+          done
+
+      - name: Verify Saltwater world invariants and report database size
+        env:
+          DATABASE_URL: ${{ steps.neon.outputs.db_url }}
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "SELECT country_name, city_name, living_population_limit, playable_city_count FROM sw_core.world_config WHERE world_id = 1 AND country_name = 'Saltwater' AND city_name = 'Saltwater' AND living_population_limit = 10000 AND playable_city_count = 1;"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT 'preview_database_bytes=' || pg_database_size(current_database());"
+
+  cleanup-preview-database:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete this pull request's Neon preview branch
+        uses: neondatabase/delete-branch-action@v3
+        with:
+          project_id: ${{ vars.NEON_PROJECT_ID || 'misty-breeze-20463094' }}
+          branch: saltwater-pr-${{ github.event.pull_request.number }}
+          api_key: ${{ secrets.NEON_API_KEY }}
