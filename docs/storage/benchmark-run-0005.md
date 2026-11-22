@@ -99,22 +99,10 @@ Using the measured integrated PostgreSQL relation footprint and the last measure
 - The workflow inserted a successful measurement record into `sw_ops.storage_operation`; input/compressed/submitted file bytes are not applicable because SQL generated the synthetic data inside PostgreSQL.
 - External media payload references: **1,950,015,000 bytes (1,950.015 MB)** across 30,000 assets; not stored in Neon.
 
-## Final capacity decision
+## Superseded capacity conclusion
 
-**YES — 1 GB is sufficient for this defined 35-year integrated relational benchmark, conditionally.**
+This report is a historical measurement of the 0005 relational benchmark. Its earlier conditional "1 GB sufficient" conclusion is **withdrawn** because 0005 did not benchmark realistic full-length reports, statements, interview transcripts, forensic documents, legal records or cumulative long-running case histories.
 
-Using the measured full Neon database size while the complete integrated dataset existed:
-- Occupied: 579.084 MB.
-- 1 GB decimal allowance: 1,000 MB.
-- Remaining: 420.916 MB.
-- Protected 20% reserve: 200 MB.
-- Additional growth headroom after protecting that reserve: **220.916 MB**.
+The media-reference table and its 1,950.015 MB notional payload are not part of Saltwater's design. Saltwater is text-only: no photographs, audio, CCTV footage, body-camera footage, video, scans, binary attachments or external media storage are required. The 0006 text-depth benchmark removes the 0005 media, CCTV-observation-reference and body-worn-video-reference tables before its storage measurement.
 
-Conditions:
-1. Binary media (about 1.95 GB in this benchmark) must be stored outside Neon in object storage.
-2. Keep at least 200 MB free; do not seed or retain data that consumes the reserve.
-3. Treat the 35-year synthetic workload as the tested planning envelope, not an unlimited-growth guarantee.
-4. Re-run this benchmark after major increases in event rates, text lengths, indexes or retention scope.
-5. Do not store full CCTV/BWC/audio/photo/video payloads in Neon under this 1 GB plan.
-
-If binary media is stored in Neon, or the 35-year event workload grows materially beyond this measured dataset, **1 GB is not sufficient**.
+**Current decision: 1 GB is NOT YET APPROVED.** See [benchmark run 0006 — text-depth lifecycle](benchmark-run-0006-text-depth.md). Production seeding remains blocked until the realistic text workload is measured and the 200 MB reserve gate is passed.
