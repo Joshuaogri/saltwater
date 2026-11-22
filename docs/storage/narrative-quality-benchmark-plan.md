@@ -1,6 +1,6 @@
 # Saltwater record narrative-quality benchmark plan
 
-Status: fixture implemented; automated structural validation passed once on disposable PostgreSQL. A follow-up run is validating chronology refinements. Manual narrative review remains pending. No production records or Neon data are loaded.
+Status: fixture implemented; automated structural and chronology validation passed on disposable PostgreSQL. Manual narrative review remains pending. No production records or Neon data are loaded.
 
 ## Purpose
 
@@ -107,3 +107,15 @@ A green CI run will mean the fixture loads and its structural assertions pass. I
 - Disposable database size after fixture creation: **8,109,079 bytes**.
 
 These storage figures are diagnostic measurements from the first structurally passing version, not a final before/after storage experiment and not capacity evidence. A subsequent editorial chronology review found that the intelligence assessment was dated after the arrest despite being cited in the arrest decision. The fixture was corrected so the assessment precedes the arrest, the arrest record is created before custody booking, and explicit assertions guard both orderings. The corrected run must pass before the fixture is considered structurally stable.
+
+
+### Corrected chronology validation
+
+- Successful corrected run: https://github.com/Joshuaogri/saltwater/actions/runs/45062795840
+- Tested commit: `a7bcdd11096092dbf56ff360b5d57ebc1ad03f5a`.
+- The intelligence assessment is now recorded before the arrest decision that references it.
+- The arrest record is recorded before custody booking.
+- Explicit SQL assertions enforce both chronology relationships.
+- The workflow completed successfully, including the 16-record, 19-link, 10-entity, 16-pending-review and zero-media-table checks.
+
+The earlier successful run 45062664898 is superseded for chronology purposes. The fixture's automated structure is now stable, but its narrative quality is not yet approved: the 16 human-review scores remain pending. The next task is to complete a record-by-record editorial review against the seven-part 0–2 rubric, preserve any unresolved weaknesses as review notes, and only then decide whether to accept the fixture for the small-scale storage/query experiment.
