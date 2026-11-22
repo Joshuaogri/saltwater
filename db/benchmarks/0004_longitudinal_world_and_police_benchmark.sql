@@ -282,24 +282,19 @@ CREATE TABLE sw_bench_run_0004.s4_exact_row_counts(
   table_name text PRIMARY KEY,
   exact_rows bigint NOT NULL
 );
-DO $
-DECLARE r record;
-BEGIN
-  FOR r IN
-    SELECT c.relname
-    FROM pg_class c
-    JOIN pg_namespace n ON n.oid=c.relnamespace
-    WHERE n.nspname='sw_bench_run_0004'
-      AND c.relkind='r'
-      AND c.relname <> 's4_exact_row_counts'
-    ORDER BY c.relname
-  LOOP
-    EXECUTE format(
-      'INSERT INTO sw_bench_run_0004.s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
-      r.relname, 'sw_bench_run_0004', r.relname
-    );
-  END LOOP;
-END $;
+-- Generate and execute one exact-count INSERT per benchmark table.
+-- psql \gexec avoids a PL/pgSQL dollar-quoted DO block entirely.
+SELECT format(
+  'INSERT INTO sw_bench_run_0004.s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
+  c.relname, 'sw_bench_run_0004', c.relname
+)
+FROM pg_class c
+JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='sw_bench_run_0004'
+  AND c.relkind='r'
+  AND c.relname <> 's4_exact_row_counts'
+ORDER BY c.relname
+\gexec
 SELECT table_name, exact_rows
 FROM sw_bench_run_0004.s4_exact_row_counts
 ORDER BY table_name;
