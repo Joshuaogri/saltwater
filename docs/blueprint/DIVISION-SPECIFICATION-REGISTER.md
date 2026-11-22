@@ -82,6 +82,7 @@ Statuses are independent across specification, implementation, testing and verif
 13. BP-12: full incident-management specification draft created; priority taxonomy, command doctrine, major-incident thresholds, closure review, retention and other policy decisions remain open.
 14. BP-13: full crime-architecture specification draft created; initial offence catalogue, fictional legal framework, element schemas, severity descriptors and taxonomy governance decisions remain open.
 15. BP-14: full crime-generation specification draft created; occurrence-family baselines, generation rates, causal model, NPC behaviour, discovery/reporting distributions and processing thresholds remain open.
-16. BP-15: full case-management specification draft created; case-reference format, state-transition approval matrix, priority/review thresholds, retention policy, access matrix and merge/referral policies remain open.\n17. Continue BP-16 through BP-44 in numeric order, preserving the same specification contract and traceability.
+16. BP-15: full case-management specification draft created; case-reference format, state-transition approval matrix, priority/review thresholds, retention policy, access matrix and merge/referral policies remain open.
+17. Continue BP-16 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
