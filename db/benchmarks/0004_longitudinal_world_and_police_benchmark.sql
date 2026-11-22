@@ -277,7 +277,7 @@ ANALYZE;
 
 \echo BENCHMARK_0004_EXACT_COUNTS
 CREATE TEMP TABLE s4_exact_row_counts(table_name text PRIMARY KEY, exact_rows bigint NOT NULL);
-DO $
+DO $$
 DECLARE r record;
 BEGIN
   FOR r IN
@@ -290,7 +290,7 @@ BEGIN
     EXECUTE format('INSERT INTO s4_exact_row_counts SELECT %L, count(*) FROM %I.%I',
                    r.relname, 'sw_bench_run_0004', r.relname);
   END LOOP;
-END $;
+END $$;
 SELECT table_name, exact_rows FROM s4_exact_row_counts ORDER BY table_name;
 
 \echo BENCHMARK_0004_EXACT_TOTAL
