@@ -174,16 +174,6 @@ CREATE INDEX radio_officer_time_idx ON radio_communication(officer_id,occurred_a
 CREATE TABLE gps_track_point AS SELECT g::bigint AS point_id, ((g-1)%250+1)::integer AS officer_id, timestamptz '1991-01-01 00:00:00+00'+g*interval '2 minutes' AS recorded_at, ((g-1)%6000+1)::integer AS building_id, (g%360)::smallint AS heading, (g%80)::smallint AS speed_code FROM generate_series(1,200000) g;
 ALTER TABLE gps_track_point ADD PRIMARY KEY(point_id);
 CREATE INDEX gps_officer_time_idx ON gps_track_point(officer_id,recorded_at);
-CREATE TABLE media_asset_metadata AS SELECT g::integer AS asset_id, (g%8)::smallint AS media_type, timestamptz '1991-01-01 00:00:00+00'+g*interval '3 hours' AS captured_at, CASE WHEN g%3=0 THEN ((g-1)%2000+1)::integer ELSE NULL END AS case_id, md5('saltwater-media-'||g) AS content_hash, (g%5000000+50000)::bigint AS payload_bytes, 'External object reference, source device, retention and integrity metadata '||g AS metadata FROM generate_series(1,30000) g;
-ALTER TABLE media_asset_metadata ADD PRIMARY KEY(asset_id);
-CREATE INDEX media_case_idx ON media_asset_metadata(case_id);
-CREATE TABLE cctv_observation AS SELECT g::integer AS observation_id, ((g-1)%6000+1)::integer AS building_id, timestamptz '1991-01-01 00:00:00+00'+g*interval '1 hour' AS observed_at, (g%20)::smallint AS observation_type, 'CCTV camera, time window, extraction, continuity and review metadata '||g AS note FROM generate_series(1,40000) g;
-ALTER TABLE cctv_observation ADD PRIMARY KEY(observation_id);
-CREATE INDEX cctv_building_time_idx ON cctv_observation(building_id,observed_at);
-CREATE TABLE body_worn_video_reference AS SELECT g::integer AS recording_id, ((g-1)%250+1)::integer AS officer_id, timestamptz '1991-01-01 00:00:00+00'+g*interval '1 day' AS recorded_at, CASE WHEN g%2=0 THEN ((g-1)%2000+1)::integer ELSE NULL END AS case_id, md5('saltwater-bwv-'||g) AS content_hash, (g%90000000+10000000)::bigint AS payload_bytes, 'BWC activation, categorisation, access and retention metadata '||g AS note FROM generate_series(1,30000) g;
-ALTER TABLE body_worn_video_reference ADD PRIMARY KEY(recording_id);
-CREATE INDEX bwv_officer_time_idx ON body_worn_video_reference(officer_id,recorded_at);
-
 CREATE TABLE bank_account AS SELECT g::integer AS account_id, ((g-1)%10000+1)::integer AS resident_id, ((g-1)%10000+1)::integer AS business_id, (g%12)::smallint AS account_type, date '1991-01-01'+(g%12000) AS opened_on, (g%4)::smallint AS status_code FROM generate_series(1,15000) g;
 ALTER TABLE bank_account ADD PRIMARY KEY(account_id);
 CREATE INDEX bank_account_resident_idx ON bank_account(resident_id);
@@ -227,9 +217,4 @@ SELECT sum(pg_relation_size(c.oid)) AS heap_bytes,
        round(sum(pg_total_relation_size(c.oid))::numeric/1000000,3) AS relation_total_mb
 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
 WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';
-\echo INTEGRATED_MEDIA_PAYLOAD_REFERENCE_TOTAL
-SELECT sum(payload_bytes)::bigint AS external_media_payload_bytes,
-       round(sum(payload_bytes)::numeric/1000000,3) AS external_media_payload_mb,
-       count(*) AS referenced_media_assets
-FROM media_asset_metadata
 WHERE true;
