@@ -135,7 +135,7 @@ The extended synthetic benchmark completed successfully (1,034,842 rows across 2
 - Benchmark report: [benchmark-run-0002.md](benchmark-run-0002.md)
 - Tested commit: `4accdd8ba88174176a2e357f4b886e4ffc381db2`
 - Temporary tables: 24
-- Synthetic rows: 1,114,854
+- Synthetic rows: 1,034,842
 - Measured heap: 245,047,296 bytes (245.047 MB)
 - Measured indexes: 61,792,256 bytes (61.792 MB)
 - Total temporary relation footprint: 307,052,544 bytes (307.053 MB)
