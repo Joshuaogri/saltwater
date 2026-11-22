@@ -24,7 +24,7 @@
 | BP-15 | Case Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-15](divisions/BP-15-CASE-MANAGEMENT.md) |
 | BP-16 | Investigation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-16](divisions/BP-16-INVESTIGATION.md) |
 | BP-17 | Victims and Witnesses | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-17](divisions/BP-17-VICTIMS-AND-WITNESSES.md) |
-| BP-18 | Suspects and Offenders | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-18 | Suspects and Offenders | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-18](divisions/BP-18-SUSPECTS-AND-OFFENDERS.md) |
 | BP-19 | Interviews and Interrogations | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-20 | Surveillance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-21 | Intelligence | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -85,6 +85,7 @@ Statuses are independent across specification, implementation, testing and verif
 16. BP-15: full case-management specification draft created; case-reference format, state-transition approval matrix, priority/review thresholds, retention policy, access matrix and merge/referral policies remain open.
 17. BP-16: full investigation specification draft created; investigation reference format, workflow catalogues, NPC autonomy, review triggers, access matrix and other policy decisions remain open.
 18. BP-17: full victims-and-witnesses specification draft created; role catalogue, safeguarding authority, referral policy, risk vocabulary, access matrix and other policy decisions remain open.
-19. Continue BP-18 through BP-44 in numeric order, preserving the same specification contract and traceability.
+19. BP-18: full suspects-and-offenders specification draft created; suspect designation threshold, POI category, offender basis, role transitions, identity-confidence vocabulary and access policy remain open.
+20. Continue BP-19 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
