@@ -85,3 +85,39 @@ GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/4505702
 The relation footprint is 142.160 MB below the 790 MB safety threshold. The full database is 143.166 MB below the 800 MB working target. These results are for a disposable benchmark database, not Neon. The workflow's capacity-gate jobs did not run due to an escaped output-expression defect; the defect has been fixed and must be confirmed in the next run.
 
 No submitted Neon payload, Neon storage increase, before/after Neon database size, or Neon compression measurement exists for this benchmark because no Neon import was performed. Mark those measurements not applicable/not measured, not zero.
+
+
+## Corrected gate run and live Neon baseline (2026-11-22)
+
+Corrected workflow run: https://github.com/Joshuaogri/saltwater/actions/runs/45057328325
+
+- Validation job: **success**.
+- Capacity gate: **passed** (relation footprint at or below 790,000,000 bytes).
+- Capacity-exceeded job: skipped as expected.
+- Measured disposable database: 656,890,903 bytes = **656.891 MB**.
+- Measured relation footprint: 647,839,744 bytes = **647.840 MB**.
+- Integrated rows: **2,449,842**.
+- Text documents: **33,500**.
+- Text words: **49,897,629**.
+- Raw UTF-8 text: 341,425,062 bytes = **341.425 MB**.
+- Tables asserted: **53**.
+- The disposable benchmark schema was dropped after measurement. No benchmark data was inserted into Neon.
+
+The corrected run's relation footprint is 142.160 MB below the 790 MB gate. Its full database size is 143.109 MB below the 800 MB working target. This is a **benchmark gate pass**, not final approval of the 1 GB production plan: the generated narrative still relies on a finite sentence bank with deterministic record/segment labels and may compress more effectively than genuinely varied authored text.
+
+Read-only Neon baseline workflow: https://github.com/Joshuaogri/saltwater/actions/runs/45057566657
+
+- Workflow: **success**.
+- Measurement transaction: BEGIN READ ONLY followed by ROLLBACK.
+- Database: neondb.
+- Database size: 9,306,112 bytes = **9.306 MB**.
+- User relation footprint measured by the workflow: 188,416 bytes = **0.188 MB**.
+- Five user tables were reported; largest measured user relation was 49,152 bytes.
+- No rows were inserted, updated or deleted.
+- No production benchmark payload was submitted; Neon storage increase is **not applicable/not measured**.
+- Compressed transfer payload is **not applicable/not measured**.
+- No before/after Neon size delta or Neon compression ratio is claimed.
+
+## Decision after corrected gate
+
+The 10,000-resident and 10,000-business targets remain unchanged. The calibrated workload passes the disposable relation-footprint gate and the live Neon baseline is small, but the 1 GB capacity decision remains **provisional / not approved** until a second benchmark uses substantially higher text entropy and measures realistic PostgreSQL heap, indexes, TOAST and full-text search behaviour. Production seeding remains blocked pending that test and a reviewed reserve calculation.
