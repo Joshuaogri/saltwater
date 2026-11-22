@@ -57,3 +57,22 @@ A clean repeat is required to validate the same workload without even transient 
 ## Clean-repeat attempt: failed before measurement
 
 The first clean text-only repeat (run 45058809884) failed during workload setup, before the measurement step. Log inspection identified a stray standalone `WHERE true;` in the shared 0005 SQL, left by the media-reference cleanup. This was a SQL syntax error, not a capacity-gate failure; no valid clean-repeat measurements were produced. The stray clause was removed in commit `fc23353ac6995aa42b05504f18ab3aa7be63066f`, which triggered a new disposable run: https://github.com/Joshuaogri/saltwater/actions/runs/45059118741. Await its completion before claiming a clean repeat. The original first-run measurements remain valid only for that original run and do not establish the corrected text-only baseline.
+
+
+## Corrected clean-repeat result (run 45059118741)
+
+The corrected text-only repeat completed successfully on commit `fc23353ac6995aa42b05504f18ab3aa7be63066f`. The SQL setup correction is confirmed. Disposable PostgreSQL measurements:
+
+- Full database: 651,779,095 bytes = **651.779 MB**.
+- Relation footprint: 642,727,936 bytes = **642.728 MB**.
+- Heap: 457,146,368 bytes = 457.146 MB.
+- Indexes: 138,838,016 bytes = 138.838 MB.
+- TOAST/auxiliary: 46,743,552 bytes = 46.744 MB.
+- Raw UTF-8 text: 244,366,230 bytes = 244.366 MB.
+- Text documents: 33,500; words: 49,897,629; integrated rows: 2,449,842; tables: 53.
+- Text table storage including indexes: 90,636,288 bytes = 90.636 MB.
+- A 1,000-document entropy sample had 1,000 distinct openings (100%).
+- Full-text query execution: 2.019 ms in the recorded plan; the plan's forced-index test is not proof the planner always chooses the GIN index.
+- Largest case: 517,809 words; median case: 12,373 words; p95: approximately 152,711 words.
+
+Compared with the first 0008 run (651.722 MB full database; 642.720 MB relation footprint), the corrected clean repeat differs by only 0.057 MB full-database and 0.008 MB relation footprint. This is a strong reproducibility result for this generated workload. Both runs are disposable PostgreSQL measurements, not Neon billed-storage measurements. The workload generator is deterministic, so repeated storage similarity establishes repeatability, not independent narrative diversity. Production capacity remains unapproved pending a further independent/repeated run, content-realism review and a defensible Neon reserve assessment.
