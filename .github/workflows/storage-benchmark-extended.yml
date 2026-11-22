@@ -1,0 +1,39 @@
+name: Saltwater extended institutional and police benchmark
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Verify foundation and run temporary benchmark
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          FOUNDATION=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 1);")
+          if [ "$FOUNDATION" != "t" ]; then
+            echo "::error::Saltwater foundation migration 0001 is not installed."
+            exit 1
+          fi
+          echo "database_size_before_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0002_institutional_police_lifecycle.sql
+          echo "database_size_after_bytes=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")"
+          echo "note=All benchmark tables are temporary and are removed when the benchmark connection closes."
