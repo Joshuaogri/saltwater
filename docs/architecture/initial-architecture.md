@@ -46,7 +46,7 @@ Every import, bulk insert, migration carrying data, file upload or other materia
 
 Use decimal MB (1 MB = 1,000,000 bytes) consistently in reports. Distinguish transfer size from PostgreSQL storage growth. If a measurement is unavailable, mark it **not measured**; never invent it. Schema-only migrations must also be logged as operations, with database size deltas measured where practical.
 
-The initial database baseline is **not measured** until a live Neon connection is established and the database size is queried. A blank or unknown value must not be reported as zero.
+Neon project metadata reports a production-branch logical size of **33,611,776 bytes (33.61 MB / 32.05 MiB), measured 2026-11-22**. This is a provider-reported logical-size baseline, not a live SQL database-size query; live SQL connectivity has not yet been independently verified. Keep these measurements distinct. A blank or unknown measurement must never be reported as zero.
 
 ## Security
 
