@@ -211,3 +211,35 @@ Stage 4 adds household profiles/memberships, resident address and life-event his
 - Project full lifecycle storage, including PostgreSQL overhead and a substantial safety reserve.
 
 **Final capacity decision: NOT APPROVED YET.** No production population, business, case or evidence seeding until the integrated lifecycle benchmark and capacity gate are complete.
+
+
+## 15. Integrated lifecycle benchmark and conditional 1 GB decision (2026-11-22)
+
+The four earlier stages have now been reconciled into one coherent synthetic dataset. The benchmark does not sum duplicate stage footprints or repeat stable entities. It uses one 10,000-resident population, one 10,000-business population, shared geographic/institutional/police/case/evidence identifiers, and one consolidated history per overlapping category.
+
+Validation:
+- PostgreSQL 16 GitHub Actions run: https://github.com/Joshuaogri/saltwater/actions/runs/45052956900
+- Commit: `960528fa97c80d31295419095d9f6a9b5e0db896`
+- 54 data tables; exact total **2,516,342 rows**.
+- Heap: 439,623,680 bytes (439.624 MB).
+- Indexes: 131,866,624 bytes (131.867 MB).
+- TOAST/auxiliary: 1,908,736 bytes (1.909 MB).
+- Integrated relation footprint: **573,399,040 bytes (573.399 MB)**.
+- Referenced media: 30,000 assets representing 1,950,015,000 bytes (1,950.015 MB) of payload. This is excluded from PostgreSQL and must be stored separately.
+- All 54 data tables plus the exact-count audit table were removed after validation.
+
+The consolidated schema includes institutional/office and public-service records; healthcare, social services, education and foreign relations; bank accounts, financial ledger and tax records; police personnel, shifts, training, discipline, CAD, dispatch, patrol, reports, radio and GPS; cases, incidents, interviews, intelligence and links, surveillance, warrants, arrests, custody, evidence, custody events, forensic examinations, prosecution, legal proceedings, corrections and media references.
+
+Planning arithmetic (decimal MB):
+- Integrated relation footprint: 573.399 MB.
+- Last measured Neon post-cleanup baseline: 9.470 MB.
+- Indicative occupied total: 582.869 MB.
+- 1 GB allowance: 1,000 MB.
+- Protected 20% reserve: 200 MB.
+- Indicative headroom beyond reserve: 217.131 MB.
+
+**Conditional capacity decision: 1 GB is sufficient for the defined integrated relational benchmark only if binary media is kept outside Neon and the 200 MB reserve is protected.** It is not sufficient if the 1.95 GB of referenced binary media is stored inside Neon, and it is not an unlimited-growth guarantee.
+
+The Neon-specific integrated workflow is prepared at https://github.com/Joshuaogri/saltwater/actions/workflows/storage-benchmark-integrated.yml. It must be run once to capture Neon database size before/during/after and confirm the actual Neon footprint. Until that run confirms the reserve, production seeding remains blocked. The 35-year benchmark is a planning scenario, not a newly approved canon game-duration rule.
+
+Report: [benchmark-run-0005.md](benchmark-run-0005.md).
