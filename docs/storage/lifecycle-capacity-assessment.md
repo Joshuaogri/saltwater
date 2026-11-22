@@ -1,6 +1,6 @@
 # Saltwater lifecycle storage-capacity assessment
 
-Status: baseline and four synthetic benchmark stages measured; lifetime capacity not approved.
+Status: 1 GB capacity NOT APPROVED pending realistic text-depth benchmark 0006. No production data has been seeded.
 
 ## 1. Verified starting point
 
@@ -84,11 +84,11 @@ For each upload, import or bulk migration, record:
 
 Never equate compressed transfer size with PostgreSQL storage growth. Database growth includes table data, indexes, TOAST and PostgreSQL overhead. If a value cannot be measured, mark it unavailable; do not estimate it as if measured.
 
-## 6. Binary evidence and attachments
+## 6. Text-only records
 
-The benchmark must distinguish structured evidence metadata from binary payloads such as photographs, audio, video, scanned documents and other large files.
+Saltwater is entirely text-based. It stores no photographs, audio, CCTV footage, body-camera footage, video, scanned documents, binary attachments or other binary media. No external object-storage tier is part of the design or capacity calculation.
 
-Do not assume Neon database storage is the right place for every binary payload. Evaluate database storage versus a separate object-storage tier, including lifecycle cost, retrieval, durability, access patterns, references, integrity hashes and backup/recovery. No external object-storage service is considered configured until it is actually provisioned and tested.
+Evidence, interviews, surveillance, dispatch, forensic examinations, reports and court records are represented through written descriptions, transcripts, metadata, chronologies, reports, provenance and links to other text records. Any former media-reference benchmark tables are excluded from the text-only workload.
 
 ## 7. Efficiency principles
 
@@ -117,7 +117,7 @@ The capacity report must state:
 - Measured baseline and post-migration size.
 - Measured bytes per representative entity/event category.
 - Table, index and TOAST storage breakdown.
-- Measured binary payload volumes and proposed storage tier.
+- Measured raw text bytes, PostgreSQL heap/index/TOAST bytes and text-search index overhead; binary payload volume is zero by design.
 - Projected lifecycle total, with assumptions clearly separated from measurements.
 - Safety reserve and expected headroom.
 - Whether 1 GB is sufficient; if not, the required alternative capacity.
@@ -270,3 +270,21 @@ Actual Neon budget:
 **NO** if full binary media is to be stored inside Neon: the benchmark references 1,950.015 MB of binary payload alone. This is also not an unlimited-growth guarantee; any material increase in event rates, text sizes, indexes or retention scope requires another measurement.
 
 The 35-year dates are a benchmark planning scenario, not a change to the game's canon or a mandatory retirement/lifespan rule. Keep production seeding blocked until the separate media-storage tier is chosen and tested, and preserve the 200 MB Neon reserve.
+
+
+## 17. Text-only capacity decision reset and benchmark 0006
+
+The earlier conditional 1 GB approval in Sections 15–16 is **withdrawn**. It measured the 0005 integrated relational workload but did not measure realistic full-length written reports, witness statements, interviews, evidence descriptions, forensic reports, legal submissions, judgments or cumulative long-running case histories.
+
+The 0005 media-reference data is not a Saltwater requirement. The new benchmark removes the media-asset, CCTV-footage-reference and body-worn-video-reference tables before the text-depth storage measurement. No binary media or external object storage is included.
+
+Benchmark 0006:
+- SQL: [0006_text_depth_lifecycle_benchmark.sql](../../db/benchmarks/0006_text_depth_lifecycle_benchmark.sql)
+- Workflow: [storage-benchmark-text-depth.yml](../../.github/workflows/storage-benchmark-text-depth.yml)
+- Specification and report: [benchmark-run-0006-text-depth.md](benchmark-run-0006-text-depth.md)
+- World size: 10,000 residents, 10,000 businesses and the integrated 35-year synthetic planning workload.
+- Long-form text: varied routine, complex and exceptional document lengths, including a 250,000-word major case history and a 500,000-word exceptional case history represented as linked dated event narratives.
+- Measurements: exact words and raw text bytes; heap, indexes and TOAST; full database size; case-history distribution; full-text search performance; cleanup and storage-ledger measurements.
+- Capacity gate: full Neon database must remain at or below 800,000,000 bytes (800 MB), preserving 200 MB of the nominal 1,000 MB allowance. The disposable PostgreSQL validation uses a conservative 790,000,000-byte relation-footprint gate before Neon is loaded.
+
+**Current decision: 1 GB NOT APPROVED until benchmark 0006 passes.** The 10,000-resident design target remains unchanged. Production population, business, case and evidence seeding remains blocked pending measured results.
