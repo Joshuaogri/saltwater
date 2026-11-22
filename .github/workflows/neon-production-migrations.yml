@@ -1,0 +1,62 @@
+name: Deploy Saltwater database migrations to Neon production
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/**"
+      - ".github/workflows/neon-production-migrations.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saltwater-neon-production-migrations
+  cancel-in-progress: false
+
+jobs:
+  deploy-migrations:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+      - name: Apply pending migrations to Neon production
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          echo "Connected database:"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT current_database() || ' / PostgreSQL ' || current_setting('server_version');"
+          for migration in db/migrations/*.sql; do
+            [ -f "$migration" ] || continue
+            filename="$(basename "$migration")"
+            version="${filename%%_*}"
+            if ! [[ "$version" =~ ^[0-9]+$ ]]; then
+              echo "::error::Migration filename must begin with a numeric version: $filename"
+              exit 1
+            fi
+            ledger_exists="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('sw_ops.schema_migration') IS NOT NULL;")"
+            if [ "$ledger_exists" != "t" ]; then
+              echo "::error::Migration ledger sw_ops.schema_migration is missing. Apply the approved foundation migration first."
+              exit 1
+            fi
+            recorded="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = $((10#$version)));")"
+            if [ "$recorded" = "t" ]; then
+              echo "Already applied: $filename"
+              continue
+            fi
+            echo "Applying production migration: $filename"
+            psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f "$migration"
+          done
+          echo "Final production database size:"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT 'database_bytes=' || pg_database_size(current_database()) || E'\\ndatabase_mb=' || round(pg_database_size(current_database())::numeric / 1000000, 3);"
