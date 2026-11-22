@@ -109,7 +109,7 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/benchmarks/0006_text_depth_lifecycle_benchmark.sql
           DB_DURING=$(psql "$DATABASE_URL" -X -Atc "SELECT pg_database_size(current_database());")
           RELATION_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(pg_total_relation_size(c.oid)),0) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='sw_bench_integrated' AND c.relkind='r';")
-          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=n.oid AND n.nspname='sw_bench_integrated' AND c.relkind='r';")
+          TABLE_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace AND n.nspname='sw_bench_integrated' AND c.relkind='r';")
           ROW_COUNT=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(exact_rows),0) FROM sw_bench_integrated.benchmark_exact_counts;")
           TEXT_WORDS=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(word_count),0) FROM sw_bench_integrated.text_record;")
           RAW_TEXT_BYTES=$(psql "$DATABASE_URL" -X -Atc "SELECT COALESCE(sum(octet_length(body)),0) FROM sw_bench_integrated.text_record;")
