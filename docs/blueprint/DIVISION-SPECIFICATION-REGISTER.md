@@ -17,7 +17,7 @@
 | BP-08 | Units and Deployment | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-08](divisions/BP-08-UNITS-AND-DEPLOYMENT.md) |
 | BP-09 | Police Resources | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-09](divisions/BP-09-POLICE-RESOURCES.md) |
 | BP-10 | Patrol Operations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-10](divisions/BP-10-PATROL-OPERATIONS.md) |
-| BP-11 | Emergency Communications | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-11 | Emergency Communications | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-11](divisions/BP-11-EMERGENCY-COMMUNICATIONS.md) |
 | BP-12 | Incident Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-13 | Crime Architecture | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-14 | Crime Generation | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -78,6 +78,7 @@ Statuses are independent across specification, implementation, testing and verif
 9. BP-08: full units and deployment specification draft created; exact unit hierarchy, establishment, staffing, geographic coverage and readiness policies remain open.
 10. BP-09: full police resources specification draft created; exact resource catalogue, fleet, facility, stock, maintenance and readiness policies remain open.
 11. BP-10: full patrol operations specification draft created; exact beat structure, coverage, response, contact, field-reporting and patrol policy decisions remain open.
-12. Continue BP-11 through BP-44 in numeric order, preserving the same specification contract and traceability.
+12. BP-11: full emergency communications specification draft created; centre staffing, call priorities, channel catalogue, recording/retention, outage fallback and dispatch policy decisions remain open.
+13. Continue BP-12 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
