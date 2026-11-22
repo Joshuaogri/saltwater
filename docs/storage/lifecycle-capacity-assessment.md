@@ -329,3 +329,39 @@ Retain the 10,000-resident and 10,000-business design targets. Build a calibrate
 - Runs on disposable PostgreSQL first; Neon is tested only if the disposable result leaves at least 200 MB of nominal capacity in reserve.
 
 **Current decision: 1 GB is NOT APPROVED for the 0006 workload. The 10,000-resident target remains unchanged pending a calibrated second benchmark. Production seeding remains blocked.**
+
+## 19. Calibrated text lifecycle benchmark 0007 — first successful measurement
+
+Benchmark 0007 corrects the case/document distribution from 0006 while retaining 10,000 residents and 10,000 businesses. It models 2,000 cases across a 35-year sizing scenario and 33,500 independently attributed text documents. The 35-year span is not an approved game-duration limit.
+
+- SQL: [0007_calibrated_text_lifecycle_benchmark.sql](../../db/benchmarks/0007_calibrated_text_lifecycle_benchmark.sql)
+- Workflow: [storage-benchmark-calibrated-text.yml](../../.github/workflows/storage-benchmark-calibrated-text.yml)
+- Report: [benchmark-run-0007-calibrated-text.md](benchmark-run-0007-calibrated-text.md)
+- Successful disposable validation run: https://github.com/Joshuaogri/saltwater/actions/runs/45057029582
+- Corrected capacity-gate run: https://github.com/Joshuaogri/saltwater/actions/runs/45057328325
+
+### Measured disposable PostgreSQL result
+
+| Measurement | Bytes | Decimal MB |
+|---|---:|---:|
+| Full database | 656,833,559 | 656.834 |
+| Relation footprint | 647,839,744 | 647.840 |
+| Heap | 463,036,416 | 463.036 |
+| Indexes | 145,195,008 | 145.195 |
+| TOAST/auxiliary | 39,616,512 | 39.617 |
+| Text-record table total | 95,756,288 | 95.756 |
+| Raw UTF-8 text | 341,425,062 | 341.425 |
+
+- Text documents: 33,500.
+- Text words: 49,897,629.
+- Integrated total rows: 2,449,842.
+- Case-history median: 12,373 words.
+- Case-history p95: approximately 152,711 words.
+- Largest linked case history: 517,809 words.
+- Full-text sample returned 50 rows in approximately 43.9 ms, but the planner used a sequential scan; index/search tuning remains open.
+
+The relation footprint is 142.160 MB below the 790 MB safety gate, and full database size is 143.166 MB below the 800 MB working target. The first validation run succeeded. Its capacity-gate follow-on jobs were skipped due to escaped workflow-output interpolation; that defect was fixed in commit 1d00c5c566fd4fa9696d72ca775a4a1f9440986a. The corrected workflow must complete and explicitly report the gate result before Neon is measured.
+
+### Current decision
+
+Benchmark 0007 is a promising calibrated disposable result, not yet a final 1 GB capacity approval. No benchmark data has been inserted into Neon. Neon before/during/after measurements, submitted payload, actual Neon storage increase and Neon compression are not measured for 0007. Production seeding remains blocked until the corrected gate is verified and a separately controlled Neon measurement is completed.
