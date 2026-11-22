@@ -20,7 +20,7 @@
 | BP-11 | Emergency Communications | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-11](divisions/BP-11-EMERGENCY-COMMUNICATIONS.md) |
 | BP-12 | Incident Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-12](divisions/BP-12-INCIDENT-MANAGEMENT.md) |
 | BP-13 | Crime Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-13](divisions/BP-13-CRIME-ARCHITECTURE.md) |
-| BP-14 | Crime Generation | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-14 | Crime Generation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-14](divisions/BP-14-CRIME-GENERATION.md) |
 | BP-15 | Case Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-16 | Investigation | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-17 | Victims and Witnesses | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -81,6 +81,6 @@ Statuses are independent across specification, implementation, testing and verif
 12. BP-11: full emergency communications specification draft created; centre staffing, call priorities, channel catalogue, recording/retention, outage fallback and dispatch policy decisions remain open.
 13. BP-12: full incident-management specification draft created; priority taxonomy, command doctrine, major-incident thresholds, closure review, retention and other policy decisions remain open.
 14. BP-13: full crime-architecture specification draft created; initial offence catalogue, fictional legal framework, element schemas, severity descriptors and taxonomy governance decisions remain open.
-15. Continue BP-14 through BP-44 in numeric order, preserving the same specification contract and traceability.
+15. BP-14: full crime-generation specification draft created; occurrence-family baselines, generation rates, causal model, NPC behaviour, discovery/reporting distributions and processing thresholds remain open.\n16. Continue BP-15 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
