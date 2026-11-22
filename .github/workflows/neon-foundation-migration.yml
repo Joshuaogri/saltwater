@@ -29,10 +29,14 @@ jobs:
             exit 1
           fi
 
-          if psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
-            "SELECT to_regclass('sw_ops.schema_migration') IS NOT NULL AND EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 1);" 2>/dev/null | grep -qx t; then
-            echo "::error::Migration 0001 is already recorded. Refusing to apply it again."
-            exit 1
+          MIGRATION_TABLE=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+            "SELECT to_regclass('sw_ops.schema_migration') IS NOT NULL;")
+          if [ "$MIGRATION_TABLE" = "t" ]; then
+            if psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
+              "SELECT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 1);" | grep -qx t; then
+              echo "::error::Migration 0001 is already recorded. Refusing to apply it again."
+              exit 1
+            fi
           fi
 
           DB_BEFORE=$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc \
