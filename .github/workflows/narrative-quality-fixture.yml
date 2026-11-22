@@ -6,7 +6,6 @@ on:
     paths:
       - "db/benchmarks/0009_narrative_quality_fixture.sql"
       - ".github/workflows/narrative-quality-fixture.yml"
-      - "docs/storage/narrative-quality-benchmark-plan.md"
 
 permissions:
   contents: read
