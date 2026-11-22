@@ -27,7 +27,7 @@
 | BP-18 | Suspects and Offenders | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-18](divisions/BP-18-SUSPECTS-AND-OFFENDERS.md) |
 | BP-19 | Interviews and Interrogations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-19](divisions/BP-19-INTERVIEWS-AND-INTERROGATIONS.md) |
 | BP-20 | Surveillance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-20](divisions/BP-20-SURVEILLANCE.md) |
-| BP-21 | Intelligence | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-21 | Intelligence | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-21](divisions/BP-21-INTELLIGENCE.md) |
 | BP-22 | Crime Scenes | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-23 | Evidence Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-24 | Forensics | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -88,6 +88,6 @@ Statuses are independent across specification, implementation, testing and verif
 19. BP-18: full suspects-and-offenders specification draft created; suspect designation threshold, POI category, offender basis, role transitions, identity-confidence vocabulary and access policy remain open.
 20. BP-19: full interviews-and-interrogations specification draft created; fictional caution/rights notices, interviewer authority, recording/retention, statement adoption, interpreter standards and related policy decisions remain open.
 21. BP-20: full surveillance specification draft created; fictional surveillance authority matrix, permitted technical methods, retention, preservation holds, source-quality and identity-resolution standards remain open.
-22. Continue BP-21 through BP-44 in numeric order, preserving the same specification contract and traceability.
+22. BP-21: full intelligence specification draft created; source/content grading scales, analytical confidence, source handling, dissemination, retention and collection-request policy decisions remain open.\n23. Continue BP-22 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
