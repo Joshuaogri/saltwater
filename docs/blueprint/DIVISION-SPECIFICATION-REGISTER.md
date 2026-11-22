@@ -16,7 +16,7 @@
 | BP-07 | Career System | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-07](divisions/BP-07-CAREER-SYSTEM.md) |
 | BP-08 | Units and Deployment | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-08](divisions/BP-08-UNITS-AND-DEPLOYMENT.md) |
 | BP-09 | Police Resources | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-09](divisions/BP-09-POLICE-RESOURCES.md) |
-| BP-10 | Patrol Operations | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-10 | Patrol Operations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-10](divisions/BP-10-PATROL-OPERATIONS.md) |
 | BP-11 | Emergency Communications | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-12 | Incident Management | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-13 | Crime Architecture | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -77,6 +77,6 @@ Statuses are independent across specification, implementation, testing and verif
 8. BP-07: full career system specification draft created; rank ladder, promotion thresholds, service-credit rules and several Chief-tenure implementation details remain open.
 9. BP-08: full units and deployment specification draft created; exact unit hierarchy, establishment, staffing, geographic coverage and readiness policies remain open.
 10. BP-09: full police resources specification draft created; exact resource catalogue, fleet, facility, stock, maintenance and readiness policies remain open.
-11. Continue BP-10 through BP-44 in numeric order, preserving the same specification contract and traceability.
+11. BP-10: full patrol operations specification draft created; exact beat structure, coverage, response, contact, field-reporting and patrol policy decisions remain open.\n12. Continue BP-11 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
