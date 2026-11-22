@@ -326,13 +326,13 @@ The original source JSON and 52→44 crosswalk remain unchanged. Source IDs use 
 | S46.R03 | Lossless narrative, normalised shared facts, references and no duplicate payloads. | Section 23; lossless records and canonical references. |
 | S46.R04 | Separate immutable source records/events from derived views/summaries. | Sections 3, 16, 23; append-only originals. |
 | S48.R02 | Protect hidden truth and restricted personal information from player-facing leakage. | Sections 17–19; least privilege and reveal firewall. |
-| S32.T01 | Every exhibit has unique ID, recovery details, continuity and current location/status. | EVID-AT-001, 016–023, 032–049, 104–108. |
-| S33.T01 | Every conclusion identifies method, source, limitations and examiner. | EVID-AT-067–074; BP-24 owns conclusion and source references. |
-| S35.T01 | Every intelligence item has source, confidence and handling status. | EVID-AT-075–077; BP-21 owns grading; evidential copy references version. |
-| S36.T01 | Every surveillance item has source device, coverage limits and time basis. | EVID-AT-018–020, 076–078. |
-| S45.T01 | Every visual traces to underlying canonical records. | EVID-AT-109–110. |
-| S46.T01 | Schema constraints enforce identity, referential integrity, population cap and lifecycle states. | EVID-AT-001, 002, 098, 103, 108; BP-38/BP-43 validation. |
-| S48.T01 | Unauthorised reads/writes are rejected and audited. | EVID-AT-091–096. |
+| S32.T01 | Every exhibit has unique ID, recovery details, continuity and current location/status. | EVID-AT-001, 008, 017, 023, 032–049. |
+| S33.T01 | Every conclusion identifies method, source, limitations and examiner. | EVID-AT-069–074; BP-24 owns conclusion and source references. |
+| S35.T01 | Every intelligence item has source, confidence and handling status. | EVID-AT-075–076; BP-21 owns grading; evidential copy references version. |
+| S36.T01 | Every surveillance item has source device, coverage limits and time basis. | EVID-AT-019–020, 078–080. |
+| S45.T01 | Every visual traces to underlying canonical records. | EVID-AT-125. |
+| S46.T01 | Schema constraints enforce identity, referential integrity, population cap and lifecycle states. | EVID-AT-001, 002, 098, 112–116; BP-38/BP-43 validation. |
+| S48.T01 | Unauthorised reads/writes are rejected and audited. | EVID-AT-100–104. |
 
 Cross-cutting X01–X10 apply where relevant: one-city canon and bounded population; canonical identity; causal/time-valid records; provenance; fact/allegation/inference/evidence/finding separation; immutable originals and additive corrections; player agency and exact reveal firewall; time freeze; storage/persistence integrity; text-first operation with optional traceable visuals.
 
@@ -389,7 +389,7 @@ Cross-cutting X01–X10 apply where relevant: one-city canon and bounded populat
 - [ ] Time freeze, population cap and permanent promotion specified.
 - [ ] Neon/GitHub/ChatGPT architecture and no-write governance preserved.
 - [ ] Text-first interface complete; optional visuals traceable.
-- [ ] All 110 acceptance tests await BP-43 execution.
+- [ ] All 126 acceptance tests await BP-43 execution.
 - [ ] Open decisions remain explicit; no policy invented.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
