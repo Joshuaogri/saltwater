@@ -119,6 +119,17 @@ BEGIN
   END IF;
 
   v_intake := sw_police.request_recruit_intake(v_second_player,'Second Player','pkg003-request-0002');
+  UPDATE sw_people.population_counter SET living_included=10000 WHERE singleton=1;
+  BEGIN
+    PERFORM sw_police.accept_recruit_intake(v_intake,v_person_a,'At-cap appointment','pkg003-at-cap',v_admin,'Second');
+    RAISE EXCEPTION 'recruit admission unexpectedly exceeded the population cap';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'recruit admission unexpectedly exceeded the population cap' THEN RAISE; END IF;
+  END;
+  IF (SELECT count(*) FROM sw_people.person) <> 3 THEN
+    RAISE EXCEPTION 'at-cap recruit failure left a partial canonical person';
+  END IF;
+  UPDATE sw_people.population_counter SET living_included=3 WHERE singleton=1;
   UPDATE sw_runtime.state SET state=3 WHERE singleton=1;
   SELECT world_tick INTO v_tick FROM sw_runtime.state WHERE singleton=1;
   BEGIN
