@@ -9,6 +9,7 @@ import psycopg
 from runtime.postgres_security import (
     PostgresAuditSink,
     PostgresGrantProvider,
+    PostgresSessionLifecycle,
     PostgresSessionVerifier,
 )
 from runtime.security import AuthorizationService, Effect, Grant
@@ -263,6 +264,53 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
                 audit = cur.fetchall()
         self.assertEqual(audit, [(False, "no_matching_grant"), (True, "explicit_allow")])
 
+
+    def test_game_native_session_issue_hashes_credential_and_revokes(self):
+        lifecycle = PostgresSessionLifecycle(connect)
+        issued = lifecycle.issue(
+            self.principal_id,
+            lifetime=timedelta(minutes=30),
+            now=self.now,
+        )
+        self.assertNotEqual(
+            issued.credential,
+            hashlib.sha256(issued.credential.encode("utf-8")).hexdigest(),
+        )
+        verified = self.verifier.verify(issued.credential)
+        self.assertIsNotNone(verified)
+        self.assertEqual(verified.session_id, issued.session_id)
+        self.assertEqual(verified.principal_id, self.principal_id)
+
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT credential_digest FROM sw_auth.session WHERE session_id=%s",
+                    (issued.session_id,),
+                )
+                stored_digest = cur.fetchone()[0]
+        self.assertEqual(
+            stored_digest,
+            hashlib.sha256(issued.credential.encode("utf-8")).digest(),
+        )
+        self.assertTrue(
+            lifecycle.revoke(issued.session_id, principal_id=self.principal_id, now=self.now)
+        )
+        self.assertFalse(lifecycle.revoke(issued.session_id, now=self.now))
+        revoked = self.verifier.verify(issued.credential)
+        self.assertEqual(revoked.session_status.value, "revoked")
+
+    def test_session_issue_rejects_inactive_principal_and_bad_lifetime(self):
+        lifecycle = PostgresSessionLifecycle(connect)
+        with self.assertRaises(ValueError):
+            lifecycle.issue(self.principal_id, lifetime=timedelta(0))
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE sw_auth.principal SET status='disabled' WHERE principal_id=%s",
+                    (self.principal_id,),
+                )
+        with self.assertRaises(PermissionError):
+            lifecycle.issue(self.principal_id)
 
 
 if __name__ == "__main__":
