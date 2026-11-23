@@ -24,11 +24,12 @@ CREATE TABLE sw_police.recruit_intake (
   request_idempotency_key text NOT NULL UNIQUE,
   outcome_event_id bigint UNIQUE REFERENCES sw_core.simulation_event(event_id),
   outcome_source text,
+  outcome_actor_principal_id uuid REFERENCES sw_auth.principal(principal_id),
   outcome_tick bigint,
   created_at timestamptz NOT NULL DEFAULT now(),
-  CHECK ((status='pending' AND outcome_event_id IS NULL AND outcome_source IS NULL AND outcome_tick IS NULL)
+  CHECK ((status='pending' AND outcome_event_id IS NULL AND outcome_source IS NULL AND outcome_actor_principal_id IS NULL AND outcome_tick IS NULL)
       OR (status IN ('accepted','rejected') AND outcome_event_id IS NOT NULL
-          AND outcome_source IS NOT NULL AND outcome_tick IS NOT NULL))
+          AND outcome_source IS NOT NULL AND outcome_actor_principal_id IS NOT NULL AND outcome_tick IS NOT NULL))
 );
 
 CREATE SEQUENCE sw_police.service_number_seq START 1;
@@ -63,15 +64,16 @@ CREATE UNIQUE INDEX career_one_active_player_idx
   ON sw_police.career_episode(player_id) WHERE career_status IN ('active','suspended');
 
 CREATE TABLE sw_police.lifecycle_event (
-  event_id bigint PRIMARY KEY REFERENCES sw_core.simulation_event(event_id),
+  event_id bigint NOT NULL REFERENCES sw_core.simulation_event(event_id),
+  event_kind text NOT NULL CHECK (event_kind IN
+    ('intake_requested','intake_accepted','intake_rejected','personnel_appointed','career_opened')),
   player_id uuid REFERENCES sw_player.profile(player_id),
   intake_id uuid REFERENCES sw_police.recruit_intake(intake_id),
   personnel_id uuid REFERENCES sw_police.personnel(personnel_id),
   career_id uuid REFERENCES sw_police.career_episode(career_id),
-  event_kind text NOT NULL CHECK (event_kind IN
-    ('intake_requested','intake_accepted','intake_rejected','personnel_appointed','career_opened')),
   effective_tick bigint NOT NULL CHECK (effective_tick >= 0),
-  source_ref text
+  source_ref text,
+  PRIMARY KEY (event_id,event_kind)
 );
 
 CREATE FUNCTION sw_police.reject_history_mutation() RETURNS trigger
@@ -166,6 +168,7 @@ CREATE FUNCTION sw_police.accept_recruit_intake(
   p_supervisor_person_id integer,
   p_appointment_source text,
   p_idempotency_key text,
+  p_authorised_by_principal_id uuid,
   p_given_name text DEFAULT NULL,
   p_middle_name text DEFAULT NULL,
   p_family_name text DEFAULT NULL
@@ -185,8 +188,9 @@ DECLARE
   v_personnel_number text;
   v_event_type smallint;
   v_episode smallint;
+  v_actor_ok boolean;
 BEGIN
-  IF p_intake_id IS NULL OR p_supervisor_person_id IS NULL
+  IF p_intake_id IS NULL OR p_supervisor_person_id IS NULL OR p_authorised_by_principal_id IS NULL
      OR p_appointment_source IS NULL OR length(btrim(p_appointment_source)) NOT BETWEEN 1 AND 200
      OR p_idempotency_key IS NULL OR length(btrim(p_idempotency_key)) < 8 THEN
     RAISE EXCEPTION 'intake, authorised supervisor, appointment source and idempotency key are required';
@@ -203,6 +207,15 @@ BEGIN
     RETURN v_career_id;
   END IF;
   IF v_intake.status <> 'pending' THEN RAISE EXCEPTION 'only pending intake can be accepted'; END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM sw_auth.principal p
+    JOIN sw_auth.principal_role r ON r.principal_id=p.principal_id
+    WHERE p.principal_id=p_authorised_by_principal_id
+      AND p.status='active' AND p.principal_kind IN ('administrator','officer')
+      AND r.role_code='recruitment_approver' AND r.revoked_at IS NULL
+  ) INTO v_actor_ok;
+  IF NOT v_actor_ok THEN RAISE EXCEPTION 'appointment requires an active authorised recruitment approver'; END IF;
 
   SELECT world_tick INTO v_tick FROM sw_runtime.state
     WHERE singleton=1 AND state=2 AND player_present=true FOR SHARE;
@@ -244,7 +257,8 @@ BEGIN
   SELECT event_type_id INTO STRICT v_event_type FROM sw_core.event_type WHERE event_code='PERSONNEL_APPOINTED';
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),v_tick,'person',v_person_id,p_appointment_source,
-          jsonb_build_object('standing','recruit','supervisor_person_id',p_supervisor_person_id),p_idempotency_key||':appointment')
+          jsonb_build_object('standing','recruit','supervisor_person_id',p_supervisor_person_id,
+            'authorised_by_principal_id',p_authorised_by_principal_id),p_idempotency_key||':appointment')
   RETURNING event_id INTO v_appointment_event;
 
   v_personnel_number := 'SWP-'||lpad(nextval('sw_police.service_number_seq')::text,8,'0');
@@ -274,7 +288,8 @@ BEGIN
   RETURNING event_id INTO v_appointment_event;
 
   UPDATE sw_police.recruit_intake SET status='accepted',outcome_event_id=v_appointment_event,
-    outcome_source=p_appointment_source,outcome_tick=v_tick WHERE intake_id=p_intake_id;
+    outcome_source=p_appointment_source,outcome_actor_principal_id=p_authorised_by_principal_id,
+    outcome_tick=v_tick WHERE intake_id=p_intake_id;
   INSERT INTO sw_police.lifecycle_event(event_id,player_id,intake_id,personnel_id,career_id,event_kind,effective_tick,source_ref)
   VALUES (v_appointment_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'intake_accepted',v_tick,p_appointment_source),
          (v_appointment_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'personnel_appointed',v_tick,p_appointment_source);
@@ -285,6 +300,12 @@ BEGIN
 END
 $$;
 
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_player FROM PUBLIC, sw_game_readonly, sw_game_command;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_police FROM PUBLIC, sw_game_readonly, sw_game_command;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_police FROM PUBLIC, sw_game_readonly, sw_game_command;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_police FROM PUBLIC, sw_game_readonly, sw_game_command;
+REVOKE ALL ON SCHEMA sw_player, sw_police FROM PUBLIC;
+
 CREATE VIEW sw_police.player_career_status AS
 SELECT i.player_id,i.intake_id,i.status AS intake_status,i.requested_tick,
        c.career_id,c.career_stage,c.career_status,c.started_tick,
@@ -294,4 +315,5 @@ FROM sw_police.recruit_intake i
 LEFT JOIN sw_police.career_episode c ON c.player_id=i.player_id
 LEFT JOIN sw_police.personnel p ON p.personnel_id=c.personnel_id;
 
+REVOKE ALL ON sw_police.player_career_status FROM PUBLIC, sw_game_readonly, sw_game_command;
 COMMIT;
