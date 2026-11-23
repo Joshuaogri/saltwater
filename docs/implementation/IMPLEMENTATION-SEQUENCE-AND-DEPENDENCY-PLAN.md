@@ -253,3 +253,10 @@ This proves the trusted in-process composition path for one read-only player com
 The player command gateway now rejects empty input, malformed shell quoting and multi-token input before authorization or command dispatch. Only a single recognised command token reaches the authorization service. The gateway supplies its bound principal ID to `AuthorizationService.decide`; a credential for a different principal produces a `principal_mismatch` denial that is itself appended to the configured audit sink. No command is dispatched for that decision.
 
 Tests cover malformed/empty/multi-token input, wrong-principal denial and the corresponding audit record. This is still a trusted in-process command boundary; no public transport or production policy is enabled. The next increment is to bind accepted player intake to a principal and session, then compose a single trusted host entry point. Neon production remains unchanged.
+
+
+## 4I. PKG-004 proposal — accepted-player identity and session activation
+
+PKG-004 is drafted at docs/implementation/approval-packages/PKG-004-player-identity-session-activation.md and awaits explicit user approval. It defines the narrow transition from a resolved provider-neutral player principal to an immutable player/person binding and a durable session, gated on an accepted recruit career. The proposed transaction must bind the canonical person from the accepted personnel/career records and issue a digest-only session credential without granting permissions. It excludes public login transport, identity-provider selection, automatic grants and all Neon production writes. No PKG-004 implementation has started; its schema proposal, Python adapter and disposable PostgreSQL tests are contingent on approval.
+
+**Verification update:** the command-gateway hardening in section 4H passed the Python workflow and disposable PostgreSQL workflow on commit 50cd205b9d9971370b812d172822a7164317a7f0. The implementation-plan and PKG-004 proposal documents are committed separately on main; documentation commits do not substitute for implementation or test evidence.
