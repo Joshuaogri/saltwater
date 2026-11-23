@@ -160,6 +160,15 @@ class PlayerCommandInterface:
         return CommandResult(True, "\n".join(lines))
 
     def _start(self) -> CommandResult:
+        state = self.kernel.status()
+        if state.lifecycle == Lifecycle.PAUSED:
+            return CommandResult(False, "Simulation is paused. Use resume to continue.")
+        if state.lifecycle == Lifecycle.STOPPED:
+            # Re-entry is explicit: move through READY first. This does not
+            # restore player presence or advance time; the RUNNING transition
+            # below is the only operation that makes the player present.
+            self.kernel.transition(Lifecycle.READY, player_present=False)
+            state = self.kernel.status()
         state = self.kernel.transition(Lifecycle.RUNNING, player_present=True)
         return CommandResult(True, f"Active play started at world tick {state.world_tick}.")
 
