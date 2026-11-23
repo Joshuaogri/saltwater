@@ -99,6 +99,12 @@ BEGIN
   v_replayed_career := sw_police.accept_recruit_intake(v_intake,v_person_a,'Authorised recruitment decision',
     'pkg003-accept-replay',v_admin,'Player');
   IF v_career <> v_replayed_career THEN RAISE EXCEPTION 'appointment replay created a different career'; END IF;
+  BEGIN
+    PERFORM sw_police.accept_recruit_intake(v_intake,v_person_a,'Unauthorised replay','pkg003-replay-denied',v_unapproved,'Player');
+    RAISE EXCEPTION 'unauthorised replay unexpectedly returned career identity';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'unauthorised replay unexpectedly returned career identity' THEN RAISE; END IF;
+  END;
 
   SELECT count(*) INTO v_count FROM sw_people.person;
   IF v_count <> 3 THEN RAISE EXCEPTION 'accepted recruit did not create exactly one canonical person'; END IF;
