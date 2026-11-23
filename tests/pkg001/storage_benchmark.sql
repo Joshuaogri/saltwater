@@ -21,7 +21,7 @@ BEGIN
   END LOOP;
   UPDATE sw_runtime.state SET state=0,player_present=false WHERE singleton=1;
 END
-$;
+$$;
 
 SELECT 'people='||count(*) FROM sw_people.person;
 SELECT 'population_count='||living_included FROM sw_people.population_counter WHERE singleton=1;
