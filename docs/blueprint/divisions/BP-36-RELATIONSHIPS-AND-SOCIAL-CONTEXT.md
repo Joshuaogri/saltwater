@@ -61,7 +61,7 @@ It does not answer: whether a person is guilty, whether an allegation is true, w
 
 1. Saltwater is one fictional sovereign city-state, one city and one jurisdiction. No second playable city or external territory may be created.
 2. The total living population has a hard cap of **10,000 people**. Each person is counted once by BP-03, regardless of household, family, social-group, employment, police, community or other role.
-3. The old source blueprint's proposed opening population composition is superseded. BP-36 must not impose 9,000 residents plus 500 police or create a separate population reserve. BP-03's current approved canon controls population accounting.
+3. The binding opening population is 9,000 residents + 500 police = 9,500 living people. The remaining 500 is unused capacity headroom, not a separate population. The hard cap is 10,000 living people total. BP-03 owns the sole population ledger, identity and counting rules; BP-36 owns household and relationship semantics and must not create a separate population count.
 4. At least 10,000 businesses remain registered under BP-04. Social groups and memberships must not create duplicate business or organisation identities.
 5. Police is the deepest simulated institution. Social context must support policing, investigations and city life without expanding into a separate all-institutions deep simulation.
 6. Every person has one stable BP-03 identity. A person may hold multiple relationships, household memberships over time, group memberships and case roles without becoming multiple people.
