@@ -7,7 +7,7 @@ DECLARE
   pid integer;
   current_count integer;
 BEGIN
-  UPDATE sw_runtime.state SET state=1 WHERE singleton=1;
+  UPDATE sw_runtime.state SET state=1,player_present=true WHERE singleton=1;
   SELECT living_included INTO current_count
     FROM sw_people.population_counter WHERE singleton=1;
   IF current_count > 9999 THEN
