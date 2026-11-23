@@ -54,6 +54,13 @@ BEGIN
   IF OLD.bootstrap_open = false AND NEW.bootstrap_open = true THEN
     RAISE EXCEPTION 'bootstrap cannot be reopened after closure';
   END IF;
+  IF OLD.bootstrap_open = true AND NEW.bootstrap_open = false
+     AND NOT (OLD.state = 1 AND OLD.world_tick = 0) THEN
+    RAISE EXCEPTION 'bootstrap can close only in ready state at world tick zero';
+  END IF;
+  IF (NEW.calendar_day, NEW.minute_of_day) IS DISTINCT FROM (OLD.calendar_day, OLD.minute_of_day) THEN
+    RAISE EXCEPTION 'fictional calendar semantics are not yet approved';
+  END IF;
   IF NEW.state = 2 AND NEW.bootstrap_open THEN
     RAISE EXCEPTION 'bootstrap must be closed before runtime start';
   END IF;
@@ -103,6 +110,7 @@ CREATE INDEX simulation_event_tick_idx
   ON sw_core.simulation_event(world_tick, event_id);
 
 INSERT INTO sw_core.event_type(event_code, description) VALUES
+ ('RUNTIME_READY', 'Simulation runtime ready for initialisation'),
  ('RUNTIME_START', 'Simulation runtime started'),
  ('RUNTIME_PAUSE', 'Simulation paused'),
  ('RUNTIME_RESUME', 'Simulation resumed'),
@@ -147,7 +155,7 @@ BEGIN
     RAISE EXCEPTION 'event world_tick must equal the committed runtime tick';
   END IF;
 
-  IF event_code IN ('RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY') THEN
+  IF event_code IN ('RUNTIME_READY','RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY') THEN
     RETURN NEW;
   END IF;
 
