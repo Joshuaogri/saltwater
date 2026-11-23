@@ -215,14 +215,6 @@ BEGIN
     WHERE intake_id=p_intake_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'recruit intake does not exist'; END IF;
 
-  IF v_intake.status='accepted' THEN
-    SELECT career_id INTO STRICT v_career_id
-      FROM sw_police.career_episode
-      WHERE player_id=v_intake.player_id AND career_status IN ('active','suspended');
-    RETURN v_career_id;
-  END IF;
-  IF v_intake.status <> 'pending' THEN RAISE EXCEPTION 'only pending intake can be accepted'; END IF;
-
   SELECT EXISTS (
     SELECT 1 FROM sw_auth.principal p
     JOIN sw_auth.principal_role r ON r.principal_id=p.principal_id
@@ -231,6 +223,14 @@ BEGIN
       AND r.role_code='recruitment_approver' AND r.revoked_at IS NULL
   ) INTO v_actor_ok;
   IF NOT v_actor_ok THEN RAISE EXCEPTION 'appointment requires an active authorised recruitment approver'; END IF;
+
+  IF v_intake.status='accepted' THEN
+    SELECT career_id INTO STRICT v_career_id
+      FROM sw_police.career_episode
+      WHERE player_id=v_intake.player_id AND career_status IN ('active','suspended');
+    RETURN v_career_id;
+  END IF;
+  IF v_intake.status <> 'pending' THEN RAISE EXCEPTION 'only pending intake can be accepted'; END IF;
 
   SELECT world_tick INTO v_tick FROM sw_runtime.state
     WHERE singleton=1 AND state=2 AND player_present=true FOR SHARE;
