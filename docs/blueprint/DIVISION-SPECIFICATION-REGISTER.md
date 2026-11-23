@@ -112,6 +112,8 @@ Statuses are independent across specification, implementation, testing and verif
 43. BP-42: full security-and-permissions specification draft created; authentication/session policy, permission catalogue, classification, delegation, emergency access, audit retention, secret management, encryption, monitoring and incident-response rules remain open decisions.
 44. BP-43: full testing-and-quality-assurance specification draft created; test runner/CI, evidence retention, coverage thresholds, defect severity, load targets, storage benchmark methodology, recovery cadence and release gates remain open decisions.
 45. BP-44: full configuration-and-change-control specification draft created; configuration schema, approval authority matrix, change workflow, schema registry, migration tooling, environment promotion, audit retention and release manifest remain open decisions.
-46. All 44 division specification drafts now exist. Next: whole-blueprint semantic audit, gap resolution, cross-division consistency review and implementation planning; preserve the fixed 44-division structure.
+46. All 44 division specification drafts exist. The whole-blueprint semantic audit is now in progress; source mapping (228/228 IDs) and top-level section numbering are checked, and heading defects in BP-15 and BP-23–BP-26 were corrected. See [whole-blueprint semantic audit](SALTWATER-WHOLE-BLUEPRINT-SEMANTIC-AUDIT.md). Requirement-to-specification semantic reconciliation, ownership consistency and test adequacy remain open.
+
+47. Whole-blueprint semantic audit baseline recorded; source integrity and mapping passed, all 44 specification files and section sequences checked, five numbering defects corrected. Full requirement-to-specification semantic review remains in progress.
 
 **No Neon write has been made or authorised by these documents.**
