@@ -182,6 +182,8 @@ Measure row, table, index, TOAST, WAL and backup growth as relevant. Benchmark r
 
 Compression, deduplication and compaction are lossless with respect to meaning, chronology, provenance, source content, uncertainty, relationships, corrections and replay requirements. Case-relevant people and evidence are never dropped or downgraded to save storage. Support the fixed population/business constraints.
 
+**Implementation standard:** [Compact-storage design standard](../../storage/COMPACT-STORAGE-DESIGN.md). This applies across all divisions; BP-38 owns data architecture and byte measurement.
+
 ## 15. Security and information boundaries
 
 BP-42 owns security policy and classifications; BP-38 enforces the data boundary. Apply least privilege to player, officer, administrator, service, migration and operational identities. Separate read, write, export, schema-change and secret-management capabilities.
