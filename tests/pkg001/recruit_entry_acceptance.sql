@@ -162,6 +162,12 @@ BEGIN
   FROM sw_player.identity_binding b WHERE b.principal_id=v_player_principal;
   SELECT pg_column_size(s) INTO v_session_tuple_bytes
   FROM sw_auth.session s WHERE s.session_id=v_activation_session;
+  IF (SELECT active_person_id FROM sw_auth.session WHERE session_id=v_activation_session) <> v_bound_person THEN
+    RAISE EXCEPTION 'session active-person link does not match accepted recruit';
+  END IF;
+  IF EXISTS (SELECT 1 FROM sw_auth.permission_grant WHERE principal_id=v_player_principal) THEN
+    RAISE EXCEPTION 'player activation unexpectedly created a permission grant';
+  END IF;
   RAISE NOTICE 'PKG004_STORAGE binding_tuple_bytes=% session_tuple_bytes=% combined_tuple_bytes=%',
     v_binding_tuple_bytes,v_session_tuple_bytes,v_binding_tuple_bytes+v_session_tuple_bytes;
   BEGIN
