@@ -75,7 +75,14 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0005_player_identity_activation.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          delta=$((after-before))
+          echo "pkg004_database_bytes_before_schema=$before"
+          echo "pkg004_database_bytes_after_schema=$after"
+          echo "pkg004_schema_growth_bytes=$delta"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_player' ORDER BY 3 DESC;"
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/auth_persistence_acceptance.sql
       - name: Run PKG-001 database acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
