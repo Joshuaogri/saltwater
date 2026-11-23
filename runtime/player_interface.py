@@ -9,8 +9,10 @@ from __future__ import annotations
 import shlex
 from dataclasses import dataclass
 from typing import Callable
+from uuid import UUID
 
 from runtime.kernel import KernelError, Lifecycle, RuntimeKernel
+from runtime.recruitment import PostgresRecruitmentService, RecruitmentError
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +43,8 @@ HELP = """Saltwater commands
   help       Show available commands
   status     Show runtime and simulation clock
   profile    Show the active player profile
+  recruit    Request entry as a recruit (pending until authorised)
+  career     Inspect recruit intake and career status
   start      Enter active play
   pause      Pause the simulation
   resume     Resume active play
@@ -51,13 +55,17 @@ HELP = """Saltwater commands
 class PlayerCommandInterface:
     """Small command router; domain mutations remain with their owning systems."""
 
-    def __init__(self, kernel: RuntimeKernel, profile: PlayerProfile):
+    def __init__(self, kernel: RuntimeKernel, profile: PlayerProfile,
+                 recruitment: PostgresRecruitmentService | None = None):
         self.kernel = kernel
         self.profile = profile
+        self.recruitment = recruitment
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
             "status": self._status,
             "profile": self._profile,
+            "recruit": self._recruit,
+            "career": self._career,
             "start": self._start,
             "pause": self._pause,
             "resume": self._resume,
@@ -109,6 +117,47 @@ class PlayerCommandInterface:
                 f"Career ID: {p.career_id or 'not started'}",
             )),
         )
+
+
+    def _recruit(self) -> CommandResult:
+        if self.recruitment is None:
+            return CommandResult(False, "Recruitment service is not connected.")
+        try:
+            player_id = UUID(self.profile.player_id)
+            intake_id = self.recruitment.request_intake(
+                player_id, self.profile.display_name,
+                f"recruit-request:{player_id}",
+            )
+        except (ValueError, RecruitmentError) as exc:
+            return CommandResult(False, f"Recruit request unavailable: {exc}")
+        return CommandResult(
+            True,
+            f"Recruit intake {intake_id} is pending. No police appointment or career is active yet.",
+        )
+
+    def _career(self) -> CommandResult:
+        if self.recruitment is None:
+            return CommandResult(False, "Recruitment service is not connected.")
+        try:
+            player_id = UUID(self.profile.player_id)
+            records = self.recruitment.status(player_id)
+        except (ValueError, RecruitmentError) as exc:
+            return CommandResult(False, f"Career status unavailable: {exc}")
+        if not records:
+            return CommandResult(True, "No recruit intake or police career has been recorded.")
+        lines = []
+        for item in records:
+            lines.append(
+                f"Intake: {item.intake_status} (requested tick {item.requested_tick})"
+            )
+            if item.career_id is None:
+                lines.append("Career: not active; appointment outcome is pending")
+            else:
+                lines.append(
+                    f"Career: {item.career_stage}/{item.career_status}; "
+                    f"service {item.service_number}; standing {item.service_standing}"
+                )
+        return CommandResult(True, "\n".join(lines))
 
     def _start(self) -> CommandResult:
         state = self.kernel.transition(Lifecycle.RUNNING, player_present=True)
