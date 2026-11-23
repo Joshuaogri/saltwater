@@ -38,6 +38,14 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
         with self.assertRaises(Exception):
             self.kernel.advance_tick()
 
+    def test_recruit_and_career_commands_fail_honestly_without_domain_adapter(self):
+        recruit = self.interface.execute("recruit")
+        career = self.interface.execute("career")
+        self.assertFalse(recruit.ok)
+        self.assertIn("not connected", recruit.message)
+        self.assertFalse(career.ok)
+        self.assertIn("not connected", career.message)
+
     def test_start_cannot_bypass_bootstrap_gate(self):
         store = InMemoryRuntimeStore()
         kernel = RuntimeKernel(store)
