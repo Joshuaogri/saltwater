@@ -655,3 +655,29 @@ The full audit must specifically test these high-risk boundaries:
 
 **S25–S32 result:** All 24 source requirements and eight source acceptance tests are semantically represented in mapped draft specifications. The fixed BP-01–BP-44 structure and source JSON were not changed. Acceptance tests remain unexecuted; individual division approval, implementation and verification statuses are unchanged. No Neon connection, migration, seed or write was performed.
 
+
+
+## 16. Integrated cross-blueprint consistency findings: first correction set
+
+**Scope:** Integrated scan of all 44 target division specifications, the master blueprint, crosswalk, source JSON and audit/register. The scan compared target references against the fixed BP-01–BP-44 register, searched for obsolete project/city names and population ceilings, and reconciled population canon and source-to-target ownership. This is a continuing integrated pass, not a declaration that every possible contradiction has been exhausted.
+
+### Finding A20 — invalid target-division reference in BP-35 observability ownership
+
+**Defect:** BP-35 §2.1 referred to “BP-51 source requirements” as though BP-51 were a target division. The target architecture has exactly 44 divisions. S51 is the original source division “Operations, observability and maintenance” and is mapped across BP-09/BP-35/BP-38/BP-39/BP-40/BP-41/BP-43 (with S51.R02/R03 also involving BP-44).
+
+**Resolution:** Replaced the invalid BP-51 target reference with explicit ownership: BP-35 runtime telemetry; BP-38 database/record-layer health; BP-39 backup/recovery health; BP-09 physical police-resource readiness; BP-40 operator-facing presentation; BP-41 alert/report semantics and delivery; BP-43 test evidence. Source S51 is explicitly identified as a mapped source domain, not a target division.
+
+**Verification:** BP-35 was updated against its current main-branch blob and re-fetched for exact wording. No division was added and no crosswalk mapping was changed.
+
+### Finding A21 — obsolete population-canon supersession statements in BP-35 and BP-36
+
+**Defect:** BP-35's S03.R01 traceability row and final traceability note incorrectly stated that the 9,000-resident + 500-police opening composition was superseded. BP-36 §3.3 repeated an obsolete supersession statement, contradicting BP-01, BP-03, BP-36's own later canon clarification and the approved master blueprint. The binding opening population remains 9,500 living people: 9,000 residents + 500 police; 500 is unused headroom; 10,000 is the hard cap.
+
+**Resolution:** Corrected both BP-35 traceability statements and BP-36 §3.3. BP-03 remains sole owner of population identity, ledger, counting and capacity. BP-35 only coordinates atomic event execution/capacity checks; BP-36 only owns relationship/household semantics. No separate population count or reserve population is introduced.
+
+**Verification:** Both specifications were updated against their current main-branch blobs and re-fetched. The corrected statements agree with BP-01/BP-03 and the binding master blueprint. This does not authorise seeding, generation or Neon writes.
+
+**Integrated scan observations:** All 44 BP specification files are present. The scan found no obsolete city/project names, no 199,999 population ceiling and no other BP-45–BP-52 target reference in the division files; the BP-51 reference recorded above was the one invalid target reference found. The original 52-division JSON remains preserved as source material; its historic DRAFT_FOR_USER_REVIEW metadata is not the authority for current user approval, which is recorded in the approved Saltwater master blueprint and governance register.
+
+**Status:** A20 and A21 are corrected in the affected specifications. The integrated contradiction/interface/canon pass continues; this first correction set does not yet certify every cross-division interface, dependency or duplicated statement as defect-free. No Neon connection, migration, seed, import or write was performed.
+
