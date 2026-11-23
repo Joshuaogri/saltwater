@@ -197,7 +197,7 @@ Identity mismatch; no valid detention authority; arrest authority disputed; cust
 
 BP-03 identity/population; BP-04 city facilities and healthcare provider registry; BP-05 mandate; BP-06 personnel; BP-08 deployment; BP-09 resources; BP-12 incidents; BP-15 case lifecycle; BP-16 investigation; BP-17 victim/witness; BP-18 suspect/offender roles; BP-19 interviews; BP-23 evidence custody; BP-25 arrest/warrant/search/seizure; BP-27 legal process; BP-28 court orders; BP-29 corrections; BP-30 governance; BP-31 professional standards; BP-33 workforce; BP-35 engine; BP-37 time; BP-38 records; BP-39 persistence; BP-42 security. BP-26 owns police-custody lifecycle and handovers only; it must not overwrite another division's authoritative facts.
 
-## 26. Acceptance tests
+## 34. Acceptance tests
 
 These are specification acceptance criteria, not executed results. BP-43 owns test execution and reproducible evidence.
 
@@ -395,7 +395,7 @@ These are specification acceptance criteria, not executed results. BP-43 owns te
 - **CUSTODY-AT-192** — No Neon write is authorised by this specification.
 - **CUSTODY-AT-193** — All source-mapped requirements and tests are traceable to this division.
 
-## 27. Source traceability
+## 35. Source traceability
 
 The original 52-division source JSON remains unchanged. Source IDs refer to original source-array positions (1-based).
 
@@ -410,7 +410,7 @@ The original 52-division source JSON remains unchanged. Source IDs refer to orig
 
 Cross-cutting X03 applies: every time-dependent fact is effective-dated and historically queryable; BP-37 is the sole clock and pause freezes all time-dependent activity. X04 requires capacity and resource changes to reconcile atomically. X05 preserves fact/allegation/intelligence/evidence/opinion/conclusion distinctions. Global constraints include one-city Saltwater, 10,000 living-person cap, permanent promotion of case-connected people, player agency and exact bingo reveal firewall.
 
-## 28. Open decisions and risk register
+## 36. Open decisions and risk register
 
 ### Open fictional decisions
 1. Exact custody authority sources, eligible receiving officers and acceptance criteria.
@@ -444,7 +444,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 | Release treated as acquittal | Separate custody and court status |
 | Hidden truth leaks through custody | Exact bingo firewall and NPC knowledge boundaries |
 
-## 29. Design completion checklist
+## 37. Design completion checklist
 
 - [ ] Custody offer, acceptance/rejection and booking specified.
 - [ ] Identity verification and correction specified.
@@ -466,7 +466,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 - [ ] Open decisions remain explicit; no real-world law silently imported.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
-## 30. Status and next dependencies
+## 38. Status and next dependencies
 
 This is a complete division design draft, not approved policy or implementation evidence.
 
