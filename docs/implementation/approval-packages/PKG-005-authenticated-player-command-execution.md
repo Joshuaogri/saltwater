@@ -1,6 +1,6 @@
 # PKG-005 — authenticated player command execution
 
-**Status:** Approved by user 2026-11-24; implementation in progress; verification pending  
+**Status:** Approved; implementation complete; Python and disposable PostgreSQL verification passed  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Dependencies:** PKG-001, PKG-002, PKG-003 and PKG-004  
@@ -104,4 +104,8 @@ The user explicitly approved PKG-005 on 2026-11-24 for the bounded repository im
 - Extended `.github/workflows/pkg001-disposable-postgres.yml` to run the new unit and integration suites.
 - Implementation commits: `b53c6d1f4e5ad5eab98bffd7ad1df7b70cf72b72`, `53d7e9f56cdd07d0183af23843f7a9180e04232f`, `33829f5de6dd8984e95a8e6f913110b316d51c87`, `1d25909fe07fd4cc5abb19aa96ee70196b8510fb`, `8b86fe3fbadf3d387c793449ca565bc0656f12bf`, `2b8cc4456ff3732f5af4e55b882f42bf87bd7b3b`.
 
-**Current state:** implementation committed directly to `main`; automated verification is pending. No schema changes are proposed or added. No Neon production operation has been performed.
+**Verification result:** Passed on `main` commit `3937cc9cf6273948c21b38179d299715b80ed96d`. Python/kernel workflow and the full disposable PostgreSQL workflow passed. The end-to-end test confirmed accepted-recruit activation, authoritative profile/career loading, explicit command grant, durable allow audit, immediate session-revocation denial and durable denial audit. The same workflow also passed the 10,000-person cap/concurrency checks, database access boundary and backup/restore checks. Database migration validation passed. See [PKG-005 disposable PostgreSQL run](https://github.com/Joshuaogri/saltwater/actions/runs/45292164170) and [database migration validation](https://github.com/Joshuaogri/saltwater/actions/runs/45292164184).
+
+A pre-existing `PostgresRecruitmentService.accept_intake` SQL call had seven placeholders for eight supplied arguments; the integration path exposed and corrected this mismatch. Disposable fixtures were adjusted to preserve one-way bootstrap semantics and use the committed runtime tick. No new persistent schema was added. Neon production remains unchanged.
+
+**Final state:** design approved; implementation complete; Python tests passed; disposable PostgreSQL integration and regression workflows passed; implementation verified. Production activation/transport: not proposed and not approved.
