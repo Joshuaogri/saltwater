@@ -212,6 +212,7 @@ After this crosswalk passes its audit, develop BP-01 through BP-44 in the fixed 
 | A12 | Operations/observability lacked operator-facing visibility. | Added BP-40 to S51.R01. | BP-41 reports/alerts; BP-40 displays; BP-43 tests. |
 | A13 | Some broad cross-cutting mappings were too narrow to ensure universal application. | Expanded X01–X10 destinations. | Each BP specification must state which global invariants it implements and how. |
 | A14 | S14 education/research mapping did not clearly assign individual non-police learner enrolment, attendance and education history; BP-32 scope was police training. | Added BP-03 for person-level education participation/history; clarified BP-04 provider-level programmes/capacity/facilities; constrained BP-32 to police training/credentials; retained BP-07/BP-33/BP-37 ownership. | BP-03/BP-04/BP-32 specifications, S14.R01/S14.T01 mapping and acceptance tests must preserve this boundary. |
+| A15 | S13 healthcare service requirements were represented primarily as provider identity/capacity and police-linked care interfaces; appointment, treatment-event and public-health alert metadata lacked an explicit proportionate service-record contract. | Expanded BP-04 provider operations and event contracts; clarified BP-03 person-level injury/death/care references, BP-17/BP-26 case support, BP-23/BP-24 evidence/forensic boundaries and BP-42 privacy. | Healthcare remains a support-level service, not a second deep simulator; no duplicate clinical chart or unrestricted health data. |
 
 **Audit conclusion:** v1.1 resolves identified omissions in traceability and clarifies ownership interfaces without changing BP-01–BP-44. This is a documentary semantic audit, not proof that the full target specifications are complete. Requirements with multi-domain destinations remain subject to division-level interface and acceptance-test design. No Neon changes are authorised.
 
@@ -233,7 +234,7 @@ Each source division was reviewed against its complete requirement and test text
 | S10 | Public finance | Reviewed | BP-34 owns accounting and transaction reconciliation. |
 | S11 | Government/public administration | Reviewed | BP-30 owns public institutions and authority; BP-04 represents entities; BP-31/BP-34 handle oversight/procurement. |
 | S12 | Civil registry/public records | Reviewed | BP-38 owns record standards; source-domain owners retain authoritative facts. |
-| S13 | Healthcare/public health | Reviewed | BP-04 represents providers; BP-17/BP-24/BP-26/BP-42 own police/medical interfaces and access. |
+| S13 | Healthcare/public health | Revised | BP-04 owns proportionate provider capacity/appointments/treatment-event metadata/public-health alerts; BP-03 person-level injury/death/care references; BP-17/BP-26 case support; BP-23/BP-24 evidence/forensics; BP-42 privacy. |
 | S14 | Education/training/research | Revised | BP-03 owns person-level education participation/history; BP-04 provider/facility/capacity; BP-32 police training; BP-07 career gates; BP-33 staff; BP-37 schedules. |
 | S15 | Social care/welfare | Reviewed | BP-04 represents services; BP-17 and BP-30 own victim-support and public-service interfaces. |
 | S16 | Utilities/infrastructure | Reviewed | BP-04 owns operators/assets; BP-35 propagates outages; BP-09/BP-12 consume effects. |
