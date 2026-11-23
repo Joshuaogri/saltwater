@@ -223,6 +223,15 @@ This is an application assembly increment, not a deployed ChatGPT/API transport 
 **Next:** run the updated CI workflow; then add a disposable-PostgreSQL integration test that constructs the full composition, verifies a persisted session, records authorization audit, and executes an allowed read-only player command. Do not add broad default grants or enable production access as part of this increment.
 
 
+## 4G. Game-native PostgreSQL session lifecycle
+
+`runtime/postgres_sessions.py` provides `PostgresSessionLifecycle` for trusted server-side session issuance and revocation. Issuance requires an active principal and an active policy version, creates a high-entropy opaque credential, and persists only its SHA-256 digest. Session identity and expiry are immutable; revocation uses the existing one-way session lifecycle trigger. The composed player application exposes this service as `sessions`; it does not add a public endpoint, identity provider, automatic permission grant, or default access policy.
+
+Disposable PostgreSQL tests verify issuance, digest-only persistence, successful verification, one-time revocation, repeated-revocation rejection, inactive-principal rejection and invalid lifetime rejection. The earlier grant-provider test failure was a test-harness mistake: it attempted to fetch a result from an INSERT without `RETURNING`; the test has been corrected. The replacement CI run must pass before this increment is marked verified. Neon production remains untouched.
+
+**Next:** bind player creation/intake to a principal and session only after the recruit/player identity workflow has an explicit accepted outcome; then add a single trusted host entry point and full command coverage. No public transport is implied.
+
+
 ## 4F. Database-backed permission grant resolution
 
 `runtime/postgres_security.py` now provides `PostgresGrantProvider`, which loads only unrevoked, currently valid grants belonging to the active policy version. `AuthorizationService` accepts this provider and reloads grants for each decision, so grant revocation and policy activation changes take effect without restarting or rebuilding the player application. The adapter is read-only; it does not issue grants or change policy.
