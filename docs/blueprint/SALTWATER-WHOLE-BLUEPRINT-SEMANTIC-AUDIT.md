@@ -113,6 +113,24 @@ The first targeted scan of BP-01–BP-08 was performed against their mapped sour
 
 **Preliminary result:** no contradiction with the inspected binding Saltwater canon was identified in this first scan. This does not certify complete semantic coverage: each source requirement/test must still be checked against every mapped target division and its acceptance criteria.
 
+### Semantic finding A14 — education-provider and learner-record ownership
+
+<badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
+
+**Source:** S14.R01 and S14.T01.
+
+**Gap:** The source requires schools, colleges and training providers, enrolment, attendance, staff, qualifications, schedules and facilities. BP-32's actual scope is the police training/professional-development system, while BP-04 originally limited itself to provider identity and service profile and BP-03 only referenced education/qualification facts. The original mapping did not explicitly assign individual non-police learner enrolment and attendance history.
+
+**Resolution within the existing 44 divisions:**
+- **BP-03:** owns person-level school/college/vocational education participation, enrolment state, attendance/participation history, completion/withdrawal and qualification references. Six acceptance criteria AC-EDU-01–06 were added.
+- **BP-04:** owns school/college/provider identity, programmes offered, term/session schedule references, enrolment capacity/availability, staff-role references, qualification-issuer profile and facilities. Individual learner records remain BP-03-owned.
+- **BP-32:** remains authoritative for police training and police-training credentials; general school/college learner records are explicitly excluded. Boundary test TRN-AT-161 was added; its acceptance-test ID sequence now contains 161 unique IDs.
+- **BP-07:** retains police career/qualification gate decisions; **BP-33** owns education-provider staff employment; **BP-37** owns canonical time/schedules; **BP-38** owns physical schema and constraints.
+
+**Crosswalk v1.3:** S14.R01 now maps to BP-03/BP-04/BP-07/BP-32/BP-33/BP-37; S14.T01 maps to BP-03/BP-04/BP-07/BP-32/BP-38. The S14 division audit status changed from Reviewed to Revised. The original 52-division source wording was not changed.
+
+**Verification:** BP-03 person education records, six new acceptance criteria and traceability; BP-04 provider-level education facts, event types and traceability; BP-32 general-education boundary and TRN-AT-161; and both S14 crosswalk rows were fetched after commit and checked. This resolves the identified ownership gap at specification level; tests have not been executed.
+
 ## 7. Cross-division invariants and boundaries to reconcile
 
 The full audit must specifically test these high-risk boundaries:
@@ -137,7 +155,7 @@ The full audit must specifically test these high-risk boundaries:
 | Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
 | Fixed 44-division structure | PASSED | Master blueprint and all 44 spec files present |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
-| Requirement-to-specification semantic coverage | IN_PROGRESS | Must reconcile all mapped items against target content |
+| Requirement-to-specification semantic coverage | IN_PROGRESS | S14.R01/S14.T01 gap A14 resolved in BP-03/BP-04/BP-32 and crosswalk v1.3; remaining mapped items still require reconciliation |
 | Cross-division ownership and interface consistency | NOT_STARTED | Requires completed division-level semantic review |
 | Acceptance-test adequacy against source wording | NOT_STARTED | Must verify tests prove source intent, not just exist |
 | Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; full 44-division consistency pass remains |
@@ -146,7 +164,7 @@ The full audit must specifically test these high-risk boundaries:
 
 ## 9. Required next sequence
 
-1. Complete BP-01–BP-08 source-to-specification semantic reconciliation, recording every source ID, mapped destination, evidence section, result, defect and resolution.
+1. Continue source-to-specification semantic reconciliation in numeric order; BP-01–BP-08 received an initial canon/ownership scan, and S14.R01/S14.T01 has one resolved target-ownership gap. Record every source ID, mapped destination, evidence section, result, defect and resolution.
 2. Continue BP-09–BP-16, then BP-17–BP-24, BP-25–BP-32 and BP-33–BP-44 in numeric order.
 3. Resolve cross-division ownership conflicts and update the relevant specifications and crosswalk without changing the 44-division structure.
 4. Validate acceptance tests against each source requirement and record evidence requirements separately from execution results.
