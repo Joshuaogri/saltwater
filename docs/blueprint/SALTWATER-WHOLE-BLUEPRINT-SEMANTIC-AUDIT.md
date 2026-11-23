@@ -283,23 +283,23 @@ The full audit must specifically test these high-risk boundaries:
 | Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
 | Fixed 44-division structure | PASSED | Master blueprint and all 44 spec files present |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
-| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare A15, S14 education A14, S17 public transport A16 and S37 custody-clock A17 mapping gaps resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
-| Cross-division ownership and interface consistency | NOT_STARTED | Requires completed division-level semantic review |
-| Acceptance-test adequacy against source wording | NOT_STARTED | Must verify tests prove source intent, not just exist |
-| Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; full 44-division consistency pass remains |
+| Requirement-to-specification semantic coverage | IN_PROGRESS | Detailed item-by-item reconciliation S33–S52 complete (including all source requirements and tests); S01–S32 still require the same detailed review |
+| Cross-division ownership and interface consistency | IN_PROGRESS | Ownership boundaries reviewed for S33–S52; full 44-division consistency pass remains |
+| Acceptance-test adequacy against source wording | IN_PROGRESS | Source tests S33–S52 checked against mapped acceptance criteria; S01–S32 and full test-quality pass remain |
+| Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; detailed domain review S33–S52 complete; full 44-division consistency pass remains |
 | Design approval | NOT_APPROVED | User retains approval authority |
 | Implementation / test execution / verification | NOT_STARTED | No implementation evidence asserted |
 
 ## 9. Required next sequence
 
-1. Continue source-to-specification semantic reconciliation in numeric order; BP-01–BP-08 received an initial canon/ownership scan, and S14.R01/S14.T01 has one resolved target-ownership gap. Record every source ID, mapped destination, evidence section, result, defect and resolution.
-2. Continue BP-09–BP-16, then BP-17–BP-24, BP-25–BP-32 and BP-33–BP-44 in numeric order.
-3. Resolve cross-division ownership conflicts and update the relevant specifications and crosswalk without changing the 44-division structure.
-4. Validate acceptance tests against each source requirement and record evidence requirements separately from execution results.
-5. Re-run whole-blueprint canon, traceability, numbering, register, dependency and consistency checks.
-6. Only after the audit is complete, prepare an implementation plan. Any Neon write remains separately gated by current measured baseline, credible size estimate, explicit user approval and post-write measurement.
+1. Complete detailed source-to-specification semantic reconciliation for S01–S08, beginning with BP-01–BP-08. Their prior work was an initial canon/ownership scan, not full item-by-item sign-off. Preserve resolved findings A14–A17 and verify each against exact source requirements, destination sections and acceptance criteria.
+2. Continue S09–S16, then S17–S24 and S25–S32 in numeric order. S33–S52 have detailed item-by-item reconciliation recorded; do not repeat those reviews unless a later change affects them.
+3. For each remaining source item, record every source ID, mapped destination, evidence section, result, defect and resolution. Resolve ownership conflicts and update relevant specifications/crosswalk without changing the 44-division structure.
+4. After S01–S32 are reconciled, perform a whole-blueprint pass for canon propagation, cross-division ownership, acceptance-test adequacy, traceability, numbering, register accuracy and dependency consistency.
+5. Keep test definitions distinct from execution results. No test is passed without reproducible evidence against the stated target.
+6. Only after the full audit is complete, prepare an implementation plan. Any Neon write remains separately gated by current measured baseline, credible size estimate, explicit user approval and post-write measurement.
 
-**Current conclusion:** Source mapping is complete and document structure has been corrected. The whole-blueprint semantic audit is not complete; no claim of full design completeness, implementation, test execution or verification is made.
+**Current conclusion:** Source mapping is complete and document structure has been corrected. Detailed item-by-item semantic reconciliation is complete for S33–S52; S01–S32 and the final whole-blueprint consistency pass remain. No claim of full design completeness, implementation, test execution or verification is made.
 
 
 ## 7. Detailed semantic reconciliation: S33–S36
