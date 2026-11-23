@@ -1,7 +1,7 @@
 """PKG-005 authenticated player context and command runtime tests."""
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
-from types import SimpleNamespace
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
@@ -229,11 +229,8 @@ class PlayerCommandRuntimeTests(unittest.TestCase):
         self.assertFalse(runtime.execute("unknown", "profile").ok)
 
         self.verifier.session = make_session()
-        self.verifier.session = self.verifier.session.__class__(
-            **{
-                **self.verifier.session.__dict__,
-                "active_person_id": None,
-            }
+        self.verifier.session = replace(
+            self.verifier.session, active_person_id=None
         )
         self.assertFalse(runtime.execute("no-person", "profile").ok)
 
