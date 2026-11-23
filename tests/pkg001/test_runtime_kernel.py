@@ -59,6 +59,23 @@ class RuntimeKernelTests(unittest.TestCase):
         self.assertEqual(self.kernel.status().world_tick, 1)
         self.assertEqual(self.kernel.store.events[-1].world_tick, 1)
 
+    def test_recovery_and_safe_halt_freeze_world_time(self):
+        self.start()
+        self.kernel.advance_tick()
+        self.kernel.transition(Lifecycle.RECOVERING)
+        with self.assertRaises(KernelError):
+            self.kernel.advance_tick()
+        with self.assertRaises(KernelError):
+            self.kernel.record("INCIDENT_CREATED")
+        self.kernel.transition(Lifecycle.SAFE_HALT)
+        with self.assertRaises(KernelError):
+            self.kernel.advance_tick()
+        self.kernel.transition(Lifecycle.RECOVERING)
+        self.kernel.transition(Lifecycle.READY)
+        self.assertEqual(self.kernel.status().world_tick, 1)
+        self.kernel.transition(Lifecycle.RUNNING, player_present=True)
+        self.assertEqual(self.kernel.advance_tick().world_tick, 2)
+
 
 if __name__ == "__main__":
     unittest.main()
