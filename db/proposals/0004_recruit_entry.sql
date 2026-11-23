@@ -95,12 +95,6 @@ CREATE TABLE sw_police.lifecycle_event (
   PRIMARY KEY (event_id,event_kind)
 );
 
-CREATE FUNCTION sw_police.reject_history_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $$
-BEGIN
-  RAISE EXCEPTION 'police lifecycle history is append-only';
-END
-$$;
 CREATE TRIGGER police_lifecycle_history_immutable
 BEFORE UPDATE OR DELETE ON sw_police.lifecycle_event
 FOR EACH ROW EXECUTE FUNCTION sw_police.reject_history_mutation();
