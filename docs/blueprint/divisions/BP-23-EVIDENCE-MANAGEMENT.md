@@ -163,7 +163,7 @@ Unknown finder/source/time/location; item before scene designation; several item
 
 BP-22 supplies scene/recovery context; BP-23 registers exhibit and owns custody after accepted transfer. BP-20/BP-19/BP-21 remain authoritative for source records; BP-23 links/registers a specific evidential copy. BP-24 owns examination methods/results; BP-25 seizure authority; BP-27 disclosure/prosecution; BP-28 court rulings; BP-37 time; BP-38/BP-39 data/persistence; BP-42 security. Dependency failure leaves a pending/unresolved reference and prohibits false success. No division silently mutates another's authoritative record.
 
-## 24. Acceptance tests
+## 28. Acceptance tests
 
 These are design criteria, not executed results. BP-43 owns test execution and reproducible evidence.
 
@@ -294,7 +294,7 @@ These are design criteria, not executed results. BP-43 owns test execution and r
 - **EVID-AT-125** — Every visual traces to source exhibit/version records.
 - **EVID-AT-126** — BP-43 test status is not inferred from specification creation.
 
-## 25. Source traceability
+## 29. Source traceability
 
 The original source JSON and 52→44 crosswalk remain unchanged. Source IDs use source division number and original array order.
 
@@ -336,7 +336,7 @@ The original source JSON and 52→44 crosswalk remain unchanged. Source IDs use 
 
 Cross-cutting X01–X10 apply where relevant: one-city canon and bounded population; canonical identity; causal/time-valid records; provenance; fact/allegation/inference/evidence/finding separation; immutable originals and additive corrections; player agency and exact reveal firewall; time freeze; storage/persistence integrity; text-first operation with optional traceable visuals.
 
-## 26. Open decisions and risk register
+## 30. Open decisions and risk register
 
 ### Open decisions
 1. Exhibit ID format and human-readable label convention.
@@ -372,7 +372,7 @@ Cross-cutting X01–X10 apply where relevant: one-city canon and bounded populat
 | Court outcome rewrites history | Versioned court-use references |
 | Hidden truth leaks through metadata | Exact reveal firewall across outputs |
 
-## 27. Design completion checklist
+## 31. Design completion checklist
 
 - [ ] Exhibit identity, registration, versioning and classification specified.
 - [ ] Recovery/source provenance and uncertainty specified.
@@ -393,7 +393,7 @@ Cross-cutting X01–X10 apply where relevant: one-city canon and bounded populat
 - [ ] Open decisions remain explicit; no policy invented.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
-## 28. Status and next dependencies
+## 32. Status and next dependencies
 
 This is a complete division design draft, not approved policy or implementation evidence.
 
