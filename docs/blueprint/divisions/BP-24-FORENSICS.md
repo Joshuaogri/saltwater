@@ -195,7 +195,7 @@ No suitable discipline; no qualified examiner; resource unavailable; calibration
 
 BP-22 owns scene control, search and original observations; BP-23 owns exhibit identity, packaging, custody and sample inventory; BP-24 owns examination work/results. BP-16 owns investigative plans and inferences; BP-21 owns intelligence; BP-19 interviews; BP-20 surveillance; BP-27 legal disclosure/prosecution; BP-28 courts. BP-09 owns physical equipment/facility inventory; BP-06/BP-32 own personnel and qualifications; BP-37 time; BP-38/BP-39 data and persistence; BP-42 security. BP-24 references, requests and returns data across these boundaries but never silently mutates another division's authoritative records.
 
-## 26. Acceptance tests
+## 33. Acceptance tests
 
 These are specification acceptance criteria, not executed results. BP-43 owns test execution and reproducible evidence.
 
@@ -343,7 +343,7 @@ These are specification acceptance criteria, not executed results. BP-43 owns te
 - **FORENSIC-AT-142** — A visual never silently contradicts authoritative text.
 - **FORENSIC-AT-143** — Every conclusion identifies method, source material, limitations and examiner.
 
-## 27. Source traceability
+## 34. Source traceability
 
 The 52-division source JSON remains unchanged. IDs refer to original source-array positions (1-based). The BP-24 crosswalk mapping is retained; this specification expands its mapped intent without changing the 44-division structure.
 
@@ -364,7 +364,7 @@ The 52-division source JSON remains unchanged. IDs refer to original source-arra
 
 Cross-cutting X05, X06 and X08 apply: preserve distinctions among fact/allegation/estimate/inference/intelligence/opinion/conclusion/finding; preserve originals and additive corrections; text-first gameplay with optional visuals that cannot contradict authoritative records. Other global rules apply through BP-01 and relevant owner divisions, including one-city canon, 10,000-person hard cap, time freeze, player agency and exact bingo reveal firewall.
 
-## 28. Open decisions and risk register
+## 35. Open decisions and risk register
 
 ### Open decisions
 1. Discipline catalogue initial breadth and versioning governance.
@@ -401,7 +401,7 @@ Cross-cutting X05, X06 and X08 apply: preserve distinctions among fact/allegatio
 | Visuals contradict records | Canonical data lineage and text authority |
 | External result silently adopted | Attribution, scope and review |
 
-## 29. Design completion checklist
+## 36. Design completion checklist
 
 - [ ] Discipline catalogue and capability model specified.
 - [ ] Request, authority, triage and acceptance lifecycle specified.
@@ -422,7 +422,7 @@ Cross-cutting X05, X06 and X08 apply: preserve distinctions among fact/allegatio
 - [ ] Open decisions remain explicit; no policy invented.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
-## 30. Status and next dependencies
+## 37. Status and next dependencies
 
 This is a complete division design draft, not approved policy or implementation evidence.
 
