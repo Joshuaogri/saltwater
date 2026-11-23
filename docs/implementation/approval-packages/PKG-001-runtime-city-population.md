@@ -71,7 +71,7 @@ One persisted singleton runtime state owns:
 
 The runtime service is the only authorised coordinator of state transitions and due work. A domain handler validates and mutates its own records. The runtime does not decide domain truth.
 
-Every event has a stable ID, event type/version, world tick, optional causation/correlation references and optional idempotency key. Domain participants and locations are typed references, not copied profiles. A retry with the same idempotency key cannot repeat the domain effect.
+Every event has a stable ID, event type/version, world tick, optional causation/correlation references and optional idempotency key. Domain participants and locations are typed references, not copied profiles. A retry with the same idempotency key cannot repeat the domain effect. A one-time bootstrap window permits reviewed initial geography/person records at tick zero; it must be closed before the runtime can start and cannot be reopened.
 
 **Pause rule:** world tick may advance only from a committed running state while player-present is true. No scheduler, NPC, event queue, narrative generation or recovery routine may advance fictional time while stopped, paused or absent. Technical audit timestamps may continue; they are not fictional time.
 
@@ -90,9 +90,9 @@ Proposed countability model has three scope states:
 - 1 included — counts if living;
 - 2 excluded — does not count.
 
-The database serialises concurrent admissions before checking the cap. The 10,001st living included person is rejected atomically. Roles and memberships are separate future domain links and do not alter the count.
+A transactional singleton counter serialises concurrent admissions and is reconciled against the canonical person-state rows. The 10,001st living included person is rejected atomically. Person identities, spatial identities and their histories cannot be deleted or silently rewritten. Roles and memberships are separate future domain links and do not alter the count.
 
-No person seed is included. The 9,500 opening population requires a separate, fully reviewed seed package with unique identities and a measured storage estimate.
+No person seed is included. The 9,500 opening population requires a separate, fully reviewed seed package with unique identities and a measured storage estimate. The bootstrap window is a one-time initialisation facility, not a general bypass of runtime controls.
 
 ## 6. Files prepared
 
