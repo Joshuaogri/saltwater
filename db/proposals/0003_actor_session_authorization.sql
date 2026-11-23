@@ -51,9 +51,11 @@ CREATE TABLE sw_auth.principal_role (
   assigned_at timestamptz NOT NULL DEFAULT now(),
   assigned_by uuid REFERENCES sw_auth.principal(principal_id),
   revoked_at timestamptz,
-  PRIMARY KEY (principal_id,role_code),
+  assignment_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   CHECK (revoked_at IS NULL OR revoked_at >= assigned_at)
 );
+CREATE UNIQUE INDEX principal_role_one_active_idx
+  ON sw_auth.principal_role(principal_id,role_code) WHERE revoked_at IS NULL;
 CREATE INDEX principal_role_active_idx ON sw_auth.principal_role(principal_id) WHERE revoked_at IS NULL;
 
 CREATE TABLE sw_auth.permission_grant (
@@ -98,9 +100,41 @@ BEGIN
   RAISE EXCEPTION '% is append-only; record a new version or lifecycle event', TG_TABLE_NAME;
 END
 $$;
-CREATE TRIGGER policy_version_immutable
+CREATE FUNCTION sw_auth.guard_policy_version_change() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'policy versions cannot be deleted'; END IF;
+  IF (NEW.policy_version,NEW.created_at,NEW.description)
+     IS DISTINCT FROM (OLD.policy_version,OLD.created_at,OLD.description) THEN
+    RAISE EXCEPTION 'policy version definitions are immutable';
+  END IF;
+  IF OLD.active=false OR NEW.active=true THEN
+    RAISE EXCEPTION 'a policy version may only be deactivated once';
+  END IF;
+  RETURN NEW;
+END
+$;
+CREATE TRIGGER policy_version_lifecycle
 BEFORE UPDATE OR DELETE ON sw_auth.policy_version
-FOR EACH ROW EXECUTE FUNCTION sw_auth.reject_immutable_change();
+FOR EACH ROW EXECUTE FUNCTION sw_auth.guard_policy_version_change();
+
+CREATE FUNCTION sw_auth.guard_role_assignment_change() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  IF TG_OP='DELETE' THEN RAISE EXCEPTION 'role assignments cannot be deleted'; END IF;
+  IF (NEW.assignment_id,NEW.principal_id,NEW.role_code,NEW.assigned_at,NEW.assigned_by)
+     IS DISTINCT FROM (OLD.assignment_id,OLD.principal_id,OLD.role_code,OLD.assigned_at,OLD.assigned_by) THEN
+    RAISE EXCEPTION 'role assignment facts are immutable';
+  END IF;
+  IF OLD.revoked_at IS NOT NULL OR NEW.revoked_at IS NULL THEN
+    RAISE EXCEPTION 'a role assignment may only be revoked once';
+  END IF;
+  RETURN NEW;
+END
+$;
+CREATE TRIGGER role_assignment_lifecycle
+BEFORE UPDATE OR DELETE ON sw_auth.principal_role
+FOR EACH ROW EXECUTE FUNCTION sw_auth.guard_role_assignment_change();
 CREATE TRIGGER auth_audit_immutable
 BEFORE UPDATE OR DELETE ON sw_auth.audit
 FOR EACH ROW EXECUTE FUNCTION sw_auth.reject_immutable_change();
