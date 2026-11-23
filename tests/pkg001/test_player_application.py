@@ -77,6 +77,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             action="player.command.status",
             resource=f"player:{commands.profile.player_id}",
             purpose="gameplay",
+            expected_principal_id=principal_id,
         )
         commands.execute.assert_called_once_with("status")
 
@@ -86,7 +87,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         commands.profile = PlayerProfile(str(uuid4()), "Player")
         authorization = Mock(spec=AuthorizationService)
         authorization.decide.return_value = SimpleNamespace(
-            allowed=True, principal_id=uuid4()
+            allowed=False, principal_id=uuid4(), reason="principal_mismatch"
         )
         application = PostgresPlayerApplication(
             kernel=object(), recruitment=object(), sessions=object(), commands=commands
@@ -99,6 +100,26 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
 
         self.assertFalse(result.ok)
         self.assertEqual(result.message, "Access denied.")
+        commands.execute.assert_not_called()
+
+    def test_gateway_rejects_malformed_empty_and_multi_argument_input(self):
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        authorization = Mock(spec=AuthorizationService)
+        application = PostgresPlayerApplication(
+            kernel=object(), recruitment=object(), sessions=object(), commands=commands
+        )
+        gateway = bind_authorized_player_commands(
+            application, authorization, uuid4()
+        )
+
+        for line in ("", "   ", "status profile", 'status "unterminated'):
+            with self.subTest(line=line):
+                result = gateway.execute("token", line)
+                self.assertFalse(result.ok)
+                self.assertEqual(result.message, "Invalid command.")
+
+        authorization.decide.assert_not_called()
         commands.execute.assert_not_called()
 
     def test_gateway_denies_unknown_commands_without_dispatch(self):
