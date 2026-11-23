@@ -221,3 +221,10 @@ This is an application assembly increment, not a deployed ChatGPT/API transport 
 `tests/pkg001/test_player_application.py` covers successful dispatch only after authorization, wrong-principal denial, unknown-command denial, and invalid gateway construction. The existing Python CI step runs this suite. This remains a trusted in-process boundary: the host must supply the correct principal-to-player binding, a PostgreSQL-backed session verifier, durable audit sink and explicit grants. The command gateway does not issue credentials, create grants, expose an HTTP endpoint, or apply migrations. Direct access to the underlying command router must remain inside the trusted host. Neon production remains unchanged.
 
 **Next:** run the updated CI workflow; then add a disposable-PostgreSQL integration test that constructs the full composition, verifies a persisted session, records authorization audit, and executes an allowed read-only player command. Do not add broad default grants or enable production access as part of this increment.
+
+
+## 4E. PostgreSQL-backed player command integration tests
+
+`tests/pkg001/test_postgres_security.py` now exercises the composed application through the real PostgreSQL session verifier and audit sink. One test grants only the exact player's `profile` command, executes it through the gateway, and checks the persisted allow audit. A companion test supplies no grant, confirms command dispatch is denied, and checks the persisted default-deny audit. These tests run in the disposable PostgreSQL workflow after the security proposal is applied; they create no Neon production data.
+
+This proves the trusted in-process composition path for one read-only player command and its default-deny case. It does not yet implement persistent grant loading from `sw_auth.permission_grant`, session issuance/revocation APIs, external transport, or a player-facing client. The current integration test supplies explicit grants to the authorization service, so no broad role grants are implied.
