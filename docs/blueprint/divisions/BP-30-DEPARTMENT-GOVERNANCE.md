@@ -639,6 +639,15 @@ Original source remains `docs/governance/SALTWATER_MASTER_BLUEPRINT.json`, SHA `
 | S40.R03 | Allow institutional failure and public trust to evolve from events. | Sections 14, 22, 25; BP-35/BP-36 own causal trust consequences; governance records failures and responses. |
 | S40.T01 | Every complaint has a route, owner, status and outcome or pending reason. | Sections 14, 20, 23–24 and tests GOV-AT-076–090. |
 | C07 | Approximately 500 individually persistent police personnel within the population cap. | Sections 2, 8, 18, 25 and tests GOV-AT-057–062, GOV-AT-112–115; police headcount remains within BP-03's 10,000 total. |
+| S10.R01 | Define currency, public revenue, taxation, fees, expenditure, budgets, debt, grants and financial periods. | Section 13; BP-30 defines approval authority only; BP-34 owns the financial model, accounts and transactions. |
+| S12.R01 | Maintain civil status, identity, address, property, business, permits and other canonically required registers. | Sections 12, 18, 23–25; BP-03/BP-04/BP-38 own registers and source records; BP-30 defines institutional authority for public administration. |
+| S21.R01 | Represent media outlets, public communications, events, venues, sports, cultural organisations and community gatherings. | Sections 12, 14, 16 and 25; BP-04 owns organisations/venues, BP-36 civic context; BP-30 governs public institutional mandates and accountability. |
+| S21.R03 | Keep civic organisations and public-facing institutions distinct and appropriately scoped. | Sections 5, 12, 16–17 and 25; canonical organisations remain BP-04 records with explicit institutional mandate and governance links. |
+| S22.R01 | Define emergency services and civil protection agencies, response and mutual aid within canon. | Sections 5, 12, 16 and 25; BP-04 owns agency identity, BP-11/BP-12 own dispatch/incident coordination, BP-30 defines public mandate and interagency governance. |
+| S23.R04 | Keep the police service alive, internally coherent and operationally functional. | Sections 8–9, 18, 20, 22 and 25; BP-30 governs policy/delegation while BP-05–BP-12 own structure, personnel and operational execution. |
+| S28.R01 | Simulate patrol presence, beat coverage, response, scene arrival, public contact and field decisions. | Sections 8–9 and 25; BP-30 defines strategic authority and policy; BP-08/BP-10/BP-12 own field execution and records. |
+| S30.R01 | Create stable case IDs, ownership, classification, status, objectives, actions, decisions, reviews, deadlines and closure reasons. | Sections 8, 14, 18 and 25; BP-15/BP-16 own case and investigative command lifecycle; BP-30 has governance-level oversight only. |
+| S48.R01 | Define user/player/officer/administrator/system roles, least privilege, secret handling, access checks and audit logs. | Sections 4, 14–16, 22–24 and 25; BP-42 owns enforcement; BP-30 defines domain governance scopes and independence requirements. |
 
 Cross-cutting controls:
 - X03: all governance effective dates and deadlines use BP-37 canonical time and freeze while paused/absent.
@@ -647,7 +656,7 @@ Cross-cutting controls:
 - X06: original records and decisions are preserved; corrections are additive and attributable.
 - Global canon: one Saltwater city/jurisdiction; 10,000 living-person cap; at least 10,000 businesses; police-depth priority; permanent person promotion; text-first completeness; exact `bingo` firewall; no offline progression; no Neon writes without explicit approval.
 
-All 21 mapped source requirement/test/canon IDs are explicitly traced. The original source JSON and crosswalk are not modified by this specification.
+All 30 mapped source requirement/test/canon IDs are explicitly traced. The original source JSON and crosswalk are not modified by this specification.
 
 ## 30. Risk register
 
