@@ -121,5 +121,6 @@ Statuses are independent across specification, implementation, testing and verif
 51. Initial source-domain ownership scan S09–S16 recorded: finance, government, civil registry, social care and utilities have mapped owners; detailed acceptance-test and interface reconciliation remains open. A14 (education) and A15 (healthcare) gaps were corrected in draft specifications/crosswalk v1.3.
 52. Semantic finding A16: clarified public transport ownership for S17.R01 across BP-02 (stop/parking/accessibility geometry), BP-04 (operators/routes/fleet profiles) and BP-37 (timetables/service runs); added acceptance criteria and updated crosswalk S17 mapping/audit. Test execution remains pending.
 53. Initial source-domain ownership scan S17–S24 recorded: buildings/assets, environment, food/essential services, culture/media, emergency services, police governance and police personnel have mapped ownership boundaries; detailed acceptance-test and interface reconciliation remains open.
+54. Initial source-domain ownership scan S25–S32 recorded: rosters/command/dispatch/patrol, crime and case systems, participant roles, scenes and evidence have mapped owners; detailed acceptance-test and cross-system reconciliation remains open.
 
 **No Neon write has been made or authorised by these documents.**
