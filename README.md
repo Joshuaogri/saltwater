@@ -6,8 +6,8 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 - Country and city: **Saltwater**.
 - One sovereign city-state; no external playable cities or territory.
-- Maximum population: **10,000 living residents**.
-- Primary experience: exceptionally detailed text simulation, supported by maps and selected graphics.
+- Maximum population: **10,000 living people total**, police included; opening baseline 9,000 residents + 500 police = 9,500, leaving 500 unused headroom.
+- Primary experience: exceptionally detailed, permanently text-first simulation; maps and selected graphics are optional.
 - Primary simulation: the police service and its operations, supported by a credible, interconnected society.
 - Persistent database: Neon PostgreSQL.
 - Source, migrations and documentation: this GitHub repository.
@@ -36,4 +36,17 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Current status
 
-Repository bootstrap is underway. Neon project creation and the GitHub `DATABASE_URL` secret were reported by the project owner. Neon project metadata reports a production-branch logical size of **33,611,776 bytes (33.61 MB / 32.05 MiB), measured 2026-11-22**. This is a provider-reported logical-size baseline, not a measurement from a live SQL query; live SQL connectivity has not yet been independently verified. No simulation data has been uploaded.
+The **platform foundation is deployed; the simulation runtime and domain systems are not yet implemented**.
+
+- Neon project: Saltwater (`misty-breeze-20463094`), production branch `br-bitter-rain-bdz9ddid`, database `neondb`.
+- Foundation migration `0001_foundation.sql` is applied and recorded as version 1.
+- A successful live connection probe verified a transactional read/write in a temporary table and rolled it back.
+- Read-only SQL verification on 2026-11-23 measured `pg_database_size` at **9,306,112 bytes (9.306 MB / 8.875 MiB)** and user relations at **188,416 bytes**.
+- The database currently has five user tables: three in `sw_core` and two in `sw_ops`. The single `world_config` row records Saltwater, one playable city and the 10,000-person cap; `event_type` and `simulation_event` contain zero rows.
+- No resident, police-personnel, business, case or evidence domain schemas or production seed records are present. No game runtime/application source code exists in the repository yet.
+- GitHub Actions migration, database-validation, live-connection and storage-benchmark workflows are present. Benchmark 0005 briefly created a synthetic Neon benchmark schema and removed it after measurement; its operation-ledger record remains. No production simulation seed data remains.
+- Three disposable PostgreSQL runs of benchmark 0008 measured approximately **651.779 MB** full-database and **642.728 MB** relations. This is repeatability evidence for the synthetic workload, not final capacity approval.
+- **Neon 1 GB production capacity remains NOT APPROVED; production seeding remains BLOCKED.** The 16-record narrative fixture has passed automated structural checks, but its human-review rows remain pending and the fixture is not approved.
+- The storage/write gate remains mandatory: before any proposed Neon migration, schema change, seed/import, bulk write or upload, measure the current baseline, estimate incremental bytes and MB/MiB with assumptions/range, show the projected total and wait for explicit user approval.
+
+Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22 project metadata) is a different measurement from PostgreSQL `pg_database_size`; do not compare or substitute the two without an explicit metric definition.
