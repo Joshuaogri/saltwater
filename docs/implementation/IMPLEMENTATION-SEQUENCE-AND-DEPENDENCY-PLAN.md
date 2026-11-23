@@ -29,7 +29,7 @@ The fixed 44-division structure, Saltwater canon, player agency, exact `bingo` r
 - Benchmarks 0006–0008 ran on disposable PostgreSQL. Benchmark 0008 produced three repeatable runs at approximately **651.779 MB full disposable database** and **642.728 MB relations**.
 - The 16-record narrative fixture passed automated structural/chronology checks. Its manual-review rows remain pending; AI-assisted editorial review is not human sign-off.
 - Neon 1 GB production capacity is **NOT APPROVED**; production simulation seeding is **BLOCKED**.
-- The repository has SQL migrations/benchmarks, GitHub Actions workflows and specifications, but no executable game runtime/application source code yet.
+- The repository now includes the shared runtime kernel and a first text command-interface application layer (`runtime/player_interface.py`). Persistent player saves, canonical officer/career creation and the full game application are not yet implemented.
 
 Provider-reported logical-size metadata around 33.6 MB is a different metric from direct SQL `pg_database_size`; retain method and metric with every baseline.
 
@@ -72,6 +72,13 @@ Approve the relevant division specification versions before implementing their d
 ## 4A. First implementation approval package
 
 PKG-001 was explicitly approved by the user on 2026-11-23 for bounded GitHub implementation and disposable PostgreSQL testing. Implementation was merged directly into `main` on 2026-11-23 (merge commit `0fb5eac232a8c414a1488f01f7a638b4b6554a7a`; historical PR [#1](https://github.com/Joshuaogri/saltwater/pull/1) is closed and merged). Future development takes place only on `main`; do not create or use development branches or PR-based workflows. Disposable PostgreSQL and Python test evidence is recorded in the PKG-001 run reports. No Neon migration, seed, or production activation is authorised. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
+
+
+## 4B. PKG-002 — player command interface foundation
+
+The first PKG-002 application-layer increment is committed directly to `main`. It adds a game-native player profile value object and a compact command router for `help`, `status`, `profile`, `start`, `pause`, `resume` and `quit`. Lifecycle commands delegate to the shared runtime kernel; pause and quit preserve the frozen-world-time invariant. The interface does not invent an officer/personnel identity or career, create local side-database saves, expose hidden truth, or bypass the bootstrap gate. GitHub Actions now targets `main` and runs its unit tests.
+
+This increment is not yet a complete playable/persistent game. Durable player sessions, BP-03 person linkage, BP-06 personnel, BP-07 recruit career creation, the Neon runtime adapter integration and explicit turn/tick scheduling remain to be implemented and tested against disposable PostgreSQL. Neon production remains untouched. See `docs/implementation/approval-packages/PKG-002-player-command-interface.md`.
 
 ## 5. Dependency-led implementation sequence
 
