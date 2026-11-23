@@ -92,6 +92,10 @@ ALTER TABLE sw_core.simulation_event
   ADD COLUMN correlation_id uuid,
   ADD COLUMN idempotency_key text;
 
+ALTER TABLE sw_runtime.state
+  ADD CONSTRAINT runtime_last_event_fk
+  FOREIGN KEY (last_event_id) REFERENCES sw_core.simulation_event(event_id);
+
 CREATE UNIQUE INDEX simulation_event_idempotency_uq
   ON sw_core.simulation_event(idempotency_key)
   WHERE idempotency_key IS NOT NULL;
@@ -213,9 +217,8 @@ ON CONFLICT (entity_code) DO NOTHING;
 
 INSERT INTO sw_geo.version
   (spatial_id, version_no, effective_from_tick, parent_id, name, active, source_ref, reason_code)
-SELECT e.spatial_id, 1, 0, p.spatial_id, 'Saltwater', true, 'approved-project-canon', 1
+SELECT e.spatial_id, 1, 0, NULL::integer, 'Saltwater', true, 'approved-project-canon', 1
 FROM sw_geo.entity e
-LEFT JOIN sw_geo.entity p ON p.entity_code = 'saltwater-state'
 WHERE e.entity_code = 'saltwater-state'
 ON CONFLICT (spatial_id, version_no) DO NOTHING;
 
@@ -460,7 +463,13 @@ INSERT INTO sw_runtime.state(singleton, state, player_present, bootstrap_open)
 VALUES (1, 0, false, true);
 
 INSERT INTO sw_ops.schema_migration(version, migration_name)
-VALUES (2, 'runtime_city_population_proposal')
+VALUES (2, 'runtime_city_population')
 ON CONFLICT (version) DO NOTHING;
+
+INSERT INTO sw_ops.storage_operation
+  (operation_kind, description, status, measurement_notes)
+VALUES
+  ('migration', '0002 runtime, canonical geography and population schema', 'succeeded',
+   'Record measured before/after database bytes after separately approved deployment.');
 
 COMMIT;
