@@ -1,7 +1,7 @@
 # Saltwater Master Blueprint
 
 **Baseline:** Kingswell Master Blueprint BP-01–BP-44, approved 2026-11-20; adopted and adapted for Saltwater by user instruction 2026-11-22.  
-**Status:** Adopted design framework; Saltwater-specific division specifications and acceptance evidence remain to be completed.  
+**Status:** APPROVED — Saltwater master blueprint framework and binding canon approved by the user on 2026-11-23. This approval covers the fixed 44-division structure and the binding Saltwater canon below; it does not approve individual division specification drafts, implementation, tests or verification.  
 **Source:** [Kingswell Master Blueprint](https://github.com/Joshuaogri/Kingswell-Police-Simulation/blob/main/docs/blueprint/MASTER-BLUEPRINT.md) and [Division Register](https://github.com/Joshuaogri/Kingswell-Police-Simulation/blob/main/docs/blueprint/DIVISION-REGISTER.md).
 
 ## Binding Saltwater canon
