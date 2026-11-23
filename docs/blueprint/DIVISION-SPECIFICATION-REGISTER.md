@@ -42,7 +42,7 @@
 | BP-33 | Human Resources | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-33](divisions/BP-33-HUMAN-RESOURCES.md) |
 | BP-34 | Finance and Procurement | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-34](divisions/BP-34-FINANCE-AND-PROCUREMENT.md) |
 | BP-35 | Simulation Engine | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-35](divisions/BP-35-SIMULATION-ENGINE.md) |
-| BP-36 | Relationships and Social Context | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-36 | Relationships and Social Context | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-36](divisions/BP-36-RELATIONSHIPS-AND-SOCIAL-CONTEXT.md) |
 | BP-37 | Time and Scheduling | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-38 | Records and Databases | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-39 | Persistence and Recovery | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -103,6 +103,7 @@ Statuses are independent across specification, implementation, testing and verif
 34. BP-33: full human-resources specification draft created; job catalogue, employment/contract policy, recruitment, leave, attendance verification, police HR delegations, employee-relations and retention rules remain open fictional configuration decisions.
 35. BP-34: full finance-and-procurement specification draft created; currency, accounting basis, fiscal calendar, revenue/tax rules, budget delegations, procurement thresholds, payroll policy, banking/payment model and financial abstraction tiers remain open fictional configuration decisions.
 36. BP-35: full simulation-engine specification draft created; runtime deployment shape, event priorities, simulation-step granularity, NPC activation/fidelity thresholds, random-stream algorithm, AI provider, replay horizon, workload budgets and operational thresholds remain open configuration decisions.
-37. Continue BP-36 through BP-44 in numeric order, preserving the same specification contract and traceability.
+37. BP-36: full relationships-and-social-context specification draft created; relationship taxonomy, household rules, verification sources, privacy/access matrix, NPC knowledge model and social-context thresholds remain open configuration decisions.
+38. Continue BP-37 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
