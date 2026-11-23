@@ -868,7 +868,7 @@ The following are the exact source requirement/test IDs mapped to BP-36 in the a
 | S40.R01 | Complaints, oversight and public accountability | Reference complaint/oversight parties and social context without owning complaint process |
 | S42.R01 | Simulation engine, causality and world activity | Supply relationship/social state for deterministic, auditable causal world activity coordinated by BP-35 |
 
-**Canon correction:** S03.R01 contains an older proposed 9,500 opening composition (9,000 residents plus 500 police and 500 reserve). This is superseded. The current Saltwater hard cap is 10,000 living people total; BP-36 does not impose the older composition or a separate reserve.
+**Canon clarification:** The S03.R01 opening composition remains binding: 9,000 residents + 500 police = 9,500 living people. The remaining 500 is unused capacity headroom, not an additional population. The hard cap is 10,000 living people total. BP-03 owns the population ledger and counting rules; BP-36 owns household/relationship semantics and must not create a separate population count.
 
 ## 26. Completion status
 
