@@ -67,8 +67,11 @@
 
 - [52→44 crosswalk and semantic audit](SALTWATER-52-TO-44-CROSSWALK.md)
 - [44-division specification register](DIVISION-SPECIFICATION-REGISTER.md)
-- BP-01, BP-02 and BP-03 have full specification drafts; user review/approval pending.
-- Implementation, testing and verification remain separate and are not claimed by these design documents.
+- All 44 BP division specification drafts are present.
+- The full S01–S52 semantic audit and integrated 44-division consistency audit are complete.
+- The master framework is approved; individual division specifications remain DESIGNED_DRAFT pending individual review/approval.
+- Platform foundation migration 0001 and database/benchmark workflows are implemented; the full domain simulation runtime is not yet implemented.
+- Blueprint acceptance-test execution and full-system verification remain incomplete; see the whole-blueprint audit for the verified current state.
 
 ## Division specification contract
 Every BP division must define: purpose; scope/exclusions; entities and fields; lifecycle/state transitions; rules and invariants; inputs/outputs; dependencies and ownership; permissions; exceptions/edge cases; cross-system effects; acceptance tests; evidence. No placeholder coverage or implied implementation.
