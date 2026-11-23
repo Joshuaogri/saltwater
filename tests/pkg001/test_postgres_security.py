@@ -226,7 +226,6 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
                         self.policy,
                     ),
                 )
-                grant_id = cur.fetchone()
         authorization = AuthorizationService(
             self.verifier, self.audit, PostgresGrantProvider(connect)
         )
