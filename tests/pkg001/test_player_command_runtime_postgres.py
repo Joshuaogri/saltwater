@@ -157,7 +157,7 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                     INSERT INTO sw_core.simulation_event
                       (event_type_id,occurred_at,world_tick,subject_kind,subject_id,
                        source_ref,attributes,idempotency_key)
-                    VALUES (%s,now(),0,'person',%s,'PKG-005 fixture',
+                    VALUES (%s,now(),%s,'person',%s,'PKG-005 fixture',
                             '{"standing":"established"}'::jsonb,%s)
                     RETURNING event_id
                     """,
