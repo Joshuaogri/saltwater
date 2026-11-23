@@ -224,7 +224,7 @@ Backup creation, listing, download/export, restore, promotion and deletion have 
 
 ## 21. Acceptance tests
 
-These 120 criteria define required BP-39 acceptance coverage. They are design criteria only; none is claimed executed.
+These 151 criteria define required BP-39 acceptance coverage. They are design criteria only; none is claimed executed.
 
 - REC-AT-001: An approved backup policy defines covered databases, branches, schemas, records, files, metadata and configuration required to reconstruct the authoritative game.
 - REC-AT-002: Backup scope includes canonical records, immutable source records, append-only histories, event records, domain state and required schema/migration metadata.
@@ -292,91 +292,91 @@ These 120 criteria define required BP-39 acceptance coverage. They are design cr
 - REC-AT-064: Restore verification checks outbox/queue consistency and prevents duplicate side effects.
 - REC-AT-065: Restore verification checks data checksums or equivalent integrity evidence.
 - REC-AT-066: Restore validation failures block promotion of the restored target to authoritative service.
-- REC-AT-061: A recovery test is performed against an isolated target, not by experimenting on the only live copy.
-- REC-AT-062: Each restore test identifies the source checkpoint and exact target environment.
-- REC-AT-063: Restore tests exercise a complete checkpoint rather than only verifying that a backup file exists.
-- REC-AT-064: Recovery tests include schema/migration compatibility checks.
-- REC-AT-065: Recovery tests include representative person, business, case, evidence and long narrative records.
-- REC-AT-066: Recovery tests include high-entropy long text and source payloads to detect truncation or encoding loss.
-- REC-AT-067: Recovery tests include concurrent transaction boundary and event/outbox consistency checks.
-- REC-AT-068: Recovery tests verify provenance, source lineage, corrections and historical versions after restore.
-- REC-AT-069: Recovery tests verify permissions, protected records and hidden-truth isolation after restore.
-- REC-AT-070: Recovery tests measure actual recovery time and compare it with the approved objective.
-- REC-AT-071: Recovery tests measure actual data-loss interval and compare it with the approved objective.
-- REC-AT-072: Recovery test results include reproducible logs, checksums, timestamps and operator identity.
-- REC-AT-073: Failed recovery tests create remediation actions and cannot be reported as successful.
-- REC-AT-074: Restore tests are repeated after material schema, provider, retention or backup-process changes.
-- REC-AT-075: Successful restore evidence is linked to the exact checkpoint, migration set and test run.
-- REC-AT-071: Disaster scenarios include accidental deletion, corruption, failed migration, credential compromise, provider outage and operator error.
-- REC-AT-072: Each scenario defines detection, containment, decision authority, recovery path and validation criteria.
-- REC-AT-073: Provider outage handling distinguishes service unavailability from data corruption or credential failure.
-- REC-AT-074: Credential compromise triggers controlled credential rotation and review of backup access.
-- REC-AT-075: Corruption response preserves the affected source for diagnosis where safe and avoids overwriting recovery copies.
-- REC-AT-076: Failed migration recovery uses the migration-specific forward-repair or rollback plan.
-- REC-AT-077: Recovery from accidental deletion uses the nearest verified suitable checkpoint and documents lost transactions.
-- REC-AT-078: Disaster recovery roles and escalation paths are documented and tested.
-- REC-AT-079: Communication during recovery distinguishes confirmed facts, estimates and unresolved uncertainty.
-- REC-AT-080: Recovery is not declared complete until data integrity and application-level validation pass.
-- REC-AT-081: Event replay is performed only under BP-35 and domain-owned replay contracts.
-- REC-AT-082: Replay uses immutable source events and deterministic sequence metadata.
-- REC-AT-083: Replay never creates duplicate cases, people, exhibits, financial postings or external side effects.
-- REC-AT-084: Non-idempotent events are guarded by stable event IDs and deduplication records.
-- REC-AT-085: Replayed projections are compared with checkpointed projections where comparison is meaningful.
-- REC-AT-086: Replay does not infer missing source truth from summaries or narrative guesses.
-- REC-AT-087: Replay preserves occurred, effective, observed, recorded and committed timestamps.
-- REC-AT-088: Replay cannot advance simulation time while the player is absent or simulation is paused.
-- REC-AT-089: Replay respects the exact bingo hidden-truth access gate.
-- REC-AT-090: Replay results record source range, software version, transformations and validation outcome.
-- REC-AT-091: Recovery preserves original source payloads without lossy conversion.
-- REC-AT-092: Recovery preserves evidence identity and chain-of-custody history under BP-23.
-- REC-AT-093: Recovery preserves original interviews, recordings, transcripts and adopted statements as distinct records.
-- REC-AT-094: Recovery preserves surveillance originals, collection metadata and derivative links.
-- REC-AT-095: Recovery preserves intelligence source separation and access restrictions.
-- REC-AT-096: Recovery preserves case and investigative chronology without converting allegation to fact.
-- REC-AT-097: Recovery preserves effective dates, record dates and source timezone/uncertainty.
-- REC-AT-098: Recovery preserves superseded values and additive correction history.
-- REC-AT-099: Recovery preserves retired/merged identity redirects and historical references.
-- REC-AT-100: Any detected data loss is explicitly scoped, recorded and never hidden by a regenerated summary.
-- REC-AT-101: Development, test and production data are isolated by environment and credentials.
-- REC-AT-102: Test fixtures cannot be mistaken for authoritative Saltwater records.
-- REC-AT-103: Production records are not copied to development/test without approved minimisation and access controls.
-- REC-AT-104: Restores into development/test environments cannot write back to production.
-- REC-AT-105: Environment identifiers are included in backup manifests and recovery logs.
-- REC-AT-106: Promotion of a restored target requires explicit release/change authority under BP-44.
-- REC-AT-107: Operational scripts are versioned and reviewed in GitHub.
-- REC-AT-108: Recovery scripts do not embed secrets or rely on undocumented local state.
-- REC-AT-109: Database and backup monitoring report healthy, degraded, failed and recovering states distinctly.
-- REC-AT-110: Recovery operations remain text-first and do not require optional graphical interfaces.
-- REC-AT-111: Backup storage and retention costs are estimated before enabling material new backup scope.
-- REC-AT-112: Backup size and growth are measured from representative data rather than guessed.
-- REC-AT-113: Backup compression is evaluated without altering source meaning or provenance.
-- REC-AT-114: Duplicate full backups are avoided where safe incremental/PITR capabilities meet approved objectives.
-- REC-AT-115: Provider-specific limits, retention and restore capabilities are verified rather than assumed.
-- REC-AT-116: Neon plan changes or feature availability are not presumed; current capability is checked before reliance.
-- REC-AT-117: Backup export format is documented and can be interpreted independently of transient application state.
-- REC-AT-118: Storage cleanup never deletes the only verified recovery point.
-- REC-AT-119: Retention pruning verifies that remaining restore points still meet approved recovery objectives.
-- REC-AT-120: Recovery cost and capacity changes are recorded for user review before material commitments.
-- REC-AT-121: Every backup and restore action has an actor/service identity, timestamp, purpose and result.
-- REC-AT-122: Backup read/export privileges are separate from live database write privileges.
-- REC-AT-123: Restore privilege is restricted to designated roles and separately audited.
-- REC-AT-124: Emergency override is attributable, time-bounded and reviewed after use.
-- REC-AT-125: Backup and restore logs redact secrets and protected personal content.
-- REC-AT-126: Recovery evidence is retained for the configured audit period.
-- REC-AT-127: Design, implementation, testing and verification statuses are reported separately.
-- REC-AT-128: A documented backup policy is not evidence that a backup job is deployed or working.
-- REC-AT-129: A backup file existing is not evidence of a successful restore.
-- REC-AT-130: A successful test restore is not evidence of production recovery objectives unless measured under representative conditions.
-- REC-AT-131: BP-38 owns schemas, constraints and database transaction integrity; BP-39 owns backup, restore and recovery execution.
-- REC-AT-132: BP-35 owns runtime event execution; BP-39 preserves checkpoints and recovery evidence without executing simulation events.
-- REC-AT-133: BP-37 owns canonical time semantics; BP-39 preserves simulation-time and sequence metadata faithfully.
-- REC-AT-134: BP-43 owns recovery test strategy and independent test evidence; BP-39 provides procedures and execution records.
-- REC-AT-135: BP-44 governs approved configuration, migrations, deployment and recovery promotion decisions.
-- REC-AT-136: BP-42 owns security policy; BP-39 applies approved access restrictions to backup and restore operations.
-- REC-AT-137: Domain owners validate restored business meaning and lifecycle invariants for their records.
-- REC-AT-138: BP-40/BP-41 display recovery status only through authorised and appropriately redacted interfaces.
-- REC-AT-139: Recovery handoff contracts identify source, target, checkpoint, schema, authority, validation and outcome.
-- REC-AT-140: Recovery cannot relax population, business, player-agency, pause or hidden-truth canon.
+- REC-AT-067: A recovery test is performed against an isolated target, not by experimenting on the only live copy.
+- REC-AT-068: Each restore test identifies the source checkpoint and exact target environment.
+- REC-AT-069: Restore tests exercise a complete checkpoint rather than only verifying that a backup file exists.
+- REC-AT-070: Recovery tests include schema/migration compatibility checks.
+- REC-AT-071: Recovery tests include representative person, business, case, evidence and long narrative records.
+- REC-AT-072: Recovery tests include high-entropy long text and source payloads to detect truncation or encoding loss.
+- REC-AT-073: Recovery tests include concurrent transaction boundary and event/outbox consistency checks.
+- REC-AT-074: Recovery tests verify provenance, source lineage, corrections and historical versions after restore.
+- REC-AT-075: Recovery tests verify permissions, protected records and hidden-truth isolation after restore.
+- REC-AT-076: Recovery tests measure actual recovery time and compare it with the approved objective.
+- REC-AT-077: Recovery tests measure actual data-loss interval and compare it with the approved objective.
+- REC-AT-078: Recovery test results include reproducible logs, checksums, timestamps and operator identity.
+- REC-AT-079: Failed recovery tests create remediation actions and cannot be reported as successful.
+- REC-AT-080: Restore tests are repeated after material schema, provider, retention or backup-process changes.
+- REC-AT-081: Successful restore evidence is linked to the exact checkpoint, migration set and test run.
+- REC-AT-082: Disaster scenarios include accidental deletion, corruption, failed migration, credential compromise, provider outage and operator error.
+- REC-AT-083: Each scenario defines detection, containment, decision authority, recovery path and validation criteria.
+- REC-AT-084: Provider outage handling distinguishes service unavailability from data corruption or credential failure.
+- REC-AT-085: Credential compromise triggers controlled credential rotation and review of backup access.
+- REC-AT-086: Corruption response preserves the affected source for diagnosis where safe and avoids overwriting recovery copies.
+- REC-AT-087: Failed migration recovery uses the migration-specific forward-repair or rollback plan.
+- REC-AT-088: Recovery from accidental deletion uses the nearest verified suitable checkpoint and documents lost transactions.
+- REC-AT-089: Disaster recovery roles and escalation paths are documented and tested.
+- REC-AT-090: Communication during recovery distinguishes confirmed facts, estimates and unresolved uncertainty.
+- REC-AT-091: Recovery is not declared complete until data integrity and application-level validation pass.
+- REC-AT-092: Event replay is performed only under BP-35 and domain-owned replay contracts.
+- REC-AT-093: Replay uses immutable source events and deterministic sequence metadata.
+- REC-AT-094: Replay never creates duplicate cases, people, exhibits, financial postings or external side effects.
+- REC-AT-095: Non-idempotent events are guarded by stable event IDs and deduplication records.
+- REC-AT-096: Replayed projections are compared with checkpointed projections where comparison is meaningful.
+- REC-AT-097: Replay does not infer missing source truth from summaries or narrative guesses.
+- REC-AT-098: Replay preserves occurred, effective, observed, recorded and committed timestamps.
+- REC-AT-099: Replay cannot advance simulation time while the player is absent or simulation is paused.
+- REC-AT-100: Replay respects the exact bingo hidden-truth access gate.
+- REC-AT-101: Replay results record source range, software version, transformations and validation outcome.
+- REC-AT-102: Recovery preserves original source payloads without lossy conversion.
+- REC-AT-103: Recovery preserves evidence identity and chain-of-custody history under BP-23.
+- REC-AT-104: Recovery preserves original interviews, recordings, transcripts and adopted statements as distinct records.
+- REC-AT-105: Recovery preserves surveillance originals, collection metadata and derivative links.
+- REC-AT-106: Recovery preserves intelligence source separation and access restrictions.
+- REC-AT-107: Recovery preserves case and investigative chronology without converting allegation to fact.
+- REC-AT-108: Recovery preserves effective dates, record dates and source timezone/uncertainty.
+- REC-AT-109: Recovery preserves superseded values and additive correction history.
+- REC-AT-110: Recovery preserves retired/merged identity redirects and historical references.
+- REC-AT-111: Any detected data loss is explicitly scoped, recorded and never hidden by a regenerated summary.
+- REC-AT-112: Development, test and production data are isolated by environment and credentials.
+- REC-AT-113: Test fixtures cannot be mistaken for authoritative Saltwater records.
+- REC-AT-114: Production records are not copied to development/test without approved minimisation and access controls.
+- REC-AT-115: Restores into development/test environments cannot write back to production.
+- REC-AT-116: Environment identifiers are included in backup manifests and recovery logs.
+- REC-AT-117: Promotion of a restored target requires explicit release/change authority under BP-44.
+- REC-AT-118: Operational scripts are versioned and reviewed in GitHub.
+- REC-AT-119: Recovery scripts do not embed secrets or rely on undocumented local state.
+- REC-AT-120: Database and backup monitoring report healthy, degraded, failed and recovering states distinctly.
+- REC-AT-121: Recovery operations remain text-first and do not require optional graphical interfaces.
+- REC-AT-122: Backup storage and retention costs are estimated before enabling material new backup scope.
+- REC-AT-123: Backup size and growth are measured from representative data rather than guessed.
+- REC-AT-124: Backup compression is evaluated without altering source meaning or provenance.
+- REC-AT-125: Duplicate full backups are avoided where safe incremental/PITR capabilities meet approved objectives.
+- REC-AT-126: Provider-specific limits, retention and restore capabilities are verified rather than assumed.
+- REC-AT-127: Neon plan changes or feature availability are not presumed; current capability is checked before reliance.
+- REC-AT-128: Backup export format is documented and can be interpreted independently of transient application state.
+- REC-AT-129: Storage cleanup never deletes the only verified recovery point.
+- REC-AT-130: Retention pruning verifies that remaining restore points still meet approved recovery objectives.
+- REC-AT-131: Recovery cost and capacity changes are recorded for user review before material commitments.
+- REC-AT-132: Every backup and restore action has an actor/service identity, timestamp, purpose and result.
+- REC-AT-133: Backup read/export privileges are separate from live database write privileges.
+- REC-AT-134: Restore privilege is restricted to designated roles and separately audited.
+- REC-AT-135: Emergency override is attributable, time-bounded and reviewed after use.
+- REC-AT-136: Backup and restore logs redact secrets and protected personal content.
+- REC-AT-137: Recovery evidence is retained for the configured audit period.
+- REC-AT-138: Design, implementation, testing and verification statuses are reported separately.
+- REC-AT-139: A documented backup policy is not evidence that a backup job is deployed or working.
+- REC-AT-140: A backup file existing is not evidence of a successful restore.
+- REC-AT-141: A successful test restore is not evidence of production recovery objectives unless measured under representative conditions.
+- REC-AT-142: BP-38 owns schemas, constraints and database transaction integrity; BP-39 owns backup, restore and recovery execution.
+- REC-AT-143: BP-35 owns runtime event execution; BP-39 preserves checkpoints and recovery evidence without executing simulation events.
+- REC-AT-144: BP-37 owns canonical time semantics; BP-39 preserves simulation-time and sequence metadata faithfully.
+- REC-AT-145: BP-43 owns recovery test strategy and independent test evidence; BP-39 provides procedures and execution records.
+- REC-AT-146: BP-44 governs approved configuration, migrations, deployment and recovery promotion decisions.
+- REC-AT-147: BP-42 owns security policy; BP-39 applies approved access restrictions to backup and restore operations.
+- REC-AT-148: Domain owners validate restored business meaning and lifecycle invariants for their records.
+- REC-AT-149: BP-40/BP-41 display recovery status only through authorised and appropriately redacted interfaces.
+- REC-AT-150: Recovery handoff contracts identify source, target, checkpoint, schema, authority, validation and outcome.
+- REC-AT-151: Recovery cannot relax population, business, player-agency, pause or hidden-truth canon.
 
 ## 22. Source traceability
 
