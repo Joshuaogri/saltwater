@@ -9,9 +9,9 @@ import psycopg
 from runtime.postgres_security import (
     PostgresAuditSink,
     PostgresGrantProvider,
-    PostgresSessionLifecycle,
     PostgresSessionVerifier,
 )
+from runtime.postgres_sessions import PostgresSessionLifecycle
 from runtime.security import AuthorizationService, Effect, Grant
 
 
