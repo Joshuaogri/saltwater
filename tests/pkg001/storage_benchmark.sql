@@ -19,8 +19,9 @@ BEGIN
     INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id)
       VALUES (pid,1,1,0,ev);
   END LOOP;
+  UPDATE sw_runtime.state SET state=0,player_present=false WHERE singleton=1;
 END
-$$;
+$;
 
 SELECT 'people='||count(*) FROM sw_people.person;
 SELECT 'population_count='||living_included FROM sw_people.population_counter WHERE singleton=1;
