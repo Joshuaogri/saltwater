@@ -12,6 +12,8 @@
 - K-006 monotonic world tick, exact current-tick event stamping, causal parent resolution.
 - K-007 duplicate idempotency key; reject duplicate effect.
 - K-008 simulate failure between event and domain commit; transaction rollback/retry must not duplicate effects.
+- K-009 reject invalid lifecycle transitions and prohibit deleting the runtime singleton.
+- K-010 bootstrap records are allowed only in ready/tick-zero/bootstrap-open state; bootstrap cannot reopen and runtime cannot start until it is closed.
 
 ## Geography
 - G-001 exactly one sovereign root and one playable city.
@@ -20,6 +22,8 @@
 - G-004 geometry payload requires known format and 32-byte SHA-256; malformed metadata rejected.
 - G-005 append new spatial version and confirm old version remains queryable.
 - G-006 verify no external/off-map reference becomes playable geometry.
+- G-007 reject spatial parent cycles, non-sequential versions and backwards effective ticks.
+- G-008 reject update/delete of spatial identities and historical versions.
 
 ## Population
 - P-001 person IDs unique and stable across name changes.
@@ -33,6 +37,8 @@
 - P-009 update/delete of population history is rejected.
 - P-010 residence changes retain previous effective-dated residence and prohibit overlapping current residences.
 - P-011 failed person admission leaves no orphan person, event, history or residence.
+- P-012 reconcile transactional population counter exactly to count of living+included state rows.
+- P-013 reject deletion of canonical person/population state; every state change requires a new event.
 
 ## Security, recovery and compactness
 - A-001 player/service without permission cannot mutate runtime, person or geography records.
