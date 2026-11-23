@@ -6,7 +6,7 @@ transactional PostgreSQL adapter and authenticated player-session provider.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from threading import RLock
 from typing import Protocol
@@ -79,7 +79,7 @@ class InMemoryRuntimeStore:
 
     def snapshot(self) -> RuntimeState:
         with self._lock:
-            return RuntimeState(**vars(self.state))
+            return replace(self.state)
 
     def close_bootstrap(self) -> RuntimeState:
         with self._lock:
