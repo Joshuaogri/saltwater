@@ -201,7 +201,7 @@ Wrong or uncertain identity; duplicate identity; no grounds; conflicting grounds
 
 BP-03 owns person identity/population; BP-05 owns institutional mandate and authority architecture; BP-06 owns personnel; BP-08 deployment; BP-09 assets; BP-12 incident/CAD; BP-15 case lifecycle; BP-16 investigation; BP-18 suspect/offender roles; BP-22 scenes; BP-23 exhibit custody; BP-26 custody; BP-27 legal processes; BP-28 courts; BP-30 command; BP-31 professional standards; BP-37 time; BP-38 records; BP-39 persistence; BP-42 security. BP-25 owns arrest, warrant, search and seizure operational decisions and execution. It references and hands off; it never silently mutates another division's authoritative records.
 
-## 26. Acceptance tests
+## 34. Acceptance tests
 
 These are specification acceptance criteria, not executed results. BP-43 owns test execution and reproducible evidence.
 
@@ -393,7 +393,7 @@ These are specification acceptance criteria, not executed results. BP-43 owns te
 - **ARREST-AT-186** — No Neon write is authorised by this specification.
 - **ARREST-AT-187** — Every material action is traceable to source requirement and test evidence.
 
-## 27. Source traceability
+## 35. Source traceability
 
 The original 52-division source JSON remains unchanged. IDs below refer to original source-array positions (1-based). BP-25 receives only its explicit mapped source requirements/tests; cross-cutting rules apply in addition.
 
@@ -406,7 +406,7 @@ The original 52-division source JSON remains unchanged. IDs below refer to origi
 
 Cross-cutting X03 applies: every time-dependent fact is effective-dated and historically queryable; BP-37 remains the sole clock and pause freezes all time-dependent action. X05 preserves fact/allegation/estimate/inference/intelligence/opinion/conclusion/finding distinctions. X08 requires text-first gameplay and optional visuals derived from canonical records. Global constraints include one-city Saltwater, 10,000 living-person cap, permanent promotion of case-connected people, player agency and exact bingo reveal firewall.
 
-## 28. Open decisions and risk register
+## 36. Open decisions and risk register
 
 ### Open fictional decisions
 1. Complete authority/powers matrix and source hierarchy.
@@ -441,7 +441,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 | Duplicate events on retry | Idempotency and append-only event history |
 | Population double-counting | One BP-03 person identity and 10k cap |
 
-## 29. Design completion checklist
+## 37. Design completion checklist
 
 - [ ] Fictional authority model and unresolved powers explicitly represented.
 - [ ] Grounds, decisions and alternatives specified.
@@ -462,7 +462,7 @@ Cross-cutting X03 applies: every time-dependent fact is effective-dated and hist
 - [ ] Open decisions remain explicit; no real-world law silently imported.
 - [ ] No Neon schema, seed, import or bulk write has been made or authorised.
 
-## 30. Status and next dependencies
+## 38. Status and next dependencies
 
 This is a complete division design draft, not approved policy or implementation evidence.
 
