@@ -14,6 +14,12 @@ class Cursor:
         self.calls = []
         self.last = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
     def execute(self, sql, params=()):
         self.calls.append((sql, params))
         if self.fail_at == len(self.calls):
