@@ -197,6 +197,7 @@ DECLARE
   v_person_event bigint;
   v_population_event bigint;
   v_appointment_event bigint;
+  v_intake_event bigint;
   v_career_event bigint;
   v_personnel_number text;
   v_event_type smallint;
@@ -300,13 +301,13 @@ BEGIN
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),v_tick,'player',v_intake.player_id::text,
           jsonb_build_object('intake_id',p_intake_id,'career_id',v_career_id),p_idempotency_key||':intake')
-  RETURNING event_id INTO v_appointment_event;
+  RETURNING event_id INTO v_intake_event;
 
-  UPDATE sw_police.recruit_intake SET status='accepted',outcome_event_id=v_appointment_event,
+  UPDATE sw_police.recruit_intake SET status='accepted',outcome_event_id=v_intake_event,
     outcome_source=p_appointment_source,outcome_actor_principal_id=p_authorised_by_principal_id,
     outcome_tick=v_tick WHERE intake_id=p_intake_id;
   INSERT INTO sw_police.lifecycle_event(event_id,player_id,intake_id,personnel_id,career_id,event_kind,effective_tick,source_ref)
-  VALUES (v_appointment_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'intake_accepted',v_tick,p_appointment_source),
+  VALUES (v_intake_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'intake_accepted',v_tick,p_appointment_source),
          (v_appointment_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'personnel_appointed',v_tick,p_appointment_source);
   INSERT INTO sw_police.lifecycle_event(event_id,player_id,intake_id,personnel_id,career_id,event_kind,effective_tick,source_ref)
   VALUES (v_career_event,v_intake.player_id,p_intake_id,v_personnel_id,v_career_id,'career_opened',v_tick,p_appointment_source);
