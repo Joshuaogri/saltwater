@@ -95,7 +95,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             allowed=False, principal_id=uuid4(), reason="principal_mismatch"
         )
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), sessions=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, principal_id
@@ -112,7 +112,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         commands.profile = PlayerProfile(str(uuid4()), "Player")
         authorization = Mock(spec=AuthorizationService)
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), sessions=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, uuid4()
@@ -132,7 +132,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         commands.profile = PlayerProfile(str(uuid4()), "Player")
         authorization = Mock(spec=AuthorizationService)
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), sessions=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, uuid4()
