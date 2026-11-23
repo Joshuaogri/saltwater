@@ -307,36 +307,14 @@ The following criteria define required coverage. They are design criteria only; 
 
 The following source requirements are assigned to BP-41 by the authoritative 52→44 crosswalk. Wording is copied from the unchanged original source JSON.
 
-| Source ID | Source division | Original requirement wording |
+| Source ID | Source division | Original requirement/test wording |
 |---|---|---|
-| S16.R01 | Utilities, energy and communications infrastructure | Represent water, electricity, sanitation, waste, telecoms, internet and critical infrastructure assets, operators, capacity, outages and restoration. |
-| S16.R02 | Utilities, energy and communications infrastructure | Model service dependencies and disruption effects on residents, businesses and police. |
-| S16.R03 | Utilities, energy and communications infrastructure | Track maintenance, incidents and service notices. |
-| S16.T01 | Utilities, energy and communications infrastructure | Outages affect only connected areas/assets and resolve through recorded restoration. |
-| S21.R01 | Culture, media, recreation and civic life | Represent media outlets, public communications, events, venues, sports, religious/cultural organisations and community gatherings as relevant to canon. |
 | S21.R02 | Culture, media, recreation and civic life | Generate schedules, attendance, public narratives and records that can affect incidents and investigations. |
-| S21.R03 | Culture, media, recreation and civic life | Keep organisations distinct and appropriately scoped. |
-| S21.T01 | Culture, media, recreation and civic life | Events have a time, place, organiser and plausible attendance. |
 | S26.R01 | Police command, policy and internal governance | Represent orders, policies, briefings, operational plans, supervision, approvals, audits, complaints, misconduct and review. |
-| S26.R02 | Police command, policy and internal governance | Record who authorised, issued, received and executed every material instruction. |
-| S26.R03 | Police command, policy and internal governance | Support fair internal process and traceable decisions. |
-| S26.T01 | Police command, policy and internal governance | Material command decisions have authority, rationale and audit trail. |
 | S30.R01 | Case management and investigative command | Create stable case IDs, ownership, classification, status, objectives, actions, decisions, reviews, deadlines, linked incidents and closure reasons. |
-| S30.R02 | Case management and investigative command | Support concurrent investigations, cold cases, linked series, referrals and reopened cases. |
-| S30.R03 | Case management and investigative command | Preserve full case chronology and decision provenance. |
-| S30.T01 | Case management and investigative command | Every case state change has actor, time, reason and evidence. |
 | S40.R01 | Complaints, oversight and public accountability | Represent public complaints, independent review, internal investigations, inspections, findings, remedies and published outcomes. |
-| S40.R02 | Complaints, oversight and public accountability | Preserve due process, conflicts of interest and auditability. |
-| S40.R03 | Complaints, oversight and public accountability | Allow institutional failure and public trust to evolve from events. |
-| S40.T01 | Complaints, oversight and public accountability | Every complaint has a route, owner, status and outcome or pending reason. |
 | S45.R01 | Maps, diagrams and visual evidence | Provide optional maps, layouts, timelines, charts and forensic scene visuals when useful or requested. |
-| S45.R02 | Maps, diagrams and visual evidence | Visuals must derive from canonical spatial/evidence data and never silently contradict text records. |
-| S45.R03 | Maps, diagrams and visual evidence | Keep text as authoritative source. |
-| S45.T01 | Maps, diagrams and visual evidence | Every visual can be traced to the underlying canonical records. |
 | S51.R01 | Operations, observability and maintenance | Track service health, errors, latency, job queues, resource use, database size, failed events and recovery actions. |
-| S51.R02 | Operations, observability and maintenance | Provide safe maintenance, migration, rollback and incident procedures. |
-| S51.R03 | Operations, observability and maintenance | Separate development/test data from authoritative simulation data. |
-| S51.T01 | Operations, observability and maintenance | Operational failures are detectable, attributable and recoverable. |
 
 ## 17. Open fictional and technical configuration decisions
 
