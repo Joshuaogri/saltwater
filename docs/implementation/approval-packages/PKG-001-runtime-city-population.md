@@ -97,10 +97,11 @@ No person seed is included. The 9,500 opening population requires a separate, fu
 ## 6. Files prepared
 
 - SQL proposal: [`db/proposals/0002_runtime_city_population.sql`](../../../db/proposals/0002_runtime_city_population.sql)
+- Disposable acceptance matrix: [`PKG-001-test-matrix.md`](PKG-001-test-matrix.md)
 - Compact storage standard: [`docs/storage/COMPACT-STORAGE-DESIGN.md`](../../storage/COMPACT-STORAGE-DESIGN.md)
 - Implementation sequence: [`docs/implementation/IMPLEMENTATION-SEQUENCE-AND-DEPENDENCY-PLAN.md`](../IMPLEMENTATION-SEQUENCE-AND-DEPENDENCY-PLAN.md)
 
-The SQL file is a proposal only. It extends the existing foundation with runtime state, world-tick guard, event causality/idempotency, geographic identity/versioning, person identity, population state/history, residence and typed event references. It seeds only the two canonical geographic root identities and a stopped runtime singleton. It inserts **zero people, businesses, cases, evidence or invented geography**.
+The SQL file is a proposal only. It extends the existing foundation with a validated runtime state machine, world-tick/presence guard, one-time bootstrap gate, event causality/idempotency, immutable geographic identity/versioning, canonical person identity/profile history, a race-safe population counter, population state/history, residence and typed event references. It seeds only the two canonical geographic root identities and a stopped runtime singleton. It inserts **zero people, businesses, cases, evidence or invented geography**.
 
 ## 7. Unresolved decisions — must remain open
 
@@ -127,7 +128,7 @@ D-001 and D-005 are required before authoritative population admission and playe
 7. Prepare a separate Neon execution request with a fresh baseline, incremental estimate in bytes/MB/MiB, uncertainty and projected total.
 8. Wait for explicit approval of that exact Neon operation before any production write.
 
-No production seed is part of this package. No schema migration may be run against Neon as a test.
+No production seed is part of this package. No schema migration may be run against Neon as a test. The package has not yet been executed against disposable PostgreSQL; SQL syntax, migration behaviour and storage estimates remain to be validated there.
 
 ## 9. Acceptance tests required before implementation can be marked tested
 
