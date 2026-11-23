@@ -284,6 +284,16 @@ BP-02 owns base topology and route calculation contracts. BP-10/BP-11/BP-12 own 
 
 **Traceability:** S09.R01–R03; S17.R01–R03; S22.R01–R03.
 
+### 8.5 Public transport, stops, parking and accessibility spatial assets
+
+Public transport stops, stations, terminals, interchanges, depots, parking areas, loading/transfer hubs and accessible pedestrian connections are canonical spatial features where established by the approved city design. Each has a stable spatial ID, geometry/location, access points, effective dates, status, accessibility attributes, access restrictions, capacity where known and provenance.
+
+A stop or terminal must connect to valid network nodes/edges and cannot be placed on an inaccessible or disconnected segment without an explicit transfer/access connector. Route geometry follows the canonical BP-02 graph; a transport service route identity and operating profile belongs to BP-04. BP-02 does not invent an operator, route, stop, timetable, parking capacity or accessibility feature. Unknown attributes remain unknown.
+
+Parking and loading areas record spatial footprint/access, permitted vehicle/mode classes, capacity and time/access restrictions where established. Accessibility facts may include step-free access, ramps, lifts, crossings, boarding access and other approved features; unknown accessibility is not assumed to be accessible.
+
+BP-04 owns transport operator, service route, fleet and stop-sequence service records. BP-37 owns timetable recurrence, service-run schedules and canonical time execution. BP-09 owns police fleet and police resource readiness. BP-10/BP-11/BP-12 consume valid route and service availability for operational decisions.
+
 ## 9. Natural geography, environment and landmarks
 
 BP-02 provides canonical geometry and identity for approved:
@@ -444,6 +454,7 @@ Failures must not produce fabricated coordinates, route distances, travel times,
 - **AC-D07:** No ETA or route is invented where required inputs/topology are missing.
 - **AC-D08:** A temporary closure affects only its valid segment/time window and does not erase road identity.
 - **AC-D09:** Disconnected graph components are reported as unreachable unless a valid transfer connector exists.
+- **AC-D10:** Public transport stops, stations, parking areas and accessibility connectors have stable spatial IDs, valid graph connectivity and time-valid access attributes; no route or stop is invented.
 
 ### E. Integration, time and history
 - **AC-E01:** Incidents, cases, evidence, dispatch, people and properties share canonical spatial IDs.
