@@ -133,14 +133,6 @@ Inputs: authorised case request; incident/discovery/referral references; canonic
 
 Required dependencies: BP-01 canon; BP-02 geography; BP-03 population/person identity; BP-04 businesses/property; BP-05/BP-06/BP-08 police authority/personnel/deployment; BP-11 communications; BP-12 incidents; BP-13 taxonomy; BP-14 occurrence surfacing; BP-16 investigations; BP-17/BP-18 participants; BP-19 interviews; BP-20 surveillance; BP-21 intelligence; BP-22 scenes; BP-23 evidence; BP-24 forensics; BP-27/BP-28 legal outcomes; BP-30 governance; BP-35 engine; BP-37 time; BP-38 records; BP-39 persistence; BP-40 interface; BP-41 reporting; BP-42 security; BP-43 QA; BP-44 change control. BP-15 owns only case identity/lifecycle and case-level relationships.
 
-## 32. Acceptance tests
-
-The following acceptance tests are required. They are design criteria, not evidence of execution.
-
-## 33. Edge cases and failure scenarios
-
-The following scenarios must be explicitly covered in implementation and regression testing.
-
 ### Source traceability
 
 | Source requirement/test | BP-15 obligation |
