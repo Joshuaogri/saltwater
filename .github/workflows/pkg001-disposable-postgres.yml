@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "db/proposals/0002_runtime_city_population.sql"
+      - "db/proposals/0003_actor_session_authorization.sql"
       - "db/migrations/0001_foundation.sql"
       - "runtime/**"
       - "tests/pkg001/**"
@@ -63,6 +64,8 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/auth_persistence_acceptance.sql
       - name: Run PKG-001 database acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
       - name: Measure representative 1,000-person storage growth
