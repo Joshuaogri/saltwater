@@ -22,7 +22,7 @@ BEGIN
   IF n_events < 20000 OR max_event IS NULL THEN
     RAISE EXCEPTION 'restored event history is incomplete: events %, max %',n_events,max_event;
   END IF;
-  IF tick <> 1 THEN
+  IF tick <> 2 THEN
     RAISE EXCEPTION 'restored runtime tick mismatch: %',tick;
   END IF;
   IF roots <> 2 THEN
