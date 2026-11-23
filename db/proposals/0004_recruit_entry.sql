@@ -38,7 +38,7 @@ CREATE TABLE sw_police.personnel (
   personnel_id uuid PRIMARY KEY,
   person_id integer NOT NULL UNIQUE REFERENCES sw_people.person(person_id),
   service_number text NOT NULL UNIQUE,
-  service_standing text NOT NULL CHECK (service_standing='recruit'),
+  service_standing text NOT NULL CHECK (service_standing IN ('recruit','established')),
   service_status text NOT NULL CHECK (service_status IN ('active','suspended','separated')),
   supervisor_person_id integer NOT NULL REFERENCES sw_people.person(person_id),
   appointment_tick bigint NOT NULL CHECK (appointment_tick >= 0),
@@ -47,6 +47,18 @@ CREATE TABLE sw_police.personnel (
   created_at timestamptz NOT NULL DEFAULT now(),
   CHECK (person_id <> supervisor_person_id)
 );
+
+CREATE TABLE sw_police.recruit_supervisor_authorisation (
+  person_id integer PRIMARY KEY REFERENCES sw_police.personnel(person_id),
+  authorised_by_principal_id uuid NOT NULL REFERENCES sw_auth.principal(principal_id),
+  authority_source text NOT NULL CHECK (length(btrim(authority_source)) BETWEEN 1 AND 200),
+  effective_tick bigint NOT NULL CHECK (effective_tick >= 0),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER recruit_supervisor_authorisation_immutable
+BEFORE UPDATE OR DELETE ON sw_police.recruit_supervisor_authorisation
+FOR EACH ROW EXECUTE FUNCTION sw_police.reject_history_mutation();
 
 CREATE TABLE sw_police.career_episode (
   career_id uuid PRIMARY KEY,
@@ -129,6 +141,7 @@ BEGIN
     RAISE EXCEPTION 'display name must contain 1 to 100 characters';
   END IF;
 
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_idempotency_key,0));
   SELECT * INTO v_existing FROM sw_police.recruit_intake
     WHERE request_idempotency_key=p_idempotency_key;
   IF FOUND THEN
@@ -222,10 +235,12 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'appointment requires active play and a present player'; END IF;
 
   IF NOT EXISTS (
-    SELECT 1 FROM sw_police.personnel
-    WHERE person_id=p_supervisor_person_id AND service_status='active'
+    SELECT 1 FROM sw_police.personnel p
+    JOIN sw_police.recruit_supervisor_authorisation a ON a.person_id=p.person_id
+    WHERE p.person_id=p_supervisor_person_id AND p.service_status='active'
+      AND p.service_standing='established'
   ) THEN
-    RAISE EXCEPTION 'supervisor must be an active police personnel member';
+    RAISE EXCEPTION 'supervisor must be active established personnel with explicit recruit-supervision authorisation';
   END IF;
 
   -- Lock the shared population counter before checking or creating the person.
