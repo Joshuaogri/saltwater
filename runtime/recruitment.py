@@ -93,7 +93,7 @@ class PostgresRecruitmentService:
             raise ValueError("idempotency_key must contain at least 8 characters")
         row = self._fetch_one(
             """SELECT sw_police.accept_recruit_intake(
-                 %s,%s,%s,%s,%s,%s,%s)""",
+                 %s,%s,%s,%s,%s,%s,%s,%s)""",
             (
                 intake_id, supervisor_person_id, appointment_source.strip(),
                 idempotency_key, authorised_by_principal_id,
