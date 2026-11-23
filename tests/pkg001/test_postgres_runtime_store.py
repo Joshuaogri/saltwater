@@ -18,11 +18,10 @@ class PostgresRuntimeStoreTests(unittest.TestCase):
             )
 
         kernel = RuntimeKernel(PostgresRuntimeStore(connect))
-        self.assertEqual(kernel.status().lifecycle, Lifecycle.STOPPED)
+        self.assertEqual(kernel.status().lifecycle, Lifecycle.READY)
         self.assertEqual(kernel.status().world_tick, 0)
 
-        kernel.transition(Lifecycle.READY)
-        self.assertEqual(kernel.status().lifecycle, Lifecycle.READY)
+        self.assertTrue(kernel.status().bootstrap_open)
         kernel.close_bootstrap()
         self.assertFalse(kernel.status().bootstrap_open)
         kernel.transition(Lifecycle.RUNNING, player_present=True)
