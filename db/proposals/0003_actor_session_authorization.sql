@@ -101,7 +101,7 @@ BEGIN
 END
 $$;
 CREATE FUNCTION sw_auth.guard_policy_version_change() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP='DELETE' THEN RAISE EXCEPTION 'policy versions cannot be deleted'; END IF;
   IF (NEW.policy_version,NEW.created_at,NEW.description)
@@ -113,13 +113,13 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER policy_version_lifecycle
 BEFORE UPDATE OR DELETE ON sw_auth.policy_version
 FOR EACH ROW EXECUTE FUNCTION sw_auth.guard_policy_version_change();
 
 CREATE FUNCTION sw_auth.guard_role_assignment_change() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP='DELETE' THEN RAISE EXCEPTION 'role assignments cannot be deleted'; END IF;
   IF (NEW.assignment_id,NEW.principal_id,NEW.role_code,NEW.assigned_at,NEW.assigned_by)
@@ -131,7 +131,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER role_assignment_lifecycle
 BEFORE UPDATE OR DELETE ON sw_auth.principal_role
 FOR EACH ROW EXECUTE FUNCTION sw_auth.guard_role_assignment_change();
