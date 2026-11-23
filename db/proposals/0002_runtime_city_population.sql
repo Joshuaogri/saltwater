@@ -275,11 +275,11 @@ BEFORE INSERT ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_version_insert();
 
 CREATE FUNCTION sw_geo.reject_version_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'spatial versions are append-only';
 END
-$;
+$$;
 CREATE TRIGGER spatial_version_immutable
 BEFORE UPDATE OR DELETE ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_geo.reject_version_mutation();
@@ -322,7 +322,7 @@ CREATE TABLE sw_people.profile_history (
 );
 
 CREATE FUNCTION sw_people.record_profile_history() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 DECLARE
   event_tick bigint;
 BEGIN
@@ -358,24 +358,24 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER person_profile_history_append
 AFTER INSERT OR UPDATE OF given_name, middle_name, family_name, source_ref
 ON sw_people.person
 FOR EACH ROW EXECUTE FUNCTION sw_people.record_profile_history();
 
 CREATE FUNCTION sw_people.reject_profile_history_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'person profile history is append-only';
 END
-$;
+$$;
 CREATE TRIGGER person_profile_history_immutable
 BEFORE UPDATE OR DELETE ON sw_people.profile_history
 FOR EACH ROW EXECUTE FUNCTION sw_people.reject_profile_history_mutation();
 
 CREATE FUNCTION sw_people.guard_person_identity_update() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW.person_id <> OLD.person_id OR NEW.created_tick <> OLD.created_tick
      OR NEW.created_at <> OLD.created_at THEN
@@ -383,7 +383,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER person_identity_update_guard
 BEFORE UPDATE ON sw_people.person
 FOR EACH ROW EXECUTE FUNCTION sw_people.guard_person_identity_update();
