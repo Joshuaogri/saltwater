@@ -413,7 +413,9 @@ Healthcare, education, welfare, emergency, utility and transport organisations m
 - what happens when the service is disrupted;
 - which records and assets are relevant to an incident or case.
 
-Specialist service records remain in their owning domains. BP-04 stores stable entity and facility references, not duplicate clinical, educational, custody or dispatch records.
+For schools, colleges and non-police training providers, BP-04 also maintains proportionate provider-level education facts: programmes/courses offered, term or operating periods, enrolment capacity/availability, session and attendance-reporting arrangements, staff-role references, qualification-issuing body/profile where applicable, facilities and service schedules. It does not maintain a duplicate individual learner file or a full education simulator. Individual enrolment, attendance/participation and education history belong to BP-03; staff employment belongs to BP-33; schedules use BP-37; police training and police-training credentials belong to BP-32.
+
+Specialist service records remain in their owning domains. BP-04 stores stable entity and facility references, not duplicate clinical, individual education, employment, custody or dispatch records.
 
 ## 10. Facilities, infrastructure and physical assets
 
@@ -527,6 +529,7 @@ Event types include:
 - access-control/key issue, return, disable or compromise;
 - asset commissioning, failure, maintenance, repair or replacement;
 - service opening/closure/outage/restoration;
+- education programme/course offering or withdrawal, term/session schedule change, enrolment-capacity change and education-service availability change;
 - stock receipt, movement, use, loss or reconciliation;
 - supplier relationship start/end;
 - incident, complaint, inspection or case linkage.
@@ -605,7 +608,7 @@ A minimum valid profile requires distinct business identity, plausible name, sec
 | Division | BP-04 provides | Other division owns |
 |---|---|---|
 | BP-02 | Property/building/premises/access IDs and spatial references | Parcels, addresses, road topology, geometry |
-| BP-03 | Employer, household-site and premises links | Person identity, life status, population count |
+| BP-03 | Employer, household-site and premises links; education-provider/programme/facility references | Person identity, life status, population count and individual enrolment/attendance/education history |
 | BP-05–BP-09 | Police facility/property references | Police structure, personnel, assignment, equipment readiness |
 | BP-10–BP-12 | Business/site/facility location, access and opening context | Patrol, calls, dispatch and incident records |
 | BP-13–BP-16 | Business/organisation entities and operational records | Crime taxonomy, occurrence, case and investigative decisions |
