@@ -1,6 +1,6 @@
 # PKG-005 — authenticated player command execution
 
-**Status:** Proposed; awaiting explicit user approval  
+**Status:** Approved by user 2026-11-24; implementation in progress; verification pending  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Dependencies:** PKG-001, PKG-002, PKG-003 and PKG-004  
@@ -92,6 +92,16 @@ This package connects existing components; it does not replace them or create a 
 
 Approval of PKG-005 will authorise the bounded repository implementation, Python tests and disposable PostgreSQL tests described above. It will not authorise any Neon production operation or external authentication/transport integration. No production operation is proposed in this package.
 
-## Approval requested
+## Approval record
 
-**Do you approve PKG-005 for implementation and disposable PostgreSQL testing, with Neon production remaining untouched?**
+The user explicitly approved PKG-005 on 2026-11-24 for the bounded repository implementation, Python tests and disposable PostgreSQL tests described above. Neon production remains untouched and is not authorised by this approval.
+
+## Implementation record
+
+- Added `runtime/player_command_runtime.py` with session-derived identity, immutable binding/person consistency checks, PostgreSQL profile/career projection and one trusted command execution entry point.
+- Added unit tests in `tests/pkg001/test_player_command_runtime.py`.
+- Added disposable PostgreSQL end-to-end test in `tests/pkg001/test_player_command_runtime_postgres.py` covering accepted-recruit activation, database-derived profile, explicit command grant, durable allow audit, session revocation and durable denial audit.
+- Extended `.github/workflows/pkg001-disposable-postgres.yml` to run the new unit and integration suites.
+- Implementation commits: `b53c6d1f4e5ad5eab98bffd7ad1df7b70cf72b72`, `53d7e9f56cdd07d0183af23843f7a9180e04232f`, `33829f5de6dd8984e95a8e6f913110b316d51c87`, `1d25909fe07fd4cc5abb19aa96ee70196b8510fb`, `8b86fe3fbadf3d387c793449ca565bc0656f12bf`, `2b8cc4456ff3732f5af4e55b882f42bf87bd7b3b`.
+
+**Current state:** implementation committed directly to `main`; automated verification is pending. No schema changes are proposed or added. No Neon production operation has been performed.
