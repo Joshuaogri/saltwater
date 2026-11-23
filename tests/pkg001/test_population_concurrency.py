@@ -25,29 +25,36 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                 with conn:
                     with conn.cursor() as cur:
                         cur.execute(
+                            "SELECT world_tick FROM sw_runtime.state "
+                            "WHERE singleton=1 AND state=2 AND player_present=true"
+                        )
+                        current_tick = cur.fetchone()[0]
+                        cur.execute(
                             "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick) "
-                            "SELECT event_type_id,now(),0 FROM sw_core.event_type "
-                            "WHERE event_code='PERSON_CREATED' RETURNING event_id"
+                            "SELECT event_type_id,now(),%s FROM sw_core.event_type "
+                            "WHERE event_code='PERSON_CREATED' RETURNING event_id",
+                            (current_tick,),
                         )
                         created_event = cur.fetchone()[0]
                         cur.execute(
                             "INSERT INTO sw_people.person(given_name,family_name,created_tick,last_event_id) "
-                            "VALUES ('Concurrent','Attempt-'||%s,0,%s) RETURNING person_id",
-                            (number, created_event),
+                            "VALUES ('Concurrent','Attempt-'||%s,%s,%s) RETURNING person_id",
+                            (number, current_tick, created_event),
                         )
                         person_id = cur.fetchone()[0]
                         cur.execute(
                             "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick) "
-                            "SELECT event_type_id,now(),0 FROM sw_core.event_type "
-                            "WHERE event_code='POPULATION_STATE_CHANGED' RETURNING event_id"
+                            "SELECT event_type_id,now(),%s FROM sw_core.event_type "
+                            "WHERE event_code='POPULATION_STATE_CHANGED' RETURNING event_id",
+                            (current_tick,),
                         )
                         population_event = cur.fetchone()[0]
                         barrier.wait(timeout=15)
                         cur.execute(
                             "INSERT INTO sw_people.population_state "
                             "(person_id,life_status,scope_status,effective_tick,last_event_id) "
-                            "VALUES (%s,1,1,0,%s)",
-                            (person_id, population_event),
+                            "VALUES (%s,1,1,%s,%s)",
+                            (person_id, current_tick, population_event),
                         )
                 return "admitted"
             except psycopg.Error as exc:
