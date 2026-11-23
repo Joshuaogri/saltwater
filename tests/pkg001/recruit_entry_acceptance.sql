@@ -5,6 +5,10 @@ BEGIN;
 DO $accept$
 DECLARE
   v_admin uuid := gen_random_uuid();
+  v_player_principal uuid := gen_random_uuid();
+  v_other_player_principal uuid := gen_random_uuid();
+  v_pending_principal uuid := gen_random_uuid();
+  v_bound_person integer;
   v_unapproved uuid := gen_random_uuid();
   v_player uuid := gen_random_uuid();
   v_second_player uuid := gen_random_uuid();
@@ -99,6 +103,36 @@ BEGIN
   v_replayed_career := sw_police.accept_recruit_intake(v_intake,v_person_a,'Authorised recruitment decision',
     'pkg003-accept-replay',v_admin,'Player');
   IF v_career <> v_replayed_career THEN RAISE EXCEPTION 'appointment replay created a different career'; END IF;
+
+  INSERT INTO sw_auth.principal(principal_id,issuer,subject,principal_kind,status)
+  VALUES (v_player_principal,'saltwater-test','accepted-player','player','active'),
+         (v_other_player_principal,'saltwater-test','duplicate-player','player','active'),
+         (v_pending_principal,'saltwater-test','pending-player','player','active');
+  SELECT sw_player.bind_accepted_identity(v_player_principal,v_player) INTO v_bound_person;
+  IF v_bound_person IS NULL THEN RAISE EXCEPTION 'accepted recruit identity did not resolve canonical person'; END IF;
+  IF (SELECT person_id FROM sw_auth.principal WHERE principal_id=v_player_principal) <> v_bound_person THEN
+    RAISE EXCEPTION 'principal canonical person link was not established';
+  END IF;
+  IF (SELECT count(*) FROM sw_player.identity_binding
+      WHERE principal_id=v_player_principal AND player_id=v_player AND person_id=v_bound_person) <> 1 THEN
+    RAISE EXCEPTION 'immutable player identity binding missing';
+  END IF;
+  IF sw_player.bind_accepted_identity(v_player_principal,v_player) <> v_bound_person THEN
+    RAISE EXCEPTION 'same identity binding replay was not idempotent';
+  END IF;
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_other_player_principal,v_player);
+    RAISE EXCEPTION 'second principal unexpectedly bound to an existing player';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'second principal unexpectedly bound to an existing player' THEN RAISE; END IF;
+  END;
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_pending_principal,v_second_player);
+    RAISE EXCEPTION 'pending recruit unexpectedly received an identity binding';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'pending recruit unexpectedly received an identity binding' THEN RAISE; END IF;
+  END;
+
   BEGIN
     PERFORM sw_police.accept_recruit_intake(v_intake,v_person_a,'Unauthorised replay','pkg003-replay-denied',v_unapproved,'Player');
     RAISE EXCEPTION 'unauthorised replay unexpectedly returned career identity';
