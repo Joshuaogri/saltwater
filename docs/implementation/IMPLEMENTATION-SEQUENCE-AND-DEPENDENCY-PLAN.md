@@ -69,6 +69,10 @@ The repository has no executable runtime/API yet. Define the smallest supported 
 ### G4 — division-level design approval
 Approve the relevant division specification versions before implementing their domain rules. Master framework approval does not approve all 44 drafts. Record approved versions and affected requirements in the register.
 
+## 4A. First implementation approval package
+
+PKG-001 is prepared for user review: [Shared runtime kernel and canonical city/population foundations](approval-packages/PKG-001-runtime-city-population.md), with a separate [disposable acceptance test matrix](approval-packages/PKG-001-test-matrix.md) and non-executable [migration proposal 0002](../../db/proposals/0002_runtime_city_population.sql). Status: **prepared, pending user approval**. It authorises no Neon write, population seed, geometry/map seed, or production activation. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
+
 ## 5. Dependency-led implementation sequence
 
 This is a dependency plan, not permission to write to production. Code, schema drafts, disposable migrations and tests may proceed while Neon production remains unchanged.
