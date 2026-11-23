@@ -280,26 +280,29 @@ The full audit must specifically test these high-risk boundaries:
 | Audit layer | Status | Evidence |
 |---|---|---|
 | Source JSON integrity and counts | PASSED | 52 divisions; 168 requirements; 60 tests |
-| Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
-| Fixed 44-division structure | PASSED | Master blueprint and all 44 specification files present |
+| Source-ID mapping completeness | PASSED | 228/228 IDs mapped exactly once or to their declared multiple owners |
+| Fixed 44-division structure | PASSED | Master blueprint lists 44 divisions; all 44 specification files present |
+| Target-reference validity | PASSED | Crosswalk references only BP-01–BP-44; all 44 target divisions represented |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
 | Requirement-to-specification semantic coverage | COMPLETE | Detailed item-by-item reconciliation S01–S32 and S33–S52 complete; all 168 requirements and 60 source tests reviewed against mapped draft specifications |
-| Cross-division ownership and interface consistency | IN_PROGRESS | Detailed domain ownership review complete for S01–S52; final integrated 44-division contradiction/interface pass remains |
+| Cross-division ownership and interface consistency | COMPLETE | All 44 target specifications and their ownership/interface contracts reviewed; findings A16, A19 and A20 resolved; no remaining conflicting authoritative owner identified |
 | Acceptance-test adequacy against source wording | COMPLETE | All 60 source acceptance tests checked against mapped draft acceptance criteria; execution remains NOT_STARTED |
-| Binding-canon propagation and contradiction audit | IN_PROGRESS | Detailed domain reviews complete for S01–S52; final integrated canon-propagation pass remains |
+| Binding-canon propagation and contradiction audit | COMPLETE | Cross-division scan of all 44 specifications; findings A18 and A21 resolved; no remaining obsolete city name, 199,999 ceiling, or conflicting population baseline identified |
+| Cross-cutting traceability and governance consistency | COMPLETE | Findings A22 confirms 228 source IDs and valid BP-01–BP-44 target references; open configuration dependencies remain explicitly listed |
 | Master framework approval | APPROVED | User approved the framework, binding canon and fixed BP-01–BP-44 structure on 2026-11-23; individual division approval is separate |
 | Individual division approval | NOT_APPROVED | All 44 division specifications remain DESIGNED_DRAFT pending individual review |
 | Implementation / test execution / verification | NOT_STARTED | No implementation or executed-test evidence asserted |
 
-## 9. Required next sequence
+## 9. Audit disposition and next sequence
 
-1. Perform the final integrated 44-division consistency pass: canon propagation, cross-division ownership and interfaces, source traceability, acceptance-test quality, numbering, register accuracy, dependencies and contradictory/duplicated statements.
-2. Resolve any remaining defects in specifications/crosswalk without changing the fixed 44-division structure or approved canon.
-3. Produce a definitive audit report distinguishing complete specification coverage from any open configuration decisions, approval, implementation and verification.
-4. Keep test definitions distinct from execution results. No test is passed without reproducible evidence against the stated target.
-5. Only after the full audit is complete, prepare an implementation plan. Any Neon write remains separately gated by current measured baseline, credible size estimate, explicit user approval and post-write measurement.
+**Specification audit: COMPLETE.** The 52-source-to-44-target design has passed source coverage, traceability, acceptance-test adequacy, cross-division ownership/interface review and integrated binding-canon consistency at specification-draft level. The recorded defects found during the integrated pass were corrected and verified. No outstanding semantic omission or contradictory authoritative owner was identified in the reviewed blueprint.
 
-**Current conclusion:** All 52 source divisions, 168 requirements and 60 source acceptance tests have now received detailed item-by-item semantic review against the mapped draft specifications. The final integrated whole-blueprint consistency pass remains. The master framework is approved, but individual division specifications are not. No claim of implementation, test execution or verification is made.
+1. Next prepare the implementation sequence and dependency plan against BP-01–BP-44, preserving the fixed division structure and the approved master framework.
+2. Keep individual division approval separate; all 44 specifications remain DESIGNED_DRAFT until reviewed/approved.
+3. Keep implementation, test execution and verification separate from documentation. No test is passed without reproducible execution evidence.
+4. Before any Neon migration, seed/import, bulk write or upload, measure the current baseline, show the incremental estimate in bytes and MB/MiB with assumptions/uncertainty, and wait for explicit user approval. Measure actual growth after an approved write.
+
+**Final audit conclusion:** All 52 source divisions, 168 requirements and 60 source acceptance tests have received detailed item-by-item semantic review against the mapped 44-division draft blueprint. All 228 source requirement/test IDs are mapped, all target references are valid, and the integrated ownership/interface/canon pass is complete. Findings A18, A19, A20 and A21 were corrected; A22 confirms crosswalk integrity. The master framework is approved; individual division specifications are not. No implementation, test execution or verification is claimed. No Neon connection, migration, seed, import or write was performed.
 
 
 ## 7. Detailed semantic reconciliation: S33–S36
@@ -688,3 +691,11 @@ The full audit must specifically test these high-risk boundaries:
 
 **Status:** A20 and A21 are corrected in the affected specifications. The integrated contradiction/interface/canon pass continues; this first correction set does not yet certify every cross-division interface, dependency or duplicated statement as defect-free. No Neon connection, migration, seed, import or write was performed.
 
+
+## 17. Final integrated audit disposition
+
+**Disposition: SPECIFICATION AUDIT COMPLETE.** The final integrated review covered the complete 44-division target set, approved master canon, source-to-target crosswalk, original source JSON and division register. It checked target-reference validity, source ID completeness, project/city identity, population opening baseline and hard cap, division ownership boundaries, key cross-domain interfaces, global player-agency/hidden-truth constraints, pause-safe time, text-first operation, test-adequacy traceability and approval/implementation status separation.
+
+The review confirmed 52 source divisions, 168 source requirements, 60 source acceptance tests, 228 unique source IDs, 44 target division entries and 44 target specification files. All 228 source IDs are represented in the crosswalk; all target references resolve within BP-01–BP-44. Findings A18 (BP-36 population canon), A19 (BP-08 roster/scheduling ownership), A20 (BP-35 invalid BP-51 target reference) and A21 (obsolete population-supersession wording in BP-35/BP-36) are corrected and verified. Finding A22 records the structural crosswalk recheck. No further semantic omission, invalid target reference, obsolete project/city identity, superseded opening-population statement or competing authoritative owner was identified in the integrated scan.
+
+Open configuration dependencies and design decisions remain documented in the relevant domain reviews; they are not represented as implementation. The approved master framework does not automatically approve the 44 individual division drafts. Implementation, test execution and verification remain NOT_STARTED. No Neon connection, migration, seed, import, bulk write or upload was performed. The next project stage is an implementation sequence/dependency plan, not another repetition of the completed semantic audit.
