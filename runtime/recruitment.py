@@ -37,6 +37,24 @@ class PostgresRecruitmentService:
     def __init__(self, connect: Callable):
         self._connect = connect
 
+    def _fetch_one(self, sql: str, params: tuple, operation: str):
+        try:
+            with self._connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    return cur.fetchone()
+        except Exception as exc:
+            raise RecruitmentError(f"{operation} failed: {exc}") from exc
+
+    def _fetch_all(self, sql: str, params: tuple, operation: str):
+        try:
+            with self._connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(sql, params)
+                    return cur.fetchall()
+        except Exception as exc:
+            raise RecruitmentError(f"{operation} failed: {exc}") from exc
+
     def request_intake(self, player_id: UUID, display_name: str, idempotency_key: str) -> UUID:
         if not isinstance(player_id, UUID):
             raise ValueError("player_id must be a UUID")
@@ -44,16 +62,14 @@ class PostgresRecruitmentService:
             raise ValueError("display_name is required")
         if not idempotency_key or len(idempotency_key.strip()) < 8:
             raise ValueError("idempotency_key must contain at least 8 characters")
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT sw_police.request_recruit_intake(%s,%s,%s)",
-                    (player_id, display_name.strip(), idempotency_key),
-                )
-                row = cur.fetchone()
-                if row is None or row[0] is None:
-                    raise RecruitmentError("intake request returned no identifier")
-                return UUID(str(row[0]))
+        row = self._fetch_one(
+            "SELECT sw_police.request_recruit_intake(%s,%s,%s)",
+            (player_id, display_name.strip(), idempotency_key),
+            "recruit intake request",
+        )
+        if row is None or row[0] is None:
+            raise RecruitmentError("intake request returned no identifier")
+        return UUID(str(row[0]))
 
     def accept_intake(
         self,
@@ -75,34 +91,31 @@ class PostgresRecruitmentService:
             raise ValueError("appointment source is required")
         if not idempotency_key or len(idempotency_key.strip()) < 8:
             raise ValueError("idempotency_key must contain at least 8 characters")
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT sw_police.accept_recruit_intake(
-                         %s,%s,%s,%s,%s,%s,%s)""",
-                    (
-                        intake_id, supervisor_person_id, appointment_source.strip(),
-                        idempotency_key, authorised_by_principal_id,
-                        given_name, middle_name, family_name,
-                    ),
-                )
-                row = cur.fetchone()
-                if row is None or row[0] is None:
-                    raise RecruitmentError("appointment returned no career identifier")
-                return UUID(str(row[0]))
+        row = self._fetch_one(
+            """SELECT sw_police.accept_recruit_intake(
+                 %s,%s,%s,%s,%s,%s,%s)""",
+            (
+                intake_id, supervisor_person_id, appointment_source.strip(),
+                idempotency_key, authorised_by_principal_id,
+                given_name, middle_name, family_name,
+            ),
+            "recruit appointment",
+        )
+        if row is None or row[0] is None:
+            raise RecruitmentError("appointment returned no career identifier")
+        return UUID(str(row[0]))
 
     def status(self, player_id: UUID) -> tuple[RecruitStatus, ...]:
         if not isinstance(player_id, UUID):
             raise ValueError("player_id must be a UUID")
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    """SELECT player_id,intake_id,intake_status,requested_tick,
-                              career_id,career_stage,career_status,started_tick,
-                              person_id,service_number,service_standing,service_status,
-                              supervisor_person_id
-                       FROM sw_police.player_career_status
-                       WHERE player_id=%s ORDER BY requested_tick,intake_id""",
-                    (player_id,),
-                )
-                return tuple(RecruitStatus(*row) for row in cur.fetchall())
+        rows = self._fetch_all(
+            """SELECT player_id,intake_id,intake_status,requested_tick,
+                      career_id,career_stage,career_status,started_tick,
+                      person_id,service_number,service_standing,service_status,
+                      supervisor_person_id
+               FROM sw_police.player_career_status
+               WHERE player_id=%s ORDER BY requested_tick,intake_id""",
+            (player_id,),
+            "career status lookup",
+        )
+        return tuple(RecruitStatus(*row) for row in rows)
