@@ -27,12 +27,13 @@ CREATE TABLE sw_runtime.state (
   singleton smallint PRIMARY KEY CHECK (singleton = 1),
   state smallint NOT NULL CHECK (state BETWEEN 0 AND 5),
   player_present boolean NOT NULL DEFAULT false,
+  bootstrap_open boolean NOT NULL DEFAULT true,
   world_tick bigint NOT NULL DEFAULT 0 CHECK (world_tick >= 0),
   calendar_day integer NOT NULL DEFAULT 0 CHECK (calendar_day >= 0),
   minute_of_day smallint NOT NULL DEFAULT 0 CHECK (minute_of_day BETWEEN 0 AND 1439),
   last_event_id bigint,
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (state <> 2 OR player_present),
+  CHECK (state <> 2 OR (player_present AND NOT bootstrap_open)),
   CHECK (state <> 0 OR NOT player_present)
 );
 
@@ -40,6 +41,22 @@ CREATE TABLE sw_runtime.state (
 CREATE FUNCTION sw_runtime.guard_state_update() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
+  IF OLD.bootstrap_open = false AND NEW.bootstrap_open = true THEN
+    RAISE EXCEPTION 'bootstrap cannot be reopened after closure';
+  END IF;
+  IF NEW.state = 2 AND NEW.bootstrap_open THEN
+    RAISE EXCEPTION 'bootstrap must be closed before runtime start';
+  END IF;
+  IF NEW.state <> OLD.state AND NOT (
+       (OLD.state = 0 AND NEW.state = 1)
+    OR (OLD.state = 1 AND NEW.state IN (0,2,4))
+    OR (OLD.state = 2 AND NEW.state IN (0,3,4))
+    OR (OLD.state = 3 AND NEW.state IN (0,2,4))
+    OR (OLD.state = 4 AND NEW.state IN (1,5))
+    OR (OLD.state = 5 AND NEW.state = 4)
+  ) THEN
+    RAISE EXCEPTION 'invalid runtime state transition';
+  END IF;
   IF NEW.world_tick < OLD.world_tick THEN
     RAISE EXCEPTION 'world_tick cannot move backwards';
   END IF;
@@ -115,9 +132,18 @@ BEGIN
     RAISE EXCEPTION 'event world_tick must equal the committed runtime tick';
   END IF;
 
-  IF event_code NOT IN
-     ('RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY')
-     AND NOT (runtime_state = 2 AND present) THEN
+  IF event_code IN ('RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY') THEN
+    RETURN NEW;
+  END IF;
+
+  IF runtime_state = 1 AND current_tick = 0
+     AND (SELECT bootstrap_open FROM sw_runtime.state WHERE singleton = 1)
+     AND event_code IN ('GEO_CREATED','GEO_VERSIONED','PERSON_CREATED',
+                        'POPULATION_STATE_CHANGED','RESIDENCE_CHANGED') THEN
+    RETURN NEW;
+  END IF;
+
+  IF NOT (runtime_state = 2 AND present) THEN
     RAISE EXCEPTION 'simulation events are blocked while stopped, paused, recovering or player-absent';
   END IF;
 
@@ -134,11 +160,7 @@ CREATE TABLE sw_geo.entity (
   spatial_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   entity_code text NOT NULL UNIQUE,
   kind smallint NOT NULL CHECK (kind BETWEEN 1 AND 12),
-  parent_id integer REFERENCES sw_geo.entity(spatial_id),
-  name text NOT NULL,
-  active boolean NOT NULL DEFAULT true,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  CHECK (parent_id IS NULL OR parent_id <> spatial_id)
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 -- kind: 1 sovereign territory, 2 playable city, 3 admin area,
 -- 4 locality, 5 zone, 6 parcel, 7 road, 8 junction, 9 path,
@@ -150,6 +172,9 @@ CREATE TABLE sw_geo.version (
   spatial_id integer NOT NULL REFERENCES sw_geo.entity(spatial_id),
   version_no smallint NOT NULL CHECK (version_no > 0),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick >= 0),
+  parent_id integer REFERENCES sw_geo.entity(spatial_id),
+  name text NOT NULL,
+  active boolean NOT NULL DEFAULT true,
   geometry_format smallint,
   geometry_payload bytea,
   geometry_sha256 bytea,
@@ -157,6 +182,7 @@ CREATE TABLE sw_geo.version (
   reason_code smallint,
   recorded_at timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (spatial_id, version_no),
+  CHECK (parent_id IS NULL OR parent_id <> spatial_id),
   CHECK (
     (geometry_payload IS NULL AND geometry_format IS NULL AND geometry_sha256 IS NULL)
     OR
@@ -165,21 +191,41 @@ CREATE TABLE sw_geo.version (
   )
 );
 
-INSERT INTO sw_geo.entity(entity_code, kind, parent_id, name)
-VALUES ('saltwater-state', 1, NULL, 'Saltwater')
+INSERT INTO sw_geo.entity(entity_code, kind)
+VALUES ('saltwater-state', 1)
 ON CONFLICT (entity_code) DO NOTHING;
 
-INSERT INTO sw_geo.entity(entity_code, kind, parent_id, name)
-SELECT 'saltwater-city', 2, spatial_id, 'Saltwater'
+INSERT INTO sw_geo.entity(entity_code, kind)
+VALUES ('saltwater-city', 2)
 FROM sw_geo.entity
 WHERE entity_code = 'saltwater-state'
 ON CONFLICT (entity_code) DO NOTHING;
 
-INSERT INTO sw_geo.version(spatial_id, version_no, effective_from_tick, source_ref, reason_code)
-SELECT spatial_id, 1, 0, 'approved-project-canon', 1
-FROM sw_geo.entity
-WHERE entity_code IN ('saltwater-state','saltwater-city')
+INSERT INTO sw_geo.version
+  (spatial_id, version_no, effective_from_tick, parent_id, name, active, source_ref, reason_code)
+SELECT e.spatial_id, 1, 0, p.spatial_id, 'Saltwater', true, 'approved-project-canon', 1
+FROM sw_geo.entity e
+LEFT JOIN sw_geo.entity p ON p.entity_code = 'saltwater-state'
+WHERE e.entity_code = 'saltwater-state'
 ON CONFLICT (spatial_id, version_no) DO NOTHING;
+
+INSERT INTO sw_geo.version
+  (spatial_id, version_no, effective_from_tick, parent_id, name, active, source_ref, reason_code)
+SELECT e.spatial_id, 1, 0, p.spatial_id, 'Saltwater', true, 'approved-project-canon', 1
+FROM sw_geo.entity e
+JOIN sw_geo.entity p ON p.entity_code = 'saltwater-state'
+WHERE e.entity_code = 'saltwater-city'
+ON CONFLICT (spatial_id, version_no) DO NOTHING;
+
+CREATE FUNCTION sw_geo.reject_version_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  RAISE EXCEPTION 'spatial versions are append-only';
+END
+$;
+CREATE TRIGGER spatial_version_immutable
+BEFORE UPDATE OR DELETE ON sw_geo.version
+FOR EACH ROW EXECUTE FUNCTION sw_geo.reject_version_mutation();
 
 -- Canonical person identity. No fabricated residents are inserted.
 CREATE TABLE sw_people.person (
@@ -307,8 +353,8 @@ CREATE TABLE sw_core.event_spatial_ref (
 );
 
 -- Seed only the singleton stopped runtime. No people, cases or businesses.
-INSERT INTO sw_runtime.state(singleton, state, player_present)
-VALUES (1, 0, false);
+INSERT INTO sw_runtime.state(singleton, state, player_present, bootstrap_open)
+VALUES (1, 0, false, true);
 
 INSERT INTO sw_ops.schema_migration(version, migration_name)
 VALUES (2, 'runtime_city_population_proposal')
