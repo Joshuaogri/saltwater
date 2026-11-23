@@ -46,7 +46,7 @@ Every import, bulk insert, migration carrying data, file upload or other materia
 
 Use decimal MB (1 MB = 1,000,000 bytes) consistently in reports. Distinguish transfer size from PostgreSQL storage growth. If a measurement is unavailable, mark it **not measured**; never invent it. Schema-only migrations must also be logged as operations, with database size deltas measured where practical.
 
-Neon project metadata reports a production-branch logical size of **33,611,776 bytes (33.61 MB / 32.05 MiB), measured 2026-11-22**. This is a provider-reported logical-size baseline, not a live SQL database-size query; live SQL connectivity has not yet been independently verified. Keep these measurements distinct. A blank or unknown measurement must never be reported as zero.
+A successful live connection probe and a read-only SQL inspection verified the production branch on 2026-11-23. Direct PostgreSQL measurement returned `pg_database_size(current_database()) = 9,306,112 bytes` (9.306 MB decimal; 8.875 MiB) and 188,416 bytes of user relations. The database contains five user tables (three in `sw_core`, two in `sw_ops`); `world_config` contains the single Saltwater world row, while `event_type` and `simulation_event` are empty. Provider-reported logical-size metadata around 33.6 MB is a different metric and must not be conflated with `pg_database_size`. Keep timestamp, method and metric with every baseline; unknown is not zero.
 
 ## Security
 
@@ -57,4 +57,12 @@ Neon project metadata reports a production-branch logical size of **33,611,776 b
 
 ## Current implementation boundary
 
-This initial bootstrap does not create resident, police, crime, case or evidence seed data. Those domain schemas will be introduced in reviewed, ordered migrations after the foundational model and requirements are developed.
+## Current implementation boundary
+
+- Foundation migration 0001 is deployed. It created the `sw_core` and `sw_ops` schemas, world configuration, event type/event tables, migration ledger and storage-operation ledger.
+- The foundation migration includes the one Saltwater world configuration row. It does not create residents, police personnel, businesses, crimes, cases, exhibits or evidence records.
+- The current production database has five user tables; no domain simulation schemas or production seed data have been loaded.
+- The repository contains SQL migrations, benchmark fixtures, GitHub Actions workflows and specifications, but no executable game runtime/application code yet.
+- Storage benchmarks 0001–0008 and the narrative fixture are test assets, not production simulation data. Benchmark 0005 created a temporary synthetic schema in Neon and removed it after measurement; its operation-ledger entry remains.
+- Benchmark 0008 passed three repeatability runs on disposable PostgreSQL. This does not approve the 1 GB Neon capacity; production seeding remains blocked pending narrative-quality sign-off and a final capacity/reserve assessment.
+- All future Neon-changing operations remain subject to a fresh baseline, a measured/credible incremental estimate, explicit user approval and post-operation measurement.
