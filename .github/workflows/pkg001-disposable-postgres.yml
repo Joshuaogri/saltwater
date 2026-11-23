@@ -76,7 +76,15 @@ jobs:
           echo "database_growth_mib=$(awk -v d="$delta" 'BEGIN {printf "%.6f", d/1048576}')"
           echo "approx_growth_bytes_per_person=$(awk -v d="$delta" 'BEGIN {printf "%.2f", d/1000}')"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 3 DESC;"
-      - name: Install PostgreSQL Python driver and test durable runtime adapter
+      - name: Fill disposable population to 9,999
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_cap_fixture.sql
+      - name: Install PostgreSQL Python driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Test concurrent population-cap boundary
+        run: python -m unittest discover -s tests/pkg001 -p "test_population_concurrency.py" -v
+      - name: Measure full 10,000-person disposable fixture
         run: |
-          python -m pip install "psycopg[binary]>=3.2,<4"
-          python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
+          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
+      - name: Test durable runtime adapter
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
