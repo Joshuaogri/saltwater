@@ -185,11 +185,9 @@ class AuthorizationService:
                 and _resource_matches(grant.resource_pattern, resource)
                 and grant.purpose == purpose
                 and (grant.expires_at is None or (grant.expires_at.tzinfo is not None and at < grant.expires_at))
-                and (
-                    (grant.principal_id is not None and grant.principal_id == session.principal_id)
-                    or (grant.principal_kind is not None and grant.principal_kind == session.principal_kind)
-                    or (grant.role is not None and grant.role in session.roles)
-                )
+                and (grant.principal_id is None or grant.principal_id == session.principal_id)
+                and (grant.principal_kind is None or grant.principal_kind == session.principal_kind)
+                and (grant.role is None or grant.role in session.roles)
             ]
             if any(grant.effect == Effect.DENY for grant in matching):
                 reason = "explicit_deny"
