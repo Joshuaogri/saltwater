@@ -107,128 +107,128 @@ The following criteria define required coverage. They are design criteria only; 
 - UI-AT-010: All essential controls work without graphics, hover, colour recognition or drag-and-drop.
 - UI-AT-011: Optional graphics are additive and never block access to textual records.
 - UI-AT-012: Keep navigation labels and command names stable and discoverable.
-- UI-AT-011: Every command defines a stable identifier, purpose, owner, arguments, permissions, preconditions and output contract.
-- UI-AT-012: Distinguish read-only commands from mutating commands.
-- UI-AT-013: Parse unknown command, malformed syntax, missing argument, invalid value and ambiguous target as separate errors.
-- UI-AT-014: Do not guess a destructive or ambiguous target.
-- UI-AT-015: Search and inspect commands never mutate authoritative records.
-- UI-AT-016: Mutating commands execute through the owning domain service and cannot bypass its invariants.
-- UI-AT-017: Show intended target and material effect before ambiguous or consequential mutations.
-- UI-AT-018: Provide explicit confirmation and cancellation where required.
-- UI-AT-019: Preserve safe draft input when a user cancels or navigates away.
-- UI-AT-020: Attribute every player action to active player identity and authority context.
-- UI-AT-021: Distinguish rejected, failed, pending, partial, no-op and confirmed-success outcomes.
-- UI-AT-022: Never claim success before the owning service confirms it.
-- UI-AT-023: Reconcile uncertain write outcomes before retry to prevent duplicate actions.
-- UI-AT-024: Repeated submission of an idempotent command cannot create duplicate records or events.
-- UI-AT-021: Search canonical IDs, names, aliases and relevant domain terms.
-- UI-AT-022: Distinguish exact match, partial match, alias, historical identity and uncertain association.
-- UI-AT-023: Apply permissions before rendering search counts, titles, snippets, previews, ranking or results.
-- UI-AT-024: Expose active filters, sort order and bounded pagination clearly.
-- UI-AT-025: Pagination preserves stable ordering and indicates whether more results exist.
-- UI-AT-026: Display stable identifiers and authorised source/provenance metadata.
-- UI-AT-027: Distinguish original source, derived view, summary, generated narrative, correction and superseded version.
-- UI-AT-028: Preserve author, recorded time, effective time, timezone and uncertainty where relevant.
-- UI-AT-029: Long text is complete or explicitly marked partial with a continuation path.
-- UI-AT-030: Derived summaries link to source records and never masquerade as original evidence.
-- UI-AT-031: Do not convert allegation, intelligence, hypothesis or association into verified fact.
-- UI-AT-032: Do not silently rewrite, normalise away or correct source wording.
-- UI-AT-033: Cross-domain links use canonical IDs and handle merged, retired or superseded references.
-- UI-AT-034: Concurrent edits expose version conflicts instead of silently overwriting newer data.
-- UI-AT-031: Case views distinguish case lifecycle from investigation activity and outcomes.
-- UI-AT-032: Investigation views present plans, leads, hypotheses and actions without recommending the next step.
-- UI-AT-033: Participant views preserve separate victim, witness, suspect and offender roles across cases.
-- UI-AT-034: Incident and dispatch views distinguish live operational state from later case records.
-- UI-AT-035: Officer views distinguish rank, position, authority, grade, clearance, qualification and assignment.
-- UI-AT-036: Career views show requirements and status without silently granting promotion or qualification.
-- UI-AT-037: Roster views show assignment validity and effective periods without implying unauthorised powers.
-- UI-AT-038: Interview views preserve original questions, answers, recording, transcript versions and adoption state.
-- UI-AT-039: Surveillance and intelligence views distinguish source material, analysis, reliability, confidence and evidential status.
-- UI-AT-040: Scene and evidence views preserve access, handling, measurements, custody and provenance.
-- UI-AT-041: Arrest, custody, legal, court and corrections screens distinguish authoritative stages and owners.
-- UI-AT-042: Personnel, complaint and professional-standards views enforce confidentiality and conflict restrictions.
-- UI-AT-043: Resource and finance views distinguish estimate, commitment, invoice, payment, asset and inventory state.
-- UI-AT-044: Cross-domain workflows never create duplicate people, cases, incidents, exhibits, organisations or transactions.
-- UI-AT-041: Maps, layouts, timelines, charts and forensic visuals are optional views over canonical data.
-- UI-AT-042: Every visual identifies the canonical source records and data version used to render it.
-- UI-AT-043: Text/source records remain authoritative if a visual is unavailable, incomplete or inconsistent.
-- UI-AT-044: Spatial views use BP-02 canonical spatial identifiers and never redefine locations or boundaries.
-- UI-AT-045: Timelines distinguish event, effective, recorded and observed time, timezone and uncertainty.
-- UI-AT-046: Scene diagrams distinguish measured geometry from illustrative geometry.
-- UI-AT-047: Evidence images and derivatives link to original exhibit identity, provenance and transformation metadata.
-- UI-AT-048: Visual markers, annotations and labels have equivalent textual descriptions.
-- UI-AT-049: Visual rendering never alters source evidence, forensic results or court findings.
-- UI-AT-050: Unavailable graphics degrade gracefully to complete textual presentation.
-- UI-AT-051: Visuals apply the same permissions and hidden-truth protections as text.
-- UI-AT-052: Player-requested visuals clearly distinguish source imagery from generated illustration.
-- UI-AT-051: Check session, role and record-level permission before every read, search, preview, command, visualisation or export.
-- UI-AT-052: Redact protected personal information before it reaches presentation or cache layers.
-- UI-AT-053: Do not reveal protected record existence through counts, snippets or error messages unless authorised.
-- UI-AT-054: Keep hidden offender truth out of search suggestions, summaries, map markers, notifications, exports and accessibility descriptions.
-- UI-AT-055: Reveal hidden offender truth only under the exact bingo trigger defined by BP-01 and BP-42.
-- UI-AT-056: NPC-facing outputs expose only information plausibly observed, received or lawfully accessed.
-- UI-AT-057: Technical administrator status does not imply unrestricted domain access.
-- UI-AT-058: Permission denial does not leak protected content.
-- UI-AT-059: Credentials, tokens and connection strings never appear in interface output, logs or screenshots.
-- UI-AT-060: Audit metadata is protected from unauthorised read or alteration.
-- UI-AT-061: Exports, clipboard and share actions enforce the same permissions and redactions as the screen.
-- UI-AT-062: Session, persona or permission changes invalidate protected cached content before further access.
-- UI-AT-061: Present BP-41 notifications with source, event time and authorised action context.
-- UI-AT-062: Notification previews are permission-filtered and do not disclose protected case truth.
-- UI-AT-063: Deduplicate repeated delivery without changing the underlying source event.
-- UI-AT-064: Read/unread state is interface metadata, not domain truth.
-- UI-AT-065: Errors distinguish failure, partial completion, pending state, uncertain outcome and confirmed success.
-- UI-AT-066: Error messages provide actionable correction information without revealing secrets or protected records.
-- UI-AT-067: Transient database/network failure never produces a false success message.
-- UI-AT-068: Reconcile uncertain write outcomes before permitting a retry.
-- UI-AT-069: Long-running operations show truthful pending, completed, warning or failed states.
-- UI-AT-070: Health indicators identify their source and observation time.
-- UI-AT-071: Do not claim Neon connectivity without a successful current connection test.
-- UI-AT-072: Warnings distinguish blocking constraints, advisory notices and informational status.
-- UI-AT-071: Navigation, reading, search, refresh and rendering do not advance simulation time.
-- UI-AT-072: No simulation time or NPC activity advances while the player is absent or the game is paused.
-- UI-AT-073: Only explicit, authorised time-advancing actions can progress the simulation under BP-35/BP-37.
-- UI-AT-074: Autosave, interface timers, notifications and background refresh cannot advance game time.
-- UI-AT-075: Unsaved drafts are clearly distinguished from committed authoritative records.
-- UI-AT-076: Preserve draft input across safe navigation or interruption where supported.
-- UI-AT-077: After uncertain writes, reconcile state before retrying or presenting a committed record.
-- UI-AT-078: Support keyboard navigation and assistive technologies for every essential workflow.
-- UI-AT-079: Do not convey status by colour alone; provide text labels.
-- UI-AT-080: Use meaningful headings, labels, focus order and control names.
-- UI-AT-081: Provide accessible confirmation, cancellation and error feedback.
-- UI-AT-082: Preserve international names, diacritics, punctuation and long identifiers losslessly.
-- UI-AT-083: Validate input without destructive truncation or silent character substitution.
-- UI-AT-084: Logout, session expiry or permission revocation clears or revalidates protected content.
-- UI-AT-081: Generated prose agrees with authorised source records, character voice, uncertainty and NPC knowledge.
-- UI-AT-082: Label generated summaries and retain links to their source records.
-- UI-AT-083: Any AI-generated claim that changes canon is persisted as an attributable structured event by its owning system.
-- UI-AT-084: AI output cannot silently overwrite source records or adjudicated outcomes.
-- UI-AT-085: Do not reveal culprit, accomplice or perpetrator identities before the exact bingo trigger.
-- UI-AT-086: Do not provide unsolicited solution hints or tell the player what to investigate next.
-- UI-AT-087: Do not imply NPC knowledge without a plausible observation, communication or lawful access path.
-- UI-AT-088: Generated visual captions obey the same permissions and hidden-truth rules as text.
-- UI-AT-089: Conflicting source records remain visibly conflicting until authoritative correction.
-- UI-AT-090: Uncertain, inferred and disputed information is labelled and never promoted to fact by presentation.
-- UI-AT-091: Authorised operator views expose service health, errors, latency, queues, resource use and database observations.
-- UI-AT-092: Metrics distinguish measured values, estimates and stale observations.
-- UI-AT-093: Database size and growth views identify measurement time, scope and units.
-- UI-AT-094: Failed events, stalled jobs and recovery actions are attributable and visible to authorised operators.
-- UI-AT-095: Maintenance, migration and rollback status does not imply approval or completion.
-- UI-AT-096: Development, test and authoritative production environments are visibly distinct.
-- UI-AT-097: Test fixtures are labelled and cannot be mistaken for canonical simulation records.
-- UI-AT-098: Telemetry and errors redact credentials and protected personal/case information.
-- UI-AT-099: Health status is sourced from actual checks and never invented.
-- UI-AT-100: Operator actions remain subject to BP-42 permissions and BP-44 change governance.
-- UI-AT-091: Use supported APIs/data contracts and do not bypass BP-38 schema or transaction ownership.
-- UI-AT-092: Repeated rendering of unchanged records does not duplicate stored narrative or domain events.
-- UI-AT-093: Use bounded pagination rather than unbounded city-wide data retrieval.
-- UI-AT-094: Retrieve long narrative and evidence metadata without loss or misleading partial display.
-- UI-AT-095: Permission-aware caches are invalidated when source permissions or records change.
-- UI-AT-096: Cached content cannot outlive revocation or expose data to a newly unauthorised session.
-- UI-AT-097: Time-sensitive views show source observation time and do not imply freshness when stale.
-- UI-AT-098: Interface integration tests cover successful, rejected, unauthorised and uncertain workflows.
-- UI-AT-099: BP-40 owns presentation and workflow, not domain truth or lifecycle.
-- UI-AT-100: BP-02 owns spatial identity; BP-35 simulation execution; BP-38 schemas; BP-39 recovery; BP-41 reports; BP-42 security; BP-43 tests; BP-44 change control.
+- UI-AT-013: Every command defines a stable identifier, purpose, owner, arguments, permissions, preconditions and output contract.
+- UI-AT-014: Distinguish read-only commands from mutating commands.
+- UI-AT-015: Parse unknown command, malformed syntax, missing argument, invalid value and ambiguous target as separate errors.
+- UI-AT-016: Do not guess a destructive or ambiguous target.
+- UI-AT-017: Search and inspect commands never mutate authoritative records.
+- UI-AT-018: Mutating commands execute through the owning domain service and cannot bypass its invariants.
+- UI-AT-019: Show intended target and material effect before ambiguous or consequential mutations.
+- UI-AT-020: Provide explicit confirmation and cancellation where required.
+- UI-AT-021: Preserve safe draft input when a user cancels or navigates away.
+- UI-AT-022: Attribute every player action to active player identity and authority context.
+- UI-AT-023: Distinguish rejected, failed, pending, partial, no-op and confirmed-success outcomes.
+- UI-AT-024: Never claim success before the owning service confirms it.
+- UI-AT-025: Reconcile uncertain write outcomes before retry to prevent duplicate actions.
+- UI-AT-026: Repeated submission of an idempotent command cannot create duplicate records or events.
+- UI-AT-027: Search canonical IDs, names, aliases and relevant domain terms.
+- UI-AT-028: Distinguish exact match, partial match, alias, historical identity and uncertain association.
+- UI-AT-029: Apply permissions before rendering search counts, titles, snippets, previews, ranking or results.
+- UI-AT-030: Expose active filters, sort order and bounded pagination clearly.
+- UI-AT-031: Pagination preserves stable ordering and indicates whether more results exist.
+- UI-AT-032: Display stable identifiers and authorised source/provenance metadata.
+- UI-AT-033: Distinguish original source, derived view, summary, generated narrative, correction and superseded version.
+- UI-AT-034: Preserve author, recorded time, effective time, timezone and uncertainty where relevant.
+- UI-AT-035: Long text is complete or explicitly marked partial with a continuation path.
+- UI-AT-036: Derived summaries link to source records and never masquerade as original evidence.
+- UI-AT-037: Do not convert allegation, intelligence, hypothesis or association into verified fact.
+- UI-AT-038: Do not silently rewrite, normalise away or correct source wording.
+- UI-AT-039: Cross-domain links use canonical IDs and handle merged, retired or superseded references.
+- UI-AT-040: Concurrent edits expose version conflicts instead of silently overwriting newer data.
+- UI-AT-041: Case views distinguish case lifecycle from investigation activity and outcomes.
+- UI-AT-042: Investigation views present plans, leads, hypotheses and actions without recommending the next step.
+- UI-AT-043: Participant views preserve separate victim, witness, suspect and offender roles across cases.
+- UI-AT-044: Incident and dispatch views distinguish live operational state from later case records.
+- UI-AT-045: Officer views distinguish rank, position, authority, grade, clearance, qualification and assignment.
+- UI-AT-046: Career views show requirements and status without silently granting promotion or qualification.
+- UI-AT-047: Roster views show assignment validity and effective periods without implying unauthorised powers.
+- UI-AT-048: Interview views preserve original questions, answers, recording, transcript versions and adoption state.
+- UI-AT-049: Surveillance and intelligence views distinguish source material, analysis, reliability, confidence and evidential status.
+- UI-AT-050: Scene and evidence views preserve access, handling, measurements, custody and provenance.
+- UI-AT-051: Arrest, custody, legal, court and corrections screens distinguish authoritative stages and owners.
+- UI-AT-052: Personnel, complaint and professional-standards views enforce confidentiality and conflict restrictions.
+- UI-AT-053: Resource and finance views distinguish estimate, commitment, invoice, payment, asset and inventory state.
+- UI-AT-054: Cross-domain workflows never create duplicate people, cases, incidents, exhibits, organisations or transactions.
+- UI-AT-055: Maps, layouts, timelines, charts and forensic visuals are optional views over canonical data.
+- UI-AT-056: Every visual identifies the canonical source records and data version used to render it.
+- UI-AT-057: Text/source records remain authoritative if a visual is unavailable, incomplete or inconsistent.
+- UI-AT-058: Spatial views use BP-02 canonical spatial identifiers and never redefine locations or boundaries.
+- UI-AT-059: Timelines distinguish event, effective, recorded and observed time, timezone and uncertainty.
+- UI-AT-060: Scene diagrams distinguish measured geometry from illustrative geometry.
+- UI-AT-061: Evidence images and derivatives link to original exhibit identity, provenance and transformation metadata.
+- UI-AT-062: Visual markers, annotations and labels have equivalent textual descriptions.
+- UI-AT-063: Visual rendering never alters source evidence, forensic results or court findings.
+- UI-AT-064: Unavailable graphics degrade gracefully to complete textual presentation.
+- UI-AT-065: Visuals apply the same permissions and hidden-truth protections as text.
+- UI-AT-066: Player-requested visuals clearly distinguish source imagery from generated illustration.
+- UI-AT-067: Check session, role and record-level permission before every read, search, preview, command, visualisation or export.
+- UI-AT-068: Redact protected personal information before it reaches presentation or cache layers.
+- UI-AT-069: Do not reveal protected record existence through counts, snippets or error messages unless authorised.
+- UI-AT-070: Keep hidden offender truth out of search suggestions, summaries, map markers, notifications, exports and accessibility descriptions.
+- UI-AT-071: Reveal hidden offender truth only under the exact bingo trigger defined by BP-01 and BP-42.
+- UI-AT-072: NPC-facing outputs expose only information plausibly observed, received or lawfully accessed.
+- UI-AT-073: Technical administrator status does not imply unrestricted domain access.
+- UI-AT-074: Permission denial does not leak protected content.
+- UI-AT-075: Credentials, tokens and connection strings never appear in interface output, logs or screenshots.
+- UI-AT-076: Audit metadata is protected from unauthorised read or alteration.
+- UI-AT-077: Exports, clipboard and share actions enforce the same permissions and redactions as the screen.
+- UI-AT-078: Session, persona or permission changes invalidate protected cached content before further access.
+- UI-AT-079: Present BP-41 notifications with source, event time and authorised action context.
+- UI-AT-080: Notification previews are permission-filtered and do not disclose protected case truth.
+- UI-AT-081: Deduplicate repeated delivery without changing the underlying source event.
+- UI-AT-082: Read/unread state is interface metadata, not domain truth.
+- UI-AT-083: Errors distinguish failure, partial completion, pending state, uncertain outcome and confirmed success.
+- UI-AT-084: Error messages provide actionable correction information without revealing secrets or protected records.
+- UI-AT-085: Transient database/network failure never produces a false success message.
+- UI-AT-086: Reconcile uncertain write outcomes before permitting a retry.
+- UI-AT-087: Long-running operations show truthful pending, completed, warning or failed states.
+- UI-AT-088: Health indicators identify their source and observation time.
+- UI-AT-089: Do not claim Neon connectivity without a successful current connection test.
+- UI-AT-090: Warnings distinguish blocking constraints, advisory notices and informational status.
+- UI-AT-091: Navigation, reading, search, refresh and rendering do not advance simulation time.
+- UI-AT-092: No simulation time or NPC activity advances while the player is absent or the game is paused.
+- UI-AT-093: Only explicit, authorised time-advancing actions can progress the simulation under BP-35/BP-37.
+- UI-AT-094: Autosave, interface timers, notifications and background refresh cannot advance game time.
+- UI-AT-095: Unsaved drafts are clearly distinguished from committed authoritative records.
+- UI-AT-096: Preserve draft input across safe navigation or interruption where supported.
+- UI-AT-097: After uncertain writes, reconcile state before retrying or presenting a committed record.
+- UI-AT-098: Support keyboard navigation and assistive technologies for every essential workflow.
+- UI-AT-099: Do not convey status by colour alone; provide text labels.
+- UI-AT-100: Use meaningful headings, labels, focus order and control names.
+- UI-AT-101: Provide accessible confirmation, cancellation and error feedback.
+- UI-AT-102: Preserve international names, diacritics, punctuation and long identifiers losslessly.
+- UI-AT-103: Validate input without destructive truncation or silent character substitution.
+- UI-AT-104: Logout, session expiry or permission revocation clears or revalidates protected content.
+- UI-AT-105: Generated prose agrees with authorised source records, character voice, uncertainty and NPC knowledge.
+- UI-AT-106: Label generated summaries and retain links to their source records.
+- UI-AT-107: Any AI-generated claim that changes canon is persisted as an attributable structured event by its owning system.
+- UI-AT-108: AI output cannot silently overwrite source records or adjudicated outcomes.
+- UI-AT-109: Do not reveal culprit, accomplice or perpetrator identities before the exact bingo trigger.
+- UI-AT-110: Do not provide unsolicited solution hints or tell the player what to investigate next.
+- UI-AT-111: Do not imply NPC knowledge without a plausible observation, communication or lawful access path.
+- UI-AT-112: Generated visual captions obey the same permissions and hidden-truth rules as text.
+- UI-AT-113: Conflicting source records remain visibly conflicting until authoritative correction.
+- UI-AT-114: Uncertain, inferred and disputed information is labelled and never promoted to fact by presentation.
+- UI-AT-115: Authorised operator views expose service health, errors, latency, queues, resource use and database observations.
+- UI-AT-116: Metrics distinguish measured values, estimates and stale observations.
+- UI-AT-117: Database size and growth views identify measurement time, scope and units.
+- UI-AT-118: Failed events, stalled jobs and recovery actions are attributable and visible to authorised operators.
+- UI-AT-119: Maintenance, migration and rollback status does not imply approval or completion.
+- UI-AT-120: Development, test and authoritative production environments are visibly distinct.
+- UI-AT-121: Test fixtures are labelled and cannot be mistaken for canonical simulation records.
+- UI-AT-122: Telemetry and errors redact credentials and protected personal/case information.
+- UI-AT-123: Health status is sourced from actual checks and never invented.
+- UI-AT-124: Operator actions remain subject to BP-42 permissions and BP-44 change governance.
+- UI-AT-125: Use supported APIs/data contracts and do not bypass BP-38 schema or transaction ownership.
+- UI-AT-126: Repeated rendering of unchanged records does not duplicate stored narrative or domain events.
+- UI-AT-127: Use bounded pagination rather than unbounded city-wide data retrieval.
+- UI-AT-128: Retrieve long narrative and evidence metadata without loss or misleading partial display.
+- UI-AT-129: Permission-aware caches are invalidated when source permissions or records change.
+- UI-AT-130: Cached content cannot outlive revocation or expose data to a newly unauthorised session.
+- UI-AT-131: Time-sensitive views show source observation time and do not imply freshness when stale.
+- UI-AT-132: Interface integration tests cover successful, rejected, unauthorised and uncertain workflows.
+- UI-AT-133: BP-40 owns presentation and workflow, not domain truth or lifecycle.
+- UI-AT-134: BP-02 owns spatial identity; BP-35 simulation execution; BP-38 schemas; BP-39 recovery; BP-41 reports; BP-42 security; BP-43 tests; BP-44 change control.
 
 ## 19. Source traceability
 
