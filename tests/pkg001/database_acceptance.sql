@@ -73,6 +73,6 @@ BEGIN
     RAISE EXCEPTION 'paused runtime tick changed';
   END IF;
 END
-$;
+$$;
 
 ROLLBACK;
