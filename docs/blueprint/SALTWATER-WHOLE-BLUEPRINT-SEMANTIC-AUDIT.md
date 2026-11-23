@@ -210,6 +210,37 @@ This is an initial ownership/content scan only. Detailed mapped-source acceptanc
 
 This is an initial ownership/content scan only. Detailed source-item and acceptance-test reconciliation remains open.
 
+### Semantic finding A17 — canonical custody clock mapping
+
+<badge color="success">Resolved in BP-26, BP-37 and crosswalk v1.3</badge>
+
+**Source:** S37.R02 and S37.T01.
+
+**Gap:** BP-26 correctly stated that BP-37 is the sole canonical clock, but the source-to-target mapping for the custody clock/property-continuity requirement did not include BP-37. This left the canonical clock and custody-specific elapsed-time/review responsibilities implicit in traceability.
+
+**Resolution:** BP-26's S37.R02 traceability now explicitly states that BP-37 supplies canonical time while BP-26 owns custody-specific elapsed-time calculation, review decisions and personal property in custody; BP-23 owns exhibit continuity. BP-37 now traces S37.R02 and S37.T01 for canonical time and scheduled custody-review/deadline occurrences. Crosswalk S37.R02 and S37.T01 now include BP-37 and audit finding A17 records the boundary.
+
+**Verification:** BP-26, BP-37 and crosswalk were fetched after commit. Test execution remains pending.
+
+### Initial source-domain scan: S41–S52
+
+| Source | Initial ownership/content check | Audit outcome |
+|---|---|---|
+| S41 Time, calendar, schedules and simulation clock | BP-37 owns canonical clock/calendar/timezones/schedule catalogue; BP-35 executes; BP-01 owns no-offline-time canon; BP-38 preserves event history. | Ownership split appears coherent; verify one clock basis, deterministic ordering and complete freeze/resume semantics. |
+| S42 Simulation engine, causality and world activity | BP-35 orchestration; BP-03/BP-04 domain state; BP-14 occurrence generation; BP-36 social context; BP-37 time; BP-38 integrity; BP-43 tests. | Ownership split appears coherent; verify deterministic event/replay boundaries, no impossible states and relevance processing without loss of persistence. |
+| S43 AI generation, narrative and player agency | BP-01 global agency/reveal rules; BP-14 hidden occurrence truth; BP-16 investigative agency; BP-18 offender roles; BP-19 interviews; BP-21 intelligence; BP-35 generation; BP-40 presentation; BP-42 access. | Exact `bingo` reveal gate and no-hint rule are present in core specifications; verify adversarial leakage through every output channel. |
+| S44 Text interface, commands and player workflow | BP-40 laptop-style text interface; BP-01 permanent text-first canon; BP-06/BP-07 individual officer/recruit; BP-38 readable source records; BP-43 essential-workflow tests. | Ownership split appears coherent; verify no essential action requires graphics. |
+| S45 Maps, diagrams and visual evidence | BP-02 spatial source; BP-12/BP-15/BP-16 incident/case/investigation views; BP-20 surveillance; BP-22 scenes; BP-23 evidence; BP-24 forensics; BP-35 derivation; BP-40 presentation; BP-41 reports; BP-38 records. | Ownership split appears coherent; verify every visual is derived from canonical records and cannot override text/source evidence. |
+| S46 Database, schemas and persistence | BP-38 canonical records/schemas/constraints; BP-39 persistence/recovery; BP-40 interface; BP-43 tests; BP-44 change control. | Ownership split appears coherent; verify connectivity claims require a successful live test and physical schema remains BP-38-owned. |
+| S47 Storage efficiency and capacity governance | BP-38 storage design/measurement; BP-39 recovery footprint; BP-43 benchmark/evidence; BP-44 change gate; BP-01 global priority/approval. | Mandatory baseline, byte/MiB estimate, uncertainty, explicit approval and post-write measurement are present; no Neon write authorised. |
+| S48 Security, permissions and information boundaries | BP-42 central access/security; BP-05/BP-30 authority; BP-38 data boundary; BP-40 presentation; BP-43 adversarial tests; all domain owners supply permission scopes. | Ownership split appears coherent; verify hidden truth, restricted personal data, credentials and derived views cannot leak. |
+| S49 Backups, recovery and data integrity | BP-39 backup/restore/recovery; BP-38 record integrity; BP-43 restore testing; BP-44 change governance. | Ownership split appears coherent; recovery objectives/cadence and provider capabilities remain open decisions, not approved defaults. |
+| S50 Testing, validation and simulation quality | BP-43 test strategy/evidence; every domain division supplies acceptance criteria; BP-38 schema constraints; BP-44 release/change gates. | Ownership split appears coherent; no test execution or verification is claimed from authored criteria alone. |
+| S51 Operations, observability and maintenance | BP-35 runtime health; BP-38 database; BP-39 recovery; BP-40 operator visibility; BP-41 notifications/reports; BP-43 quality gates; BP-44 safe change. | Ownership split appears coherent; verify all critical failures are detectable, attributable and recoverable. |
+| S52 Canon, versioning and change control | BP-44 controlled change; BP-01 canon; BP-38 schemas/records; BP-43 evidence/status. | BP-44 specification and approval gates exist; verify every amendment has reason, authority, affected requirements, migration impact and test evidence. |
+
+This is an initial ownership/content scan only. Requirement-by-requirement destination coverage and acceptance-test adequacy remain open, including adversarial and cross-channel tests.
+
 ### Semantic finding A16 — public transport and mobility ownership
 
 <badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
