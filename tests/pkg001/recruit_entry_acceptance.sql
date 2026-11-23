@@ -9,6 +9,10 @@ DECLARE
   v_other_player_principal uuid := gen_random_uuid();
   v_pending_principal uuid := gen_random_uuid();
   v_bound_person integer;
+  v_activation_session uuid := gen_random_uuid();
+  v_activation_correlation uuid := gen_random_uuid();
+  v_binding_tuple_bytes integer;
+  v_session_tuple_bytes integer;
   v_unapproved uuid := gen_random_uuid();
   v_player uuid := gen_random_uuid();
   v_second_player uuid := gen_random_uuid();
@@ -120,6 +124,19 @@ BEGIN
   IF sw_player.bind_accepted_identity(v_player_principal,v_player) <> v_bound_person THEN
     RAISE EXCEPTION 'same identity binding replay was not idempotent';
   END IF;
+  INSERT INTO sw_auth.session
+    (session_id,principal_id,credential_digest,status,issued_at,expires_at,
+     active_person_id,authentication_strength,policy_version,correlation_id)
+  VALUES
+    (v_activation_session,v_player_principal,decode(repeat('ab',32),'hex'),'active',
+     clock_timestamp(),clock_timestamp()+interval '12 hours',v_bound_person,
+     'standard','pkg003-test',v_activation_correlation);
+  SELECT pg_column_size(b) INTO v_binding_tuple_bytes
+  FROM sw_player.identity_binding b WHERE b.principal_id=v_player_principal;
+  SELECT pg_column_size(s) INTO v_session_tuple_bytes
+  FROM sw_auth.session s WHERE s.session_id=v_activation_session;
+  RAISE NOTICE 'PKG004_STORAGE binding_tuple_bytes=% session_tuple_bytes=% combined_tuple_bytes=%',
+    v_binding_tuple_bytes,v_session_tuple_bytes,v_binding_tuple_bytes+v_session_tuple_bytes;
   BEGIN
     PERFORM sw_player.bind_accepted_identity(v_other_player_principal,v_player);
     RAISE EXCEPTION 'second principal unexpectedly bound to an existing player';
