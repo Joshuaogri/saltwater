@@ -47,7 +47,7 @@
 | BP-38 | Records and Databases | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-38](divisions/BP-38-RECORDS-AND-DATABASES.md) |
 | BP-39 | Persistence and Recovery | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-39](divisions/BP-39-PERSISTENCE-AND-RECOVERY.md) |
 | BP-40 | Interface | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-40](divisions/BP-40-INTERFACE.md) |
-| BP-41 | Notifications and Reporting | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-41 | Notifications and Reporting | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-41](divisions/BP-41-NOTIFICATIONS-AND-REPORTING.md) |
 | BP-42 | Security and Permissions | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-43 | Testing and Quality Assurance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-44 | Configuration and Change Control | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
