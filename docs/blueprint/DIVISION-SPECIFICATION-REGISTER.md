@@ -37,7 +37,7 @@
 | BP-28 | Courts and Outcomes | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-28](divisions/BP-28-COURTS-AND-OUTCOMES.md) |
 | BP-29 | Corrections | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-29](divisions/BP-29-CORRECTIONS.md) |
 | BP-30 | Department Governance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-30](divisions/BP-30-DEPARTMENT-GOVERNANCE.md) |
-| BP-31 | Professional Standards | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-31 | Professional Standards | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-31](divisions/BP-31-PROFESSIONAL-STANDARDS.md) |
 | BP-32 | Training and Development | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-33 | Human Resources | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-34 | Finance and Procurement | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -98,6 +98,7 @@ Statuses are independent across specification, implementation, testing and verif
 29. BP-28: full courts-and-outcomes specification draft created; court hierarchy, judicial appointments, jurisdiction, evidential doctrine, verdict taxonomy, sentencing, appeal and publication rules remain open fictional configuration decisions.
 30. BP-29: full corrections specification draft created; institution catalogue/capacity, sentence calculation, admission, supervision, rehabilitation, release, recall and post-release policy decisions remain open.
 31. BP-30: full department-governance specification draft created; institutional catalogue, appointment/tenure, police governance, delegation, policy, oversight, complaints routing and public accountability rules remain open.
-32. Continue BP-31 through BP-44 in numeric order, preserving the same specification contract and traceability.
+32. BP-31: full professional-standards specification draft created; complaint taxonomy, screening thresholds, investigative powers, proof standards, interim measures, disciplinary sanctions, hearings, appeals and independent review rules remain open fictional configuration decisions.
+33. Continue BP-32 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
