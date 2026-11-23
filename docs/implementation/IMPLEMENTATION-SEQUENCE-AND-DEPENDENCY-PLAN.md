@@ -80,6 +80,14 @@ The first PKG-002 application-layer increment is committed directly to `main`. I
 
 This increment is not yet a complete playable/persistent game. Durable player sessions, BP-03 person linkage, BP-06 personnel, BP-07 recruit career creation, the Neon runtime adapter integration and explicit turn/tick scheduling remain to be implemented and tested against disposable PostgreSQL. Neon production remains untouched. See `docs/implementation/approval-packages/PKG-002-player-command-interface.md`.
 
+## 4C. PKG-003 — recruit-entry vertical slice
+
+PKG-003 was approved on 2026-11-23 and implemented directly on `main`. The disposable-only proposal `db/proposals/0004_recruit_entry.sql` defines pending intake, canonical person admission, personnel appointment, explicitly authorised recruit supervision and career episode creation. The PostgreSQL adapter is in `runtime/recruitment.py`; the text interface exposes `recruit` and `career` commands when a trusted adapter is injected. The recruit-specific SQL acceptance script and Python adapter tests are included in the main-branch disposable PostgreSQL workflow.
+
+A pending request creates no canonical person or serving career. Appointment requires an active recruitment approver and a separately authorised active established supervisor; `established` is a service-standing label, not a substantive rank. Successful appointment creates one person, one population membership, one personnel dossier and one recruit career episode atomically. The proposal preserves event provenance and uses the existing population counter lock.
+
+**Current limitation:** the text commands honestly report unavailable until the trusted recruitment adapter is connected to the durable player/runtime path. End-to-end ChatGPT/runtime/Neon integration is not claimed. Proposal 0004 has not been applied to Neon; no production data or configuration was changed. See `docs/implementation/approval-packages/PKG-003-recruit-entry-vertical-slice.md` for scope and evidence state.
+
 ## 5. Dependency-led implementation sequence
 
 This is a dependency plan, not permission to write to production. Code, schema drafts, disposable migrations and tests may proceed while Neon production remains unchanged.
