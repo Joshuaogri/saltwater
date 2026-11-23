@@ -8,6 +8,12 @@ DECLARE
   v_player_principal uuid := gen_random_uuid();
   v_other_player_principal uuid := gen_random_uuid();
   v_pending_principal uuid := gen_random_uuid();
+  v_nonplayer_principal uuid := gen_random_uuid();
+  v_disabled_principal uuid := gen_random_uuid();
+  v_rejected_principal uuid := gen_random_uuid();
+  v_rejected_player uuid := gen_random_uuid();
+  v_rejected_intake uuid;
+  v_rejected_event bigint;
   v_bound_person integer;
   v_activation_session uuid := gen_random_uuid();
   v_activation_correlation uuid := gen_random_uuid();
@@ -111,7 +117,10 @@ BEGIN
   INSERT INTO sw_auth.principal(principal_id,issuer,subject,principal_kind,status)
   VALUES (v_player_principal,'saltwater-test','accepted-player','player','active'),
          (v_other_player_principal,'saltwater-test','duplicate-player','player','active'),
-         (v_pending_principal,'saltwater-test','pending-player','player','active');
+         (v_pending_principal,'saltwater-test','pending-player','player','active'),
+         (v_nonplayer_principal,'saltwater-test','officer-principal','officer','active'),
+         (v_disabled_principal,'saltwater-test','disabled-player','player','disabled'),
+         (v_rejected_principal,'saltwater-test','rejected-player','player','active');
   SELECT sw_player.bind_accepted_identity(v_player_principal,v_player) INTO v_bound_person;
   IF v_bound_person IS NULL THEN RAISE EXCEPTION 'accepted recruit identity did not resolve canonical person'; END IF;
   IF (SELECT person_id FROM sw_auth.principal WHERE principal_id=v_player_principal) <> v_bound_person THEN
@@ -121,9 +130,27 @@ BEGIN
       WHERE principal_id=v_player_principal AND player_id=v_player AND person_id=v_bound_person) <> 1 THEN
     RAISE EXCEPTION 'immutable player identity binding missing';
   END IF;
-  IF sw_player.bind_accepted_identity(v_player_principal,v_player) <> v_bound_person THEN
-    RAISE EXCEPTION 'same identity binding replay was not idempotent';
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_player_principal,v_player);
+    RAISE EXCEPTION 'activation replay unexpectedly returned a second session opportunity';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'activation replay unexpectedly returned a second session opportunity' THEN RAISE; END IF;
+  END;
+  IF (SELECT count(*) FROM sw_player.identity_binding WHERE player_id=v_player) <> 1 THEN
+    RAISE EXCEPTION 'activation replay duplicated the immutable binding';
   END IF;
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_nonplayer_principal,v_player);
+    RAISE EXCEPTION 'non-player principal unexpectedly activated';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'non-player principal unexpectedly activated' THEN RAISE; END IF;
+  END;
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_disabled_principal,v_player);
+    RAISE EXCEPTION 'disabled principal unexpectedly activated';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'disabled principal unexpectedly activated' THEN RAISE; END IF;
+  END;
   INSERT INTO sw_auth.session
     (session_id,principal_id,credential_digest,status,issued_at,expires_at,
      active_person_id,authentication_strength,policy_version,correlation_id)
@@ -149,6 +176,24 @@ BEGIN
     RAISE EXCEPTION 'pending recruit unexpectedly received an identity binding';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM = 'pending recruit unexpectedly received an identity binding' THEN RAISE; END IF;
+  END;
+
+  v_rejected_intake := sw_police.request_recruit_intake(v_rejected_player,'Rejected Player','pkg003-request-rejected');
+  SELECT event_type_id INTO STRICT v_event_type
+    FROM sw_core.event_type WHERE event_code='RECRUIT_INTAKE_REJECTED';
+  INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,source_ref,attributes,idempotency_key)
+  VALUES (v_event_type,clock_timestamp(),0,'player',v_rejected_player::text,
+          jsonb_build_object('intake_id',v_rejected_intake,'status','rejected'),'pkg003-rejected-outcome')
+  RETURNING event_id INTO v_rejected_event;
+  UPDATE sw_police.recruit_intake
+  SET status='rejected',outcome_event_id=v_rejected_event,outcome_source='PKG-004 acceptance test',
+      outcome_actor_principal_id=v_admin,outcome_tick=0
+  WHERE intake_id=v_rejected_intake;
+  BEGIN
+    PERFORM sw_player.bind_accepted_identity(v_rejected_principal,v_rejected_player);
+    RAISE EXCEPTION 'rejected recruit unexpectedly activated';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM = 'rejected recruit unexpectedly activated' THEN RAISE; END IF;
   END;
 
   BEGIN
