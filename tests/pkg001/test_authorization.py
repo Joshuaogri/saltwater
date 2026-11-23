@@ -60,6 +60,22 @@ class AuthorizationTests(unittest.TestCase):
         self.assertEqual(len(self.audit.records), 1)
         self.assertEqual(self.audit.records[0].principal_id, self.player_id)
 
+    def test_expected_principal_mismatch_is_audited_as_denial(self):
+        other_id = uuid4()
+        decision = self.auth.decide(
+            "opaque-valid-session",
+            action="read_case",
+            resource="case/SM-TEST-1",
+            purpose="active_play",
+            now=self.now,
+            expected_principal_id=other_id,
+        )
+        self.assertFalse(decision.allowed)
+        self.assertEqual(decision.reason, "principal_mismatch")
+        self.assertEqual(self.audit.records[-1].principal_id, self.player_id)
+        self.assertFalse(self.audit.records[-1].allowed)
+        self.assertEqual(self.audit.records[-1].reason, "principal_mismatch")
+
     def test_default_deny(self):
         decision = self.decide(action="export_case")
         self.assertFalse(decision.allowed)
