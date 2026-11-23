@@ -106,7 +106,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         commands.profile = PlayerProfile(str(uuid4()), "Player")
         authorization = Mock(spec=AuthorizationService)
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, uuid4()
