@@ -736,6 +736,7 @@ The specification must preserve all mapped requirements and tests from the origi
 - **S19** Environment, weather and natural hazards: hazards affect location, safety, resources and operational decisions.
 - **S20** Food systems and essential services: disruptions can create police incidents and resource dependencies.
 - **S22** Emergency services and civil protection: multi-agency coordination, dispatch handoffs and incident command interfaces are explicit.
+  - Exact obligations: S22.R01–R03 and S22.T01. BP-12 owns incident-level multi-agency command, operational milestones, resource/agency status links and handoff chronology; BP-11 owns communications/dispatch exchange; BP-04/BP-33 own partner-agency capability and staffing source records; BP-35 owns event execution.
 - **S26** Police command, policy and internal governance: operational command and policy authority are distinguished.
 - **S27** 911, call-taking, CAD and dispatch: BP-11 owns communications; BP-12 owns the incident record.
 - **S28** Patrol, response and field operations: BP-10 owns field activity; BP-12 coordinates incident-level status.
