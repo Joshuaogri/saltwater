@@ -113,6 +113,12 @@ class AuditSink(Protocol):
     def append(self, record: SecurityAuditRecord) -> None: ...
 
 
+class GrantProvider(Protocol):
+    """Load the currently effective grants for one authorization decision."""
+
+    def load(self, at: datetime) -> tuple[Grant, ...]: ...
+
+
 @dataclass
 class InMemoryAuditSink:
     """Test-only sink. Production requires a durable append-only implementation."""
@@ -138,7 +144,7 @@ class AuthorizationService:
         self,
         verifier: SessionVerifier,
         audit_sink: AuditSink,
-        grants: tuple[Grant, ...] = (),
+        grants: tuple[Grant, ...] | GrantProvider = (),
         *,
         policy_version: str = "1",
     ):
@@ -179,8 +185,13 @@ class AuthorizationService:
         ):
             reason = "hidden_truth_requires_exact_player_trigger"
         else:
+            effective_grants = (
+                self._grants.load(at)
+                if hasattr(self._grants, "load")
+                else self._grants
+            )
             matching = [
-                grant for grant in self._grants
+                grant for grant in effective_grants
                 if grant.action == action
                 and _resource_matches(grant.resource_pattern, resource)
                 and grant.purpose == purpose
