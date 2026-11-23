@@ -300,6 +300,9 @@ The full audit must specifically test these high-risk boundaries:
 
 ## 9. Audit disposition and next sequence
 
+- [Implementation sequence and dependency plan](../implementation/IMPLEMENTATION-SEQUENCE-AND-DEPENDENCY-PLAN.md)
+
+
 **Specification audit: COMPLETE.** The 52-source-to-44-target design has passed source coverage, traceability, acceptance-test adequacy, cross-division ownership/interface review and integrated binding-canon consistency at specification-draft level. The recorded design defects were corrected and verified.
 
 The repository and Neon environment already contain a deployed platform foundation; they are not an empty bootstrap. The current production database contains the foundation schema and one Saltwater world-configuration row, but no domain simulation schemas or production seed data. The repository contains SQL migrations, benchmark fixtures and GitHub Actions workflows, but no executable game runtime/application code.
