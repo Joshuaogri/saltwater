@@ -18,7 +18,13 @@ The implementation in `runtime/security.py` establishes a provider-neutral autho
 
 The PostgreSQL proposal creates NOLOGIN templates `sw_game_readonly` and `sw_game_command`. The read role can select canonical data but cannot directly mutate it. The command role has schema visibility but no direct table DML. Neither role is connected to a login, provider, player or service identity.
 
-## 2. Tests
+## 2. Persistent identity proposal (0003)
+
+`db/proposals/0003_actor_session_authorization.sql` adds a provider-neutral `sw_auth` schema for disposable validation. It stores external issuer/subject identifiers (not passwords), principal kind/status and optional canonical-person linkage; opaque session credential digests only (SHA-256-sized binary digest, never raw token); session expiry/revocation and active persona; role assignments; permission grants with action/resource/purpose/effect and subject constraints; immutable policy versions; and append-only authorization audit decisions. Session issuance facts and grant definitions are immutable; sessions can be revoked and grants can be revoked once. Policy versions and audit rows cannot be updated or deleted.
+
+The proposal deliberately grants no direct `sw_auth` table access to ordinary read/command roles. A future narrow trusted authentication service/API must own these writes and reads. The identity provider and credential issuance format remain unselected. The schema is a persistence contract, not yet a working login system or connected `SessionVerifier`/`AuditSink` adapter. The SQL acceptance fixture is transactionally rolled back in disposable PostgreSQL only.
+
+## 3. Tests
 
 The authorization unit suite covers:
 - explicit allow and audit;
@@ -31,7 +37,7 @@ The authorization unit suite covers:
 
 The disposable database suite separately tests the read-only and command role grants and append-only history enforcement. These tests do not use Neon.
 
-## 3. Integration still required
+## 4. Integration still required
 
 This module is a policy contract, not yet a complete production security system. Before A-001/A-002 can be fully accepted:
 
@@ -45,7 +51,7 @@ This module is a policy contract, not yet a complete production security system.
 8. Test session revocation, policy changes, stale cache invalidation, cross-principal isolation, unauthorised direct SQL and audit failure under the actual deployed adapters.
 9. Verify that security operations use real security time but never advance fictional time or NPC activity.
 
-## 4. Deliberate non-assumptions
+## 5. Deliberate non-assumptions
 
 - No external identity provider or credential format selected.
 - No player account, authenticated session, active officer persona or live login seeded.
