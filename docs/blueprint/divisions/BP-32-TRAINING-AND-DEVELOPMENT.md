@@ -52,6 +52,7 @@ BP-32 supplies authoritative, versioned training and qualification evidence to t
 ### 3.2 Excluded
 - Canonical person identity, life history and population accounting: BP-03.
 - Training-provider, school, college, organisation and business identity: BP-04.
+- General school/college learner enrolment, attendance, academic participation and non-police education history: BP-03 person records and BP-04 provider records; BP-32 owns police training, not a parallel general education registry.
 - Police hierarchy, rank, position, grade, authority, powers, clearance and post prerequisites: BP-05.
 - Authoritative police personnel/service master: BP-06.
 - Career lifecycle, promotion, appointment, retirement and career decisions: BP-07.
@@ -559,13 +560,13 @@ The following are required acceptance tests, not evidence that implementation or
 159. **TRN-AT-159** — Qualification scope and validity are independently represented.
 160. **TRN-AT-160** — A requirement linked to a post does not itself grant appointment or authority.
 
-## 28. Source traceability
+\n- **TRN-AT-161** — General school/college enrolment, attendance and education histories resolve to BP-03 person records and BP-04 provider records; BP-32 does not create duplicate general-education records.\n\n## 28. Source traceability
 
 The original 52-division JSON remains authoritative for source wording. The crosswalk maps every requirement/test to one or more target divisions. BP-32 must preserve the full meaning of each mapped item.
 
 | Source ID | Source requirement/test | BP-32 incorporation |
 |---|---|---|
-| S14.R01 | Education providers, enrolment, attendance, staff, qualifications, schedules and facilities | Sections 6–10, 13, 17–18, 27 |
+| S14.R01 | Police-training provider/course, enrolment, attendance, qualifications, schedules and facilities; general school/college provider and learner records are BP-03/BP-04 | Sections 3–10, 13, 17–18, 27; explicit boundary with BP-03/BP-04 |
 | S14.R02 | Police recruitment/training and workforce development | Sections 7–15, 21, 25, 27 |
 | S14.R03 | Credible education and qualification histories | Sections 6, 12, 14, 24, 26–27 |
 | S14.T01 | Qualifications have issuing bodies, dates and valid prerequisites | Sections 8, 12–13; TRN-AT-006–015, 65–81 |
