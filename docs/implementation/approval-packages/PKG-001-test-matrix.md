@@ -1,6 +1,6 @@
 # PKG-001 — Disposable acceptance test matrix
 
-**Status:** Proposed; not executed. **Target:** disposable PostgreSQL only.  
+**Status:** Partially executed. **Target:** disposable PostgreSQL only. The matrix below remains authoritative; execution states are recorded separately so no untested requirement is silently treated as passed.  
 **Source package:** PKG-001. **No Neon execution permitted.**
 
 ## Runtime kernel
@@ -52,3 +52,54 @@
 - S-005 compare actual disposable DB growth with projected 9,500-person opening baseline.
 
 All tests must run on disposable PostgreSQL with synthetic fixtures and automatic rollback/cleanup. No test connects to Neon production. Record exact commit, PostgreSQL version, fixture version, command, result, evidence and storage measurement.
+
+
+## Execution status — run 0001
+
+Evidence: [PKG-001 disposable validation and storage report](../test-evidence/PKG-001-run-0001.md).  
+Successful CI commit: `13a78e4cb48d10e310f07fd04cb365f01dad436f`; PostgreSQL 16.16; Python 3.12; psycopg 3.3.9.
+
+| Test ID | Status | Scope actually exercised |
+|---|---|---|
+| K-001 | PASS | Runtime singleton and initial stopped state |
+| K-002 | PASS | Valid lifecycle transitions and invalid transition rejection |
+| K-003 | PARTIAL | No tick advancement while stopped or paused; recovering/player-absent variants remain |
+| K-004 | PENDING | Event insertion while paused/absent not separately exercised |
+| K-005 | PASS | Lifecycle state/event transitions commit through PostgreSQL adapter |
+| K-006 | PASS | Monotonic tick, current-tick events and causal event linkage |
+| K-007 | PASS | Idempotent event and tick retries do not duplicate effects |
+| K-008 | PENDING | Injected failure between event and domain commit |
+| K-009 | PARTIAL | Invalid transition rejected; singleton deletion protection not separately tested |
+| K-010 | PARTIAL | Bootstrap closure and start gate pass; invalid closure/reopen tests remain |
+| G-001 | PASS | Exactly two canonical roots seeded |
+| G-002 | PENDING | Duplicate roots, parent validity and cycles |
+| G-003 | PASS | Geometry-null roots; no coordinates/CRS invented |
+| G-004 | PENDING | Geometry metadata/hash validation |
+| G-005 | PENDING | Spatial version append/history retention |
+| G-006 | PENDING | Off-map references cannot become playable geometry |
+| G-007 | PENDING | Spatial version chronology and cycle rejection |
+| G-008 | PENDING | Spatial identity/version immutability |
+| P-001 | PARTIAL | Stable canonical person IDs created; rename/correction path remains |
+| P-002 | PENDING | Roles/memberships do not affect population identity/count |
+| P-003 | PASS | Exactly 10,000 living+included people reached |
+| P-004 | PASS | 10,001st admission rejected |
+| P-005 | PASS | Two concurrent admissions at 9,999: exactly one accepted |
+| P-006 | PENDING | Unresolved/excluded scope semantics |
+| P-007 | PENDING | Death transition and retained history |
+| P-008 | PASS | Population-state change produces linked append-only history |
+| P-009 | PENDING | Direct history update/delete rejection |
+| P-010 | PENDING | Residence chronology and overlap rules |
+| P-011 | PASS | Rejected concurrent admission rolled back person/event/history; final counts reconcile |
+| P-012 | PASS | Counter, person and population-state totals reconcile at 10,000 |
+| P-013 | PENDING | Canonical person/state deletion protection and event-required transitions |
+| P-014 | PENDING | Profile correction history and stable ID across correction |
+| A-001 | PENDING | Permission boundary and unauthorised mutation tests |
+| A-002 | PENDING | Hidden-truth firewall and exact `bingo` reveal route |
+| R-001 | PENDING | Backup/restore verification |
+| S-001 | PARTIAL | Whole-database baseline and relation totals measured; isolated schema-only overhead remains |
+| S-002 | PARTIAL | Full-cap compact person/state/history/two-event fixture measured; residence/event/text sub-costs remain |
+| S-003 | PENDING | Text/source-reference payload bands |
+| S-004 | PENDING | Query-plan/index justification |
+| S-005 | PARTIAL | 10,000-person compact fixture measured; full 9,500-person opening-world baseline not yet modelled |
+
+Only PASS rows are complete for their stated test scope. PARTIAL rows must not be represented as full acceptance.
