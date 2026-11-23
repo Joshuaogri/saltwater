@@ -30,7 +30,7 @@ class PostgresRuntimeStoreTests(unittest.TestCase):
         first = kernel.record("PERSON_CREATED", idempotency_key="pkg001-person-event")
         repeated = kernel.record("PERSON_CREATED", idempotency_key="pkg001-person-event")
         self.assertEqual(first.event_id, repeated.event_id)
-        child = kernel.record("CASE_OPENED", causation_id=first.event_id)
+        child = kernel.record("PERSON_PROFILE_CHANGED", causation_id=first.event_id)
         self.assertEqual(child.causation_id, first.event_id)
 
         state = kernel.advance_tick(idempotency_key="pkg001-tick-1")
