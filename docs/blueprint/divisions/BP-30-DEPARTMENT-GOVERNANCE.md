@@ -211,6 +211,10 @@ Decision review can confirm, vary, revoke or refer a prior decision. The review 
 
 BP-30 defines the mandate, accountability and oversight route for public administrative bodies. BP-04 represents the body, premises, business/provider and service identity. BP-34 owns public financial transactions and accounting. BP-38 owns public record standards.
 
+The civil registry is a defined public-administration function, not an unowned generic database. BP-30 owns the registry office/mandate, registrar appointment and authority, register catalogue, registration and certification workflows, permitted disclosure authority, and governance of corrections and challenges. The registry's person-linked civil identity/life-event facts are referenced by BP-03; property, premises and business registers reference BP-04 source records; BP-38 supplies common identifiers, versioning, provenance, access and retention controls. Social relationship status in BP-36 is not itself proof of a legally registered civil status. A registration or certificate must identify its source record, issuing authority, effective/recorded times, current status and correction lineage.
+
+BP-30 also owns the public-administration workflow for permits, licences and inspections where no specialist operational division is assigned: application/intake, eligibility and evidence references, review, decision, issue, conditions, renewal, variation, suspension, revocation, appeal/referral and closure. Domain-specific facts remain with their owners (for example BP-04 business/property facts and BP-34 fees/payments); BP-30 records authority and workflow outcomes without creating duplicate business, property or financial ledgers.
+
 Public policy, administrative decisions, procurement authority, permits, licensing and inspections must be attributed to competent offices. BP-30 can define who may approve or review these actions; the relevant operational owner records the application, transaction or service event. BP-30 must not create parallel application, licence, inspection or finance databases.
 
 Social care, welfare, community support and other public services are represented proportionately. BP-04 owns provider identity and premises; BP-17 owns victim/witness support and safeguarding; BP-36 owns relationships/community context. BP-30 owns institutional mandate, public accountability and governance review, not individual clinical or service-delivery records.
@@ -533,6 +537,11 @@ These are criteria for BP-43. They are not evidence that implementation or testi
 - GOV-AT-070 — Public asset ownership and premises identity remain with BP-04 and resource owners.
 - GOV-AT-071 — Government permits and licensing decisions have an identified competent authority.
 - GOV-AT-072 — Permit application, review, decision, issuance, variation, suspension and revocation are separate states.
+- GOV-AT-151 — Every civil registry function has a defined BP-30 office, mandate, registrar authority and controlled workflow.
+- GOV-AT-152 — Civil-status and life-event registrations reference one canonical BP-03 person and preserve issuing authority, effective/recorded times, status and provenance.
+- GOV-AT-153 — A civil-status/social-relationship distinction is enforced; a BP-36 relationship alone cannot create or prove a civil registration.
+- GOV-AT-154 — Civil-register corrections preserve the prior registered value, reason, authority, time and correction lineage.
+- GOV-AT-155 — Permit/licence/inspection workflow states and decisions are attributable, versioned and linked to BP-04/BP-34 source facts without duplicate ledgers.
 - GOV-AT-073 — Inspection authority and scope are explicit and auditable.
 - GOV-AT-074 — Inspection observations are distinct from findings and enforcement decisions.
 - GOV-AT-075 — Public complaint receipt is distinct from complaint investigation and outcome.
@@ -621,6 +630,8 @@ Original source remains `docs/governance/SALTWATER_MASTER_BLUEPRINT.json`, SHA `
 | S01.R01 | Define Saltwater sovereign status, territory boundary, jurisdiction, institutions, powers, succession and constitutional rules. | Sections 2, 5–7, 17, 25–27; BP-01 owns canon, BP-02 geography, BP-30 institutional authority and succession. |
 | S01.R02 | Define legal hierarchy, authority sources, emergency powers, separation of functions and jurisdictional limits. | Sections 7–8, 10, 17, 25–27; authority/delegation, emergency powers, separation and bounded jurisdiction; BP-27 owns legal process. |
 | S01.T02 | No institution exercises undefined authority. | Sections 5–7, 10, 26 and tests GOV-AT-001–027; authority validation is mandatory. |
+| S12.R01 | Maintain civil status, identity, address, property, business, permits and other canonically required registers. | Sections 12, 18, 19, 25; BP-30 owns registry office/authority and public register workflow; BP-03/BP-04 own person/property/business source facts; BP-38 common record controls. |
+| S12.R03 | Support lawful in-world retrieval and controlled disclosure. | Sections 12, 23–24; registry disclosure authority and BP-42 access enforcement, with source records retained by domain owners. |
 | S11.R01 | Define executive, legislative, administrative and oversight functions, offices, incumbents, mandates, decision processes and records. | Sections 5–7, 11, 17–20; institutional, office, authority and decision models. |
 | S11.R02 | Represent public policy, procurement, permits, licensing, inspections and public complaints. | Sections 10, 12–14; governance approval/mandate boundaries, with financial and complaint case ownership retained by BP-34/BP-31. |
 | S11.R03 | Ensure government actions have accountable actors, authority and dates. | Sections 7, 9, 11, 20–24; all material actions are attributable and effective-dated. |
