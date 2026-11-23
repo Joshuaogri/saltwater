@@ -114,5 +114,89 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
         ).allowed)
 
 
+    def test_postgres_session_authorizes_composed_player_command_and_audits_it(self):
+        from runtime.application import (
+            bind_authorized_player_commands,
+            create_postgres_player_application,
+        )
+        from runtime.player_interface import PlayerProfile
+        from runtime.security import Effect, Grant
+
+        profile = PlayerProfile(str(self.principal_id), "Database-backed Player")
+        application = create_postgres_player_application(connect, profile)
+        authorization = AuthorizationService(
+            self.verifier,
+            self.audit,
+            (
+                Grant(
+                    "player.command.profile",
+                    f"player:{profile.player_id}",
+                    "gameplay",
+                    Effect.ALLOW,
+                    principal_id=self.principal_id,
+                ),
+            ),
+        )
+        gateway = bind_authorized_player_commands(
+            application, authorization, self.principal_id
+        )
+
+        result = gateway.execute(self.token, "profile")
+
+        self.assertTrue(result.ok)
+        self.assertIn("Database-backed Player", result.message)
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT action, resource, purpose, allowed, reason
+                       FROM sw_auth.audit WHERE session_id=%s
+                       ORDER BY audit_id DESC LIMIT 1""",
+                    (self.session_id,),
+                )
+                audit = cur.fetchone()
+        self.assertEqual(
+            audit,
+            (
+                "player.command.profile",
+                f"player:{profile.player_id}",
+                "gameplay",
+                True,
+                "explicit_allow",
+            ),
+        )
+
+    def test_postgres_session_without_command_grant_is_denied_and_audited(self):
+        from runtime.application import (
+            bind_authorized_player_commands,
+            create_postgres_player_application,
+        )
+        from runtime.player_interface import PlayerProfile
+
+        profile = PlayerProfile(str(self.principal_id), "Unprivileged Player")
+        application = create_postgres_player_application(connect, profile)
+        authorization = AuthorizationService(self.verifier, self.audit, ())
+        gateway = bind_authorized_player_commands(
+            application, authorization, self.principal_id
+        )
+
+        result = gateway.execute(self.token, "profile")
+
+        self.assertFalse(result.ok)
+        self.assertEqual(result.message, "Access denied.")
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT action, allowed, reason FROM sw_auth.audit
+                       WHERE session_id=%s ORDER BY audit_id DESC LIMIT 1""",
+                    (self.session_id,),
+                )
+                audit = cur.fetchone()
+        self.assertEqual(
+            audit,
+            ("player.command.profile", False, "no_matching_grant"),
+        )
+
+
+
 if __name__ == "__main__":
     unittest.main()
