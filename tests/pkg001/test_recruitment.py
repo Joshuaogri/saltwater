@@ -11,6 +11,12 @@ class FakeCursor:
         self.row = row
         self.executed = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
     def execute(self, sql, params):
         self.executed = (sql, params)
 
