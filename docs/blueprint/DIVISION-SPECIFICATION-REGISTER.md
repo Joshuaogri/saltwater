@@ -1,9 +1,13 @@
 # Saltwater Division Specification Register
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** 2026-11-22  
 **Structure:** Fixed BP-01–BP-44; no structural change.  
 **Purpose:** Track design specification separately from implementation, testing and verification.
+
+## Master blueprint approval
+
+**APPROVED — 2026-11-23.** The user has approved the Saltwater master blueprint framework, binding canon and fixed BP-01–BP-44 structure. This is approval of the master framework only. The 44 division specifications remain `DESIGNED_DRAFT` until each is semantically reconciled, complete, traceable and individually reviewed. Implementation, testing and verification remain separate statuses and are not approved or implied by this decision.
 
 | ID | Division | Specification status | Implementation | Test | Verification | Specification |
 |---|---|---|---|---|---|---|
