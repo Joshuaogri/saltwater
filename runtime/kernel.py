@@ -85,6 +85,8 @@ class InMemoryRuntimeStore:
         with self._lock:
             if not self.state.bootstrap_open:
                 return self.snapshot()
+            if self.state.lifecycle != Lifecycle.READY or self.state.world_tick != 0:
+                raise KernelError("bootstrap can close only in ready state at world tick zero")
             self.state.bootstrap_open = False
             return self.snapshot()
 
