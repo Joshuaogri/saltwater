@@ -589,24 +589,23 @@ These are required acceptance tests, not evidence that implementation or executi
 
 ## 25. Source traceability
 
-The original 52-division JSON remains the source of truth for original requirement wording. The crosswalk assigns requirements and tests to BP-33 as follows; all mapped meaning is retained in this specification.
+The original 52-division JSON remains the source of truth for original requirement wording. The crosswalk assigns requirements and tests to BP-33 as follows; all mapped meaning is retained in this specification. IDs below are included only where the authoritative crosswalk maps them to BP-33.
 
 | Source ID | Original requirement/test | BP-33 incorporation |
 |---|---|---|
 | S03.R05 | Prevent double-counting police or people with multiple roles | Sections 2, 5–6, 15, 24; HR-AT-003–004, 095, 105 |
-| S03.T01 | Population ledger reconciles to person records | Sections 2, 5–6, 21; HR-AT-001–004, 105–108 |
-| S03.T03 | Police count is a subset of total population, not an extra uncounted population | Sections 2, 4.1, 5, 12; HR-AT-003–004, 061–069, 105 |
 | S04.R01 | Stable identity, attributes, history, needs, schedule, skills, employment, finances, relationships and relevant records | Sections 5–6, 10, 15–18; HR-AT-001–004, 033–036, 095–100 |
-| S04.T01 | Identity remains stable across jobs, addresses and relationships | Sections 5–6, 15; HR-AT-001–004, 033, 095–097 |
 | S08.R01 | Track jobs, employers, contracts, shifts, attendance, payroll, leave, skills, qualifications, discipline and separation | Sections 6–15, 18–21; HR-AT-007–094 |
 | S08.R02 | Generate plausible work schedules and movement between work and home | Sections 10, 16, 18, 24; HR-AT-034–044, 098–104, 133, 149 |
 | S08.R03 | Link employment to businesses, public institutions and police staffing | Sections 4, 7, 8, 12, 18; HR-AT-002, 020–022, 061–069, 130–132 |
 | S08.T01 | Simultaneous shifts and locations do not conflict without recorded explanation | Sections 5, 10, 16, 20; HR-AT-034–036, 097–100, 133, 149 |
 | S10.R01 | Define currency, public revenue, taxation, fees, expenditure, budgets, debt, grants and financial periods | Sections 4.2, 7, 8, 10, 15, 18; finance/payroll ownership boundary and HR-AT-045–046, 129–132 |
-| S10.T01 | Every posted transaction balances under its accounting model | Sections 4.2, 15, 18, 21; BP-34 authoritative posting boundary and HR-AT-046, 129–132 |
+| S23.R01 | Police mandate/structure/rank/position/authority/powers/clearance/divisions/units/reporting | Sections 4, 8, 12, 18; HR administration respects BP-05 structure and authority and BP-06/BP-08 interfaces |
+| S23.R03 | Appointment, promotion, transfer, acting roles, succession, discipline, grievance, standards and retirement | Sections 4, 8, 13–14, 18; HR transaction interfaces to BP-06/BP-07/BP-30/BP-31 |
+| S24.R01 | Officer identity/history/recruitment/vetting/training/qualifications/skills/performance/welfare/leave/shifts/pay/discipline/career | Sections 4, 6, 8, 11–15, 18; police HR administration and owner boundaries |
+| S24.R02 | Recruit entry and career progression through vacancies, standards and required training | Sections 8–9, 12–14, 18; police recruitment administration with BP-06/BP-07/BP-32 |
 | S25.R01 | Generate and maintain shifts, duty rosters, leave, absences, minimum staffing, specialist availability, patrol areas and command coverage | Sections 10–12, 18; BP-08/BP-09 operational ownership and HR-AT-061–069 |
 | S25.R03 | Record roster changes and actual attendance separately | Sections 10, 12, 18–19; HR-AT-037–045, 061–064 |
-| S25.T01 | No officer is simultaneously assigned to incompatible duties | Sections 10, 12, 20; HR-AT-034–036, 061–069, 133 |
 
 Crosswalk-wide rules also apply:
 - **X03:** All time-dependent facts are effective-dated and historically queryable; HR uses BP-37 and never wall-clock progression.
