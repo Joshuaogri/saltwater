@@ -142,6 +142,10 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                 supervisor_person = fixture_people[0][0]
                 supervisor_of_supervisor = fixture_people[1][0]
                 cur.execute(
+                    "SELECT world_tick FROM sw_runtime.state WHERE singleton=1"
+                )
+                current_tick = cur.fetchone()[0]
+                cur.execute(
                     """
                     SELECT event_type_id FROM sw_core.event_type
                     WHERE event_code='PERSONNEL_APPOINTED'
@@ -158,7 +162,7 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                     RETURNING event_id
                     """,
                     (
-                        appointment_type, supervisor_person,
+                        appointment_type, current_tick, supervisor_person,
                         "pkg005-supervisor-appointment:" + cls.suffix,
                     ),
                 )
@@ -169,11 +173,11 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                     INSERT INTO sw_police.personnel
                       (personnel_id,person_id,service_number,service_standing,service_status,
                        supervisor_person_id,appointment_tick,appointment_source,appointment_event_id)
-                    VALUES (%s,%s,%s,'established','active',%s,0,'PKG-005 fixture',%s)
+                    VALUES (%s,%s,%s,'established','active',%s,%s,'PKG-005 fixture',%s)
                     """,
                     (
                         personnel_id, supervisor_person, "PKG5-" + cls.suffix[:16],
-                        supervisor_of_supervisor, appointment_event,
+                        supervisor_of_supervisor, current_tick, appointment_event,
                     ),
                 )
                 cur.execute(
