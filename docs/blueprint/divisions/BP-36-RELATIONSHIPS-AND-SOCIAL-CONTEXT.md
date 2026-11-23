@@ -855,7 +855,7 @@ The following are the exact source requirement/test IDs mapped to BP-36 in the a
 
 | Source ID | Source division | Source intent preserved |
 |---|---|---|
-| S03.R01 | Population accounting and demographic model | Population accounting and hard cap interface; the old 9,500 opening composition is superseded by current Saltwater canon |
+| S03.R01 | Population accounting and demographic model | Preserve the binding opening population of 9,000 residents + 500 police = 9,500 living people, 500 unused capacity headroom and the 10,000 hard cap; BP-03 owns the sole population ledger |
 | S04.R01 | Person identity and life records | Stable person references and relationship attributes/history without duplicate identity |
 | S05.R01 | Households, relationships and social networks | Households, families, partners, dependants, friendships, conflicts, professional links and networks |
 | S05.T01 | Households, relationships and social networks | Reciprocal relationship semantics where applicable and historically traceable links |
