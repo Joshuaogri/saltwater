@@ -50,7 +50,7 @@
 | BP-41 | Notifications and Reporting | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-41](divisions/BP-41-NOTIFICATIONS-AND-REPORTING.md) |
 | BP-42 | Security and Permissions | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-42](divisions/BP-42-SECURITY-AND-PERMISSIONS.md) |
 | BP-43 | Testing and Quality Assurance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-43](divisions/BP-43-TESTING-AND-QUALITY-ASSURANCE.md) |
-| BP-44 | Configuration and Change Control | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-44 | Configuration and Change Control | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-44](divisions/BP-44-CONFIGURATION-AND-CHANGE-CONTROL.md) |
 
 ## Governing status rules
 
@@ -111,6 +111,7 @@ Statuses are independent across specification, implementation, testing and verif
 42. BP-41: full notifications-and-reporting specification draft created; notification taxonomy/priorities, recipient resolution, delivery channels, retry policy, report catalogue, public release authority, metric definitions, retention, scheduling and queue implementation remain open decisions.
 43. BP-42: full security-and-permissions specification draft created; authentication/session policy, permission catalogue, classification, delegation, emergency access, audit retention, secret management, encryption, monitoring and incident-response rules remain open decisions.
 44. BP-43: full testing-and-quality-assurance specification draft created; test runner/CI, evidence retention, coverage thresholds, defect severity, load targets, storage benchmark methodology, recovery cadence and release gates remain open decisions.
-45. Continue BP-44 in numeric order, preserving the same specification contract and traceability.
+45. BP-44: full configuration-and-change-control specification draft created; configuration schema, approval authority matrix, change workflow, schema registry, migration tooling, environment promotion, audit retention and release manifest remain open decisions.
+46. All 44 division specification drafts now exist. Next: whole-blueprint semantic audit, gap resolution, cross-division consistency review and implementation planning; preserve the fixed 44-division structure.
 
 **No Neon write has been made or authorised by these documents.**
