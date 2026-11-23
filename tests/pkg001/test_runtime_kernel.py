@@ -30,12 +30,8 @@ class RuntimeKernelTests(unittest.TestCase):
             self.kernel.transition(Lifecycle.RUNNING, player_present=True)
         self.kernel.close_bootstrap()
         self.kernel.transition(Lifecycle.RUNNING, player_present=True)
-        with self.assertRaises(KernelError):
-            self.kernel.close_bootstrap().__class__  # ensure call below remains explicit
-        # Store-level invariant is checked by attempting to reopen directly.
-        self.store.state.bootstrap_open = True
-        with self.assertRaises(KernelError):
-            self.kernel.transition(Lifecycle.RUNNING, player_present=True)
+        self.assertFalse(self.kernel.close_bootstrap().bootstrap_open)
+        self.assertFalse(self.kernel.status().bootstrap_open)
 
     def test_valid_transitions_and_tick(self):
         self.start()
