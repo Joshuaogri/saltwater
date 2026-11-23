@@ -165,6 +165,21 @@ BP-04 acceptance criterion AC-D06 and BP-03 criteria AC-HLTH-01–04 were added.
 
 **Verification:** Updated BP-03/BP-04 specifications and crosswalk were fetched after commit. Test execution remains pending.
 
+### Initial source-domain scan: S17–S24
+
+| Source | Initial ownership/content check | Audit outcome |
+|---|---|---|
+| S17 Roads, transport and mobility | BP-02 topology, stops, parking and accessibility; BP-04 operators, routes and fleet profiles; BP-37 timetables; BP-09 police fleet; BP-10/BP-11/BP-12 operational consumers. | Finding A16 resolved the previously implicit service-route/stop/timetable ownership. Test execution pending. |
+| S18 Buildings, facilities and physical assets | BP-02 spatial identity; BP-04 premises/building/facility and access structure; BP-09 police assets; BP-20 surveillance; BP-22 scene geometry; BP-23 exhibits. | Ownership split appears coherent; verify key/lock/alarm and authorised-access timelines against scene and surveillance records. |
+| S19 Environment, weather and natural hazards | BP-02 geography; BP-35 environmental causality/effects; BP-37 canonical time; BP-09/BP-10/BP-12/BP-17/BP-20/BP-22/BP-24 consume justified impacts. | Ownership split appears coherent; verify effects are location/time-valid and do not invent evidence or health consequences. |
+| S20 Food systems and essential services | BP-04 suppliers/operators/stock; BP-09 police dependencies; BP-34 financial/procurement; BP-35 supply-chain causality and recovery. | Ownership split appears proportionate; verify stock/delivery/shortage reconciliation and no conjured supply. |
+| S21 Culture, media, recreation and civic life | BP-04 organisations/venues/media; BP-30 public authority; BP-36 community/social context; BP-35 generation; BP-37 schedules; BP-41 public notices/reports. | Ownership split appears coherent at support-level depth; verify events have organiser, place, time and grounded attendance. |
+| S22 Emergency services and civil protection | BP-04 agency identity/facilities; BP-09 police resource interfaces; BP-11 dispatch coordination; BP-12 incident command; BP-30 institutional authority; BP-35 causal coordination. | Ownership split appears proportionate; verify other-agency capability and handoffs without creating a second deep simulation or displacing police depth. |
+| S23 Police service governance and structure | BP-05 institutional architecture; BP-06 personnel; BP-07 career; BP-08 units; BP-30 governance; BP-31 standards; BP-32 training; BP-33 HR; BP-42 permissions. | Ownership split appears coherent; verify rank/position/grade/authority/powers/clearance/qualification/appointment/assignment remain distinct across interfaces. |
+| S24 Police personnel and career simulation | BP-06 personnel; BP-07 career; BP-08 deployment; BP-09 resources; BP-32 qualifications; BP-33 HR. | Ownership split appears coherent; verify personnel identity, employment, career, competence, welfare, pay and discipline are linked without duplicate master records. |
+
+This is an initial ownership/content scan only. All mapped source requirements/tests still require exact target-section and acceptance-test reconciliation.
+
 ### Semantic finding A16 — public transport and mobility ownership
 
 <badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
