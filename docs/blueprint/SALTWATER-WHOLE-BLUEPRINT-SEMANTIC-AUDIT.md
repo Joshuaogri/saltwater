@@ -165,6 +165,24 @@ BP-04 acceptance criterion AC-D06 and BP-03 criteria AC-HLTH-01–04 were added.
 
 **Verification:** Updated BP-03/BP-04 specifications and crosswalk were fetched after commit. Test execution remains pending.
 
+### Semantic finding A16 — public transport and mobility ownership
+
+<badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
+
+**Source:** S17.R01.
+
+**Gap:** The source explicitly requires public transport, fleet, routes, timetables, stops, parking and accessibility. The original specifications had a road graph and generic transport-operator references, plus generic scheduling, but did not clearly allocate stop/parking/accessibility spatial records, transport service routes/fleet profiles and timetable occurrences across the owning divisions.
+
+**Resolution within existing divisions:**
+- **BP-02:** owns public-transport stops/stations/terminals, parking/loading areas, accessible pedestrian connectors, spatial identity and route geometry/topology.
+- **BP-04:** owns transport operators, service-route identity, ordered stop sequences, fleet/service profiles, capacity, accessibility and service disruption events.
+- **BP-37:** owns timetable definitions and scheduled service-run occurrences; it does not decide route geometry or operator/service identity.
+- **BP-09:** remains owner of police fleet/resource readiness only. **BP-10/BP-11/BP-12** consume route and service availability for patrol, dispatch and incidents.
+
+Added BP-02 criterion AC-D10 and BP-04 criterion AC-D07. BP-37's schedule catalogue and source traceability now explicitly include public transport timetables/service runs. Crosswalk S17.R01 now includes BP-37; finding A16 and the S17 review status were updated.
+
+**Verification:** Updated BP-02/BP-04/BP-37 specifications and crosswalk were fetched after commit. Test execution remains pending.
+
 ## 7. Cross-division invariants and boundaries to reconcile
 
 The full audit must specifically test these high-risk boundaries:
@@ -189,7 +207,7 @@ The full audit must specifically test these high-risk boundaries:
 | Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
 | Fixed 44-division structure | PASSED | Master blueprint and all 44 spec files present |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
-| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare gap A15 and S14 education gap A14 resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
+| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare A15, S14 education A14 and S17 public transport A16 gaps resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
 | Cross-division ownership and interface consistency | NOT_STARTED | Requires completed division-level semantic review |
 | Acceptance-test adequacy against source wording | NOT_STARTED | Must verify tests prove source intent, not just exist |
 | Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; full 44-division consistency pass remains |
