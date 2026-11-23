@@ -34,7 +34,7 @@
 | BP-25 | Arrests and Warrants | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-25](divisions/BP-25-ARRESTS-AND-WARRANTS.md) |
 | BP-26 | Custody Management | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-26](divisions/BP-26-CUSTODY-MANAGEMENT.md) |
 | BP-27 | Legal Processes | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-27](divisions/BP-27-LEGAL-PROCESSES.md) |
-| BP-28 | Courts and Outcomes | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-28 | Courts and Outcomes | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-28](divisions/BP-28-COURTS-AND-OUTCOMES.md) |
 | BP-29 | Corrections | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-30 | Department Governance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-31 | Professional Standards | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -95,6 +95,7 @@ Statuses are independent across specification, implementation, testing and verif
 26. BP-25: full arrests-and-warrants specification draft created; fictional authority matrix, warrant categories/issuer roles, duration/variation rules, search/consent scope, seizure procedures, safeguards and force-review policy decisions remain open.
 27. BP-26: full custody-management specification draft created; custody authority and clock start, detention limits/review intervals, facility/cell baseline, risk/observation standards, welfare, healthcare, communication, search/property, transfer and release policy decisions remain open.
 28. BP-27: full legal-process specification draft created; fictional legal hierarchy, charging authority, disclosure rules, representation, deadlines, bail/remand and appeal policy decisions remain open.
-29. Continue BP-28 through BP-44 in numeric order, preserving the same specification contract and traceability.
+29. BP-28: full courts-and-outcomes specification draft created; court hierarchy, judicial appointments, jurisdiction, evidential doctrine, verdict taxonomy, sentencing, appeal and publication rules remain open fictional configuration decisions.
+30. Continue BP-29 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
