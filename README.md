@@ -32,6 +32,7 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 - `db/migrations/`: ordered PostgreSQL migrations.
 - `docs/architecture/`: architecture decisions and storage design.
 - `docs/operations/`: operational procedures and measurement records.
+- `docs/implementation/`: dependency-led implementation sequence and delivery gates.
 - `.github/workflows/`: automated checks.
 
 ## Current status
