@@ -9,7 +9,7 @@ import hashlib
 import secrets
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Callable
+from typing import Callable, Any
 from uuid import UUID, uuid4
 
 
@@ -31,8 +31,9 @@ class PostgresSessionLifecycle:
             raise TypeError("connect must be a trusted PostgreSQL connection factory")
         self._connect = connect
 
-    def issue(
+    def issue_in_transaction(
         self,
+        cur: Any,
         principal_id: UUID,
         *,
         lifetime: timedelta = timedelta(hours=12),
@@ -40,6 +41,12 @@ class PostgresSessionLifecycle:
         authentication_strength: str = "standard",
         now: datetime | None = None,
     ) -> IssuedGameSession:
+        """Issue a session using a caller-owned transaction/cursor.
+
+        This lets identity binding and initial session issuance commit or roll
+        back together. The credential is generated here and only its digest is
+        sent to PostgreSQL.
+        """
         if not isinstance(principal_id, UUID):
             raise TypeError("principal_id must be a UUID")
         if not isinstance(lifetime, timedelta) or lifetime <= timedelta(0):
@@ -49,42 +56,42 @@ class PostgresSessionLifecycle:
         issued_at = now or datetime.now(timezone.utc)
         if issued_at.tzinfo is None or issued_at.utcoffset() is None:
             raise ValueError("now must be timezone-aware")
+        if active_person_id is not None and (not isinstance(active_person_id, int) or active_person_id <= 0):
+            raise ValueError("active_person_id must be a positive integer")
         expires_at = issued_at + lifetime
         credential = secrets.token_urlsafe(32)
         digest = hashlib.sha256(credential.encode("utf-8")).digest()
         session_id = uuid4()
         correlation_id = uuid4()
 
-        with self._connect() as conn:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT status FROM sw_auth.principal WHERE principal_id=%s FOR SHARE",
-                    (principal_id,),
-                )
-                principal = cur.fetchone()
-                if principal is None or principal[0] != "active":
-                    raise PermissionError("principal is missing or not active")
-                cur.execute(
-                    "SELECT policy_version FROM sw_auth.policy_version WHERE active=true FOR SHARE"
-                )
-                policy = cur.fetchone()
-                if policy is None:
-                    raise RuntimeError("no active authorization policy")
-                policy_version = policy[0]
-                cur.execute(
-                    """
-                    INSERT INTO sw_auth.session
-                      (session_id,principal_id,credential_digest,status,issued_at,
-                       expires_at,active_person_id,authentication_strength,
-                       policy_version,correlation_id)
-                    VALUES (%s,%s,%s,'active',%s,%s,%s,%s,%s,%s)
-                    """,
-                    (
-                        session_id, principal_id, digest, issued_at, expires_at,
-                        active_person_id, authentication_strength, policy_version,
-                        correlation_id,
-                    ),
-                )
+        cur.execute(
+            "SELECT status FROM sw_auth.principal WHERE principal_id=%s FOR SHARE",
+            (principal_id,),
+        )
+        principal = cur.fetchone()
+        if principal is None or principal[0] != "active":
+            raise PermissionError("principal is missing or not active")
+        cur.execute(
+            "SELECT policy_version FROM sw_auth.policy_version WHERE active=true FOR SHARE"
+        )
+        policy = cur.fetchone()
+        if policy is None:
+            raise RuntimeError("no active authorization policy")
+        policy_version = policy[0]
+        cur.execute(
+            """
+            INSERT INTO sw_auth.session
+              (session_id,principal_id,credential_digest,status,issued_at,
+               expires_at,active_person_id,authentication_strength,
+               policy_version,correlation_id)
+            VALUES (%s,%s,%s,'active',%s,%s,%s,%s,%s,%s)
+            """,
+            (
+                session_id, principal_id, digest, issued_at, expires_at,
+                active_person_id, authentication_strength, policy_version,
+                correlation_id,
+            ),
+        )
         return IssuedGameSession(
             session_id=session_id,
             principal_id=principal_id,
@@ -93,6 +100,23 @@ class PostgresSessionLifecycle:
             expires_at=expires_at,
             policy_version=policy_version,
         )
+
+    def issue(
+        self,
+        principal_id: UUID,
+        *,
+        lifetime: timedelta = timedelta(hours=12),
+        active_person_id: int | None = None,
+        authentication_strength: str = "standard",
+        now: datetime | None = None,
+    ) -> IssuedGameSession:
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                return self.issue_in_transaction(
+                    cur, principal_id, lifetime=lifetime,
+                    active_person_id=active_person_id,
+                    authentication_strength=authentication_strength, now=now,
+                )
 
     def revoke(
         self,
