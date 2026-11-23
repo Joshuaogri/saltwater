@@ -63,12 +63,12 @@ Successful CI commit: `13a78e4cb48d10e310f07fd04cb365f01dad436f`; PostgreSQL 16.
 |---|---|---|
 | K-001 | PASS | Runtime singleton and initial stopped state |
 | K-002 | PASS | Valid lifecycle transitions and invalid transition rejection |
-| K-003 | PARTIAL | No tick advancement while stopped or paused; recovering/player-absent variants remain |
-| K-004 | PENDING | Event insertion while paused/absent not separately exercised |
+| K-003 | PASS | No tick advancement while stopped, paused, recovering or safe-halt; runtime remains frozen until recovery returns to ready/running |
+| K-004 | PASS | Ordinary event insertion rejected while paused and recovering; paused event/tick rejection verified against PostgreSQL adapter |
 | K-005 | PASS | Lifecycle state/event transitions commit through PostgreSQL adapter |
 | K-006 | PASS | Monotonic tick, current-tick events and causal event linkage |
 | K-007 | PASS | Idempotent event and tick retries do not duplicate effects |
-| K-008 | PENDING | Injected failure between event and domain commit |
+| K-008 | PASS | Simulated domain-write failure after event insert rolled back the transaction; no event/idempotency residue remained |
 | K-009 | PARTIAL | Invalid transition rejected; singleton deletion protection not separately tested |
 | K-010 | PARTIAL | Bootstrap closure and start gate pass; invalid closure/reopen tests remain |
 | G-001 | PASS | Exactly two canonical roots seeded |
@@ -93,9 +93,9 @@ Successful CI commit: `13a78e4cb48d10e310f07fd04cb365f01dad436f`; PostgreSQL 16.
 | P-012 | PASS | Counter, person and population-state totals reconcile at 10,000 |
 | P-013 | PENDING | Canonical person/state deletion protection and event-required transitions |
 | P-014 | PENDING | Profile correction history and stable ID across correction |
-| A-001 | PENDING | Permission boundary and unauthorised mutation tests |
+| A-001 | PASS (DB role scope) | Readonly role can read but not mutate; command role has no direct table DML; NOLOGIN templates remain unbound to authenticated actors |
 | A-002 | PENDING | Hidden-truth firewall and exact `bingo` reveal route |
-| R-001 | PENDING | Backup/restore verification |
+| R-001 | PASS (logical disposable restore) | PostgreSQL 16 custom-format dump restored into a separate disposable database; person/state/history/event counts, event watermark, runtime tick, roots and population counter matched |
 | S-001 | PARTIAL | Whole-database baseline and relation totals measured; isolated schema-only overhead remains |
 | S-002 | PARTIAL | Full-cap compact person/state/history/two-event fixture measured; residence/event/text sub-costs remain |
 | S-003 | PENDING | Text/source-reference payload bands |
@@ -103,3 +103,11 @@ Successful CI commit: `13a78e4cb48d10e310f07fd04cb365f01dad436f`; PostgreSQL 16.
 | S-005 | PARTIAL | 10,000-person compact fixture measured; full 9,500-person opening-world baseline not yet modelled |
 
 Only PASS rows are complete for their stated test scope. PARTIAL rows must not be represented as full acceptance.
+
+
+## Execution status — runs 0002 and 0003
+
+- [Run 0002 — access boundary and backup/restore](../test-evidence/PKG-001-run-0002.md)
+- [Run 0003 — paused event gate, rollback, recovery and repeat backup/restore](../test-evidence/PKG-001-run-0003.md)
+
+A-001 is a database-role boundary result only; authenticated actor/session mapping and command API enforcement are not implemented. R-001 is a logical restore on the same disposable PostgreSQL cluster, not cross-region disaster recovery or PITR. A-002 remains pending because hidden-truth data and all access surfaces are not yet implemented.
