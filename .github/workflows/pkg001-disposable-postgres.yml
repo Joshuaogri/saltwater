@@ -63,7 +63,16 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
       - name: Run PKG-001 database acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
-      - name: Measure disposable schema footprint
+      - name: Measure representative 1,000-person storage growth
         run: |
-          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables ORDER BY 3 DESC;"
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/storage_benchmark.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          delta=$((after-before))
+          echo "database_bytes_before_fixture=$before"
+          echo "database_bytes_after_fixture=$after"
+          echo "database_growth_bytes=$delta"
+          echo "database_growth_mb=$(awk "BEGIN {printf \"%.6f\", $delta/1000000}")"
+          echo "database_growth_mib=$(awk "BEGIN {printf \"%.6f\", $delta/1048576}")"
+          echo "approx_growth_bytes_per_person=$(awk "BEGIN {printf \"%.2f\", $delta/1000}")"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 3 DESC;"
