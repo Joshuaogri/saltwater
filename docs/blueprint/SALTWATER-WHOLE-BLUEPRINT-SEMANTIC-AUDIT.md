@@ -180,6 +180,21 @@ BP-04 acceptance criterion AC-D06 and BP-03 criteria AC-HLTH-01–04 were added.
 
 This is an initial ownership/content scan only. All mapped source requirements/tests still require exact target-section and acceptance-test reconciliation.
 
+### Initial source-domain scan: S25–S32
+
+| Source | Initial ownership/content check | Audit outcome |
+|---|---|---|
+| S25 Police duty rosters, staffing and deployment | BP-06 personnel; BP-08 unit membership/assignment/coverage; BP-09 resource readiness; BP-10 patrol; BP-11 dispatch availability; BP-33 employment/attendance; BP-37 scheduling. | Ownership split appears coherent; verify minimum staffing, actual attendance and incompatible-duty tests across the roster/dispatch/patrol interfaces. |
+| S26 Police command, policy and internal governance | BP-05 institutional authority; BP-08 unit command; BP-12 operational command; BP-30 governance/policy; BP-31 standards; BP-38 decision provenance; BP-41 notifications/reports. | Ownership split appears coherent; verify every material instruction has authoriser, issuer, recipient, execution status and audit trail. |
+| S27 911, call-taking, CAD and dispatch | BP-11 call-taking/CAD/radio/dispatch; BP-12 incident; BP-17 caller/participant role; BP-08 deployment; BP-09 readiness; BP-35 event execution; BP-38 originals; BP-42 access. | BP-11 scope is aligned with source; verify concurrent workload, original recordings, claim/fact separation and dispatch chronology. |
+| S28 Patrol, response and field operations | BP-08 deployment; BP-10 patrol/field actions; BP-12 incident; BP-22 scenes; BP-30 authority; BP-09 equipment; BP-35/BP-37 time and causality. | Ownership split appears coherent; verify location, resource, authority and task commitments are rechecked at execution. |
+| S29 Incidents, crime taxonomy and occurrence generation | BP-13 taxonomy; BP-14 hidden occurrence truth/generation; BP-11 reporting/dispatch; BP-12 incident lifecycle; BP-15 case; BP-17/BP-18 roles; BP-21 intelligence. | Ownership split appears coherent; verify occurrence, report, allegation, intelligence, offence and proven finding remain separate. |
+| S30 Case management and investigative command | BP-15 case identity/lifecycle; BP-16 investigative work; BP-21 intelligence; BP-27/BP-28 legal; BP-30 governance; BP-38 records; BP-41 reporting. | Ownership split appears coherent; verify concurrent/cold/linked/reopened cases and immutable chronology/decision provenance. |
+| S31 Victims, witnesses, suspects and persons of interest | BP-03 identity/promotion; BP-15 case links; BP-17 victim/witness; BP-18 suspect/offender; BP-42 information security; BP-35 promotion events. | Ownership split appears coherent; verify roles are independent, suspicion is not guilt and relevant-person promotion is permanent. |
+| S32 Scene management and evidence collection | BP-22 scene boundaries/search/observations; BP-23 exhibits/custody; BP-24 forensics; BP-19 interviews; BP-20 surveillance; BP-21 intelligence; BP-38 records; BP-09 resources. | Ownership split appears coherent; verify testimonial/digital/documentary/biological/trace material can enter evidence workflow without source-record or chain-of-custody loss. |
+
+This is an initial ownership/content scan only. Detailed mapped-source acceptance-test reconciliation remains open.
+
 ### Semantic finding A16 — public transport and mobility ownership
 
 <badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
