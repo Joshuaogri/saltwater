@@ -39,7 +39,7 @@
 | BP-30 | Department Governance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-30](divisions/BP-30-DEPARTMENT-GOVERNANCE.md) |
 | BP-31 | Professional Standards | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-31](divisions/BP-31-PROFESSIONAL-STANDARDS.md) |
 | BP-32 | Training and Development | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-32](divisions/BP-32-TRAINING-AND-DEVELOPMENT.md) |
-| BP-33 | Human Resources | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-33 | Human Resources | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-33](divisions/BP-33-HUMAN-RESOURCES.md) |
 | BP-34 | Finance and Procurement | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-35 | Simulation Engine | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-36 | Relationships and Social Context | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -100,6 +100,7 @@ Statuses are independent across specification, implementation, testing and verif
 31. BP-30: full department-governance specification draft created; institutional catalogue, appointment/tenure, police governance, delegation, policy, oversight, complaints routing and public accountability rules remain open.
 32. BP-31: full professional-standards specification draft created; complaint taxonomy, screening thresholds, investigative powers, proof standards, interim measures, disciplinary sanctions, hearings, appeals and independent review rules remain open fictional configuration decisions.
 33. BP-32: full training-and-development specification draft created; course catalogue, recruit curriculum, mandatory training matrix, competency/assessment standards, qualification validity, provider/instructor approval and remediation policies remain open fictional configuration decisions.
-34. Continue BP-33 through BP-44 in numeric order, preserving the same specification contract and traceability.
+34. BP-33: full human-resources specification draft created; job catalogue, employment/contract policy, recruitment, leave, attendance verification, police HR delegations, employee-relations and retention rules remain open fictional configuration decisions.
+35. Continue BP-34 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
