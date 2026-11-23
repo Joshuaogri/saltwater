@@ -306,48 +306,16 @@ The following source requirements/tests are mapped to BP-44 by the authoritative
 | Source ID | Source division | Original requirement/test wording |
 |---|---|---|
 | S01.R01 | Sovereignty, jurisdiction and constitutional order | Define Saltwater's sovereign status, territory boundary, jurisdiction, institutions, powers, succession and constitutional rules. |
-| S01.R02 | Sovereignty, jurisdiction and constitutional order | Define legal hierarchy, authority sources, emergency powers, separation of functions and jurisdictional limits. |
-| S01.R03 | Sovereignty, jurisdiction and constitutional order | Prevent external-city or territorial expansion. |
 | S01.T01 | Sovereignty, jurisdiction and constitutional order | Every location resolves inside the single Saltwater jurisdiction or is explicitly marked off-map. |
-| S01.T02 | Sovereignty, jurisdiction and constitutional order | No institution exercises undefined authority. |
-| S12.R01 | Civil registry and public records | Maintain civil status, identity, address, property, business, permits and other canonically required registers. |
 | S12.R02 | Civil registry and public records | Track corrections, versions, issuing authority, access and provenance. |
-| S12.R03 | Civil registry and public records | Support lawful in-world retrieval and controlled disclosure. |
-| S12.T01 | Civil registry and public records | Record changes preserve prior values and reason for change. |
 | S46.R01 | Database, schemas and persistence | Use Neon PostgreSQL as the persistent database and GitHub as source control, specification and migration history; ChatGPT is the user-facing AI partner/interface. |
-| S46.R02 | Database, schemas and persistence | Define canonical schemas, constraints, relationships, IDs, migrations, indexes and transaction boundaries. |
-| S46.R03 | Database, schemas and persistence | Store detailed narrative losslessly; normalise shared facts, reference repeated entities and avoid duplicate payloads. |
-| S46.R04 | Database, schemas and persistence | Separate immutable source records/events from derived views and summaries. |
-| S46.R05 | Database, schemas and persistence | Never claim live database connectivity without a successful connection test. |
-| S46.T01 | Database, schemas and persistence | Schema constraints enforce identity, referential integrity, population cap and valid lifecycle states. |
-| S47.R01 | Storage efficiency and capacity governance | Use compact keys, enums, references, normalisation, deduplication and lossless compression where justified; compress structure, never meaningful narrative. |
-| S47.R02 | Storage efficiency and capacity governance | Avoid redundant fields, duplicate text, unnecessary indexes, repeated snapshots and unbounded logs. |
-| S47.R03 | Storage efficiency and capacity governance | Measure row, table, index and TOAST growth; benchmark representative high-entropy long text. |
 | S47.R04 | Storage efficiency and capacity governance | Before every Neon migration, schema change, seed/import, bulk write or upload, show current measured baseline, incremental estimate in bytes and MB/MiB, method, assumptions, uncertainty range and projected total; wait for explicit user approval. |
-| S47.R05 | Storage efficiency and capacity governance | After approved deployment, measure actual growth and compare with estimate. If estimate is not credible, benchmark first; do not deploy. |
 | S47.T01 | Storage efficiency and capacity governance | No Neon write occurs without explicit approval after a documented estimate. |
-| S47.T02 | Storage efficiency and capacity governance | Post-deployment measured delta is recorded. |
-| S48.R01 | Security, permissions and information boundaries | Define user, player, officer, administrator and system roles; least privilege; secret handling; access checks and audit logs. |
-| S48.R02 | Security, permissions and information boundaries | Protect hidden case truth and restricted personal information from player-facing leakage. |
-| S48.R03 | Security, permissions and information boundaries | Keep credentials out of source control, narrative records and logs. |
-| S48.T01 | Security, permissions and information boundaries | Unauthorised reads/writes are rejected and audited. |
-| S49.R01 | Backups, recovery and data integrity | Define backup cadence, retention, restore testing, point-in-time recovery where available, export format and disaster recovery procedure. |
 | S49.R02 | Backups, recovery and data integrity | Protect canon and authoritative records against corruption, accidental overwrite and partial writes. |
-| S49.R03 | Backups, recovery and data integrity | Keep recoverable backups separate from live mutable state. |
-| S49.T01 | Backups, recovery and data integrity | A tested restore reproduces a verified checkpoint. |
-| S50.R01 | Testing, validation and simulation quality | Maintain unit, integration, schema, migration, end-to-end, replay, load, population, storage and narrative-quality tests. |
-| S50.R02 | Testing, validation and simulation quality | Test edge cases, adversarial inputs, boundary conditions, race conditions, long-running continuity and cross-system reconciliation. |
-| S50.R03 | Testing, validation and simulation quality | Use evidence-based completion criteria and regression gates. |
-| S50.T01 | Testing, validation and simulation quality | Every division has traceable acceptance tests and recorded results. |
-| S51.R01 | Operations, observability and maintenance | Track service health, errors, latency, job queues, resource use, database size, failed events and recovery actions. |
 | S51.R02 | Operations, observability and maintenance | Provide safe maintenance, migration, rollback and incident procedures. |
-| S51.R03 | Operations, observability and maintenance | Separate development/test data from authoritative simulation data. |
-| S51.T01 | Operations, observability and maintenance | Operational failures are detectable, attributable and recoverable. |
 | S52.R01 | Canon, versioning and change control | Maintain a single canonical blueprint version, decision log, glossary, schema registry and traceability matrix. |
 | S52.R02 | Canon, versioning and change control | No unapproved changes to canon, division structure, requirements or approved design. |
 | S52.R03 | Canon, versioning and change control | Record every amendment with reason, approval, affected requirements, migration impact and tests. |
-| S52.R04 | Canon, versioning and change control | Keep proposed, approved, implemented, verified and retired states distinct. |
-| S52.T01 | Canon, versioning and change control | Every implementation item maps to an approved requirement and evidence. |
 
 ## 20. Open configuration and implementation decisions
 
