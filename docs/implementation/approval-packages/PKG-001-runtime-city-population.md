@@ -128,7 +128,7 @@ D-001 and D-005 are required before authoritative population admission and playe
 7. Prepare a separate Neon execution request with a fresh baseline, incremental estimate in bytes/MB/MiB, uncertainty and projected total.
 8. Wait for explicit approval of that exact Neon operation before any production write.
 
-No production seed is part of this package. No schema migration may be run against Neon as a test. Implementation branch and pull request are open. The package has not yet passed disposable PostgreSQL execution; SQL migration behaviour and storage estimates remain unverified until CI completes.
+No production seed is part of this package. No schema migration may be run against Neon as a test. Implementation branch and pull request are open. Run 0001 passed on disposable PostgreSQL 16.16: both migrations applied, the listed database acceptance checks passed, and all six Python kernel tests passed. Whole-database storage measured 8,756,247 bytes; this is not a migration delta or production estimate. See [run evidence](../test-evidence/PKG-001-run-0001.md). Further concurrency, recovery, permission and persistence-adapter tests remain outstanding.
 
 ## 9. Acceptance tests required before implementation can be marked tested
 
