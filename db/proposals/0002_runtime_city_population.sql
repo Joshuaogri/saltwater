@@ -554,16 +554,8 @@ CREATE TABLE sw_core.event_spatial_ref (
 -- direct table DML: future authenticated command functions/API own mutations.
 -- Roles are NOLOGIN templates; deployment-specific login membership is a
 -- separate approved operation after actor/session design is settled.
-DO $
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sw_game_readonly') THEN
-    CREATE ROLE sw_game_readonly NOLOGIN;
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sw_game_command') THEN
-    CREATE ROLE sw_game_command NOLOGIN;
-  END IF;
-END
-$;
+CREATE ROLE sw_game_readonly NOLOGIN;
+CREATE ROLE sw_game_command NOLOGIN;
 
 REVOKE ALL ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
 GRANT USAGE ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
