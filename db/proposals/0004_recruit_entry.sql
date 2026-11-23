@@ -48,6 +48,13 @@ CREATE TABLE sw_police.personnel (
   CHECK (person_id <> supervisor_person_id)
 );
 
+CREATE FUNCTION sw_police.reject_history_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  RAISE EXCEPTION 'police lifecycle history is append-only';
+END
+$;
+
 CREATE TABLE sw_police.recruit_supervisor_authorisation (
   person_id integer PRIMARY KEY REFERENCES sw_police.personnel(person_id),
   authorised_by_principal_id uuid NOT NULL REFERENCES sw_auth.principal(principal_id),
