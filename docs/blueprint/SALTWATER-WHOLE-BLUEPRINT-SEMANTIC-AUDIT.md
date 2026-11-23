@@ -671,13 +671,20 @@ The full audit must specifically test these high-risk boundaries:
 
 ### Finding A21 — obsolete population-canon supersession statements in BP-35 and BP-36
 
-**Defect:** BP-35's S03.R01 traceability row and final traceability note incorrectly stated that the 9,000-resident + 500-police opening composition was superseded. BP-36 §3.3 repeated an obsolete supersession statement, contradicting BP-01, BP-03, BP-36's own later canon clarification and the approved master blueprint. The binding opening population remains 9,500 living people: 9,000 residents + 500 police; 500 is unused headroom; 10,000 is the hard cap.
+**Defect:** BP-35's S03.R01 traceability row and final traceability note incorrectly stated that the 9,000-resident + 500-police opening composition was superseded. BP-36 §3.3 and its S03.R01 traceability row repeated obsolete supersession statements, contradicting BP-01, BP-03, BP-36's own later canon clarification and the approved master blueprint. The binding opening population remains 9,500 living people: 9,000 residents + 500 police; 500 is unused headroom; 10,000 is the hard cap.
 
-**Resolution:** Corrected both BP-35 traceability statements and BP-36 §3.3. BP-03 remains sole owner of population identity, ledger, counting and capacity. BP-35 only coordinates atomic event execution/capacity checks; BP-36 only owns relationship/household semantics. No separate population count or reserve population is introduced.
+**Resolution:** Corrected both BP-35 traceability statements and both conflicting BP-36 statements (the §3.3 canon rule and S03.R01 traceability row). BP-03 remains sole owner of population identity, ledger, counting and capacity. BP-35 only coordinates atomic event execution/capacity checks; BP-36 only owns relationship/household semantics. No separate population count or reserve population is introduced.
 
-**Verification:** Both specifications were updated against their current main-branch blobs and re-fetched. The corrected statements agree with BP-01/BP-03 and the binding master blueprint. This does not authorise seeding, generation or Neon writes.
+**Verification:** BP-35 and BP-36 were updated against their current main-branch blobs and re-fetched; the BP-36 S03.R01 traceability row was separately corrected and re-fetched after a residual contradiction was found during verification. The corrected statements agree with BP-01/BP-03 and the binding master blueprint. This does not authorise seeding, generation or Neon writes.
 
 **Integrated scan observations:** All 44 BP specification files are present. The scan found no obsolete city/project names, no 199,999 population ceiling and no other BP-45–BP-52 target reference in the division files; the BP-51 reference recorded above was the one invalid target reference found. The original 52-division JSON remains preserved as source material; its historic DRAFT_FOR_USER_REVIEW metadata is not the authority for current user approval, which is recorded in the approved Saltwater master blueprint and governance register.
+
+
+### Finding A22 — crosswalk target-reference and source-ID integrity recheck
+
+**Check:** Recomputed source IDs from the original JSON and target references from the crosswalk. The source contains 52 divisions, 168 requirements and 60 tests (228 unique requirement/test IDs). The crosswalk contains all 228 unique source IDs and references only BP-01 through BP-44; all 44 target divisions are represented and no out-of-range target reference was found.
+
+**Result:** Crosswalk structural traceability recheck passed. This confirms mapping completeness and valid target identifiers, not semantic correctness by itself; semantic coverage is supported separately by the S01–S52 item-by-item audit. No source JSON or crosswalk mapping change was required.
 
 **Status:** A20 and A21 are corrected in the affected specifications. The integrated contradiction/interface/canon pass continues; this first correction set does not yet certify every cross-division interface, dependency or duplicated statement as defect-free. No Neon connection, migration, seed, import or write was performed.
 
