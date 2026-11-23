@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   preview-database:
-    if: github.event.action != 'closed'
+    if: github.event.action != 'closed' && contains(github.event.pull_request.labels.*.name, 'neon-preview-approved')
     runs-on: ubuntu-latest
     steps:
       - name: Create or reuse isolated Neon branch
@@ -69,7 +69,7 @@ jobs:
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SELECT 'preview_database_bytes=' || pg_database_size(current_database());"
 
   cleanup-preview-database:
-    if: github.event.action == 'closed'
+    if: github.event.action == 'closed' && contains(github.event.pull_request.labels.*.name, 'neon-preview-approved')
     runs-on: ubuntu-latest
     steps:
       - name: Delete this pull request's Neon preview branch
