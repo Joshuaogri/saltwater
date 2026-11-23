@@ -1,6 +1,6 @@
 # PKG-001 — Shared runtime kernel and canonical city/population foundations
 
-**Status:** READY FOR USER REVIEW — NOT APPROVED FOR IMPLEMENTATION OR DEPLOYMENT  
+**Status:** APPROVED FOR IMPLEMENTATION — IN PROGRESS; NOT APPROVED FOR PRODUCTION DEPLOYMENT  
 **Package version:** 1.0  
 **Target repository:** `Joshuaogri/saltwater`, branch `main`  
 **Blueprint:** fixed BP-01–BP-44; no division is renamed, split, merged or reordered.  
@@ -128,7 +128,7 @@ D-001 and D-005 are required before authoritative population admission and playe
 7. Prepare a separate Neon execution request with a fresh baseline, incremental estimate in bytes/MB/MiB, uncertainty and projected total.
 8. Wait for explicit approval of that exact Neon operation before any production write.
 
-No production seed is part of this package. No schema migration may be run against Neon as a test. The package has not yet been executed against disposable PostgreSQL; SQL syntax, migration behaviour and storage estimates remain to be validated there.
+No production seed is part of this package. No schema migration may be run against Neon as a test. Implementation branch and pull request are open. The package has not yet passed disposable PostgreSQL execution; SQL migration behaviour and storage estimates remain unverified until CI completes.
 
 ## 9. Acceptance tests required before implementation can be marked tested
 
