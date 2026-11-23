@@ -1,6 +1,6 @@
 # Saltwater 52→44 Requirement Crosswalk
 
-**Version:** 1.2 — division-by-division semantic audit register  
+**Version:** 1.3 — division-by-division semantic audit register  
 **Date:** 2026-11-22  
 **Source:** `docs/governance/SALTWATER_MASTER_BLUEPRINT.json` (52 divisions; unchanged)  
 **Target:** `docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md` (BP-01–BP-44; fixed structure)  
@@ -37,7 +37,7 @@ Notation: `R: Snn.Rnn→BP-xx` maps every requirement; `T: Snn.Tnn→BP-xx` maps
 | S11 | Government and public administration | R: S11.R01→BP-01,BP-30,BP-42; S11.R02→BP-04,BP-30,BP-31,BP-34; S11.R03→BP-30,BP-38,BP-42 | T: S11.T01→BP-30,BP-38,BP-42 | BP-30 owns public institutional structure and decision authority; BP-04 represents operational bodies and premises. |
 | S12 | Civil registry and public records | R: S12.R01→BP-03,BP-04,BP-30,BP-38; S12.R02→BP-38,BP-42,BP-44; S12.R03→BP-16,BP-27,BP-38,BP-42 | T: S12.T01→BP-38,BP-42,BP-44 | BP-38 owns authoritative record/version/provenance rules; domain owners remain responsible for their source records. |
 | S13 | Healthcare and public health | R: S13.R01→BP-04,BP-09,BP-12,BP-17,BP-26,BP-35; S13.R02→BP-03,BP-12,BP-17,BP-22,BP-23,BP-24,BP-28; S13.R03→BP-38,BP-42 | T: S13.T01→BP-04,BP-09,BP-12,BP-35 | BP-04 represents providers and facilities; BP-12/BP-17/BP-24 handle operational interfaces; BP-42 controls restricted access. Healthcare remains proportionate, not a second deep simulation. |
-| S14 | Education, training and research | R: S14.R01→BP-04,BP-07,BP-32,BP-33,BP-37; S14.R02→BP-07,BP-09,BP-32; S14.R03→BP-03,BP-07,BP-32,BP-33,BP-38 | T: S14.T01→BP-07,BP-32,BP-38 | BP-04 represents providers; BP-32 owns general training/qualifications; BP-07 owns police career gates. |
+| S14 | Education, training and research | R: S14.R01→BP-03,BP-04,BP-07,BP-32,BP-33,BP-37; S14.R02→BP-07,BP-09,BP-32; S14.R03→BP-03,BP-07,BP-32,BP-33,BP-38 | T: S14.T01→BP-03,BP-07,BP-32,BP-38 | BP-03 owns individual education participation/history; BP-04 provider/programme/facility/capacity; BP-32 police training; BP-07 police career gates; BP-33 staff employment; BP-37 schedules. |
 | S15 | Social care, welfare and community support | R: S15.R01→BP-04,BP-17,BP-30,BP-36; S15.R02→BP-04,BP-17,BP-30,BP-38; S15.R03→BP-03,BP-14,BP-17,BP-18,BP-35,BP-36 | T: S15.T01→BP-04,BP-17,BP-30,BP-38 | BP-04 represents services/providers; BP-17 owns victim/witness support interfaces; BP-30 owns public-service governance. |
 | S16 | Utilities, energy and communications infrastructure | R: S16.R01→BP-04,BP-09,BP-35; S16.R02→BP-04,BP-09,BP-10,BP-11,BP-12,BP-35; S16.R03→BP-04,BP-09,BP-12,BP-41 | T: S16.T01→BP-04,BP-09,BP-35 | BP-04 owns infrastructure assets/operators; BP-09 owns police resource dependencies; BP-35 propagates geographically bounded outage/restoration effects. |
 | S17 | Roads, transport and mobility | R: S17.R01→BP-02,BP-04,BP-09,BP-10,BP-11; S17.R02→BP-03,BP-09,BP-10,BP-11,BP-12,BP-35,BP-37; S17.R03→BP-10,BP-11,BP-12,BP-16,BP-20,BP-22 | T: S17.T01→BP-02,BP-10,BP-11,BP-35 | BP-02 owns road geometry; BP-04 owns transport operators/facilities; BP-10/BP-11 consume routes and travel constraints. |
@@ -211,6 +211,7 @@ After this crosswalk passes its audit, develop BP-01 through BP-44 in the fixed 
 | A11 | Security roles and secret protection omitted player-facing enforcement and test coverage. | Expanded S48.R01–R03. | BP-42 owns policy; domain owners enforce; BP-40 applies presentation boundary; BP-43 verifies. |
 | A12 | Operations/observability lacked operator-facing visibility. | Added BP-40 to S51.R01. | BP-41 reports/alerts; BP-40 displays; BP-43 tests. |
 | A13 | Some broad cross-cutting mappings were too narrow to ensure universal application. | Expanded X01–X10 destinations. | Each BP specification must state which global invariants it implements and how. |
+| A14 | S14 education/research mapping did not clearly assign individual non-police learner enrolment, attendance and education history; BP-32 scope was police training. | Added BP-03 for person-level education participation/history; clarified BP-04 provider-level programmes/capacity/facilities; constrained BP-32 to police training/credentials; retained BP-07/BP-33/BP-37 ownership. | BP-03/BP-04/BP-32 specifications, S14.R01/S14.T01 mapping and acceptance tests must preserve this boundary. |
 
 **Audit conclusion:** v1.1 resolves identified omissions in traceability and clarifies ownership interfaces without changing BP-01–BP-44. This is a documentary semantic audit, not proof that the full target specifications are complete. Requirements with multi-domain destinations remain subject to division-level interface and acceptance-test design. No Neon changes are authorised.
 
@@ -233,7 +234,7 @@ Each source division was reviewed against its complete requirement and test text
 | S11 | Government/public administration | Reviewed | BP-30 owns public institutions and authority; BP-04 represents entities; BP-31/BP-34 handle oversight/procurement. |
 | S12 | Civil registry/public records | Reviewed | BP-38 owns record standards; source-domain owners retain authoritative facts. |
 | S13 | Healthcare/public health | Reviewed | BP-04 represents providers; BP-17/BP-24/BP-26/BP-42 own police/medical interfaces and access. |
-| S14 | Education/training/research | Reviewed | BP-32 owns general training; BP-07 owns police career gates; BP-04 represents providers. |
+| S14 | Education/training/research | Revised | BP-03 owns person-level education participation/history; BP-04 provider/facility/capacity; BP-32 police training; BP-07 career gates; BP-33 staff; BP-37 schedules. |
 | S15 | Social care/welfare | Reviewed | BP-04 represents services; BP-17 and BP-30 own victim-support and public-service interfaces. |
 | S16 | Utilities/infrastructure | Reviewed | BP-04 owns operators/assets; BP-35 propagates outages; BP-09/BP-12 consume effects. |
 | S17 | Roads/transport/mobility | Reviewed | BP-02 owns topology; BP-04 transport actors; BP-10/BP-11/BP-12 consume routes. |
