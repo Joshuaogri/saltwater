@@ -267,7 +267,7 @@ Track relevant life facts with effective dates:
 - birth and age calculation;
 - residence and movement;
 - household and family membership;
-- education and qualifications;
+- education participation and qualification history, including school/college/training-provider enrolment, participation/attendance, completed programmes and awarded qualifications;
 - employment and occupation;
 - income/financial references at proportionate depth;
 - relationships and dependants;
@@ -279,6 +279,8 @@ Track relevant life facts with effective dates:
 Age is calculated against canonical in-game date, not the real-world clock. If the fictional clock or date of birth is unknown, exact age remains unresolved. Historical age calculations use the date relevant to the event.
 
 A person may have multiple concurrent roles (e.g. resident, employee, student, police officer, household member). Roles are linked records; they do not create additional identities or population counts.
+
+Person-level education history includes school, college, vocational and other non-police education participation: provider/programme references, enrolment status and effective dates, attendance/participation facts or sourced summaries, completion/withdrawal, and qualification/award references with issuer and award date where known. This is a proportionate person-life record, not a full education simulator. BP-04 owns the provider, programme/facility and service-capacity profile; BP-37 owns the canonical calendar/schedule; BP-33 owns staff employment; BP-32 owns police training and its authoritative course/credential records. Unknown or disputed history remains explicit and sourced.
 
 ## 8. Households, residence and relationships interface
 
@@ -482,6 +484,8 @@ BP-03 requires the following logical record families; BP-38 determines physical 
 | Household membership | Person, household, role, dates | BP-36 + BP-03 link |
 | Relationship link | Person pair, type, status, source, dates | BP-36 |
 | Employment link | Person, employer, job, status, dates | BP-33 |
+| Education participation link | Person, provider/programme reference, enrolment state, effective interval, attendance/participation references, completion/withdrawal and source | BP-03 person history; BP-04 provider; BP-37 schedule |
+| Education/qualification history | Person, qualification/award reference, issuing body, award date, scope/status, evidence/source and validity where known | BP-03 person history; BP-32 owns police-training credentials |
 | Police personnel link | Person, officer/personnel record, service status | BP-06 |
 | Routine/schedule link | Person, routine, time window, location reference | BP-03/BP-37 |
 | Movement event | Person, from/to spatial IDs, time, mode, confidence/source | BP-03/BP-02 |
@@ -489,6 +493,8 @@ BP-03 requires the following logical record families; BP-38 determines physical 
 | Promotion event | Person, trigger, reason, case/incident reference, actor/time | BP-03 |
 | Person knowledge item | Person, information, source, acquired time, confidence/access | BP-03/BP-21 |
 | Reconciliation result | Snapshot time, counts, exceptions, resolution links | BP-03/BP-38 |
+
+Education history events include enrolment_started/changed/suspended/withdrawn/completed; attendance_recorded/corrected; education_programme_completed; qualification_recorded/verified/corrected/revoked. Each references the canonical person, provider/programme/issuer where applicable, source, actor, effective and recorded times, status and correction lineage. These events do not create or remove a person or alter the population count.
 
 Event contract: each population-changing event includes unique event ID, person ID, event type, prior/new population status, count delta, effective in-game time, recorded time, actor/system, reason/source, transaction outcome and related entity IDs.
 
@@ -547,6 +553,14 @@ Event contract: each population-changing event includes unique event ID, person 
 
 Required test classes: boundary/cap, duplicate identity, concurrency/race, lifecycle, promotion permanence, temporal history, cross-domain references, privacy, NPC knowledge, replay, recovery, 10k-scale population, storage-growth and regression.
 
+### Education participation and qualification history
+- **AC-EDU-01:** A learner is linked to one canonical BP-03 person ID; enrolment does not create a duplicate person.
+- **AC-EDU-02:** School, college and non-police education enrolment records preserve provider/programme, status and effective dates.
+- **AC-EDU-03:** Attendance/participation is distinct from enrolment and completion; unknown or disputed attendance remains explicit.
+- **AC-EDU-04:** Education history records issuing body and award date when known and preserves unknown values rather than inventing them.
+- **AC-EDU-05:** Provider/facility identity resolves to BP-04 and schedules resolve to BP-37; staff employment resolves to BP-33.
+- **AC-EDU-06:** Police training course and credential authority remains with BP-32; general education history is not duplicated there.
+
 ## 19. Source traceability
 
 | Source IDs | BP-03 obligation |
@@ -557,6 +571,7 @@ Required test classes: boundary/cap, duplicate identity, concurrency/race, lifec
 | S04.R01–R03; S04.T01–T02 | Individual identity, processing tiers and permanent promotion |
 | S05.R01–R03; S05.T01 | Household/relationship interfaces |
 | S08.R02; S08.T01 | Work/home routines and movement |
+| S14.R01; S14.R03; S14.T01 | Person-level education enrolment, attendance and qualification history; issuer/date/prerequisite references |
 | S31.R01–R03; S31.T01 | Case-role identity and promotion |
 | S39.R01–R02; S39.T01 | Person continuity through sentence/release status |
 | S42.R01–R03; S42.T01 | Event processing, relevance and state consistency |
