@@ -49,7 +49,7 @@
 | BP-40 | Interface | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-40](divisions/BP-40-INTERFACE.md) |
 | BP-41 | Notifications and Reporting | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-41](divisions/BP-41-NOTIFICATIONS-AND-REPORTING.md) |
 | BP-42 | Security and Permissions | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-42](divisions/BP-42-SECURITY-AND-PERMISSIONS.md) |
-| BP-43 | Testing and Quality Assurance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-43 | Testing and Quality Assurance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-43](divisions/BP-43-TESTING-AND-QUALITY-ASSURANCE.md) |
 | BP-44 | Configuration and Change Control | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 
 ## Governing status rules
@@ -110,7 +110,7 @@ Statuses are independent across specification, implementation, testing and verif
 41. BP-40: full interface specification draft created; command grammar, workspace layout, session behaviour, search limits, autosave, exports, accessibility targets, visual formats, operational thresholds and outage behaviour remain open decisions.
 42. BP-41: full notifications-and-reporting specification draft created; notification taxonomy/priorities, recipient resolution, delivery channels, retry policy, report catalogue, public release authority, metric definitions, retention, scheduling and queue implementation remain open decisions.
 43. BP-42: full security-and-permissions specification draft created; authentication/session policy, permission catalogue, classification, delegation, emergency access, audit retention, secret management, encryption, monitoring and incident-response rules remain open decisions.
-43. BP-42: full security-and-permissions specification draft created; authentication/session policy, permission catalogue, classification, delegation, emergency access, audit retention, secret management, encryption, monitoring and incident-response rules remain open decisions.
-44. Continue BP-43 through BP-44 in numeric order, preserving the same specification contract and traceability.
+44. BP-43: full testing-and-quality-assurance specification draft created; test runner/CI, evidence retention, coverage thresholds, defect severity, load targets, storage benchmark methodology, recovery cadence and release gates remain open decisions.
+45. Continue BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
