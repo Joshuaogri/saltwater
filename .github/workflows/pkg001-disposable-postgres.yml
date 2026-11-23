@@ -8,6 +8,7 @@ on:
       - "db/proposals/0002_runtime_city_population.sql"
       - "db/proposals/0003_actor_session_authorization.sql"
       - "db/proposals/0004_recruit_entry.sql"
+      - "docs/implementation/approval-packages/PKG-003-recruit-entry-vertical-slice.md"
       - "db/migrations/0001_foundation.sql"
       - "runtime/**"
       - "tests/pkg001/**"
