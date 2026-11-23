@@ -155,6 +155,10 @@ The canonical person profile supports, where known and relevant:
 
 Sensitive or highly personal attributes must not be generated or exposed without a defined gameplay purpose and permission model. BP-42 governs access. BP-03 defines the identity field semantics, not access rights.
 
+### 4.4 Civil identity and registration references
+
+Where Saltwater's configured civil registry recognises a fact, the canonical person record must link to its authoritative registration record and preserve the registered value, status, issuing/recording authority, effective date, recorded date, source, correction history and current validity. This includes birth and death registration and any configured civil-status, name, citizenship/residency or other legally registered life event; do not infer a registration from a social relationship, household membership, reported event or unverified claim. BP-30 owns the registry institution, mandate, authorised registrar roles and public-administration process; BP-38 owns common register/version/provenance/access standards; BP-36 owns the underlying social/family relationship semantics; BP-02/BP-04 own address, property and business source records. BP-03 owns the person-linked civil identity/life-status reference and population consequences. A correction to a register must not erase the prior value or silently rewrite historical case records.
+
 ### 4.3 Unknown, estimated and disputed attributes
 Unknown values remain unknown. Do not invent exact DOBs, addresses, nationality, employment, relationship status or personal histories merely to fill fields.
 
@@ -577,6 +581,7 @@ Required test classes: boundary/cap, duplicate identity, concurrency/race, lifec
 | S04.R01–R03; S04.T01–T02 | Individual identity, processing tiers and permanent promotion |
 | S05.R01–R03; S05.T01 | Household/relationship interfaces |
 | S08.R02; S08.T01 | Work/home routines and movement |
+| S12.R01 | Person-linked civil identity and life-status references; authoritative registry process is BP-30 and common register controls are BP-38 |
 | S13.R02 | Person-level injury, death and care-access references, with medical evidence kept distinct from clinical/forensic owners |
 | S14.R01; S14.R03; S14.T01 | Person-level education enrolment, attendance and qualification history; issuer/date/prerequisite references |
 | S31.R01–R03; S31.T01 | Case-role identity and promotion |
