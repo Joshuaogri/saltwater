@@ -604,6 +604,8 @@ The original 52-division JSON remains the source of truth for original requireme
 | S23.R03 | Appointment, promotion, transfer, acting roles, succession, discipline, grievance, standards and retirement | Sections 4, 8, 13–14, 18; HR transaction interfaces to BP-06/BP-07/BP-30/BP-31 |
 | S24.R01 | Officer identity/history/recruitment/vetting/training/qualifications/skills/performance/welfare/leave/shifts/pay/discipline/career | Sections 4, 6, 8, 11–15, 18; police HR administration and owner boundaries |
 | S24.R02 | Recruit entry and career progression through vacancies, standards and required training | Sections 8–9, 12–14, 18; police recruitment administration with BP-06/BP-07/BP-32 |
+| S22.R02 | Track emergency-service staffing references and accountable personnel availability; BP-33 remains authoritative for employee employment, qualifications, shifts and attendance. | Sections 4, 6–10, 18–20; emergency-service provider and operational profiles reference, but do not duplicate, HR records. |
+| S22.T01 | Emergency-service resource availability and response chronology reconcile across agencies. | Sections 10, 16, 18, 21; BP-04 agency/unit profiles, BP-11 dispatch, BP-12 incident coordination and BP-35 event chronology consume authoritative HR availability. |
 | S25.R01 | Generate and maintain shifts, duty rosters, leave, absences, minimum staffing, specialist availability, patrol areas and command coverage | Sections 10–12, 18; BP-08/BP-09 operational ownership and HR-AT-061–069 |
 | S25.R03 | Record roster changes and actual attendance separately | Sections 10, 12, 18–19; HR-AT-037–045, 061–064 |
 
