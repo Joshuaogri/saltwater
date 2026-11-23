@@ -173,7 +173,7 @@ This is the first end-to-end proof, not a substitute for the full 44-division si
 
 ## 7. Immediate next work
 
-1. Continue PKG-001: implement persistent principal/session/grant/revocation records, a trusted identity-provider adapter and durable audit sink; connect the authorization service to player commands and every query/search/map/notification/report/export/cache/AI route; implement a separately protected hidden-truth store and the single exact `bingo` reveal service; add cross-route leak tests and broader disaster-recovery tests. Runtime recovery/safe-halt, transaction rollback, DB-role boundary and logical backup/restore now pass on disposable PostgreSQL. Keep calendar and population-scope decisions open until resolved.
+1. PKG-001: runtime kernel, city/population foundation, and persistent provider-neutral actor/session/policy/grant/audit schema proposal. The 0003 schema is tested only on disposable PostgreSQL; no identity provider, credential issuer, durable application adapter, route integration or hidden-truth store is selected or deployed. Next: implement trusted provider adapter and durable verifier/audit adapters, then route all game reads/writes through the same low-friction authorization service. Preserve a simple player login/persona flow; avoid unnecessary approval prompts during ordinary play. Keep calendar and population-scope decisions open until resolved.
 2. Human sign-off of narrative fixture 0001; keep manual-review state honest.
 3. Final text-quality/capacity assessment and explicit decision on the 1 GB Neon allowance with 200 MB reserve.
 4. Define the minimal ChatGPT ↔ authorised runtime ↔ Neon integration contract.
