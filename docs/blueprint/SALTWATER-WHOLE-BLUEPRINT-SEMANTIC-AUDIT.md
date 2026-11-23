@@ -113,6 +113,21 @@ The first targeted scan of BP-01–BP-08 was performed against their mapped sour
 
 **Preliminary result:** no contradiction with the inspected binding Saltwater canon was identified in this first scan. This does not certify complete semantic coverage: each source requirement/test must still be checked against every mapped target division and its acceptance criteria.
 
+### Initial source-domain scan: S09–S16
+
+| Source | Initial ownership/content check | Audit outcome |
+|---|---|---|
+| S09 Markets, trade, supply chains and logistics | BP-02 spatial network; BP-04 businesses, warehouses and providers; BP-09 police logistics; BP-34 procurement/finance; BP-35 causal disruption and delivery events. | Ownership split appears coherent; verify stock/order/delivery reconciliation across sender, carrier and receiver in mapped tests. |
+| S10 Public finance, taxation and economic accounts | BP-34 owns accounting, currency, budgets, revenue, debt, grants and household/business finance; BP-38 records/transactions; BP-43 tests balance. | No immediate ownership gap found in initial scan; fictional currency/accounting policies remain open. |
+| S11 Government and public administration | BP-30 owns institutions, offices, authority and decisions; BP-04 organisation identity; BP-31 oversight; BP-34 procurement; BP-38 records; BP-42 access. | Ownership split appears coherent; verify permit/licence/inspection workflows and official-action authority tests. |
+| S12 Civil registry and public records | BP-03 person/civil identity; BP-04 property/business; BP-30 permits and public institutions; BP-38 record/version/provenance; BP-42 access; BP-44 change governance. | Source ownership is distributed by record domain; verify no missing issuing/registry workflow or competing authority in detailed review. |
+| S13 Healthcare and public health | Provider operations lacked explicit appointment/treatment/public-health-alert metadata. | Finding A15 resolved in BP-03/BP-04 and crosswalk v1.3; test execution pending. |
+| S14 Education, training and research | General learner enrolment/attendance was not clearly assigned; BP-32 is police-training focused. | Finding A14 resolved in BP-03/BP-04/BP-32 and crosswalk v1.3; test execution pending. |
+| S15 Social care, welfare and community support | BP-04 provider identities/capacity; BP-17 safeguarding/referrals; BP-30 public-service governance; BP-36 social context; BP-38 records. | Ownership split appears coherent at support-level depth; verify referral lifecycle, eligibility/capacity and outcome contracts. |
+| S16 Utilities, energy and communications infrastructure | BP-04 operators/assets; BP-09 police resource dependencies; BP-35 outage propagation/restoration; BP-12 incident effects; BP-41 service notices. | Ownership split appears coherent; verify network-connected impact, outage scope and explicit restoration tests. |
+
+This is an initial ownership/content scan only. The mapped target sections and acceptance tests for every source item still require detailed reconciliation.
+
 ### Semantic finding A14 — education-provider and learner-record ownership
 
 <badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
