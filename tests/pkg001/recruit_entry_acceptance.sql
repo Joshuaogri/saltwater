@@ -126,6 +126,7 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM = 'second principal unexpectedly bound to an existing player' THEN RAISE; END IF;
   END;
+  PERFORM sw_police.request_recruit_intake(v_second_player,'Second Player','pkg003-request-0002');
   BEGIN
     PERFORM sw_player.bind_accepted_identity(v_pending_principal,v_second_player);
     RAISE EXCEPTION 'pending recruit unexpectedly received an identity binding';
