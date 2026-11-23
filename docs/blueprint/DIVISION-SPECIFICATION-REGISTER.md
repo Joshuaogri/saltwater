@@ -123,5 +123,6 @@ Statuses are independent across specification, implementation, testing and verif
 53. Initial source-domain ownership scan S17–S24 recorded: buildings/assets, environment, food/essential services, culture/media, emergency services, police governance and police personnel have mapped ownership boundaries; detailed acceptance-test and interface reconciliation remains open.
 54. Initial source-domain ownership scan S25–S32 recorded: rosters/command/dispatch/patrol, crime and case systems, participant roles, scenes and evidence have mapped owners; detailed acceptance-test and cross-system reconciliation remains open.
 55. Semantic finding A17: added BP-37 canonical clock and scheduled custody-review interface to S37.R02/S37.T01 mapping; BP-26 retains custody-specific clock calculation and decisions; BP-37 traceability and BP-26 ownership wording updated. Test execution remains pending.
+56. Initial source-domain ownership scan S33–S52 recorded: forensics, interviews, intelligence, surveillance, arrest/custody, legal outcomes, corrections, oversight, time, simulation engine, AI/player agency, interface, visuals, database, storage, security, recovery, QA, operations and change control have mapped owners. Full item-by-item semantic and acceptance-test reconciliation remains open.
 
 **No Neon write has been made or authorised by these documents.**
