@@ -417,6 +417,8 @@ For schools, colleges and non-police training providers, BP-04 also maintains pr
 
 Healthcare providers also require proportionate service-operation records: practitioner/service roles, emergency-care capability, capacity and availability, appointment slots and booking/referral status, treatment-encounter event metadata, public-health alert references and disruption/restoration. BP-04 records the provider/service event and care-access interface, not a detailed clinical chart. Person-specific injury/death/care facts are linked to BP-03 and relevant case/custody records (BP-17/BP-26); forensic medical examination remains BP-24; evidence continuity remains BP-23; BP-42 governs sensitive access; BP-35 coordinates time-valid capacity, alerts and disruption effects.
 
+Transport operators require proportionate service records: operator and service identity, route/service ID, ordered stop/station/terminal references, fleet and vehicle availability profile, service capacity, accessibility characteristics, service restrictions, disruption/closure state and timetable references. BP-02 owns stop/terminal/parking spatial identity and route geometry; BP-04 owns operator/service/fleet profiles; BP-37 owns timetable definitions and scheduled runs; BP-09 owns police fleet only. Actual vehicle movement, dispatch and patrol decisions remain with the relevant operational owner.
+
 Specialist service records remain in their owning domains. BP-04 stores stable entity and facility references, not duplicate clinical, individual education, employment, custody or dispatch records.
 
 ## 10. Facilities, infrastructure and physical assets
@@ -533,6 +535,7 @@ Event types include:
 - service opening/closure/outage/restoration;
 - education programme/course offering or withdrawal, term/session schedule change, enrolment-capacity change and education-service availability change;
 - healthcare appointment booked/rescheduled/cancelled/attended/no-show; treatment encounter started/completed/referred (metadata only); public-health alert issued/updated/withdrawn;
+- transport service/route created/changed/withdrawn; stop sequence or accessibility profile changed; timetable version activated; service run delayed/cancelled/restored; fleet vehicle serviceability/availability changed;
 - stock receipt, movement, use, loss or reconciliation;
 - supplier relationship start/end;
 - incident, complaint, inspection or case linkage.
@@ -747,6 +750,7 @@ A compact record is acceptable only if all required meaning, history, provenance
 - **AC-D04:** Essential-service operators and dependencies can be traced across affected facilities.
 - **AC-D05:** Off-map organisations cannot create external playable geography or population.
 - **AC-D06:** Healthcare providers expose service capability, capacity, appointment/referral availability, treatment-event metadata and public-health alert references without creating duplicate clinical charts or bypassing BP-42 access controls.
+- **AC-D07:** Each public transport service route references valid BP-02 stops and route geometry, a BP-04 operator/fleet profile and a BP-37 timetable; service capacity/accessibility and disruption state are time-valid.
 
 ### E. Staff, stock, supply and events
 - **AC-E01:** Staff links resolve to canonical BP-03 person IDs and BP-33 employment records.
@@ -790,6 +794,7 @@ Required test classes: identity/duplicate detection, minimum registry, entity re
 | S14.R01; S14.T01 | Education and training provider representation |
 | S15.R01–R02; S15.T01 | Social-care and community provider representation |
 | S16.R01–R03; S16.T01 | Utilities, communications, infrastructure operators and disruption links |
+| S17.R01 | Transport operators, service routes, fleet profiles, stops, timetable references, parking and accessibility interfaces; BP-02 owns spatial geometry and BP-37 timetable execution |
 | S18.R01–R03; S18.T01 | Buildings, facilities, physical assets, access and maintenance |
 | S20.R01–R03; S20.T01 | Food, essential services, stock, distribution and supply |
 | S21.R01–R03; S21.T01 | Culture, media, recreation, events and civic organisations |
