@@ -1,6 +1,6 @@
 # Saltwater lifecycle storage-capacity assessment
 
-Status: 1 GB capacity NOT APPROVED pending realistic text-depth benchmark 0006. No production data has been seeded.
+Status: 1 GB Neon production capacity NOT APPROVED pending narrative-quality sign-off and final capacity/reserve assessment. No production simulation data has been seeded.
 
 ## 1. Verified starting point
 
