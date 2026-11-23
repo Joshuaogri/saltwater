@@ -89,7 +89,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             allowed=True, principal_id=uuid4()
         )
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, principal_id
