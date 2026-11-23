@@ -47,6 +47,45 @@ class PostgresRuntimeStoreTests(unittest.TestCase):
             reloaded.advance_tick()
         self.assertEqual(reloaded.status().world_tick, 1)
         reloaded.transition(Lifecycle.RUNNING, player_present=True)
+
+        # A failed command after event insertion must roll back the event.
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT count(*) FROM sw_core.simulation_event")
+                before = cur.fetchone()[0]
+        with self.assertRaises(RuntimeError):
+            with connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT event_type_id FROM sw_core.event_type WHERE event_code='PERSON_PROFILE_CHANGED'"
+                    )
+                    event_type_id = cur.fetchone()[0]
+                    cur.execute(
+                        "INSERT INTO sw_core.simulation_event "
+                        "(event_type_id,occurred_at,world_tick,idempotency_key) "
+                        "VALUES (%s,now(),1,'pkg001-rollback-check')",
+                        (event_type_id,),
+                    )
+                    raise RuntimeError("simulated domain-write failure")
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT count(*) FROM sw_core.simulation_event")
+                self.assertEqual(cur.fetchone()[0], before)
+                cur.execute("SELECT count(*) FROM sw_core.simulation_event WHERE idempotency_key='pkg001-rollback-check'")
+                self.assertEqual(cur.fetchone()[0], 0)
+
+        # Recovery and safe-halt transitions freeze time until ready/running.
+        reloaded.transition(Lifecycle.RECOVERING)
+        self.assertEqual(reloaded.status().world_tick, 1)
+        with self.assertRaises(KernelError):
+            reloaded.advance_tick()
+        reloaded.transition(Lifecycle.SAFE_HALT)
+        with self.assertRaises(KernelError):
+            reloaded.advance_tick()
+        reloaded.transition(Lifecycle.RECOVERING)
+        reloaded.transition(Lifecycle.READY)
+        reloaded.transition(Lifecycle.RUNNING, player_present=True)
+        self.assertEqual(reloaded.advance_tick().world_tick, 2)
         reloaded.transition(Lifecycle.STOPPED)
         self.assertEqual(reloaded.status().lifecycle, Lifecycle.STOPPED)
 
