@@ -30,6 +30,7 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
         self.token = "saltwater-test-token-" + suffix
         with connect() as conn:
             with conn.cursor() as cur:
+                cur.execute("UPDATE sw_auth.policy_version SET active=false WHERE active=true")
                 cur.execute(
                     "INSERT INTO sw_auth.policy_version(policy_version,description,active) VALUES (%s,%s,true)",
                     (self.policy, "Disposable adapter test"),
@@ -87,6 +88,9 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
                 )
         session = self.verifier.verify(self.token)
         self.assertEqual(session.session_status.value, "revoked")
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("UPDATE sw_auth.principal SET status='disabled' WHERE principal_id=%s", (self.principal_id,))
         auth = AuthorizationService(self.verifier, self.audit)
         self.assertFalse(auth.decide(
             self.token, action="read_case", resource="case/test",
