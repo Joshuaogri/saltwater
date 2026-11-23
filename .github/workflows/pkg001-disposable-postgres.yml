@@ -32,6 +32,8 @@ jobs:
           python-version: "3.12"
       - name: Run runtime kernel tests
         run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
+      - name: Run actor authorization and hidden-truth gate tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
 
   disposable-postgres:
     runs-on: ubuntu-latest
