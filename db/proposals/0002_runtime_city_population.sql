@@ -227,6 +227,16 @@ CREATE TRIGGER spatial_version_immutable
 BEFORE UPDATE OR DELETE ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_geo.reject_version_mutation();
 
+CREATE FUNCTION sw_geo.reject_entity_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'spatial identities are immutable; create a version instead';
+END
+$$;
+CREATE TRIGGER spatial_entity_immutable
+BEFORE UPDATE OR DELETE ON sw_geo.entity
+FOR EACH ROW EXECUTE FUNCTION sw_geo.reject_entity_mutation();
+
 -- Canonical person identity. No fabricated residents are inserted.
 CREATE TABLE sw_people.person (
   person_id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -250,25 +260,42 @@ CREATE TABLE sw_people.population_state (
   CHECK (life_status = 1 OR scope_status <> 1)
 );
 
+CREATE TABLE sw_people.population_counter (
+  singleton smallint PRIMARY KEY CHECK (singleton = 1),
+  living_included integer NOT NULL DEFAULT 0 CHECK (living_included BETWEEN 0 AND 10000)
+);
+INSERT INTO sw_people.population_counter(singleton, living_included)
+VALUES (1, 0);
+
 CREATE FUNCTION sw_people.enforce_population_cap() RETURNS trigger
 LANGUAGE plpgsql AS $$
 DECLARE
   current_count integer;
+  old_count integer := 0;
+  new_count integer := 0;
+  adjusted_count integer;
 BEGIN
-  -- Serialises competing admissions so concurrent transactions cannot exceed 10,000.
-  PERFORM pg_advisory_xact_lock(57001, 1);
+  -- A single locked counter row serialises admissions across concurrent sessions.
+  SELECT living_included INTO current_count
+    FROM sw_people.population_counter
+    WHERE singleton = 1
+    FOR UPDATE;
 
-  IF NEW.life_status = 1 AND NEW.scope_status = 1 THEN
-    SELECT count(*) INTO current_count
-      FROM sw_people.population_state
-      WHERE life_status = 1
-        AND scope_status = 1
-        AND person_id <> NEW.person_id;
-
-    IF current_count >= 10000 THEN
-      RAISE EXCEPTION 'Saltwater living population cap of 10000 would be exceeded';
-    END IF;
+  IF TG_OP = 'UPDATE'
+     AND OLD.life_status = 1 AND OLD.scope_status = 1 THEN
+    old_count := 1;
   END IF;
+  IF NEW.life_status = 1 AND NEW.scope_status = 1 THEN
+    new_count := 1;
+  END IF;
+
+  adjusted_count := current_count - old_count + new_count;
+  IF adjusted_count > 10000 THEN
+    RAISE EXCEPTION 'Saltwater living population cap of 10000 would be exceeded';
+  END IF;
+  UPDATE sw_people.population_counter
+    SET living_included = adjusted_count
+    WHERE singleton = 1;
   RETURN NEW;
 END
 $$;
@@ -277,7 +304,26 @@ BEFORE INSERT OR UPDATE OF life_status, scope_status
 ON sw_people.population_state
 FOR EACH ROW EXECUTE FUNCTION sw_people.enforce_population_cap();
 
--- Append-only history of population/life-state transitions.
+CREATE FUNCTION sw_people.reject_person_delete() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'canonical person identities cannot be deleted';
+END
+$$;
+CREATE TRIGGER person_identity_no_delete
+BEFORE DELETE ON sw_people.person
+FOR EACH ROW EXECUTE FUNCTION sw_people.reject_person_delete();
+
+CREATE FUNCTION sw_people.reject_population_state_delete() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'population state cannot be deleted; use a lifecycle transition';
+END
+$$;
+CREATE TRIGGER population_state_no_delete
+BEFORE DELETE ON sw_people.population_state
+FOR EACH ROW EXECUTE FUNCTION sw_people.reject_population_state_delete();
+
 CREATE TABLE sw_people.population_history (
   event_id bigint PRIMARY KEY REFERENCES sw_core.simulation_event(event_id),
   person_id integer NOT NULL REFERENCES sw_people.person(person_id),
