@@ -109,6 +109,7 @@ Statuses are independent across specification, implementation, testing and verif
 40. BP-39: full persistence-and-recovery specification draft created; RPO/RTO values, backup cadence/retention, verified Neon capabilities, checkpoint mechanism, encryption, access matrix, recovery runbooks and test cadence remain open decisions.
 41. BP-40: full interface specification draft created; command grammar, workspace layout, session behaviour, search limits, autosave, exports, accessibility targets, visual formats, operational thresholds and outage behaviour remain open decisions.
 42. BP-41: full notifications-and-reporting specification draft created; notification taxonomy/priorities, recipient resolution, delivery channels, retry policy, report catalogue, public release authority, metric definitions, retention, scheduling and queue implementation remain open decisions.
-43. Continue BP-42 through BP-44 in numeric order, preserving the same specification contract and traceability.
+43. BP-42: full security-and-permissions specification draft created; authentication/session policy, permission catalogue, classification, delegation, emergency access, audit retention, secret management, encryption, monitoring and incident-response rules remain open decisions.
+44. Continue BP-43 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
