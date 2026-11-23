@@ -57,3 +57,23 @@ Verified against Neon on 2026-11-22:
 - Logical database size reported by Neon: 33,595,392 bytes (approximately 33.6 MB)
 
 No simulation seed data was added during this integration work.
+
+
+## Direct live SQL verification — 2026-11-23
+
+A read-only query against production branch `br-bitter-rain-bdz9ddid`, database `neondb`, confirmed:
+
+- Foundation migration version 1 (`foundation`) is recorded in `sw_ops.schema_migration`, applied at 2026-11-22 17:11:30 UTC.
+- `pg_database_size(current_database())`: **9,306,112 bytes** (9.306 MB decimal; 8.875 MiB).
+- User relation footprint: **188,416 bytes**.
+- Five user tables: `sw_core.world_config`, `sw_core.event_type`, `sw_core.simulation_event`, `sw_ops.schema_migration`, `sw_ops.storage_operation`.
+- `world_config` contains one Saltwater row (one playable city; 10,000-person cap); `event_type` and `simulation_event` contain zero rows.
+- No resident, police, business, case or evidence domain tables or production seed records are present.
+
+The provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22 project metadata) is a distinct metric from the SQL `pg_database_size` reading above. Do not treat the two as interchangeable.
+
+The live connection probe workflow succeeded on 2026-11-22. It created a temporary table, inserted/read one test row, and rolled back; it left no persistent simulation data.
+
+Benchmark 0005 did create a temporary synthetic benchmark schema/data set on Neon for measurement, then dropped that schema. Its successful operation record remains in `sw_ops.storage_operation`; the synthetic benchmark tables and rows do not remain. Later text-depth/high-entropy runs 0006–0008 were run on disposable PostgreSQL and did not load benchmark data into Neon. None of these runs loaded production population/business/police/case/evidence seed data.
+
+**Current gate:** Neon 1 GB production capacity is NOT APPROVED; production seeding remains BLOCKED. Benchmark 0008's three repeatability runs are not a narrative-quality approval or a Neon capacity approval. The 16-record narrative fixture's manual-review rows remain pending.
