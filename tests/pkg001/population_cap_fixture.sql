@@ -1,13 +1,19 @@
--- Disposable-only fixture: move from 1,000 to 9,999 living/included people.
+-- Disposable-only fixture: fill the current living/included population to 9,999.
 -- Follow with test_population_concurrency.py, which races two admissions at the cap.
 DO $$
 DECLARE
   i integer;
   ev bigint;
   pid integer;
+  current_count integer;
 BEGIN
   UPDATE sw_runtime.state SET state=1 WHERE singleton=1;
-  FOR i IN 1001..9999 LOOP
+  SELECT living_included INTO current_count
+    FROM sw_people.population_counter WHERE singleton=1;
+  IF current_count > 9999 THEN
+    RAISE EXCEPTION 'fixture population already exceeds 9,999';
+  END IF;
+  FOR i IN current_count+1..9999 LOOP
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
       RETURNING event_id INTO ev;
