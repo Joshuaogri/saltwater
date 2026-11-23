@@ -63,7 +63,7 @@ BEGIN
   RETURNING event_id INTO v_event;
   INSERT INTO sw_police.personnel(personnel_id,person_id,service_number,service_standing,service_status,
     supervisor_person_id,appointment_tick,appointment_source,appointment_event_id)
-  VALUES (gen_random_uuid(),v_person_a,'SWP-00000001','established','active',
+  VALUES (gen_random_uuid(),v_person_a,'FIXTURE-0001','established','active',
     v_person_b,0,'PKG-003 disposable test fixture',v_event);
   INSERT INTO sw_police.recruit_supervisor_authorisation(person_id,authorised_by_principal_id,authority_source,effective_tick)
   VALUES (v_person_a,v_admin,'PKG-003 disposable test fixture',0);
