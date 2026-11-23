@@ -164,7 +164,7 @@ A test definition or GitHub commit is not a test pass. Each executed test must r
 
 ## 10. Storage estimate and limits
 
-No defensible production migration estimate is claimed yet. The current database baseline is known, but the schema proposal has not been executed or measured in disposable PostgreSQL. Catalog growth, indexes, trigger functions and actual tuple overhead must be measured, not guessed.
+No production/Neon migration estimate is claimed. The proposal has now been executed on disposable PostgreSQL 16.16. A 1,000-person synthetic fixture (one profile history, one population state/history and two events per person) increased whole-database size by 950,272 bytes (0.950 MB; 0.906 MiB), approximately 950.27 bytes per person at this sample size. This is a compact baseline only; it excludes richer narrative, residence, relationships, jobs, police dossiers, cases, later indexes, and long-run bloat. The result is documented in [PKG-001 run evidence](../test-evidence/PKG-001-run-0001.md).
 
 The first benchmark will report:
 - empty schema/migration delta;
@@ -174,7 +174,7 @@ The first benchmark will report:
 - 10,000-person cap test;
 - low/median/high narrative and source-reference overhead separately.
 
-The 9,500-person seed estimate is not a seed authorisation. No production capacity approval is inferred.
+The 9,500-person seed estimate is not established by this sample and is not a seed authorisation. No production capacity approval is inferred.
 
 ## 11. Explicit approval boundary
 
