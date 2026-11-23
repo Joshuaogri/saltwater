@@ -1,6 +1,6 @@
 # Saltwater implementation sequence and dependency plan
 
-**Status:** IMPLEMENTATION PLAN DRAFT — planning only. It grants no division approval and no Neon write permission.  
+**Status:** IMPLEMENTATION PLAN — active delivery plan. It grants no division approval and no Neon write permission. All repository development is performed directly on `main`.  
 **Authority:** Approved Saltwater master blueprint BP-01–BP-44 and completed 52→44 semantic audit.  
 **Prepared:** 2026-11-23
 
@@ -71,7 +71,7 @@ Approve the relevant division specification versions before implementing their d
 
 ## 4A. First implementation approval package
 
-PKG-001 was explicitly approved by the user on 2026-11-23 for bounded GitHub implementation and disposable PostgreSQL testing. Implementation is in progress on branch `implementation/pkg-001-runtime-city-population`, PR [#1](https://github.com/Joshuaogri/saltwater/pull/1). Run 0001 passed on disposable PostgreSQL 16.16 and Python 3.12.16; see [test evidence](test-evidence/PKG-001-run-0001.md). No Neon migration, seed, or production activation is authorised. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
+PKG-001 was explicitly approved by the user on 2026-11-23 for bounded GitHub implementation and disposable PostgreSQL testing. Implementation was merged directly into `main` on 2026-11-23 (merge commit `0fb5eac232a8c414a1488f01f7a638b4b6554a7a`; historical PR [#1](https://github.com/Joshuaogri/saltwater/pull/1) is closed and merged). Future development takes place only on `main`; do not create or use development branches or PR-based workflows. Disposable PostgreSQL and Python test evidence is recorded in the PKG-001 run reports. No Neon migration, seed, or production activation is authorised. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
 
 ## 5. Dependency-led implementation sequence
 
