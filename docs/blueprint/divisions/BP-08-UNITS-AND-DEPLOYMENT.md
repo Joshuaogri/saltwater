@@ -41,11 +41,11 @@ It must support a coherent, active police service across Saltwater's single city
 | Case assignment and investigative direction | BP-15/BP-16 | Receives authorised investigative allocation |
 | Specialist training and qualification awards | BP-32 | Consumes verified qualification status |
 | HR transactions, leave and employment administration | BP-33 | Consumes authoritative status/availability events |
-| Time, rosters, shift patterns and simulation clock | BP-37 | Consumes schedule and time authority |
+| Canonical time, calendar, recurrence and schedule execution | BP-37 | Consumes temporal services; BP-08 remains owner of police roster content and duty assignment |
 | Unit/personnel persistence and records | BP-38/BP-39 | Stores canonical records and history |
 | Permissions and protected assignments | BP-42 | Enforces visibility and action authority |
 
-BP-08 owns the organisational membership and deployment assignment record. It does not own the personnel identity, substantive rank, duty roster, resource inventory or the operational execution of a patrol/call/case task.
+BP-08 owns the organisational membership, planned police duty roster and deployment assignment records. It does not own canonical clock/calendar or schedule-execution services (BP-37), personnel identity or service history (BP-06), actual attendance and leave records (BP-33), substantive career/rank progression (BP-07), resource inventory/readiness (BP-09), or the operational execution of a patrol/call/case task (BP-10/BP-11/BP-12). BP-37 supplies temporal and recurrence services; BP-08 owns the police roster's staffing and assignment content; BP-33 records actual attendance/leave, which may differ from the plan.
 
 ## 3. Governing invariants
 
@@ -307,7 +307,7 @@ Readiness is time-sensitive and must identify the calculation timestamp and sour
 - BP-31: authorised restrictions that affect duties, subject to confidentiality.
 - BP-32: qualifications and capability credentials.
 - BP-33: leave, HR and employment status.
-- BP-37: roster, shift, calendar, simulation time and pause.
+- BP-37: canonical clock, calendar, recurrence, temporal queries and schedule execution; BP-08 owns police planned-roster content and duty assignment, while BP-33 owns actual attendance/leave.
 - BP-42: access and information classification.
 
 ### Outputs
