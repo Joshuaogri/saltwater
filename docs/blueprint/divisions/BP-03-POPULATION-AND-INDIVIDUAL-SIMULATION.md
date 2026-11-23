@@ -271,7 +271,7 @@ Track relevant life facts with effective dates:
 - employment and occupation;
 - income/financial references at proportionate depth;
 - relationships and dependants;
-- health/welfare facts only where necessary and permission-controlled;
+- injury, death, medical-evidence and care-access references only where necessary, sourced, effective-dated and permission-controlled; full clinical records are not duplicated in the population profile;
 - skills, routines and activities;
 - significant life events;
 - death/permanent departure.
@@ -553,6 +553,12 @@ Event contract: each population-changing event includes unique event ID, person 
 
 Required test classes: boundary/cap, duplicate identity, concurrency/race, lifecycle, promotion permanence, temporal history, cross-domain references, privacy, NPC knowledge, replay, recovery, 10k-scale population, storage-growth and regression.
 
+### Health, injury, death and care-history references
+- **AC-HLTH-01:** Injury, death and care-access facts link to the canonical person ID and an attributable source/event.
+- **AC-HLTH-02:** Allegation, observation, clinical finding, forensic interpretation and court finding remain distinct; no injury or cause of death is inferred from an allegation.
+- **AC-HLTH-03:** Sensitive health details are stored only where necessary and protected by BP-42; the person profile holds proportionate references, not a duplicate clinical chart.
+- **AC-HLTH-04:** Medical evidence and exhibit continuity link to BP-23/BP-24; BP-03 does not take over forensic interpretation.
+
 ### Education participation and qualification history
 - **AC-EDU-01:** A learner is linked to one canonical BP-03 person ID; enrolment does not create a duplicate person.
 - **AC-EDU-02:** School, college and non-police education enrolment records preserve provider/programme, status and effective dates.
@@ -571,6 +577,7 @@ Required test classes: boundary/cap, duplicate identity, concurrency/race, lifec
 | S04.R01–R03; S04.T01–T02 | Individual identity, processing tiers and permanent promotion |
 | S05.R01–R03; S05.T01 | Household/relationship interfaces |
 | S08.R02; S08.T01 | Work/home routines and movement |
+| S13.R02 | Person-level injury, death and care-access references, with medical evidence kept distinct from clinical/forensic owners |
 | S14.R01; S14.R03; S14.T01 | Person-level education enrolment, attendance and qualification history; issuer/date/prerequisite references |
 | S31.R01–R03; S31.T01 | Case-role identity and promotion |
 | S39.R01–R02; S39.T01 | Person continuity through sentence/release status |
