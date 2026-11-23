@@ -11,6 +11,9 @@ from runtime.security import (
     PrincipalStatus,
     SecurityAuditRecord,
     SessionStatus,
+    Effect,
+    Grant,
+    PrincipalKind,
     VerifiedSession,
 )
 
@@ -103,3 +106,49 @@ class PostgresAuditSink(AuditSink):
                         record.allowed, record.reason, record.policy_version,
                     ),
                 )
+
+
+
+class PostgresGrantProvider:
+    """Load only currently effective grants under the active policy version.
+
+    Grants are re-read for every authorization decision so revocation and policy
+    changes take effect without rebuilding the application. No grant is created
+    or modified by this adapter.
+    """
+
+    def __init__(self, connect: Callable):
+        self._connect = connect
+
+    def load(self, at):
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT g.action, g.resource_pattern, g.purpose, g.effect,
+                           g.principal_id, g.principal_kind, g.role_code,
+                           g.expires_at
+                    FROM sw_auth.permission_grant g
+                    JOIN sw_auth.policy_version p
+                      ON p.policy_version=g.policy_version AND p.active=true
+                    WHERE g.valid_from <= %s
+                      AND (g.expires_at IS NULL OR g.expires_at > %s)
+                      AND g.revoked_at IS NULL
+                    ORDER BY g.grant_id
+                    """,
+                    (at, at),
+                )
+                rows = cur.fetchall()
+        return tuple(
+            Grant(
+                action=row[0],
+                resource_pattern=row[1],
+                purpose=row[2],
+                effect=Effect(row[3]),
+                principal_id=row[4],
+                principal_kind=PrincipalKind(row[5]) if row[5] else None,
+                role=row[6],
+                expires_at=row[7],
+            )
+            for row in rows
+        )
