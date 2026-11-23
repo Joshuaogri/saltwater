@@ -133,8 +133,14 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                     "UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1 AND state=1"
                 )
 
-                supervisor_person = create_person(cur, "supervisor-" + cls.suffix)
-                supervisor_of_supervisor = create_person(cur, "senior-" + cls.suffix)
+                cur.execute(
+                    "SELECT person_id FROM sw_people.person ORDER BY person_id LIMIT 2"
+                )
+                fixture_people = cur.fetchall()
+                if len(fixture_people) != 2:
+                    raise AssertionError("storage fixture must provide two canonical people")
+                supervisor_person = fixture_people[0][0]
+                supervisor_of_supervisor = fixture_people[1][0]
                 cur.execute(
                     """
                     SELECT event_type_id FROM sw_core.event_type
@@ -267,6 +273,11 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                 self.assertEqual(
                     cur.fetchall(),
                     [(True, "explicit_allow"), (False, "session_not_active")],
+                )
+                # Return the disposable runtime to stopped state for the
+                # following population-cap fixture; no world tick advanced.
+                cur.execute(
+                    "UPDATE sw_runtime.state SET state=0,player_present=false WHERE singleton=1 AND state=2"
                 )
 
 
