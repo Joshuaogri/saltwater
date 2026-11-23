@@ -49,11 +49,11 @@ CREATE TABLE sw_police.personnel (
 );
 
 CREATE FUNCTION sw_police.reject_history_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $function$
 BEGIN
   RAISE EXCEPTION 'police lifecycle history is append-only';
 END
-$;
+$function$;
 
 CREATE TABLE sw_police.recruit_supervisor_authorisation (
   person_id integer PRIMARY KEY REFERENCES sw_police.personnel(person_id),
