@@ -1,6 +1,6 @@
 # PKG-003 — recruit-entry vertical slice approval
 
-**Status:** Approved 2026-11-23; implementation committed to main; CI verification pending  
+**Status:** Approved 2026-11-23; bounded implementation committed; disposable PostgreSQL CI passed  
 **Branch:** `main` only; no feature branches or pull requests  
 **Project:** Entirely fictional Saltwater police simulation  
 **Production database:** No Neon migration, seed, write, upload, or configuration change is included or authorised.
@@ -125,15 +125,17 @@ This package does not settle every visitor, commuter, temporary-presence or off-
 
 | Check | State |
 |---|---|
-| Schema proposal authored; not a live migration | Implemented |
-| PostgreSQL atomic recruit-acceptance path | Implemented; disposable CI pending |
-| Population counter/cap transaction boundary | Reuses PKG-001 locked counter; recruit-specific CI pending |
-| Adapter unit tests | Implemented; CI pending |
-| Player command hooks | Implemented; require injected durable adapter |
+| Schema proposal authored; not a live migration | Implemented; CI migration application passed on disposable PostgreSQL |
+| PostgreSQL atomic recruit-acceptance path | Passed disposable PostgreSQL acceptance |
+| Population counter/cap transaction boundary | Passed 10,000-cap rejection and no-partial-person checks; existing concurrent cap test also passed |
+| Adapter unit tests | Passed |
+| Player command hooks | Implemented; unit tests passed; require injected durable adapter |
 | End-to-end player/runtime/Neon connection | Not implemented; production Neon unchanged |
 | Production migration or data write | Not authorised; not performed |
 
-The new recruit commands are intentionally unavailable until a trusted PostgreSQL recruitment adapter is supplied to the player interface. This package does not pretend that the overall ChatGPT-to-Neon runtime connection is complete. The approval does not alter the production-write gate.
+**CI evidence:** [PKG-001 disposable PostgreSQL validation run 115](https://github.com/Joshuaogri/saltwater/actions/runs/45275219362) — **passed** on commit `9235b36642e5c287d8e0fd1ec33398308ceb6ff2`. The run applied proposals 0001–0004 to disposable PostgreSQL, passed PKG-003 recruit acceptance (including approver/replay denial, 10,000 cap, atomic rollback and pause checks), passed the 10,000-person concurrency test, measured the 1,000/10,000-person fixtures, tested the runtime/security adapters and completed backup/restore.
+
+The new recruit commands are intentionally unavailable until a trusted PostgreSQL recruitment adapter is supplied to the player interface. The command hooks and service adapter are implemented, but the overall ChatGPT-to-Neon runtime connection and durable player-session wiring are not complete. The approval does not alter the production-write gate.
 
 ## Approval requested
 
