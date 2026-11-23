@@ -1,6 +1,7 @@
 -- PKG-003 disposable PostgreSQL end-to-end acceptance.
 -- Run after 0001, 0002, 0003 and 0004 in a fresh disposable database.
 \set ON_ERROR_STOP on
+BEGIN;
 DO $accept$
 DECLARE
   v_admin uuid := gen_random_uuid();
