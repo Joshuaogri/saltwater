@@ -6,7 +6,11 @@ from uuid import uuid4
 
 import psycopg
 
-from runtime.postgres_security import PostgresAuditSink, PostgresSessionVerifier
+from runtime.postgres_security import (
+    PostgresAuditSink,
+    PostgresGrantProvider,
+    PostgresSessionVerifier,
+)
 from runtime.security import AuthorizationService, Effect, Grant
 
 
@@ -195,6 +199,70 @@ class PostgresSecurityAdapterTests(unittest.TestCase):
             audit,
             ("player.command.profile", False, "no_matching_grant"),
         )
+
+
+    def test_postgres_grants_are_loaded_and_revocation_takes_effect_immediately(self):
+        from runtime.application import (
+            bind_authorized_player_commands,
+            create_postgres_player_application,
+        )
+        from runtime.player_interface import PlayerProfile
+
+        profile = PlayerProfile(str(self.principal_id), "Grant-backed Player")
+        application = create_postgres_player_application(connect, profile)
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    INSERT INTO sw_auth.permission_grant
+                      (action,resource_pattern,purpose,effect,principal_id,policy_version)
+                    VALUES (%s,%s,%s,'allow',%s,%s)
+                    """,
+                    (
+                        "player.command.profile",
+                        f"player:{profile.player_id}",
+                        "gameplay",
+                        self.principal_id,
+                        self.policy,
+                    ),
+                )
+                grant_id = cur.fetchone()
+        authorization = AuthorizationService(
+            self.verifier, self.audit, PostgresGrantProvider(connect)
+        )
+        gateway = bind_authorized_player_commands(
+            application, authorization, self.principal_id
+        )
+
+        allowed = gateway.execute(self.token, "profile")
+        self.assertTrue(allowed.ok)
+        self.assertIn("Grant-backed Player", allowed.message)
+
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE sw_auth.permission_grant
+                    SET revoked_at=now()
+                    WHERE action=%s AND principal_id=%s AND policy_version=%s
+                    """,
+                    ("player.command.profile", self.principal_id, self.policy),
+                )
+        denied = gateway.execute(self.token, "profile")
+        self.assertFalse(denied.ok)
+        self.assertEqual(denied.message, "Access denied.")
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT allowed, reason FROM sw_auth.audit
+                    WHERE session_id=%s AND action='player.command.profile'
+                    ORDER BY audit_id DESC LIMIT 2
+                    """,
+                    (self.session_id,),
+                )
+                audit = cur.fetchall()
+        self.assertEqual(audit, [(False, "no_matching_grant"), (True, "explicit_allow")])
 
 
 
