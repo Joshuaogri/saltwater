@@ -211,9 +211,8 @@ VALUES ('saltwater-state', 1)
 ON CONFLICT (entity_code) DO NOTHING;
 
 INSERT INTO sw_geo.entity(entity_code, kind)
-VALUES ('saltwater-city', 2)
-FROM sw_geo.entity
-WHERE entity_code = 'saltwater-state'
+SELECT 'saltwater-city', 2
+WHERE EXISTS (SELECT 1 FROM sw_geo.entity WHERE entity_code = 'saltwater-state')
 ON CONFLICT (entity_code) DO NOTHING;
 
 INSERT INTO sw_geo.version
