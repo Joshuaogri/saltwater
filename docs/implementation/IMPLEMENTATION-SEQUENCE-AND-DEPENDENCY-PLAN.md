@@ -206,3 +206,9 @@ Track separate states for every division/item:
 - **Production activation:** not proposed / awaiting approval / approved for exact operation / deployed / measured.
 
 A GitHub commit, SQL file, successful benchmark, migration workflow no-op or AI review does not automatically advance every state.
+
+## 4C. Durable player-application composition increment
+
+A trusted server-side composition root is now implemented at `runtime/application.py`. `create_postgres_player_application(connect, profile)` wires one shared trusted PostgreSQL connection factory into the durable `PostgresRuntimeStore`, `PostgresRecruitmentService`, `RuntimeKernel` and `PlayerCommandInterface`. It is lazy and performs no connection, migration, seed, or write during construction. The composition contract is covered by `tests/pkg001/test_player_application.py` and the `main` CI workflow.
+
+This is an application assembly increment, not a deployed ChatGPT/API transport or an authenticated public endpoint. The host must authenticate the player and enforce authorization before exposing commands; database credentials remain server-side. The next runtime work is to bind verified player sessions and authorization decisions to command execution, then exercise the composed commands against disposable PostgreSQL. Neon production remains unchanged and the production-write gate remains in force.
