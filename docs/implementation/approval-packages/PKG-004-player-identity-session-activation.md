@@ -1,6 +1,6 @@
 # PKG-004 — accepted-player identity and session activation
 
-**Status:** Approved; implementation in progress  
+**Status:** Approved; implemented and disposable verification passed  
 **Branch:** main only; no feature branches or pull requests  
 **Project:** Entirely fictional Saltwater police simulation  
 **Production database:** No Neon migration, seed, write, upload, or configuration change is included or authorised.
@@ -117,3 +117,17 @@ Approve PKG-004 D1–D6 and the bounded implementation scope above. Approval wil
 - Wired activation into the trusted application composition root; no public route or player-entered activation command was added.
 - Added Python adapter tests and disposable SQL acceptance checks for accepted/pending intake, immutable binding, duplicate binding and session digest/active-person linkage.
 - Neon production remains unchanged. CI evidence will be recorded after the current main-branch runs complete.
+
+
+## Verification evidence
+
+**Implementation commit:** `e505c159dd8e11d368c043c1f83af2e140899186` on `main`.
+
+- Python kernel, activation adapter, application composition, authorization and hidden-truth tests: passed.
+- Disposable PostgreSQL workflow: run [45288422056](https://github.com/Joshuaogri/saltwater/actions/runs/45288422056) passed, including application of proposals 0002–0005, PKG-004 acceptance, the 10,000-person cap fixture, session/audit integration, database access boundary and backup/restore.
+- Database migration validation: run [45288422078](https://github.com/Joshuaogri/saltwater/actions/runs/45288422078) passed.
+- PKG-004 disposable schema measurement: database size before proposal 0005 = 9,460,759 bytes; after = 9,550,871 bytes; measured schema growth = 90,112 bytes in the disposable PostgreSQL environment.
+- Representative record storage: identity-binding tuple = 104 bytes; session tuple = 161 bytes; combined tuple payload = 265 bytes. The identity-binding relation including indexes occupied 49,152 bytes in the disposable environment.
+- Acceptance checks confirm pending and rejected recruit denial, inactive and non-player principal denial, immutable one-to-one binding, replay denial without duplicate binding, canonical active-person linkage, digest-only session storage, and no automatic permission grant.
+
+**Production state:** Neon was not migrated or written to. No player identity or session records were created in Neon. Production activation remains separately gated.
