@@ -116,5 +116,6 @@ Statuses are independent across specification, implementation, testing and verif
 
 47. Whole-blueprint semantic audit baseline recorded; source integrity and mapping passed, all 44 specification files and section sequences checked, five numbering defects corrected. Full requirement-to-specification semantic review remains in progress.
 48. Initial canon/ownership scan of BP-01–BP-08 recorded in the audit report; population arithmetic and core Saltwater constraints are consistent, while map/population scope/business baseline/police structure and career policy decisions remain open. Full source-item-to-target-content reconciliation continues.
+49. Semantic finding A14: clarified general education provider and learner-record ownership for S14.R01/S14.T01 across BP-03, BP-04, BP-32, BP-07, BP-33, BP-37 and BP-38; updated crosswalk to v1.3; added six BP-03 acceptance criteria and BP-32 boundary test TRN-AT-161. Source JSON unchanged; test execution remains pending.
 
 **No Neon write has been made or authorised by these documents.**
