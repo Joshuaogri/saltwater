@@ -115,5 +115,6 @@ Statuses are independent across specification, implementation, testing and verif
 46. All 44 division specification drafts exist. The whole-blueprint semantic audit is now in progress; source mapping (228/228 IDs) and top-level section numbering are checked, and heading defects in BP-15 and BP-23–BP-26 were corrected. See [whole-blueprint semantic audit](SALTWATER-WHOLE-BLUEPRINT-SEMANTIC-AUDIT.md). Requirement-to-specification semantic reconciliation, ownership consistency and test adequacy remain open.
 
 47. Whole-blueprint semantic audit baseline recorded; source integrity and mapping passed, all 44 specification files and section sequences checked, five numbering defects corrected. Full requirement-to-specification semantic review remains in progress.
+48. Initial canon/ownership scan of BP-01–BP-08 recorded in the audit report; population arithmetic and core Saltwater constraints are consistent, while map/population scope/business baseline/police structure and career policy decisions remain open. Full source-item-to-target-content reconciliation continues.
 
 **No Neon write has been made or authorised by these documents.**
