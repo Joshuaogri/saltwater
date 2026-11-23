@@ -46,7 +46,7 @@
 | BP-37 | Time and Scheduling | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-37](divisions/BP-37-TIME-AND-SCHEDULING.md) |
 | BP-38 | Records and Databases | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-38](divisions/BP-38-RECORDS-AND-DATABASES.md) |
 | BP-39 | Persistence and Recovery | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-39](divisions/BP-39-PERSISTENCE-AND-RECOVERY.md) |
-| BP-40 | Interface | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
+| BP-40 | Interface | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-40](divisions/BP-40-INTERFACE.md) |
 | BP-41 | Notifications and Reporting | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-42 | Security and Permissions | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
 | BP-43 | Testing and Quality Assurance | NOT_STARTED | NOT_STARTED | NOT_STARTED | NOT_STARTED | — |
@@ -107,6 +107,7 @@ Statuses are independent across specification, implementation, testing and verif
 38. BP-37: full time-and-scheduling specification draft created; fictional calendar epoch, timezone, active-time advancement, recurrence, event priority, expiry/retry and timestamp precision remain open configuration decisions.
 39. BP-38: full records-and-databases specification draft created; canonical ID formats, schema catalogue, transaction policy, event/outbox design, security enforcement, retention, indexing, migration tooling and measurement queries remain open technical decisions.
 40. BP-39: full persistence-and-recovery specification draft created; RPO/RTO values, backup cadence/retention, verified Neon capabilities, checkpoint mechanism, encryption, access matrix, recovery runbooks and test cadence remain open decisions.
-41. Continue BP-40 through BP-44 in numeric order, preserving the same specification contract and traceability.
+41. BP-40: full interface specification draft created; command grammar, workspace layout, session behaviour, search limits, autosave, exports, accessibility targets, visual formats, operational thresholds and outage behaviour remain open decisions.
+42. Continue BP-41 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
