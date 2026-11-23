@@ -95,6 +95,7 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
 
         with connect() as conn:
             with conn.cursor() as cur:
+                cur.execute("UPDATE sw_auth.policy_version SET active=false WHERE active=true")
                 cur.execute(
                     """
                     INSERT INTO sw_auth.policy_version(policy_version,description,active)
