@@ -45,6 +45,8 @@ class PostgresRuntimeStoreTests(unittest.TestCase):
         reloaded.transition(Lifecycle.PAUSED)
         with self.assertRaises(KernelError):
             reloaded.advance_tick()
+        with self.assertRaises(KernelError):
+            reloaded.record("PERSON_PROFILE_CHANGED")
         self.assertEqual(reloaded.status().world_tick, 1)
         reloaded.transition(Lifecycle.RUNNING, player_present=True)
 
