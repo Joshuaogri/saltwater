@@ -33,7 +33,7 @@ The engine must support a city that feels continuously alive while respecting th
 - Simulation workload scheduling, priority, budgets, back-pressure and safe load shedding.
 - AI/narrative generation orchestration, context assembly, output validation, provenance and strict player-agency/hidden-truth boundaries.
 - Optional visual/map/timeline/chart generation requests as projections of canonical records, never as authoritative state.
-- Engine health, event-queue metrics, execution traces, latency, error counters, resource use and recovery signals, with operational ownership coordinated with BP-51 source requirements and BP-38/39.
+- Engine health, event-queue metrics, execution traces, latency, error counters and runtime resource-use telemetry (BP-35). Database size, query/transaction health and record-layer diagnostics remain BP-38; backup, restore and recovery health remain BP-39; physical police-resource readiness remains BP-09; authorised operator-facing health presentation is BP-40; operational alert/report semantics and delivery are BP-41; cross-domain test evidence is BP-43. Source division S51 is mapped across these target owners; there is no BP-51 target division.
 - Engine-level testability, deterministic fixtures, replay harness contracts and runtime invariants.
 
 ### 2.2 BP-35 does not own
@@ -847,7 +847,7 @@ The following source IDs are mapped to BP-35 in the authoritative crosswalk. Ori
 |---|---|---|
 | S02.R01 | Geography, land and spatial reference | Consume canonical districts, zones, parcels, addresses, coordinates, boundaries, terrain, coastlines and land use; do not duplicate geography |
 | S02.T01 | Geography, land and spatial reference | Prevent duplicate or contradictory canonical locations |
-| S03.R01 | Population accounting and demographic model | Respect opening population accounting, reserve headroom and 10,000 hard cap as superseded by current Saltwater canon |
+| S03.R01 | Population accounting and demographic model | Enforce the binding opening population of 9,000 residents + 500 police = 9,500 living people, retain 500 unused capacity headroom, and enforce the 10,000 hard cap; BP-03 owns the sole population ledger |
 | S03.T01 | Population accounting and demographic model | Reconcile population ledger and person records |
 | S04.R01 | Person identity and life records | Coordinate stable person identity, attributes, history, needs, schedule, skills, employment, finances, relationships and records |
 | S04.T01 | Person identity and life records | Preserve identity across jobs, addresses and relationships |
@@ -901,7 +901,7 @@ The following source IDs are mapped to BP-35 in the authoritative crosswalk. Ori
 | S51.R01 | Operations, observability and maintenance | Track service health, errors, latency, queues, resource use, database size, failed events and recovery |
 | S51.T01 | Operations, observability and maintenance | Make operational failures detectable, attributable and recoverable |
 
-**Traceability note:** The original source's opening population detail (9,500 = 9,000 residents + 500 police) is superseded by the current binding Saltwater canon. The 10,000 hard cap remains binding; the old opening composition is not reintroduced by this mapping.
+**Traceability note:** The opening population composition in S03.R01 remains binding Saltwater canon: 9,000 residents + 500 police = 9,500 living people. The remaining 500 is unused capacity headroom, not an additional population; the hard cap is 10,000 living people total. BP-03 owns the sole population ledger and counting rules; BP-35 only coordinates atomic event execution and capacity checks. No population seed or Neon write is authorised by this mapping.
 
 ## 24. Completion status
 
