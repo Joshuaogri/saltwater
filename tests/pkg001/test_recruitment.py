@@ -2,7 +2,7 @@
 import unittest
 from uuid import uuid4
 
-from runtime.recruitment import PostgresRecruitmentService
+from runtime.recruitment import PostgresRecruitmentService, RecruitmentError
 
 
 class FakeCursor:
@@ -80,6 +80,13 @@ class RecruitmentAdapterTests(unittest.TestCase):
                 idempotency_key="accept-0002", authorised_by_principal_id=uuid4(),
             )
         self.assertIsNone(self.connection.cursor_value.executed)
+
+    def test_database_errors_are_returned_as_recruitment_errors(self):
+        def unavailable():
+            raise RuntimeError("database unavailable")
+        service = PostgresRecruitmentService(unavailable)
+        with self.assertRaises(RecruitmentError):
+            service.request_intake(uuid4(), "Player", "request-0004")
 
     def test_rejects_non_uuid_player_identifier(self):
         with self.assertRaises(ValueError):
