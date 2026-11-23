@@ -1,6 +1,6 @@
--- PROPOSAL ONLY — PKG-001 / migration 0002.
--- DO NOT APPLY TO NEON OR ANY AUTHORITATIVE DATABASE.
--- Requires 0001 foundation; execute only after separate explicit approval.
+-- PKG-001 / migration 0002.
+-- Disposable PostgreSQL acceptance-test migration only.
+-- NEVER apply to Neon or another authoritative database under PKG-001 approval.
 -- No resident/person/business/case/evidence seed data is inserted.
 -- The two geographic root records identify Saltwater; geometry remains unset.
 
