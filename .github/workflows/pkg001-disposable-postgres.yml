@@ -31,7 +31,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Run runtime kernel tests
-        run: python -m unittest discover -s tests/pkg001 -p "test_*.py" -v
+        run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
 
   disposable-postgres:
     runs-on: ubuntu-latest
@@ -76,3 +76,7 @@ jobs:
           echo "database_growth_mib=$(awk -v d="$delta" 'BEGIN {printf "%.6f", d/1048576}')"
           echo "approx_growth_bytes_per_person=$(awk -v d="$delta" 'BEGIN {printf "%.2f", d/1000}')"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 3 DESC;"
+      - name: Install PostgreSQL Python driver and test durable runtime adapter
+        run: |
+          python -m pip install "psycopg[binary]>=3.2,<4"
+          python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
