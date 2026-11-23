@@ -84,7 +84,7 @@ Existing deliverables: migration 0001; world configuration and event envelope ta
 **Primary divisions:** BP-35, BP-37, BP-38, BP-39, BP-42, BP-43, BP-44.  
 **Interface foundation:** BP-40; notification/report contracts BP-41.
 
-1. **BP-38:** stable IDs, schema registry, typed references, transaction boundaries, provenance, append-preserving corrections, constraints and compact storage.
+1. **BP-38:** stable IDs, schema registry, typed references, transaction boundaries, provenance, append-preserving corrections, constraints and compact storage. Apply the compact-storage standard to every schema/event; benchmark bytes per representative record before any production proposal.
 2. **BP-42:** principals/personas, permissions, purpose-limited reads, service identities, secrets, audit and hidden-truth protection.
 3. **BP-37:** canonical in-world clock, pause/resume, effective/recorded time, calendar, recurrence and schedule semantics.
 4. **BP-35:** deterministic event acceptance/ordering, idempotency, causal dispatch, NPC activation, player-presence gate, replay and failure handling.
