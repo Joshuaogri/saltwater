@@ -112,6 +112,7 @@ INSERT INTO sw_core.event_type(event_code, description) VALUES
  ('GEO_CREATED', 'Canonical geographic identity created'),
  ('GEO_VERSIONED', 'Geographic version recorded'),
  ('PERSON_CREATED', 'Canonical person identity created'),
+ ('PERSON_PROFILE_CHANGED', 'Canonical person profile corrected or changed'),
  ('POPULATION_STATE_CHANGED', 'Person population/life state changed'),
  ('RESIDENCE_CHANGED', 'Person residence link changed')
 ON CONFLICT (event_code) DO NOTHING;
@@ -302,8 +303,91 @@ CREATE TABLE sw_people.person (
   family_name text,
   created_tick bigint NOT NULL CHECK (created_tick >= 0),
   source_ref text,
+  last_event_id bigint NOT NULL REFERENCES sw_core.simulation_event(event_id),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+
+CREATE TABLE sw_people.profile_history (
+  event_id bigint PRIMARY KEY REFERENCES sw_core.simulation_event(event_id),
+  person_id integer NOT NULL REFERENCES sw_people.person(person_id),
+  old_given_name text,
+  new_given_name text,
+  old_middle_name text,
+  new_middle_name text,
+  old_family_name text,
+  new_family_name text,
+  old_source_ref text,
+  new_source_ref text,
+  effective_tick bigint NOT NULL CHECK (effective_tick >= 0),
+  recorded_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE FUNCTION sw_people.record_profile_history() RETURNS trigger
+LANGUAGE plpgsql AS $
+DECLARE
+  event_tick bigint;
+BEGIN
+  SELECT world_tick INTO event_tick
+    FROM sw_core.simulation_event
+    WHERE event_id = NEW.last_event_id;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'person profile event is missing';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    INSERT INTO sw_people.profile_history
+      (event_id, person_id, new_given_name, new_middle_name,
+       new_family_name, new_source_ref, effective_tick)
+    VALUES
+      (NEW.last_event_id, NEW.person_id, NEW.given_name, NEW.middle_name,
+       NEW.family_name, NEW.source_ref, event_tick);
+  ELSIF ROW(NEW.given_name, NEW.middle_name, NEW.family_name, NEW.source_ref)
+        IS DISTINCT FROM
+        ROW(OLD.given_name, OLD.middle_name, OLD.family_name, OLD.source_ref) THEN
+    IF NEW.last_event_id = OLD.last_event_id THEN
+      RAISE EXCEPTION 'every person profile change requires a new committed event';
+    END IF;
+    INSERT INTO sw_people.profile_history
+      (event_id, person_id, old_given_name, new_given_name,
+       old_middle_name, new_middle_name, old_family_name, new_family_name,
+       old_source_ref, new_source_ref, effective_tick)
+    VALUES
+      (NEW.last_event_id, NEW.person_id, OLD.given_name, NEW.given_name,
+       OLD.middle_name, NEW.middle_name, OLD.family_name, NEW.family_name,
+       OLD.source_ref, NEW.source_ref, event_tick);
+  END IF;
+  RETURN NEW;
+END
+$;
+CREATE TRIGGER person_profile_history_append
+AFTER INSERT OR UPDATE OF given_name, middle_name, family_name, source_ref
+ON sw_people.person
+FOR EACH ROW EXECUTE FUNCTION sw_people.record_profile_history();
+
+CREATE FUNCTION sw_people.reject_profile_history_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  RAISE EXCEPTION 'person profile history is append-only';
+END
+$;
+CREATE TRIGGER person_profile_history_immutable
+BEFORE UPDATE OR DELETE ON sw_people.profile_history
+FOR EACH ROW EXECUTE FUNCTION sw_people.reject_profile_history_mutation();
+
+CREATE FUNCTION sw_people.guard_person_identity_update() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  IF NEW.person_id <> OLD.person_id OR NEW.created_tick <> OLD.created_tick
+     OR NEW.created_at <> OLD.created_at THEN
+    RAISE EXCEPTION 'canonical person identity and creation time are immutable';
+  END IF;
+  RETURN NEW;
+END
+$;
+CREATE TRIGGER person_identity_update_guard
+BEFORE UPDATE ON sw_people.person
+FOR EACH ROW EXECUTE FUNCTION sw_people.guard_person_identity_update();
 
 -- life_status: 1 living, 2 deceased.
 -- scope_status: 0 unresolved, 1 included in Saltwater population, 2 excluded.
