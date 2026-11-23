@@ -131,6 +131,25 @@ The first targeted scan of BP-01–BP-08 was performed against their mapped sour
 
 **Verification:** BP-03 person education records, six new acceptance criteria and traceability; BP-04 provider-level education facts, event types and traceability; BP-32 general-education boundary and TRN-AT-161; and both S14 crosswalk rows were fetched after commit and checked. This resolves the identified ownership gap at specification level; tests have not been executed.
 
+### Semantic finding A15 — proportionate healthcare service records
+
+<badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
+
+**Source:** S13.R01, S13.R02 and S13.T01.
+
+**Gap:** The provider representation described facilities, broad capacity and referrals, but did not explicitly define healthcare appointment, treatment-encounter and public-health-alert event metadata. The source requires these service facts while explicitly avoiding a separate deep healthcare simulator.
+
+**Resolution within existing divisions:**
+- **BP-04:** now owns proportionate healthcare provider/service capability, practitioner/service roles, emergency-care capacity, appointment/referral availability, treatment-encounter metadata, public-health alert references and service disruption/restoration.
+- **BP-03:** now explicitly owns proportionate person-level injury, death and care-access references, without duplicating clinical charts or making medical/forensic findings.
+- **BP-17/BP-26:** retain victim/witness and custody-specific care/support workflows.
+- **BP-23/BP-24:** retain exhibit continuity and forensic examination/interpretation.
+- **BP-35:** coordinates time-valid capacity, alerts and disruption effects; **BP-42** controls sensitive access.
+
+BP-04 acceptance criterion AC-D06 and BP-03 criteria AC-HLTH-01–04 were added. Crosswalk audit finding A15 and the S13 division review status were updated. No new division or deep healthcare simulator was introduced.
+
+**Verification:** Updated BP-03/BP-04 specifications and crosswalk were fetched after commit. Test execution remains pending.
+
 ## 7. Cross-division invariants and boundaries to reconcile
 
 The full audit must specifically test these high-risk boundaries:
@@ -155,7 +174,7 @@ The full audit must specifically test these high-risk boundaries:
 | Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
 | Fixed 44-division structure | PASSED | Master blueprint and all 44 spec files present |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
-| Requirement-to-specification semantic coverage | IN_PROGRESS | S14.R01/S14.T01 gap A14 resolved in BP-03/BP-04/BP-32 and crosswalk v1.3; remaining mapped items still require reconciliation |
+| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare gap A15 and S14 education gap A14 resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
 | Cross-division ownership and interface consistency | NOT_STARTED | Requires completed division-level semantic review |
 | Acceptance-test adequacy against source wording | NOT_STARTED | Must verify tests prove source intent, not just exist |
 | Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; full 44-division consistency pass remains |
