@@ -15,7 +15,7 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
 
     def test_help_and_unknown_commands(self):
         self.assertIn("status", self.interface.execute("help").message)
-        result = self.interface.execute("launch missiles")
+        result = self.interface.execute("launch")
         self.assertFalse(result.ok)
         self.assertIn("Unknown command", result.message)
 
