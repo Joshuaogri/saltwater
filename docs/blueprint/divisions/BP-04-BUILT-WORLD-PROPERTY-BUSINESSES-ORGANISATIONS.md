@@ -415,6 +415,8 @@ Healthcare, education, welfare, emergency, utility and transport organisations m
 
 For schools, colleges and non-police training providers, BP-04 also maintains proportionate provider-level education facts: programmes/courses offered, term or operating periods, enrolment capacity/availability, session and attendance-reporting arrangements, staff-role references, qualification-issuing body/profile where applicable, facilities and service schedules. It does not maintain a duplicate individual learner file or a full education simulator. Individual enrolment, attendance/participation and education history belong to BP-03; staff employment belongs to BP-33; schedules use BP-37; police training and police-training credentials belong to BP-32.
 
+Healthcare providers also require proportionate service-operation records: practitioner/service roles, emergency-care capability, capacity and availability, appointment slots and booking/referral status, treatment-encounter event metadata, public-health alert references and disruption/restoration. BP-04 records the provider/service event and care-access interface, not a detailed clinical chart. Person-specific injury/death/care facts are linked to BP-03 and relevant case/custody records (BP-17/BP-26); forensic medical examination remains BP-24; evidence continuity remains BP-23; BP-42 governs sensitive access; BP-35 coordinates time-valid capacity, alerts and disruption effects.
+
 Specialist service records remain in their owning domains. BP-04 stores stable entity and facility references, not duplicate clinical, individual education, employment, custody or dispatch records.
 
 ## 10. Facilities, infrastructure and physical assets
@@ -530,6 +532,7 @@ Event types include:
 - asset commissioning, failure, maintenance, repair or replacement;
 - service opening/closure/outage/restoration;
 - education programme/course offering or withdrawal, term/session schedule change, enrolment-capacity change and education-service availability change;
+- healthcare appointment booked/rescheduled/cancelled/attended/no-show; treatment encounter started/completed/referred (metadata only); public-health alert issued/updated/withdrawn;
 - stock receipt, movement, use, loss or reconciliation;
 - supplier relationship start/end;
 - incident, complaint, inspection or case linkage.
@@ -743,6 +746,7 @@ A compact record is acceptable only if all required meaning, history, provenance
 - **AC-D03:** Service hours, capacity, actual availability and temporary closures are distinguishable.
 - **AC-D04:** Essential-service operators and dependencies can be traced across affected facilities.
 - **AC-D05:** Off-map organisations cannot create external playable geography or population.
+- **AC-D06:** Healthcare providers expose service capability, capacity, appointment/referral availability, treatment-event metadata and public-health alert references without creating duplicate clinical charts or bypassing BP-42 access controls.
 
 ### E. Staff, stock, supply and events
 - **AC-E01:** Staff links resolve to canonical BP-03 person IDs and BP-33 employment records.
