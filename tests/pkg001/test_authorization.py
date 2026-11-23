@@ -112,6 +112,19 @@ class AuthorizationTests(unittest.TestCase):
             "opaque-valid-session", reveal_trigger="bingo", **base
         ).allowed)
 
+    def test_non_player_cannot_reveal_hidden_truth(self):
+        service_session = VerifiedSession(**{
+            **{name: getattr(self.session, name) for name in self.session.__dataclass_fields__},
+            "principal_kind": PrincipalKind.SERVICE,
+        })
+        auth = AuthorizationService(FakeVerifier(service_session), self.audit, self.grants)
+        decision = auth.decide(
+            "opaque-valid-session", action="reveal_hidden_truth", resource="case/SM-TEST-1",
+            purpose="player_requested_reveal", now=self.now, reveal_trigger="bingo",
+        )
+        self.assertFalse(decision.allowed)
+        self.assertEqual(decision.reason, "hidden_truth_requires_exact_player_trigger")
+
     def test_invalid_session_and_audit_failure_fail_closed(self):
         self.assertFalse(self.auth.decide(
             "not-valid", action="read_case", resource="case/SM-TEST-1",
