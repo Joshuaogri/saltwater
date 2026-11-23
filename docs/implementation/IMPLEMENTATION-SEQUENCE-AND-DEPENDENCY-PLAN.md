@@ -276,3 +276,11 @@ The application composition root now exposes the activation service. Python adap
 **PKG-004 verification result:** Passed on implementation commit `e505c159dd8e11d368c043c1f83af2e140899186`. Python and application composition tests passed; disposable PostgreSQL workflow [45288422056](https://github.com/Joshuaogri/saltwater/actions/runs/45288422056) and database migration validation [45288422078](https://github.com/Joshuaogri/saltwater/actions/runs/45288422078) passed. The acceptance run denied pending/rejected intake, inactive/non-player principals and activation replay; it confirmed one-to-one immutable binding, accepted-person session linkage, digest-only storage and no automatic grants. Disposable storage: schema growth 90,112 bytes; binding/session tuple payloads 104/161 bytes (265 combined); identity-binding relation plus indexes 49,152 bytes. Neon production remained unchanged.
 
 **PKG-004 state:** Design approved; implementation complete; Python and disposable PostgreSQL tests passed; implementation verified. Production activation: not proposed and not approved.
+
+
+## 4K. PKG-005 — authenticated player command execution (proposed)
+
+PKG-005 is proposed in `docs/implementation/approval-packages/PKG-005-authenticated-player-command-execution.md`; it is awaiting explicit user approval. The bounded objective is to connect the PKG-004 activated session to the existing command gateway without duplicating security services. A trusted in-process entry point will derive principal identity from `PostgresSessionVerifier`, resolve the immutable principal/player/person binding and player profile/career from PostgreSQL, verify that the session's active-person ID matches that binding, and dispatch through the existing `AuthorizationService` gateway. Every command remains default-deny and individually grant-controlled; the durable audit sink and immediate session/grant revocation checks remain authoritative.
+
+The package proposes application code and tests only, with no new persistent schema. It excludes public API/ChatGPT transport and external identity-provider work. If approved, implementation and full disposable PostgreSQL testing are authorised; Neon production remains untouched. No implementation has begun and no production action is authorised by this proposal.
+
