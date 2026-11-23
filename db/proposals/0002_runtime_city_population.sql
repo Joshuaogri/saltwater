@@ -38,6 +38,16 @@ CREATE TABLE sw_runtime.state (
 );
 
 -- World tick can advance only from an actively running, player-present state.
+CREATE FUNCTION sw_runtime.reject_state_delete() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  RAISE EXCEPTION 'runtime singleton cannot be deleted';
+END
+$$;
+CREATE TRIGGER runtime_state_no_delete
+BEFORE DELETE ON sw_runtime.state
+FOR EACH ROW EXECUTE FUNCTION sw_runtime.reject_state_delete();
+
 CREATE FUNCTION sw_runtime.guard_state_update() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
@@ -217,6 +227,50 @@ JOIN sw_geo.entity p ON p.entity_code = 'saltwater-state'
 WHERE e.entity_code = 'saltwater-city'
 ON CONFLICT (spatial_id, version_no) DO NOTHING;
 
+CREATE FUNCTION sw_geo.guard_version_insert() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+  prior_version smallint;
+  prior_tick bigint;
+  has_cycle boolean;
+BEGIN
+  SELECT max(version_no), max(effective_from_tick)
+    INTO prior_version, prior_tick
+    FROM sw_geo.version
+    WHERE spatial_id = NEW.spatial_id;
+
+  IF NEW.version_no <> COALESCE(prior_version, 0) + 1 THEN
+    RAISE EXCEPTION 'spatial version numbers must be sequential';
+  END IF;
+  IF prior_tick IS NOT NULL AND NEW.effective_from_tick < prior_tick THEN
+    RAISE EXCEPTION 'spatial effective time cannot move backwards';
+  END IF;
+
+  IF NEW.parent_id IS NOT NULL THEN
+    WITH RECURSIVE ancestors(spatial_id) AS (
+      SELECT NEW.parent_id
+      UNION
+      SELECT v.parent_id
+      FROM sw_geo.version v
+      JOIN ancestors a ON a.spatial_id = v.spatial_id
+      WHERE v.version_no = (
+        SELECT max(v2.version_no) FROM sw_geo.version v2
+        WHERE v2.spatial_id = v.spatial_id
+      ) AND v.parent_id IS NOT NULL
+    )
+    SELECT EXISTS(SELECT 1 FROM ancestors WHERE spatial_id = NEW.spatial_id)
+      INTO has_cycle;
+    IF has_cycle THEN
+      RAISE EXCEPTION 'spatial parent relationship would create a cycle';
+    END IF;
+  END IF;
+  RETURN NEW;
+END
+$$;
+CREATE TRIGGER spatial_version_insert_guard
+BEFORE INSERT ON sw_geo.version
+FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_version_insert();
+
 CREATE FUNCTION sw_geo.reject_version_mutation() RETURNS trigger
 LANGUAGE plpgsql AS $
 BEGIN
@@ -348,6 +402,9 @@ BEGIN
   ELSIF (NEW.life_status, NEW.scope_status, NEW.effective_tick)
         IS DISTINCT FROM
         (OLD.life_status, OLD.scope_status, OLD.effective_tick) THEN
+    IF NEW.last_event_id = OLD.last_event_id THEN
+      RAISE EXCEPTION 'every population-state change requires a new committed event';
+    END IF;
     INSERT INTO sw_people.population_history
       (event_id, person_id, old_life_status, new_life_status,
        old_scope_status, new_scope_status, effective_tick)
