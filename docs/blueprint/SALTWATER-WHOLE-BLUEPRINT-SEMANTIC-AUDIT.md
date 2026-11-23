@@ -195,6 +195,21 @@ This is an initial ownership/content scan only. All mapped source requirements/t
 
 This is an initial ownership/content scan only. Detailed mapped-source acceptance-test reconciliation remains open.
 
+### Initial source-domain scan: S33–S40
+
+| Source | Initial ownership/content check | Audit outcome |
+|---|---|---|
+| S33 Forensics and specialist examination | BP-09 specialist resources; BP-23 exhibits/submissions; BP-24 methods/results/limitations/quality/interpretation; BP-16 investigative inference; BP-21 intelligence; BP-35 causal scheduling/turnaround. | Ownership split appears coherent; verify each conclusion identifies method, source material, limitations and examiner, and that turnaround uses simulation time. |
+| S34 Interviews, interrogations and statements | BP-17/BP-18 participant roles; BP-19 interview lifecycle/recordings/statements; BP-27 procedural/legal interface; BP-23 evidential continuity; BP-38 originals/provenance; BP-42 access. | Ownership split appears coherent; verify verbatim/source content, statement versions, cautions and hidden-truth/no-leading-prompt safeguards. |
+| S35 Intelligence, analysis and information handling | BP-21 source grading/confidence/products/dissemination; BP-16 investigative use; BP-18 suspect links; BP-23 evidence boundary; BP-27 legal; BP-38 provenance; BP-42 restrictions. | Ownership split appears coherent; verify intelligence remains distinct from evidence and established fact, with source provenance and uncertainty retained. |
+| S36 Surveillance, observation and technical monitoring | BP-20 methods/coverage/authorisation/collection/time drift/retrieval; BP-22 scenes; BP-23 evidence continuity; BP-35 time; BP-38 records; BP-42 access; BP-09 resources. | Ownership split appears coherent; verify coverage limits, blind spots and source-device/time basis accompany every item and absence of coverage is not treated as proof of absence. |
+| S37 Arrest, search, warrants and custody | BP-25 grounds/warrants/search/seizure; BP-26 custody/booking/welfare/release; BP-23 property/evidence; BP-27 legal process; BP-37 canonical clock; BP-38 records. | Finding A17 resolved the missing canonical-clock mapping. Verify custody/warrant events satisfy configured rules and pause/chronology constraints. |
+| S38 Prosecution, courts and legal outcomes | BP-27 charging/prosecution/defence/disclosure; BP-28 adjudication/verdict/sentence/appeal; BP-29 sentence execution; BP-15 case links; BP-23 evidence versions; BP-38 records. | Ownership split appears coherent; verify legal statuses never auto-convert and court outcomes do not rewrite investigative history. |
+| S39 Corrections, rehabilitation and post-sentence status | BP-29 sentence execution/supervision/release/recall; BP-28 sentence authority; BP-26 police custody; BP-03 person continuity; BP-38 records. | Ownership split appears coherent; verify sentence and release dates reconcile to court orders and person records. |
+| S40 Complaints, oversight and public accountability | BP-30 institutional oversight; BP-31 complaint/standards investigation; BP-41 public reporting; BP-35 event causality; BP-36 public trust/social context; BP-38 records; BP-42 access. | Ownership split appears coherent; verify each complaint has route/owner/status/outcome and due-process/conflict safeguards. |
+
+This is an initial ownership/content scan only. Detailed source-item and acceptance-test reconciliation remains open.
+
 ### Semantic finding A16 — public transport and mobility ownership
 
 <badge color="success">Resolved in draft specifications and crosswalk v1.3</badge>
@@ -237,7 +252,7 @@ The full audit must specifically test these high-risk boundaries:
 | Source-ID mapping completeness | PASSED | 228/228 IDs mapped |
 | Fixed 44-division structure | PASSED | Master blueprint and all 44 spec files present |
 | Top-level section numbering | PASSED | All 44 checked; five defects corrected and re-fetched |
-| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare A15, S14 education A14 and S17 public transport A16 gaps resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
+| Requirement-to-specification semantic coverage | IN_PROGRESS | S13 healthcare A15, S14 education A14, S17 public transport A16 and S37 custody-clock A17 mapping gaps resolved in draft specs/crosswalk v1.3; remaining mapped items still require reconciliation |
 | Cross-division ownership and interface consistency | NOT_STARTED | Requires completed division-level semantic review |
 | Acceptance-test adequacy against source wording | NOT_STARTED | Must verify tests prove source intent, not just exist |
 | Binding-canon propagation and contradiction audit | IN_PROGRESS | Canon inspected; full 44-division consistency pass remains |
