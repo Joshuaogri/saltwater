@@ -581,6 +581,8 @@ Each test records fixture IDs, model/policy version, source events, expected/act
 
 ## 22. Source traceability
 
+Exact source obligations: S22.R01 (police resource capability interface for emergency response/mutual aid only); S22.R02 (police-owned equipment/resource availability); S22.T01 (police resource readiness contribution to cross-agency reconciliation). BP-09 does not own non-police agency equipment, employment or unit records.
+
 Primary source divisions: S16 utilities/energy/communications infrastructure; S17 roads/transport/mobility; S18 buildings/facilities/physical assets; S22 emergency services/civil protection (coordination only); S23 police service governance/structure; S25 duty rosters/staffing/deployment; S27 911/CAD/dispatch; S28 patrol/response/field operations; S30 case/investigative command; S32 evidence/scene resources (BP-22/BP-23 ownership); S33 forensic specialist equipment (BP-24 method ownership); S37 arrest/search/warrants/custody (BP-25/BP-26 process ownership); S46 database/persistence; S47 storage/capacity governance (records/storage architecture interface); S48 security/permissions; S49 backup/recovery; S50 testing; S51 observability/maintenance; S52 canon/change control. All requirement/test IDs and source JSON pointers must be semantically checked against the 52→44 crosswalk before approval.
 
 ## 23. Open decisions
