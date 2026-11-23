@@ -1,0 +1,69 @@
+name: PKG-001 disposable PostgreSQL validation
+
+on:
+  pull_request:
+    paths:
+      - "db/proposals/0002_runtime_city_population.sql"
+      - "db/migrations/0001_foundation.sql"
+      - "runtime/**"
+      - "tests/pkg001/**"
+      - ".github/workflows/pkg001-disposable-postgres.yml"
+  push:
+    branches:
+      - "implementation/pkg-001-runtime-city-population"
+    paths:
+      - "db/proposals/0002_runtime_city_population.sql"
+      - "db/migrations/0001_foundation.sql"
+      - "runtime/**"
+      - "tests/pkg001/**"
+      - ".github/workflows/pkg001-disposable-postgres.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run runtime kernel tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_*.py" -v
+
+  disposable-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply foundation and PKG-001 to disposable PostgreSQL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+      - name: Run PKG-001 database acceptance checks
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
+      - name: Measure disposable schema footprint
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables ORDER BY 3 DESC;"
