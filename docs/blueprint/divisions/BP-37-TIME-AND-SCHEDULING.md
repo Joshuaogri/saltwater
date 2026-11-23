@@ -370,6 +370,8 @@ The authoritative crosswalk maps the following requirements and tests to BP-37. 
 | S04.R01 | Person identity and life records | Person schedules, needs, skills, employment, finances and relationship timelines reference canonical person records without duplication. |
 | S05.R02 | Households, relationships and social networks | Relationship history, shared-address periods, contact patterns and plausible changes retain effective and recorded time. |
 | S17.R01 | Roads, transport and mobility | Public transport timetable definitions and scheduled service runs use canonical time and versioned schedule occurrences; BP-02 owns spatial topology and BP-04 service identity. |
+| S37.R02 | Arrest, search, warrants and custody | BP-37 supplies the sole canonical clock and scheduled custody-review/deadline occurrences; BP-26 owns the custody-specific elapsed-time calculation and review decisions. |
+| S37.T01 | Arrest, search, warrants and custody | Custody/warrant chronology uses one canonical time basis and deterministic ordering; domain owners validate their own transitions. |
 | S41.R01 | Time, calendar, schedules and simulation clock | One authoritative clock/calendar/timezone basis for shifts, opening hours, deadlines and event ordering. |
 | S41.R02 | Time, calendar, schedules and simulation clock | No time advances outside the simulation; resume exactly without hidden elapsed time. |
 | S41.R03 | Time, calendar, schedules and simulation clock | Support paused, active, queued and historical event states. |
