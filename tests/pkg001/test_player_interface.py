@@ -55,6 +55,35 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertEqual(kernel.status().lifecycle, Lifecycle.READY)
 
+    def test_explicit_start_reenters_after_quit_without_advancing_time(self):
+        self.assertTrue(self.interface.execute("start").ok)
+        self.assertEqual(self.kernel.status().world_tick, 0)
+
+        self.assertTrue(self.interface.execute("quit").quit_requested)
+        stopped = self.kernel.status()
+        self.assertEqual(stopped.lifecycle, Lifecycle.STOPPED)
+        self.assertFalse(stopped.player_present)
+        self.assertEqual(stopped.world_tick, 0)
+
+        self.assertTrue(self.interface.execute("status").ok)
+        self.assertEqual(self.kernel.status().lifecycle, Lifecycle.STOPPED)
+        self.assertFalse(self.kernel.status().player_present)
+        self.assertEqual(self.kernel.status().world_tick, 0)
+
+        restarted = self.interface.execute("start")
+        self.assertTrue(restarted.ok, restarted.message)
+        self.assertEqual(self.kernel.status().lifecycle, Lifecycle.RUNNING)
+        self.assertTrue(self.kernel.status().player_present)
+        self.assertEqual(self.kernel.status().world_tick, 0)
+
+    def test_start_does_not_implicitly_resume_a_paused_simulation(self):
+        self.assertTrue(self.interface.execute("start").ok)
+        self.assertTrue(self.interface.execute("pause").ok)
+        result = self.interface.execute("start")
+        self.assertFalse(result.ok)
+        self.assertIn("Use resume", result.message)
+        self.assertEqual(self.kernel.status().lifecycle, Lifecycle.PAUSED)
+
     def test_commands_reject_arguments_and_malformed_quotes(self):
         self.assertFalse(self.interface.execute("status extra").ok)
         self.assertFalse(self.interface.execute('"unterminated').ok)
