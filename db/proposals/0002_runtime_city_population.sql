@@ -549,6 +549,32 @@ CREATE TABLE sw_core.event_spatial_ref (
   PRIMARY KEY (event_id, spatial_id, relation_code)
 );
 
+
+-- Application privilege boundary. The command role intentionally receives no
+-- direct table DML: future authenticated command functions/API own mutations.
+-- Roles are NOLOGIN templates; deployment-specific login membership is a
+-- separate approved operation after actor/session design is settled.
+DO $
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sw_game_readonly') THEN
+    CREATE ROLE sw_game_readonly NOLOGIN;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'sw_game_command') THEN
+    CREATE ROLE sw_game_command NOLOGIN;
+  END IF;
+END
+$;
+
+REVOKE ALL ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+GRANT USAGE ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+GRANT SELECT ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
+
 -- Seed only the singleton stopped runtime. No people, cases or businesses.
 INSERT INTO sw_runtime.state(singleton, state, player_present, bootstrap_open)
 VALUES (1, 0, false, true);
