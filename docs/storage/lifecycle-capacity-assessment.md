@@ -444,12 +444,12 @@ Across all three successful 0008 runs, full database sizes were 651.722, 651.779
 - Benchmark 0008's disposable PostgreSQL storage gate: **PASSED across three successful runs**.
 - Neon production capacity: **NOT APPROVED**.
 - Production seeding: **BLOCKED**.
-- Neon benchmark writes: **NONE**.
+- Persistent Neon benchmark dataset remaining: **NONE**. Benchmark 0005 temporarily created synthetic tables/rows on Neon, measured them, and dropped the schema; its operation-ledger record remains. Benchmarks 0006–0008 used disposable PostgreSQL only.
 
 The benchmark does not measure Neon billed storage, actual production growth, long-term WAL/history accounting, or the final workload's real narrative quality. The 200 MB nominal reserve remains a planning requirement, not proof of sufficient capacity. Continue with the separate record-type-specific narrative quality fixture, then measure that approved-quality fixture on disposable PostgreSQL and assess query plans/latency. Do not load production data into Neon until the complete lifecycle, actual Neon storage accounting and reserve are justified.
 
 
-## 26. Final verified status — 22 November 2026
+## 26. Final verified status — 23 November 2026
 
 This section is the current authoritative status and supersedes interim/pending statements in Sections 20–22. Those sections are retained as chronological history of the benchmark work.
 
@@ -458,7 +458,7 @@ This section is the current authoritative status and supersedes interim/pending 
 - Full disposable database sizes: 651.722 MB, 651.779 MB and 651.779 MB.
 - Relation footprints: 642.720 MB, 642.728 MB and 642.728 MB.
 - Workload: 33,500 text records, 49,897,629 words, 2,449,842 integrated rows and 53 tables.
-- The benchmark schema was dropped after measurement. No benchmark data was inserted into Neon.
+- Benchmark 0008's disposable schema was dropped after measurement. Separately, benchmark 0005 had temporarily created a synthetic schema/data set on Neon and removed it after measurement; only its storage-operation ledger entry remains. No production simulation seed data was inserted.
 - Narrative fixture 0001 contains 16 linked records, 19 record links and 10 entities. Corrected chronology checks passed.
 - Latest fixture workflow: https://github.com/Joshuaogri/saltwater/actions/runs/45062895647 — completed successfully, including the disposable PostgreSQL build and text-only structural checks.
 - The fixture has 16 manual-review entries, all deliberately pending. Automated success is not a human narrative-quality approval.
@@ -469,7 +469,7 @@ This section is the current authoritative status and supersedes interim/pending 
 - Narrative quality review: **PENDING**.
 - Neon 1 GB production-capacity approval: **NOT APPROVED**.
 - Production seeding: **BLOCKED**.
-- Neon benchmark writes: **NONE**.
+- Persistent Neon benchmark dataset remaining: **NONE**; temporary synthetic benchmark 0005 schema/data was removed after measurement, with its operation-ledger entry retained.
 
 No binary-media storage tier is required by the current Saltwater text-only design; all media-reference and media-payload assumptions are excluded. The old Sections 20–22 describe interim states before the completed repeats and must not be read as current status.
 
