@@ -742,6 +742,7 @@ Primary source mappings to the original 52-division source:
 - S25: personnel, rosters, roles and deployed units.
 - S26: operational command and supervision.
 - S27: emergency call-taking, CAD, dispatch and radio.
+- S22.R01–R03; S22.T01: emergency-service/civil-protection coordination, resource requests, dispatch/acceptance, unit-status exchange and multi-agency chronology. BP-04 owns partner agency/unit capability profiles; BP-33 owns personnel availability; BP-11 owns communications and dispatch exchange; BP-12 owns incident command; BP-09 contributes police resource readiness only.
 - S28: field operations, status, response and task handoff.
 - S29/S30: incident/crime classification and case linkage.
 - S37: arrest/search/custody communication interfaces.
