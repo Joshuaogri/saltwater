@@ -39,6 +39,7 @@
 - P-011 failed person admission leaves no orphan person, event, history or residence.
 - P-012 reconcile transactional population counter exactly to count of living+included state rows.
 - P-013 reject deletion of canonical person/population state; every state change requires a new event.
+- P-014 profile/name corrections append immutable profile history and retain the stable person ID.
 
 ## Security, recovery and compactness
 - A-001 player/service without permission cannot mutate runtime, person or geography records.
