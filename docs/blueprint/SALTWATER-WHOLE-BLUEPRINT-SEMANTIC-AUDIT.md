@@ -96,6 +96,23 @@ A source item is not marked semantically covered merely because its ID appears i
 
 These are audit controls, not findings that the relevant requirements are necessarily absent. No semantic omission is declared resolved without examining its actual destination content.
 
+### Initial canon and ownership scan: BP-01–BP-08
+
+The first targeted scan of BP-01–BP-08 was performed against their mapped source domains and the binding source canon. This is a preliminary content scan, not the final item-by-item semantic sign-off.
+
+| Division | Initial scan | Matters requiring resolution before design approval |
+|---|---|---|
+| BP-01 | Global canon and authority model are consistent with the source population arithmetic, one-city boundary, business minimum, police depth, text-first interface and pause rule. | Confirm that all cross-cutting obligations remain represented in domain specifications and that authority boundaries are consistent across BP-27/BP-30/BP-42/BP-44. |
+| BP-02 | Single bounded jurisdiction, off-map-only external references, canonical spatial IDs, geometry/topology and text fallback are specified. | Exact boundary, coordinate system, districts, roads, addressing and natural geography remain intentionally open canon decisions. |
+| BP-03 | Opening 9,000 residents + 500 police = 9,500 total; 500 headroom; 10,000 hard cap; one-person-one-ID; atomic capacity and permanent promotion are explicit. | Countability of visitors/commuters/temporary persons and whether opening identities are seeded individually or generated from aggregate targets remain open. |
+| BP-04 | At least 10,000 distinct businesses, separate person-count accounting, property/tenancy/occupancy, access, time validity and employer/provider interfaces are specified. | Whether the 10,000-business floor means total registered or active businesses, sector distribution and initial property/building counts remain open. |
+| BP-05 | Police remains the deepest institution; approximately 500 personnel are included in the population cap; rank/position/grade/authority/powers/clearance/qualification/appointment/assignment are distinct. | Final organisation chart, command titles, unit structure, staffing allocation and authority matrix remain open. |
+| BP-06 | Personnel records link to canonical BP-03 identities; service history, categories, appointments, qualifications, supervision, personnel documents and lifecycle are represented. | Personnel category taxonomy, service-number format, applicant lifecycle and restricted personnel-record policy remain open. |
+| BP-07 | Career lifecycle includes recruit/probation, progression, acting/secondment, service calculation, mandatory retirement by years of service and Chief tenure exception. | Rank ladder, promotion thresholds, probation duration, service-credit edge cases and appeal policy remain open; the 35-year service rule and Chief exception are not to be weakened. |
+| BP-08 | Unit catalogue, establishment, command, membership, deployment, geographic responsibility, readiness and resource interfaces are specified. | Final unit structure, staffing allocations, beat model, readiness formula and deployment arbitration remain open. |
+
+**Preliminary result:** no contradiction with the inspected binding Saltwater canon was identified in this first scan. This does not certify complete semantic coverage: each source requirement/test must still be checked against every mapped target division and its acceptance criteria.
+
 ## 7. Cross-division invariants and boundaries to reconcile
 
 The full audit must specifically test these high-risk boundaries:
