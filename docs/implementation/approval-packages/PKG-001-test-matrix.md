@@ -94,7 +94,7 @@ Successful CI commit: `13a78e4cb48d10e310f07fd04cb365f01dad436f`; PostgreSQL 16.
 | P-013 | PENDING | Canonical person/state deletion protection and event-required transitions |
 | P-014 | PENDING | Profile correction history and stable ID across correction |
 | A-001 | PASS (DB role scope) | Readonly role can read but not mutate; command role has no direct table DML; NOLOGIN templates remain unbound to authenticated actors |
-| A-002 | PENDING | Hidden-truth firewall and exact `bingo` reveal route |
+| A-002 | PARTIAL | Central player-only exact `bingo` policy gate tested; hidden-truth storage and all read/search/log/export/cache/AI routes are not yet implemented or tested |
 | R-001 | PASS (logical disposable restore) | PostgreSQL 16 custom-format dump restored into a separate disposable database; person/state/history/event counts, event watermark, runtime tick, roots and population counter matched |
 | S-001 | PARTIAL | Whole-database baseline and relation totals measured; isolated schema-only overhead remains |
 | S-002 | PARTIAL | Full-cap compact person/state/history/two-event fixture measured; residence/event/text sub-costs remain |
@@ -111,3 +111,9 @@ Only PASS rows are complete for their stated test scope. PARTIAL rows must not b
 - [Run 0003 — paused event gate, rollback, recovery and repeat backup/restore](../test-evidence/PKG-001-run-0003.md)
 
 A-001 is a database-role boundary result only; authenticated actor/session mapping and command API enforcement are not implemented. R-001 is a logical restore on the same disposable PostgreSQL cluster, not cross-region disaster recovery or PITR. A-002 remains pending because hidden-truth data and all access surfaces are not yet implemented.
+
+
+- [Run 0004 — actor authorization and reveal-gate unit tests](../test-evidence/PKG-001-run-0004.md)
+- [Actor authorization and hidden-truth implementation boundary](../../security/ACTOR-AUTHORIZATION-AND-HIDDEN-TRUTH.md)
+
+The authorization contract's test doubles are not production identity or audit adapters. A-002 remains PARTIAL, not PASS.
