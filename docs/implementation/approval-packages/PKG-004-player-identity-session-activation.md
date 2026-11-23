@@ -1,6 +1,6 @@
 # PKG-004 — accepted-player identity and session activation
 
-**Status:** Proposed; awaiting explicit approval  
+**Status:** Approved; implementation in progress  
 **Branch:** main only; no feature branches or pull requests  
 **Project:** Entirely fictional Saltwater police simulation  
 **Production database:** No Neon migration, seed, write, upload, or configuration change is included or authorised.
@@ -103,3 +103,17 @@ This package is limited to the identity/session activation seam. It does not app
 ## Approval requested
 
 Approve PKG-004 D1–D6 and the bounded implementation scope above. Approval will authorise repository implementation and disposable PostgreSQL testing only. It will not authorise any production Neon operation.
+
+
+## Approval record
+
+**Approved by user:** 2026-11-24. Approval covers D1–D6, repository implementation and disposable PostgreSQL testing only. It does not authorise Neon production changes.
+
+## Implementation record
+
+- Added `db/proposals/0005_player_identity_activation.sql`: immutable one-to-one principal/player/person binding, accepted-recruit validation, principal-to-person link protection and transactional identity-binding function.
+- Added `runtime/player_activation.py`: trusted activation service that resolves the canonical person from accepted career/personnel records and issues the first session in the same PostgreSQL transaction.
+- Extended `PostgresSessionLifecycle` with transaction-scoped issuance so binding and session insertion commit or roll back together; credential hashing and active-policy selection remain in the existing lifecycle service.
+- Wired activation into the trusted application composition root; no public route or player-entered activation command was added.
+- Added Python adapter tests and disposable SQL acceptance checks for accepted/pending intake, immutable binding, duplicate binding and session digest/active-person linkage.
+- Neon production remains unchanged. CI evidence will be recorded after the current main-branch runs complete.
