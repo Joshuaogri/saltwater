@@ -15,6 +15,7 @@ from runtime.kernel import PostgresRuntimeStore, RuntimeKernel
 from runtime.player_interface import CommandResult, PlayerCommandInterface, PlayerProfile
 from runtime.recruitment import PostgresRecruitmentService
 from runtime.postgres_sessions import PostgresSessionLifecycle
+from runtime.player_activation import PostgresPlayerActivationService
 from runtime.security import AuthorizationService
 
 
@@ -25,6 +26,7 @@ class PostgresPlayerApplication:
     kernel: RuntimeKernel
     recruitment: PostgresRecruitmentService
     sessions: PostgresSessionLifecycle
+    activation: PostgresPlayerActivationService
     commands: PlayerCommandInterface
 
 
@@ -86,11 +88,13 @@ def create_postgres_player_application(
     kernel = RuntimeKernel(PostgresRuntimeStore(connect))
     recruitment = PostgresRecruitmentService(connect)
     sessions = PostgresSessionLifecycle(connect)
+    activation = PostgresPlayerActivationService(connect, sessions)
     commands = PlayerCommandInterface(kernel, profile, recruitment)
     return PostgresPlayerApplication(
         kernel=kernel,
         recruitment=recruitment,
         sessions=sessions,
+        activation=activation,
         commands=commands,
     )
 
