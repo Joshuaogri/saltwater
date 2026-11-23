@@ -219,13 +219,24 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
                 )
                 if cur.fetchone()[0] != 0:
                     raise AssertionError("PKG-004 activation unexpectedly created grants")
-                cur.execute(
+                cur.executemany(
                     """
                     INSERT INTO sw_auth.permission_grant
                       (action,resource_pattern,purpose,effect,principal_id,policy_version)
-                    VALUES ('player.command.profile',%s,'gameplay','allow',%s,%s)
+                    VALUES (%s,%s,'gameplay','allow',%s,%s)
                     """,
-                    ("player:" + str(cls.player_id), cls.principal_id, cls.policy),
+                    [
+                        (
+                            action, "player:" + str(cls.player_id),
+                            cls.principal_id, cls.policy,
+                        )
+                        for action in (
+                            "player.command.profile",
+                            "player.command.status",
+                            "player.command.start",
+                            "player.command.quit",
+                        )
+                    ],
                 )
 
         verifier = PostgresSessionVerifier(connect)
@@ -242,6 +253,32 @@ class PlayerCommandRuntimePostgresTests(unittest.TestCase):
         self.assertIn(self.display_name, allowed.message)
         self.assertIn(str(self.player_id), allowed.message)
         self.assertIn("recruit", allowed.message)
+
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT world_tick FROM sw_runtime.state WHERE singleton=1")
+                original_tick = cur.fetchone()[0]
+
+        first_start = self.runtime.execute(self.credential, "start")
+        self.assertTrue(first_start.ok, first_start.message)
+        active_status = self.runtime.execute(self.credential, "status")
+        self.assertIn("Runtime: running", active_status.message)
+        self.assertIn("Player present: yes", active_status.message)
+
+        quit_result = self.runtime.execute(self.credential, "quit")
+        self.assertTrue(quit_result.ok)
+        self.assertTrue(quit_result.quit_requested)
+        stopped_status = self.runtime.execute(self.credential, "status")
+        self.assertIn("Runtime: stopped", stopped_status.message)
+        self.assertIn("Player present: no", stopped_status.message)
+        self.assertIn(f"World tick: {original_tick}", stopped_status.message)
+
+        second_start = self.runtime.execute(self.credential, "start")
+        self.assertTrue(second_start.ok, second_start.message)
+        second_status = self.runtime.execute(self.credential, "status")
+        self.assertIn("Runtime: running", second_status.message)
+        self.assertIn(f"World tick: {original_tick}", second_status.message)
+        self.assertTrue(self.runtime.execute(self.credential, "quit").quit_requested)
 
         with connect() as conn:
             with conn.cursor() as cur:
