@@ -57,7 +57,22 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM = '10,001st living included person was incorrectly accepted' THEN RAISE; END IF;
   END;
+  -- Start runtime only after the one-time bootstrap is closed.
+  UPDATE sw_runtime.state
+    SET bootstrap_open=false, player_present=true, state=2
+    WHERE singleton=1;
+  UPDATE sw_runtime.state SET world_tick=1 WHERE singleton=1;
+  UPDATE sw_runtime.state SET state=3, player_present=false WHERE singleton=1;
+  BEGIN
+    UPDATE sw_runtime.state SET world_tick=2 WHERE singleton=1;
+    RAISE EXCEPTION 'world tick advanced while paused';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM = 'world tick advanced while paused' THEN RAISE; END IF;
+  END;
+  IF (SELECT world_tick FROM sw_runtime.state WHERE singleton=1) <> 1 THEN
+    RAISE EXCEPTION 'paused runtime tick changed';
+  END IF;
 END
-$$;
+$;
 
 ROLLBACK;
