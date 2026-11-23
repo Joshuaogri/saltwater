@@ -667,7 +667,6 @@ Original source: `docs/governance/SALTWATER_MASTER_BLUEPRINT.json`, SHA `a882c4f
 | S23.R01 | Define police mandate, command hierarchy, rank/grade/position/authority/powers/clearance, divisions, units and reporting lines as distinct concepts. | Sections 4, 8, 18; BP-05/BP-06/BP-30 own hierarchy and authority; BP-31 validates and links standards matters. |
 | S23.R03 | Define appointment, promotion, transfer, acting roles, succession, discipline, grievance, standards and retirement rules. | Sections 8, 14–18; BP-31 owns disciplinary matter process; BP-07/BP-32/BP-33 own career, training and employment execution. |
 | S26.R01 | Represent orders, policies, briefings, operational plans, supervision, approvals, audits, complaints, misconduct and review. | Sections 7–18, 23–26; BP-30 policy/command governance, BP-31 complaint/misconduct lifecycle, operational owners retain execution. |
-| S26.R02 | Record who authorised, issued, received and executed every material instruction. | Sections 8, 12, 14, 20, 23–25; authority, interim measure and outcome implementation references. |
 | S26.R03 | Support fair internal process and traceable decisions. | Sections 8–15, 23–25; conflicts, notice, response, evidence, reasoned findings, review and audit. |
 | S40.R01 | Represent public complaints, independent review, internal investigations, inspections, findings, remedies and published outcomes. | Sections 6–17, 23–26; full complaint and professional-standards lifecycle, oversight and publication interfaces. |
 | S40.R02 | Preserve due process, conflicts of interest and auditability. | Sections 8, 11, 13–15, 24–25; independent assignment, procedural fairness and immutable audit. |
@@ -681,7 +680,7 @@ Cross-cutting controls:
 - X06: original records are preserved; corrections are additive and attributable.
 - Global canon: one city/jurisdiction; 10,000 living-person cap; >=10,000 businesses; police-depth priority; permanent person promotion; text-first completeness; exact `bingo` reveal gate; no offline progression; no Neon writes without explicit approval.
 
-All 10 BP-31-mapped source IDs are explicitly traced. Source JSON and crosswalk remain unchanged.
+All 9 BP-31-mapped source IDs are explicitly traced. Source JSON and crosswalk remain unchanged.
 
 ## 31. Risk register
 
