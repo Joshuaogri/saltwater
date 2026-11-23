@@ -26,10 +26,13 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             "runtime.application.RuntimeKernel"
         ) as kernel_type, patch(
             "runtime.application.PlayerCommandInterface"
-        ) as commands_type:
+        ) as commands_type, patch(
+            "runtime.application.PostgresSessionLifecycle"
+        ) as sessions_type:
             store = store_type.return_value
             kernel = kernel_type.return_value
             recruitment = recruitment_type.return_value
+            sessions = sessions_type.return_value
             commands = commands_type.return_value
             result = create_postgres_player_application(connect, profile)
 
@@ -37,9 +40,11 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         store_type.assert_called_once_with(connect)
         kernel_type.assert_called_once_with(store)
         recruitment_type.assert_called_once_with(connect)
+        sessions_type.assert_called_once_with(connect)
         commands_type.assert_called_once_with(kernel, profile, recruitment)
         self.assertIs(result.kernel, kernel)
         self.assertIs(result.recruitment, recruitment)
+        self.assertIs(result.sessions, sessions)
         self.assertIs(result.commands, commands)
 
     def test_factory_rejects_untrusted_or_invalid_inputs_before_wiring(self):
@@ -58,7 +63,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             allowed=True, principal_id=principal_id
         )
         application = PostgresPlayerApplication(
-            kernel=object(), recruitment=object(), commands=commands
+            kernel=object(), recruitment=object(), sessions=object(), commands=commands
         )
         gateway = bind_authorized_player_commands(
             application, authorization, principal_id
