@@ -1,6 +1,5 @@
 """PKG-003 adapter contract tests; PostgreSQL invariants run in SQL acceptance tests."""
 import unittest
-from contextlib import contextmanager
 from uuid import uuid4
 
 from runtime.recruitment import PostgresRecruitmentService
@@ -44,7 +43,7 @@ class FakeConnection:
 class RecruitmentAdapterTests(unittest.TestCase):
     def setUp(self):
         self.row = (uuid4(),)
-        self.connection = FakeConnection(self.row[0])
+        self.connection = FakeConnection(self.row)
         self.service = PostgresRecruitmentService(lambda: self.connection)
 
     def test_request_calls_single_authoritative_database_function(self):
