@@ -223,6 +223,15 @@ This is an application assembly increment, not a deployed ChatGPT/API transport 
 **Next:** run the updated CI workflow; then add a disposable-PostgreSQL integration test that constructs the full composition, verifies a persisted session, records authorization audit, and executes an allowed read-only player command. Do not add broad default grants or enable production access as part of this increment.
 
 
+## 4F. Database-backed permission grant resolution
+
+`runtime/postgres_security.py` now provides `PostgresGrantProvider`, which loads only unrevoked, currently valid grants belonging to the active policy version. `AuthorizationService` accepts this provider and reloads grants for each decision, so grant revocation and policy activation changes take effect without restarting or rebuilding the player application. The adapter is read-only; it does not issue grants or change policy.
+
+The disposable PostgreSQL test executes the same authorised player `profile` command using the database-backed grant provider, revokes the grant, then repeats the command and confirms immediate default-deny behaviour and both durable audit outcomes. This is not a production grant policy or a blanket player role. No Neon schema or data has been changed.
+
+**Next:** complete a security review of the command boundary and add a narrow game-native session lifecycle service (issue/revoke) with opaque credentials, hashed persistence and no public transport until the host integration is ready.
+
+
 ## 4E. PostgreSQL-backed player command integration tests
 
 `tests/pkg001/test_postgres_security.py` now exercises the composed application through the real PostgreSQL session verifier and audit sink. One test grants only the exact player's `profile` command, executes it through the gateway, and checks the persisted allow audit. A companion test supplies no grant, confirms command dispatch is denied, and checks the persisted default-deny audit. These tests run in the disposable PostgreSQL workflow after the security proposal is applied; they create no Neon production data.
