@@ -43,11 +43,9 @@ class AuthorizedPlayerCommandGateway:
         try:
             parts = shlex.split(line)
         except ValueError:
-            return self.commands.execute(line)
-        if not parts:
-            return self.commands.execute(line)
-        if len(parts) != 1:
-            return self.commands.execute(line)
+            return CommandResult(False, "Invalid command.")
+        if not parts or len(parts) != 1:
+            return CommandResult(False, "Invalid command.")
 
         command = parts[0].casefold()
         allowed_commands = {
@@ -62,8 +60,9 @@ class AuthorizedPlayerCommandGateway:
             action=f"player.command.{command}",
             resource=self.player_resource,
             purpose=self.purpose,
+            expected_principal_id=self.principal_id,
         )
-        if not decision.allowed or decision.principal_id != self.principal_id:
+        if not decision.allowed:
             return CommandResult(False, "Access denied.")
         return self.commands.execute(line)
 
