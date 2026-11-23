@@ -110,7 +110,7 @@ BEGIN
     IF v_existing.principal_id=p_principal_id
        AND v_existing.player_id=p_player_id
        AND v_existing.person_id=v_person_id THEN
-      RETURN v_person_id;
+      RAISE EXCEPTION 'identity binding already exists; use the explicit session lifecycle to issue another session';
     END IF;
     RAISE EXCEPTION 'principal, player or person is already bound to a different identity';
   END IF;
