@@ -558,7 +558,7 @@ CREATE ROLE sw_game_readonly NOLOGIN;
 CREATE ROLE sw_game_command NOLOGIN;
 
 REVOKE ALL ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
-GRANT USAGE ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
+GRANT USAGE ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly, sw_game_command;
 REVOKE ALL ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
 GRANT SELECT ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
