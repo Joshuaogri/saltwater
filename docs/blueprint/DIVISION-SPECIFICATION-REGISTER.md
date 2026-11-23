@@ -101,6 +101,6 @@ Statuses are independent across specification, implementation, testing and verif
 32. BP-31: full professional-standards specification draft created; complaint taxonomy, screening thresholds, investigative powers, proof standards, interim measures, disciplinary sanctions, hearings, appeals and independent review rules remain open fictional configuration decisions.
 33. BP-32: full training-and-development specification draft created; course catalogue, recruit curriculum, mandatory training matrix, competency/assessment standards, qualification validity, provider/instructor approval and remediation policies remain open fictional configuration decisions.
 34. BP-33: full human-resources specification draft created; job catalogue, employment/contract policy, recruitment, leave, attendance verification, police HR delegations, employee-relations and retention rules remain open fictional configuration decisions.
-35. Continue BP-34 through BP-44 in numeric order, preserving the same specification contract and traceability.
+35. BP-34: full finance-and-procurement specification draft created; currency, accounting basis, fiscal calendar, revenue/tax rules, budget delegations, procurement thresholds, payroll policy, banking/payment model and financial abstraction tiers remain open fictional configuration decisions.\n36. Continue BP-35 through BP-44 in numeric order, preserving the same specification contract and traceability.
 
 **No Neon write has been made or authorised by these documents.**
