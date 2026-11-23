@@ -7,6 +7,7 @@ on:
     paths:
       - "db/proposals/0002_runtime_city_population.sql"
       - "db/proposals/0003_actor_session_authorization.sql"
+      - "db/proposals/0004_recruit_entry.sql"
       - "db/migrations/0001_foundation.sql"
       - "runtime/**"
       - "tests/pkg001/**"
@@ -33,6 +34,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
       - name: Run player command interface tests
         run: python -m unittest discover -s tests/pkg001 -p "test_player_interface.py" -v
+      - name: Run recruit-entry adapter tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_recruitment.py" -v
       - name: Run actor authorization and hidden-truth gate tests
         run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
 
@@ -65,9 +68,12 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/auth_persistence_acceptance.sql
       - name: Run PKG-001 database acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
+      - name: Run PKG-003 recruit-entry acceptance checks
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/recruit_entry_acceptance.sql
       - name: Measure representative 1,000-person storage growth
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
