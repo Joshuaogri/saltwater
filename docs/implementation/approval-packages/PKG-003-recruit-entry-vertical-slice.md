@@ -1,6 +1,6 @@
 # PKG-003 — recruit-entry vertical slice approval
 
-**Status:** Proposal — awaiting one package approval  
+**Status:** Approved 2026-11-23; implementation committed to main; CI verification pending  
 **Branch:** `main` only; no feature branches or pull requests  
 **Project:** Entirely fictional Saltwater police simulation  
 **Production database:** No Neon migration, seed, write, upload, or configuration change is included or authorised.
@@ -99,6 +99,42 @@ This package does not settle every visitor, commuter, temporary-presence or off-
 | P3-09 | Disposable PostgreSQL tests pass; Neon production remains unchanged |
 | P3-10 | Player can inspect pending/active recruit state through text commands |
 
+## Approval and implementation record
+
+**User approval:** Explicitly approved on 2026-11-23. Approval covers D1–D6 and the bounded implementation scope above. It does not authorise any Neon production operation.
+
+### Implemented on `main`
+
+- `db/proposals/0004_recruit_entry.sql`: disposable-only schema proposal for game-native player profile, pending recruit intake, personnel, recruit-supervisor authorisation, career episode and append-only lifecycle events.
+- `runtime/recruitment.py`: trusted PostgreSQL adapter for idempotent intake requests, explicitly authorised acceptance and career-status inspection.
+- `runtime/player_interface.py`: `recruit` and `career` commands; without a connected recruitment adapter they return an honest unavailable state. The recruit request remains pending until the database accepts an authorised recruitment outcome.
+- `tests/pkg001/test_recruitment.py`: adapter contract tests.
+- `tests/pkg001/recruit_entry_acceptance.sql`: disposable PostgreSQL acceptance checks for pending intake, idempotent request, authorised approver, missing supervisor, atomic rollback, one-person admission, population accounting, active recruit career, replay and pause gate.
+- `.github/workflows/pkg001-disposable-postgres.yml`: applies proposal 0004 only in the disposable CI database and runs the new tests.
+
+### Bounded implementation choices
+
+- `established` is a generic service-standing value used only to represent an existing supervisor; it is not a substantive rank or a rank ladder.
+- Supervisors must be active established personnel with a separate, explicit recruit-supervision authorisation. Appointment approval requires an active administrator/officer principal holding the `recruitment_approver` role.
+- An intake request creates no person, personnel dossier or career. Those records are created together only after the authorised acceptance function succeeds in one database transaction.
+- Person, population, appointment and career events retain distinct event identities and effective simulation ticks.
+- The player identity remains distinct from the canonical person and personnel/career identifiers. Unknown biographical details remain null.
+- No probation duration, confirmation, rank, grade, command authority, specialist qualification or independent police power is inferred.
+
+### Verification state
+
+| Check | State |
+|---|---|
+| Schema proposal authored; not a live migration | Implemented |
+| PostgreSQL atomic recruit-acceptance path | Implemented; disposable CI pending |
+| Population counter/cap transaction boundary | Reuses PKG-001 locked counter; recruit-specific CI pending |
+| Adapter unit tests | Implemented; CI pending |
+| Player command hooks | Implemented; require injected durable adapter |
+| End-to-end player/runtime/Neon connection | Not implemented; production Neon unchanged |
+| Production migration or data write | Not authorised; not performed |
+
+The new recruit commands are intentionally unavailable until a trusted PostgreSQL recruitment adapter is supplied to the player interface. This package does not pretend that the overall ChatGPT-to-Neon runtime connection is complete. The approval does not alter the production-write gate.
+
 ## Approval requested
 
-One approval of **PKG-003 as written** authorises the bounded D1–D6 decisions and the implementation scope above. It does not approve the complete BP-03/BP-05/BP-06/BP-07/BP-33 specifications, and it does not authorise production Neon writes.
+The package was approved on 2026-11-23. The approval covers the bounded D1–D6 decisions and implementation scope above. It does not approve the complete BP-03/BP-05/BP-06/BP-07/BP-33 specifications, and it does not authorise production Neon writes.
