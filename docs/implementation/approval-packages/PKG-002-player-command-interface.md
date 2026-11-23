@@ -1,6 +1,6 @@
 # PKG-002 — player command interface foundation
 
-**Status:** Initial application-layer implementation committed to `main`; automated validation pending.  
+**Status:** Initial application-layer implementation committed to `main`; Python unit tests and disposable PostgreSQL workflow passed (2026-11-23).  
 **Branch policy:** `main` is the only development branch. No feature branches or pull-request workflow.  
 **Project:** Saltwater, an entirely fictional single-city police simulation.  
 **Production database:** No Neon migration, seed, write, credential or configuration change is included or authorised by this package.
