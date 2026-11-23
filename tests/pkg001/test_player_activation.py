@@ -62,7 +62,8 @@ class ActivationTests(unittest.TestCase):
         )
 
         self.assertEqual(result.person_id, 812)
-        self.assertEqual(result.session.active_person_id if hasattr(result.session, "active_person_id") else 812, 812)
+        session_insert = next(params for sql, params in cursor.calls if "INSERT INTO sw_auth.session" in sql)
+        self.assertEqual(session_insert[5], 812)
         self.assertTrue(connection.committed)
         self.assertFalse(connection.rolled_back)
         self.assertIn("bind_accepted_identity", cursor.calls[0][0])
