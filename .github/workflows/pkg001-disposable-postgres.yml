@@ -1,0 +1,111 @@
+name: PKG-001 disposable PostgreSQL validation
+
+on:
+  pull_request:
+    paths:
+      - "db/proposals/0002_runtime_city_population.sql"
+      - "db/proposals/0003_actor_session_authorization.sql"
+      - "db/migrations/0001_foundation.sql"
+      - "runtime/**"
+      - "tests/pkg001/**"
+      - ".github/workflows/pkg001-disposable-postgres.yml"
+  push:
+    branches:
+      - "implementation/pkg-001-runtime-city-population"
+    paths:
+      - "db/proposals/0002_runtime_city_population.sql"
+      - "db/migrations/0001_foundation.sql"
+      - "runtime/**"
+      - "tests/pkg001/**"
+      - ".github/workflows/pkg001-disposable-postgres.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-kernel:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run runtime kernel tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
+      - name: Run actor authorization and hidden-truth gate tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
+
+  disposable-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply foundation and PKG-001 to disposable PostgreSQL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/auth_persistence_acceptance.sql
+      - name: Run PKG-001 database acceptance checks
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
+      - name: Measure representative 1,000-person storage growth
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/storage_benchmark.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          delta=$((after-before))
+          echo "database_bytes_before_fixture=$before"
+          echo "database_bytes_after_fixture=$after"
+          echo "database_growth_bytes=$delta"
+          echo "database_growth_mb=$(awk -v d="$delta" 'BEGIN {printf "%.6f", d/1000000}')"
+          echo "database_growth_mib=$(awk -v d="$delta" 'BEGIN {printf "%.6f", d/1048576}')"
+          echo "approx_growth_bytes_per_person=$(awk -v d="$delta" 'BEGIN {printf "%.2f", d/1000}')"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 3 DESC;"
+      - name: Fill disposable population to 9,999
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_cap_fixture.sql
+      - name: Install PostgreSQL Python driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Test persistent session verifier and durable audit sink
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_security.py" -v
+      - name: Test concurrent population-cap boundary
+        run: python -m unittest discover -s tests/pkg001 -p "test_population_concurrency.py" -v
+      - name: Measure full 10,000-person disposable fixture
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
+      - name: Test durable runtime adapter
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
+      - name: Test database access boundary
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/security_boundary.sql
+      - name: Backup and restore disposable database
+        run: |
+          cid=$(docker ps -q --filter ancestor=postgres:16 | head -n1)
+          test -n "$cid"
+          expected=$(docker exec "$cid" psql -U "$PGUSER" -d "$PGDATABASE" -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_people.population_history)||':'||(SELECT count(*) FROM sw_people.profile_history)||':'||(SELECT count(*) FROM sw_core.simulation_event)||':'||(SELECT max(event_id) FROM sw_core.simulation_event)||':'||(SELECT world_tick FROM sw_runtime.state WHERE singleton=1)||':'||(SELECT living_included FROM sw_people.population_counter WHERE singleton=1)")
+          docker exec "$cid" pg_dump -U "$PGUSER" -d "$PGDATABASE" -Fc -f /tmp/saltwater-pkg001.dump
+          docker exec "$cid" createdb -U "$PGUSER" saltwater_restore
+          docker exec "$cid" pg_restore -U "$PGUSER" --exit-on-error --no-owner -d saltwater_restore /tmp/saltwater-pkg001.dump
+          docker exec -i "$cid" psql -U "$PGUSER" -d saltwater_restore -v ON_ERROR_STOP=1 < tests/pkg001/backup_restore_assert.sql
+          actual=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_people.population_history)||':'||(SELECT count(*) FROM sw_people.profile_history)||':'||(SELECT count(*) FROM sw_core.simulation_event)||':'||(SELECT max(event_id) FROM sw_core.simulation_event)||':'||(SELECT world_tick FROM sw_runtime.state WHERE singleton=1)||':'||(SELECT living_included FROM sw_people.population_counter WHERE singleton=1)")
+          test "$expected" = "$actual"
+          echo "BACKUP_RESTORE_MANIFEST_MATCH=$actual"

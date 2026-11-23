@@ -1,6 +1,6 @@
 # PKG-001 — Shared runtime kernel and canonical city/population foundations
 
-**Status:** READY FOR USER REVIEW — NOT APPROVED FOR IMPLEMENTATION OR DEPLOYMENT  
+**Status:** APPROVED FOR IMPLEMENTATION — IN PROGRESS; NOT APPROVED FOR PRODUCTION DEPLOYMENT  
 **Package version:** 1.0  
 **Target repository:** `Joshuaogri/saltwater`, branch `main`  
 **Blueprint:** fixed BP-01–BP-44; no division is renamed, split, merged or reordered.  
@@ -128,7 +128,7 @@ D-001 and D-005 are required before authoritative population admission and playe
 7. Prepare a separate Neon execution request with a fresh baseline, incremental estimate in bytes/MB/MiB, uncertainty and projected total.
 8. Wait for explicit approval of that exact Neon operation before any production write.
 
-No production seed is part of this package. No schema migration may be run against Neon as a test. The package has not yet been executed against disposable PostgreSQL; SQL syntax, migration behaviour and storage estimates remain to be validated there.
+No production seed is part of this package. No schema migration may be run against Neon as a test. Implementation branch and pull request are open. Run 0001 passed on disposable PostgreSQL 16.16: migrations applied, database acceptance checks passed, six Python kernel tests passed, and the durable PostgreSQL runtime adapter passed an integration test for persistence, lifecycle transitions, causal events, idempotency and pause-safe clock control. A two-session admission race starting at 9,999 admitted exactly one person and rejected the other, leaving exactly 10,000. The compact 10,000-person fixture grew the disposable database by 8,192,000 bytes (8.192 MB; 7.8125 MiB), averaging 819.2 bytes/person for the tested records. See [run evidence](../test-evidence/PKG-001-run-0001.md). Recovery/safe-halt and transactional rollback tests now pass. A-001 database-role enforcement and R-001 logical backup/restore also pass on disposable PostgreSQL. The provider-neutral actor authorization contract and exact player-only `bingo` gate now pass 7 unit tests. Persistent identity/session/grant storage, a trusted provider adapter, durable audit sink and integration across every hidden-truth access route remain outstanding. See [run 0004](../test-evidence/PKG-001-run-0004.md) and [security boundary specification](../../security/ACTOR-AUTHORIZATION-AND-HIDDEN-TRUTH.md). See [run 0002](../test-evidence/PKG-001-run-0002.md) and [run 0003](../test-evidence/PKG-001-run-0003.md).
 
 ## 9. Acceptance tests required before implementation can be marked tested
 
@@ -164,7 +164,7 @@ A test definition or GitHub commit is not a test pass. Each executed test must r
 
 ## 10. Storage estimate and limits
 
-No defensible production migration estimate is claimed yet. The current database baseline is known, but the schema proposal has not been executed or measured in disposable PostgreSQL. Catalog growth, indexes, trigger functions and actual tuple overhead must be measured, not guessed.
+No production/Neon migration estimate is claimed. The proposal has now been executed on disposable PostgreSQL 16.16. A 1,000-person synthetic fixture (one profile history, one population state/history and two events per person) increased whole-database size by 950,272 bytes (0.950 MB; 0.906 MiB), approximately 950.27 bytes per person at this sample size. This is a compact baseline only; it excludes richer narrative, residence, relationships, jobs, police dossiers, cases, later indexes, and long-run bloat. The result is documented in [PKG-001 run evidence](../test-evidence/PKG-001-run-0001.md).
 
 The first benchmark will report:
 - empty schema/migration delta;
@@ -174,7 +174,7 @@ The first benchmark will report:
 - 10,000-person cap test;
 - low/median/high narrative and source-reference overhead separately.
 
-The 9,500-person seed estimate is not a seed authorisation. No production capacity approval is inferred.
+The 9,500-person seed estimate is not established by this sample and is not a seed authorisation. No production capacity approval is inferred.
 
 ## 11. Explicit approval boundary
 

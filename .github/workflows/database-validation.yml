@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - "db/migrations/**"
+      - "db/proposals/0002_runtime_city_population.sql"
+      - "tests/pkg001/**"
+      - "runtime/**"
       - ".github/workflows/database-validation.yml"
   pull_request:
     paths:
@@ -46,4 +49,14 @@ jobs:
         env:
           PGPASSWORD: test-only-password
         run: |
-          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test             -c "SELECT 1 FROM sw_core.world_config WHERE world_id = 1 AND country_name = 'Saltwater' AND city_name = 'Saltwater' AND living_population_limit = 10000 AND playable_city_count = 1"
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \
+            -c "SELECT 1 FROM sw_core.world_config WHERE world_id = 1 AND country_name = 'Saltwater' AND city_name = 'Saltwater' AND living_population_limit = 10000 AND playable_city_count = 1"
+      - name: Apply PKG-001 proposal to disposable PostgreSQL only
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -f tests/pkg001/database_acceptance.sql
+      - name: Run Python runtime-kernel tests
+        run: |
+          python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v

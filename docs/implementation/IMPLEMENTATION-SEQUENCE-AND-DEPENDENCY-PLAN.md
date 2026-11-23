@@ -71,7 +71,7 @@ Approve the relevant division specification versions before implementing their d
 
 ## 4A. First implementation approval package
 
-PKG-001 is prepared for user review: [Shared runtime kernel and canonical city/population foundations](approval-packages/PKG-001-runtime-city-population.md), with a separate [disposable acceptance test matrix](approval-packages/PKG-001-test-matrix.md) and non-executable [migration proposal 0002](../../db/proposals/0002_runtime_city_population.sql). Status: **prepared, pending user approval**. It authorises no Neon write, population seed, geometry/map seed, or production activation. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
+PKG-001 was explicitly approved by the user on 2026-11-23 for bounded GitHub implementation and disposable PostgreSQL testing. Implementation is in progress on branch `implementation/pkg-001-runtime-city-population`, PR [#1](https://github.com/Joshuaogri/saltwater/pull/1). Run 0001 passed on disposable PostgreSQL 16.16 and Python 3.12.16; see [test evidence](test-evidence/PKG-001-run-0001.md). No Neon migration, seed, or production activation is authorised. Its scope covers the runtime kernel and canonical city/population substrate; BP-04/BP-36 and user-facing interfaces remain downstream dependencies.
 
 ## 5. Dependency-led implementation sequence
 
@@ -173,11 +173,12 @@ This is the first end-to-end proof, not a substitute for the full 44-division si
 
 ## 7. Immediate next work
 
-1. Human sign-off of narrative fixture 0001; keep manual-review state honest.
-2. Final text-quality/capacity assessment and explicit decision on the 1 GB Neon allowance with 200 MB reserve.
-3. Define the minimal ChatGPT ↔ authorised runtime ↔ Neon integration contract.
-4. Prepare Stage 1 and Stage 2 implementation packages: entity/event contracts, schema drafts, disposable PostgreSQL migrations, acceptance tests and measured storage estimates.
-5. Present every proposed production Neon operation separately for explicit approval. No production seed or domain migration is included in this plan.
+1. PKG-001: runtime kernel, city/population foundation, and persistent provider-neutral actor/session/policy/grant/audit schema proposal. The 0003 schema and provider-neutral PostgreSQL session verifier/durable audit adapters pass disposable PostgreSQL tests (PKG-001 run 0005). No identity provider or credential issuer is selected; no player-facing login/token-delivery path, live runtime/API connection, all-route authorization integration or hidden-truth store is deployed. Next: connect the adapters to a minimal game-native player/session flow and executable runtime/API, then route game reads/writes through the same low-friction authorization service. Preserve simple player access and avoid unnecessary approval prompts during ordinary play. Keep calendar and population-scope decisions open until resolved.
+2. Human sign-off of narrative fixture 0001; keep manual-review state honest.
+3. Final text-quality/capacity assessment and explicit decision on the 1 GB Neon allowance with 200 MB reserve.
+4. Define the minimal ChatGPT ↔ authorised runtime ↔ Neon integration contract.
+5. Prepare subsequent Stage 1 and Stage 2 implementation packages: entity/event contracts, schema drafts, disposable PostgreSQL migrations, acceptance tests and measured storage estimates.
+6. Present every proposed production Neon operation separately for explicit approval. No production seed or domain migration is included in this plan.
 
 ## 8. Completion-state discipline
 

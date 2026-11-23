@@ -1,6 +1,6 @@
--- PROPOSAL ONLY — PKG-001 / migration 0002.
--- DO NOT APPLY TO NEON OR ANY AUTHORITATIVE DATABASE.
--- Requires 0001 foundation; execute only after separate explicit approval.
+-- PKG-001 / migration 0002.
+-- Disposable PostgreSQL acceptance-test migration only.
+-- NEVER apply to Neon or another authoritative database under PKG-001 approval.
 -- No resident/person/business/case/evidence seed data is inserted.
 -- The two geographic root records identify Saltwater; geometry remains unset.
 
@@ -54,6 +54,13 @@ BEGIN
   IF OLD.bootstrap_open = false AND NEW.bootstrap_open = true THEN
     RAISE EXCEPTION 'bootstrap cannot be reopened after closure';
   END IF;
+  IF OLD.bootstrap_open = true AND NEW.bootstrap_open = false
+     AND NOT (OLD.state = 1 AND OLD.world_tick = 0) THEN
+    RAISE EXCEPTION 'bootstrap can close only in ready state at world tick zero';
+  END IF;
+  IF (NEW.calendar_day, NEW.minute_of_day) IS DISTINCT FROM (OLD.calendar_day, OLD.minute_of_day) THEN
+    RAISE EXCEPTION 'fictional calendar semantics are not yet approved';
+  END IF;
   IF NEW.state = 2 AND NEW.bootstrap_open THEN
     RAISE EXCEPTION 'bootstrap must be closed before runtime start';
   END IF;
@@ -103,6 +110,7 @@ CREATE INDEX simulation_event_tick_idx
   ON sw_core.simulation_event(world_tick, event_id);
 
 INSERT INTO sw_core.event_type(event_code, description) VALUES
+ ('RUNTIME_READY', 'Simulation runtime ready for initialisation'),
  ('RUNTIME_START', 'Simulation runtime started'),
  ('RUNTIME_PAUSE', 'Simulation paused'),
  ('RUNTIME_RESUME', 'Simulation resumed'),
@@ -147,7 +155,7 @@ BEGIN
     RAISE EXCEPTION 'event world_tick must equal the committed runtime tick';
   END IF;
 
-  IF event_code IN ('RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY') THEN
+  IF event_code IN ('RUNTIME_READY','RUNTIME_START','RUNTIME_PAUSE','RUNTIME_RESUME','RUNTIME_STOP','RUNTIME_RECOVERY') THEN
     RETURN NEW;
   END IF;
 
@@ -211,9 +219,8 @@ VALUES ('saltwater-state', 1)
 ON CONFLICT (entity_code) DO NOTHING;
 
 INSERT INTO sw_geo.entity(entity_code, kind)
-VALUES ('saltwater-city', 2)
-FROM sw_geo.entity
-WHERE entity_code = 'saltwater-state'
+SELECT 'saltwater-city', 2
+WHERE EXISTS (SELECT 1 FROM sw_geo.entity WHERE entity_code = 'saltwater-state')
 ON CONFLICT (entity_code) DO NOTHING;
 
 INSERT INTO sw_geo.version
@@ -276,11 +283,11 @@ BEFORE INSERT ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_version_insert();
 
 CREATE FUNCTION sw_geo.reject_version_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'spatial versions are append-only';
 END
-$;
+$$;
 CREATE TRIGGER spatial_version_immutable
 BEFORE UPDATE OR DELETE ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_geo.reject_version_mutation();
@@ -323,7 +330,7 @@ CREATE TABLE sw_people.profile_history (
 );
 
 CREATE FUNCTION sw_people.record_profile_history() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 DECLARE
   event_tick bigint;
 BEGIN
@@ -359,24 +366,24 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER person_profile_history_append
 AFTER INSERT OR UPDATE OF given_name, middle_name, family_name, source_ref
 ON sw_people.person
 FOR EACH ROW EXECUTE FUNCTION sw_people.record_profile_history();
 
 CREATE FUNCTION sw_people.reject_profile_history_mutation() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'person profile history is append-only';
 END
-$;
+$$;
 CREATE TRIGGER person_profile_history_immutable
 BEFORE UPDATE OR DELETE ON sw_people.profile_history
 FOR EACH ROW EXECUTE FUNCTION sw_people.reject_profile_history_mutation();
 
 CREATE FUNCTION sw_people.guard_person_identity_update() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW.person_id <> OLD.person_id OR NEW.created_tick <> OLD.created_tick
      OR NEW.created_at <> OLD.created_at THEN
@@ -384,7 +391,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$$;
 CREATE TRIGGER person_identity_update_guard
 BEFORE UPDATE ON sw_people.person
 FOR EACH ROW EXECUTE FUNCTION sw_people.guard_person_identity_update();
@@ -541,6 +548,24 @@ CREATE TABLE sw_core.event_spatial_ref (
   relation_code smallint NOT NULL,
   PRIMARY KEY (event_id, spatial_id, relation_code)
 );
+
+
+-- Application privilege boundary. The command role intentionally receives no
+-- direct table DML: future authenticated command functions/API own mutations.
+-- Roles are NOLOGIN templates; deployment-specific login membership is a
+-- separate approved operation after actor/session design is settled.
+CREATE ROLE sw_game_readonly NOLOGIN;
+CREATE ROLE sw_game_command NOLOGIN;
+
+REVOKE ALL ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+GRANT USAGE ON SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly, sw_game_command;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+GRANT SELECT ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops TO sw_game_readonly;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM PUBLIC;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw_ops FROM sw_game_command;
 
 -- Seed only the singleton stopped runtime. No people, cases or businesses.
 INSERT INTO sw_runtime.state(singleton, state, player_present, bootstrap_open)
