@@ -64,8 +64,7 @@ BEGIN
   PERFORM 1 FROM sw_player.profile WHERE player_id=p_player_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'player profile does not exist'; END IF;
 
-  SELECT count(*), min(p.person_id)
-    INTO v_binding_count, v_person_id
+  PERFORM 1
   FROM sw_police.career_episode c
   JOIN sw_police.recruit_intake i ON i.player_id=c.player_id AND i.status='accepted'
   JOIN sw_police.personnel p ON p.personnel_id=c.personnel_id
@@ -77,7 +76,24 @@ BEGIN
     AND p.service_standing='recruit'
     AND p.service_status='active'
     AND pop.life_status=1
-    AND pop.scope_status=1;
+    AND pop.scope_status=1
+  FOR SHARE OF c,i,p,person,pop;
+  GET DIAGNOSTICS v_binding_count = ROW_COUNT;
+
+  SELECT person.person_id INTO v_person_id
+  FROM sw_police.career_episode c
+  JOIN sw_police.recruit_intake i ON i.player_id=c.player_id AND i.status='accepted'
+  JOIN sw_police.personnel p ON p.personnel_id=c.personnel_id
+  JOIN sw_people.person person ON person.person_id=p.person_id
+  JOIN sw_people.population_state pop ON pop.person_id=person.person_id
+  WHERE c.player_id=p_player_id
+    AND c.career_stage='recruit'
+    AND c.career_status='active'
+    AND p.service_standing='recruit'
+    AND p.service_status='active'
+    AND pop.life_status=1
+    AND pop.scope_status=1
+  LIMIT 1;
 
   IF v_binding_count <> 1 OR v_person_id IS NULL THEN
     RAISE EXCEPTION 'exactly one accepted active recruit career with active personnel and living canonical person is required';
