@@ -132,4 +132,5 @@ BEGIN
 
   RAISE NOTICE 'PKG003_ACCEPTANCE_PASS people=3 population=3 career=%',v_career;
 END
-$$;
+$;
+ROLLBACK;
