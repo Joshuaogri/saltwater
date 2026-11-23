@@ -173,7 +173,7 @@ This is the first end-to-end proof, not a substitute for the full 44-division si
 
 ## 7. Immediate next work
 
-1. Continue PKG-001: harden the tested PostgreSQL runtime adapter; implement authenticated actor/session and permission enforcement; add concurrent population-cap, 10,000/10,001 boundary, failure/recovery and backup/restore tests. Keep calendar and population-scope decisions open until resolved.
+1. Continue PKG-001: harden the tested PostgreSQL runtime adapter; implement authenticated actor/session and permission enforcement; add failure/recovery and backup/restore tests. The concurrent 9,999-to-10,000 admission race and 10,001st rejection now pass on disposable PostgreSQL. Keep calendar and population-scope decisions open until resolved.
 2. Human sign-off of narrative fixture 0001; keep manual-review state honest.
 3. Final text-quality/capacity assessment and explicit decision on the 1 GB Neon allowance with 200 MB reserve.
 4. Define the minimal ChatGPT ↔ authorised runtime ↔ Neon integration contract.
