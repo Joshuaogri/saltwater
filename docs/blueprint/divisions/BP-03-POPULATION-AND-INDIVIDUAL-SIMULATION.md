@@ -155,11 +155,23 @@ The canonical person profile supports, where known and relevant:
 
 Sensitive or highly personal attributes must not be generated or exposed without a defined gameplay purpose and permission model. BP-42 governs access. BP-03 defines the identity field semantics, not access rights.
 
+### 4.3 Unknown, estimated and disputed attributes
+Unknown values remain unknown. Do not invent exact DOBs, addresses, nationality, employment, relationship status or personal histories merely to fill fields.
+
+Where an estimate is useful, store:
+- estimated value/range;
+- confidence;
+- source;
+- who recorded it;
+- in-game time;
+- basis/limitations;
+- whether later confirmation supersedes it.
+
+Conflicting values must coexist as sourced claims or be resolved through an attributed correction; do not silently overwrite the prior record.
+
 ### 4.4 Civil identity and registration references
 
 Where Saltwater's configured civil registry recognises a fact, the canonical person record must link to its authoritative registration record and preserve the registered value, status, issuing/recording authority, effective date, recorded date, source, correction history and current validity. This includes birth and death registration and any configured civil-status, name, citizenship/residency or other legally registered life event; do not infer a registration from a social relationship, household membership, reported event or unverified claim. BP-30 owns the registry institution, mandate, authorised registrar roles and public-administration process; BP-38 owns common register/version/provenance/access standards; BP-36 owns the underlying social/family relationship semantics; BP-02/BP-04 own address, property and business source records. BP-03 owns the person-linked civil identity/life-status reference and population consequences. A correction to a register must not erase the prior value or silently rewrite historical case records.
-
-### 4.3 Unknown, estimated and disputed attributes
 Unknown values remain unknown. Do not invent exact DOBs, addresses, nationality, employment, relationship status or personal histories merely to fill fields.
 
 Where an estimate is useful, store:
@@ -530,6 +542,8 @@ Event contract: each population-changing event includes unique event ID, person 
 - **AC-C05:** Permanent departure and later return follow explicit count transitions.
 - **AC-C06:** Unknown/conflicting attributes remain sourced and unresolved until supported correction.
 - **AC-C07:** Historical person links remain valid after status changes.
+- **AC-C08:** A person-linked civil identity/life-status fact references an authoritative registration record, registrar/issuing authority, effective and recorded times, source and current validity.
+- **AC-C09:** A reported event or BP-36 social relationship cannot silently create or prove a civil registration; corrections preserve prior values and provenance.
 
 ### D. Processing tiers and promotion
 - **AC-D01:** Tier changes do not create/delete person identities.
