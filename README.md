@@ -103,4 +103,4 @@ The user approved SW-DB-001 on 2026-11-24 for GitHub main development and dispos
 
 SW-DB-001's approved disposable implementation is verified in [run 45456851773](https://github.com/Joshuaogri/saltwater/actions/runs/45456851773). The next bounded package is [BP04-01](docs/implementation/approval-packages/BP04-01-property-premises-identity-foundation.md): canonical property, building, premises, unit and access-point identities; typed BP-02 parcel/address references; explicit unresolved locations; parent relationships and lifecycle history; and SW-UNS naming integration. It does not duplicate proposal 0010's business model, invent geography, seed property distributions, implement ownership/tenancy or write to Neon.
 
-**Status: PROPOSED — awaiting explicit approval for GitHub `main` and disposable PostgreSQL 16 only.** Neon production write authority remains NONE.
+**Status: APPROVED — implementation committed on `main`; disposable PostgreSQL 16 verification in progress.** Neon production write authority remains NONE.
