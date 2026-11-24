@@ -13,12 +13,17 @@ on:
       - "docs/implementation/approval-packages/SW-DB-001-canonical-world-provisioning-and-capacity-proof.md"
   workflow_dispatch:
 
+concurrency:
+  group: sw-db-001-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
 jobs:
   python-regression:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -67,6 +72,7 @@ jobs:
 
   disposable-postgres:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16
