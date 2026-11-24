@@ -240,7 +240,7 @@ END
 $$;
 
 CREATE FUNCTION sw_property.record_entity_status_history()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $bp04$
 DECLARE
   v_id bigint;
   v_tick bigint;
@@ -264,13 +264,13 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$bp04$;
 
 CREATE FUNCTION sw_property.change_lifecycle(
   p_entity_type text,p_entity_id bigint,p_new_status text,p_effective_tick bigint,
   p_source_ref text,p_actor_ref text,p_reason text
 ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
-SET search_path=pg_catalog,sw_property AS $
+SET search_path=pg_catalog,sw_property AS $bp04$
 DECLARE
   v_table text;
   v_id_column text;
@@ -307,7 +307,7 @@ BEGIN
   PERFORM set_config('sw_property.change_reason',COALESCE(v_old_reason,''),true);
   IF v_rows<>1 THEN RAISE EXCEPTION 'BP-04 lifecycle identity not found'; END IF;
 END
-$;
+$bp04$;
 
 CREATE FUNCTION sw_property.reject_entity_delete()
 RETURNS trigger LANGUAGE plpgsql AS $$
