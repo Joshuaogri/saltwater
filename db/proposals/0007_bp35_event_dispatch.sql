@@ -144,6 +144,9 @@ DECLARE
   runtime_row sw_runtime.state%ROWTYPE;
   prior sw_runtime.event_work%ROWTYPE;
   event_type smallint;
+  prior_code text;
+  prior_causation bigint;
+  prior_correlation uuid;
   new_event_id bigint;
 BEGIN
   SELECT * INTO runtime_row FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
@@ -167,13 +170,19 @@ BEGIN
   END IF;
   SELECT * INTO prior FROM sw_runtime.event_work WHERE idempotency_key=p_idempotency_key;
   IF FOUND THEN
-    IF (prior.owner_domain,prior.handler_key,prior.handler_version,prior.schema_version,
-        prior.due_tick,prior.priority,prior.actor_ref,prior.source_division,prior.source_ref,
-        prior.visibility_class,prior.max_attempts)
+    SELECT et.event_code,se.causation_event_id,se.correlation_id
+      INTO prior_code,prior_causation,prior_correlation
+      FROM sw_core.simulation_event se
+      JOIN sw_core.event_type et USING(event_type_id)
+      WHERE se.event_id=prior.event_id;
+    IF (prior_code,prior.owner_domain,prior.handler_key,prior.handler_version,
+        prior.schema_version,prior.due_tick,prior.priority,prior.actor_ref,
+        prior.source_division,prior.source_ref,prior.visibility_class,
+        prior.max_attempts,prior_causation,prior_correlation)
        IS DISTINCT FROM
-       (p_owner_domain,p_handler_key,p_handler_version,p_schema_version,
-        p_due_tick,p_priority,p_actor_ref,p_source_division,p_source_ref,
-        p_visibility_class,p_max_attempts) THEN
+       (p_event_code,p_owner_domain,p_handler_key,p_handler_version,
+        p_schema_version,p_due_tick,p_priority,p_actor_ref,p_source_division,
+        p_source_ref,p_visibility_class,p_max_attempts,p_causation_event_id,p_correlation_id) THEN
       RAISE EXCEPTION 'event idempotency key conflicts with prior definition';
     END IF;
     RETURN prior.event_id;
