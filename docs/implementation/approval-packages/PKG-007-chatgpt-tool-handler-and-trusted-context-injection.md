@@ -1,7 +1,7 @@
 # PKG-007 — ChatGPT Tool Handler and Trusted Context Injection
 
 **Package:** PKG-007  
-**Status:** Approved; implementation committed; CI verification pending  
+**Status:** Approved; implemented and verified  
 **Target branch:** `main` only  
 **Depends on:** PKG-005 verified; PKG-006 verified  
 **Approval boundary:** Repository implementation and Python/contract tests only. No deployed endpoint, ChatGPT app/plugin, external identity provider, production secret store, Neon production change or live player session.
@@ -78,8 +78,13 @@ Trusted context is injected by host-side code through a separate non-model argum
 
 Use deterministic fakes for trusted host context, credential provider and PKG-006 adapter. Test exact input/output schemas, allowlist, unknown keys, request-reference boundaries, context separation, expiry, fail-closed behavior, safe generic failures and non-leakage. Run the full existing Python and disposable PostgreSQL CI workflow to detect regressions.
 
-## 8. Approval requested
+## 8. Completion record
 
-Approval authorises the repository implementation, documentation and automated Python/contract testing described above, committed directly to `main`. It does not authorise deployment, public network exposure, ChatGPT app/plugin publication or any Neon production operation.
+The user authorised completion of PKG-007. Implemented directly on `main`:
+- `runtime/chatgpt_tool_handler.py` strictly parses JSON/object arguments, rejects unknown fields and malformed shapes, validates the exact command allowlist and optional request reference, requires separately injected unexpired `TrustedHostContext`, delegates once to PKG-006, and returns exactly `ok` and `message`.
+- `tests/pkg001/test_chatgpt_tool_handler.py` covers valid JSON/object calls, schema boundary, malformed/multi-command/unknown input, request-reference bounds, absent/forged/expired context, context separation, denial, host-reference non-disclosure, malformed adapter responses and generic exception handling.
+- `.github/workflows/pkg001-disposable-postgres.yml` runs the new contract suite.
 
-**Do you approve PKG-007 for implementation and Python/contract testing, with deployment and Neon production remaining untouched?**
+**Verification:** Python and contract test job passed; full disposable PostgreSQL acceptance job passed, including the existing population-cap, database security, backup/restore and authenticated-command regression tests. Workflow: https://github.com/Joshuaogri/saltwater/actions/runs/45308750086. Migration validation: https://github.com/Joshuaogri/saltwater/actions/runs/45308723918. No Neon production operation, persistent schema change, endpoint, deployed ChatGPT integration, plugin, identity, session or permission grant was created.
+
+PKG-007 is complete within its repository-only approval boundary. A deployed ChatGPT connection remains a separate future integration task.
