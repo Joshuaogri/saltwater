@@ -30,7 +30,7 @@ The committed [SW-GEO-V1 map register](../../maps/README.md) and [geography data
 The map register explicitly records that:
 - parcel fabric and canonical numbered addresses do not yet exist;
 - building footprints and entrances do not yet exist;
-- the 100 source-to-spatial-ID mappings remain unresolved;
+- all 100 source records now map to stable entity_code values; database spatial_id is generated per database and looked up by entity_code;
 - the map baseline is `DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED`;
 - graph structure checks are not full geometry QA or operational routing acceptance.
 
@@ -43,7 +43,7 @@ This package is divided into controlled stages. Each stage must produce a reprod
 ### Stage A — geography readiness and reconciliation
 
 1. Reconcile the full source geography inventory against stable BP-02 IDs.
-2. Resolve the 100 outstanding source-to-spatial-ID mappings; record every source row, destination ID, mapping status, rationale and reviewer/source provenance.
+2. Resolve the 100 source-to-entity_code mappings, now resolved and regression-tested; record every source row, destination ID, mapping status, rationale and reviewer/source provenance.
 3. Validate the eight district and 24 neighbourhood polygons, boundaries, containment, adjacency, overlaps/gaps and point-in-polygon assignment rules.
 4. Validate the 42 named roads, 367 junctions, 685 segments and five routes against the actual committed dataset; verify endpoint integrity, parent-road membership, connectedness and access semantics.
 5. Confirm the authoritative geography version and its approval status. Preserve SW-GEO-V1 unchanged; any correction is a new version with explicit predecessor/successor history.
@@ -177,7 +177,7 @@ Do not hide shared registry/index overhead inside per-entity byte figures; repor
 ## 8. Required acceptance tests
 
 1. All eight districts and 24 neighbourhoods reconcile to the approved geography version.
-2. All 100 outstanding source-to-spatial-ID mappings are either resolved with provenance or remain explicit blockers; none are silently dropped.
+2. All 100 source-to-entity_code mappings, now resolved and regression-tested are either resolved with provenance or remain explicit blockers; none are silently dropped.
 3. Parcel polygons pass validity, containment, overlap/gap and deterministic neighbourhood-assignment checks.
 4. Parcel split/merge/successor history is queryable and identity is never reused.
 5. Address uniqueness, alias history and parcel/road/locality relationships pass.
@@ -258,7 +258,7 @@ Recommended sequence after approval:
 
 **Stage E physical-asset inventory — implemented and verified (2026-11-24):** [Full disposable PostgreSQL 16 workflow 45504985010](https://github.com/Joshuaogri/saltwater/actions/runs/45504985010) passed all 15 Python tests, migrations 0011–0015, parcel/dossier imports, physical-asset import, database acceptance, same-manifest idempotency, relation/query measurements and PostgreSQL 16 backup/restore. The resulting hierarchy has 420 property-site candidates, 384 building candidates, 1,327 premises, 15,199 units and 768 unreviewed access-location candidates; 36 properties have no building candidate. All five entity types have full BP04-02 profiles (18,098 total) and typed detail rows (181,915 total): 34,624 measurements, 1,327 building levels, 4,608 components, 3,981 room allocations, 37,979 utility records, 21,417 features, 22,533 condition assessments and 55,446 knowledge-state assertions. No physical defect records were fabricated. Candidate geometry persistence contains 1,572 records; 420 properties retain candidate-parcel lineage. Proposal 0015 adds batch, site-link and append-only geometry records, plus explicit unknown/not-assessed access-point egress/loading states. SQL source 9,238 bytes; schema-only disposable growth 303,104 bytes; first asset import growth 130,441,216 bytes; same-manifest repeat 0 bytes. Full manifest artifact is 1,523,057 compressed bytes ([artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45504985010/artifacts/14971474446)). Full evidence: [BP04-03 Stage E physical-asset inventory run 0001](../test-evidence/BP04-03-stage-e-physical-asset-inventory-run-0001.md).
 
-**Authority boundary remains:** these are generated, non-operational design candidates. Zero canonical addresses or operational spatial IDs were created; all 100 source-to-spatial mappings remain unresolved. The 768 access locations are not confirmed entrances. There are no ownership, tenancy, occupancy, resident, business-operator or police-facility assignments. Building footprints, room allocations and unit areas are design estimates, not surveys. No Neon production connection, migration, seed, upload or activation occurred.
+**Authority boundary remains:** these are generated, non-operational design candidates. Zero canonical addresses or operational spatial IDs were created; all 100 source records now map to stable entity_code values; database spatial_id is generated per database and looked up by entity_code. The 768 access locations are not confirmed entrances. There are no ownership, tenancy, occupancy, resident, business-operator or police-facility assignments. Building footprints, room allocations and unit areas are design estimates, not surveys. No Neon production connection, migration, seed, upload or activation occurred.
 
 **Next dependency:** BP-02 geography approval/version gate and resolution of the 100 source-to-spatial mappings. After that, create operational parcel/address/entrance identities through a separate controlled migration. Business-site assignment, population/household allocation, ownership, tenancy, occupancy and police-facility appointment remain separate downstream work.
 
