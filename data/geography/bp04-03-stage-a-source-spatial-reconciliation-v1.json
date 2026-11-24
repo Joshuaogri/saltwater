@@ -7,9 +7,9 @@
   "operational_approval": false,
   "generated_from": "Committed SW-NAM-001 geography identity fixture; entries are source inventory only, not proof of spatial mapping.",
   "summary": {
-    "source_records": 99,
+    "source_records": 100,
     "resolved": 0,
-    "unresolved": 99,
+    "unresolved": 100,
     "spatial_ids_assigned": 0
   },
   "records": [
@@ -1196,6 +1196,18 @@
       "display_name": "Coastline Drive",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V22",
+      "mapping_status": "UNRESOLVED",
+      "spatial_id": null,
+      "review_status": "NOT_REVIEWED",
+      "resolution_note": "No authoritative BP-02 spatial ID mapping is present in the current source baseline; do not infer or generate one."
+    },
+    {
+      "source_id": "SWR-V23",
+      "entity_code": "SWR-V23",
+      "entity_kind": 7,
+      "display_name": "Eastern Promenade",
+      "parent_entity_code": "saltwater-city",
+      "source_ref": "SW-GEO-V1:road:SWR-V23",
       "mapping_status": "UNRESOLVED",
       "spatial_id": null,
       "review_status": "NOT_REVIEWED",
