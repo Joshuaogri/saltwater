@@ -100,7 +100,7 @@ CREATE INDEX parcel_lineage_successor_idx
   ON sw_geo.parcel_lineage(successor_parcel_spatial_id,lineage_id);
 
 CREATE FUNCTION sw_geo.guard_parcel_lineage_kind()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $bp04$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.predecessor_parcel_spatial_id AND kind=6)
      OR NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.successor_parcel_spatial_id AND kind=6) THEN
@@ -108,7 +108,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$bp04$;
 CREATE TRIGGER parcel_lineage_kind_guard
 BEFORE INSERT ON sw_geo.parcel_lineage
 FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_parcel_lineage_kind();
