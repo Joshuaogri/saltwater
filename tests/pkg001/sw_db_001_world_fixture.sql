@@ -19,6 +19,8 @@ DECLARE
   v_business record;
   v_name text;
   v_count integer;
+  v_person_digest bytea;
+  v_business_digest bytea;
 BEGIN
   IF current_database() <> 'saltwater_test' THEN
     RAISE EXCEPTION 'SW-DB-001 fixture is restricted to saltwater_test; got %',current_database();
@@ -166,6 +168,48 @@ BEGIN
   FROM sw_business.business b
   WHERE b.created_batch_id=v_batch
   ON CONFLICT (business_id) DO NOTHING;
+
+  SELECT sw_ops.digest(
+    convert_to(string_agg(
+      concat_ws('|',c.fixture_person_key,c.cohort,p.given_name,p.family_name,
+                ps.life_status::text,ps.scope_status::text),
+      E'\\n' ORDER BY c.fixture_person_key
+    ),'UTF8'),'sha256')
+  INTO v_person_digest
+  FROM sw_test.person_cohort c
+  JOIN sw_people.person p USING (person_id)
+  JOIN sw_people.population_state ps USING (person_id)
+  WHERE c.batch_id=v_batch;
+
+  SELECT sw_ops.digest(
+    convert_to(string_agg(
+      concat_ws('|',b.business_code,r.display_name,b.operating_status,
+                b.site_assignment_status,coalesce(b.primary_spatial_id::text,''),
+                p.test_sector_code,p.test_legal_form,p.test_operating_basis,p.test_staff_band),
+      E'\\n' ORDER BY b.business_code
+    ),'UTF8'),'sha256')
+  INTO v_business_digest
+  FROM sw_business.business b
+  JOIN sw_names.name_reservation r
+    ON r.entity_type='BUSINESS' AND r.entity_id=b.business_id
+   AND r.name_form='canonical'
+  JOIN sw_test.business_profile p USING (business_id)
+  WHERE b.created_batch_id=v_batch;
+
+  INSERT INTO sw_ops.provisioning_content_checksum
+    (batch_id,entity_type,record_count,content_sha256)
+  VALUES (v_batch,'PERSON',9500,v_person_digest),
+         (v_batch,'BUSINESS',10000,v_business_digest)
+  ON CONFLICT (batch_id,entity_type) DO NOTHING;
+
+  IF NOT EXISTS (SELECT 1 FROM sw_ops.provisioning_content_checksum
+                 WHERE batch_id=v_batch AND entity_type='PERSON'
+                   AND record_count=9500 AND content_sha256=v_person_digest)
+     OR NOT EXISTS (SELECT 1 FROM sw_ops.provisioning_content_checksum
+                    WHERE batch_id=v_batch AND entity_type='BUSINESS'
+                      AND record_count=10000 AND content_sha256=v_business_digest) THEN
+    RAISE EXCEPTION 'same-manifest content checksum or record count changed';
+  END IF;
 
   SELECT count(*) INTO v_count FROM sw_test.person_cohort
   WHERE batch_id=v_batch;
