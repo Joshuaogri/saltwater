@@ -73,7 +73,7 @@ CREATE TABLE sw_property.access_point_profile (
   access_point_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   access_point_id bigint NOT NULL REFERENCES sw_property.access_point(access_point_id),
   access_type text NOT NULL CHECK (access_type IN ('pedestrian_entrance','pedestrian_exit','vehicle_entrance','vehicle_exit','combined_gate','loading_bay','service_entrance','emergency_exit','controlled_passage','lobby_threshold','roof_access','plant_access','other','unknown')),
-  access_modes text[] NOT NULL DEFAULT '{}',
+  access_modes text[] NOT NULL DEFAULT '{}' CHECK (access_modes <@ ARRAY['pedestrian','cycle','motorcycle','light_vehicle','heavy_vehicle','service','emergency','restricted']::text[]),
   directionality text NOT NULL CHECK (directionality IN ('inbound','outbound','bidirectional','emergency_only','restricted','unknown')),
   control_type text NOT NULL CHECK (control_type IN ('open','gate','lock','staffed','intercom','card','key','turnstile','barrier','mixed','unknown')),
   availability_state text NOT NULL CHECK (availability_state IN ('available','restricted','unavailable','emergency_only','unknown','not_assessed')),
