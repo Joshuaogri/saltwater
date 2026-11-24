@@ -14,6 +14,7 @@ DECLARE
   cycle_denied boolean := false;
   stale_denied boolean := false;
   pause_denied boolean := false;
+  active_pause_blocked boolean := false;
 BEGIN
   UPDATE sw_runtime.state SET state=1,player_present=false
     WHERE singleton=1 AND state=0;
@@ -62,6 +63,16 @@ BEGIN
     ELSE RAISE; END IF;
   END;
   IF NOT stale_denied THEN RAISE EXCEPTION 'stale claim token was not rejected'; END IF;
+
+  BEGIN
+    UPDATE sw_runtime.state SET state=3,player_present=false WHERE singleton=1;
+    RAISE EXCEPTION 'pause unexpectedly committed during active event dispatch';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='pause waits for active event dispatch to finish' THEN active_pause_blocked:=true;
+    ELSIF SQLERRM='pause unexpectedly committed during active event dispatch' THEN RAISE;
+    ELSE RAISE; END IF;
+  END;
+  IF NOT active_pause_blocked THEN RAISE EXCEPTION 'active dispatch did not block pause'; END IF;
 
   SELECT sw_runtime.finish_event_work(
     parent_id,claimed.claim_token,true,'fixture:parent-committed',NULL,NULL,true
