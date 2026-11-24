@@ -227,6 +227,7 @@ SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_business,sw_core AS $$
 DECLARE
   v_code text;
   v_kind smallint;
+  v_enable_seqscan text;
 BEGIN
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
@@ -255,14 +256,20 @@ BEGIN
     RAISE EXCEPTION 'generator manifest domain does not match the owning entity type';
   END IF;
 
+  -- Force the existing trigram GIN index for this one high-selectivity lookup.
+  -- Restore the caller's planner setting immediately; do not affect unrelated SQL.
+  v_enable_seqscan := current_setting('enable_seqscan');
+  PERFORM set_config('enable_seqscan','off',true);
   PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
   IF EXISTS (
     SELECT 1 FROM sw_names.name_reservation r
     WHERE r.normalized_key <> NEW.normalized_key
       AND r.normalized_key % NEW.normalized_key
   ) THEN
+    PERFORM set_config('enable_seqscan',v_enable_seqscan,true);
     RAISE EXCEPTION 'near-duplicate name requires review before reservation';
   END IF;
+  PERFORM set_config('enable_seqscan',v_enable_seqscan,true);
 
   IF NEW.name_form='canonical' AND EXISTS (
     SELECT 1 FROM sw_names.name_reservation r
