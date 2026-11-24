@@ -14,6 +14,8 @@ DECLARE
   unresolved_id bigint;
   unresolved_claim record;
   blocked boolean:=false;
+  checkpoint_row_bytes integer;
+  recovery_row_bytes integer;
 BEGIN
   UPDATE sw_runtime.state SET state=1,player_present=false
     WHERE singleton=1 AND state=0;
@@ -102,6 +104,13 @@ BEGIN
     'disposable-ci','saltwater','main','saltwater_test',
     'test:operator','approval:BP39-01'
   );
+  SELECT pg_column_size(m) INTO checkpoint_row_bytes
+    FROM sw_runtime.checkpoint_manifest m WHERE m.checkpoint_id=checkpoint_id;
+  SELECT pg_column_size(r) INTO recovery_row_bytes
+    FROM sw_runtime.event_claim_recovery r
+    WHERE r.event_id=unresolved_id ORDER BY r.recovery_id DESC LIMIT 1;
+  RAISE NOTICE 'BP39_CHECKPOINT_ROW_BYTES=%',checkpoint_row_bytes;
+  RAISE NOTICE 'BP39_RECOVERY_ROW_BYTES=%',recovery_row_bytes;
   report:=sw_runtime.validate_checkpoint_manifest(checkpoint_id);
   IF report->'gates'->'schema_watermark'->>'status'<>'pass'
      OR report->'gates'->'runtime_and_tick'->>'status'<>'pass'
