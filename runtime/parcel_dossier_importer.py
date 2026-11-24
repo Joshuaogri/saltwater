@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 import psycopg
+from shapely.geometry import Polygon
 
 
 def validate_manifest(data, candidates):
@@ -32,10 +33,25 @@ def validate_manifest(data, candidates):
         raise ValueError("Duplicate parcel dossier IDs")
     if set(dossier_ids) != set(candidate_ids):
         raise ValueError("Parcel dossier identities do not match candidate parcel manifest")
+    candidate_by_id = {row["candidate_parcel_id"]: row for row in candidates.get("parcels", [])}
     for row in data["parcels"]:
         dossier = row["dossier"]
+        candidate = candidate_by_id[dossier["candidate_parcel_id"]]
+        polygon = Polygon(candidate["geometry"][0], candidate["geometry"][1:])
+        if not polygon.is_valid or polygon.is_empty or polygon.area <= 0:
+            raise ValueError("Candidate geometry is invalid while validating dossier measurements")
         if dossier["area_m2"] <= 0 or dossier["perimeter_m"] <= 0:
             raise ValueError("Parcel dossier contains invalid geometry measurements")
+        if abs(dossier["area_m2"] - candidate["area_m2"]) > 0.001:
+            raise ValueError("Parcel dossier area does not match candidate geometry")
+        if abs(dossier["perimeter_m"] - round(polygon.length, 3)) > 0.001:
+            raise ValueError("Parcel dossier perimeter does not match candidate geometry")
+        if dossier["frontage_candidate_count"] != len(row["frontages"]):
+            raise ValueError("Parcel frontage candidate count does not match frontage rows")
+        if dossier["frontage_segment_count"] != sum(len(item["road_segment_ids"]) for item in row["frontages"]):
+            raise ValueError("Parcel frontage segment count does not match frontage rows")
+        if dossier["adjacent_water_feature_ids"] != sorted(item["water_feature_id"] for item in row["water_adjacencies"]):
+            raise ValueError("Parcel water adjacency IDs do not match water adjacency rows")
         frontage_ids = {item["frontage_candidate_id"] for item in row["frontages"]}
         if any(item["frontage_candidate_id"] not in frontage_ids for item in row["access_candidates"]):
             raise ValueError("Access location candidate has no matching frontage candidate")
