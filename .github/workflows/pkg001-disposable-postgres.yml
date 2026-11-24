@@ -11,6 +11,10 @@ on:
       - "db/proposals/0005_player_identity_activation.sql"
       - "db/proposals/0006_bp37_tick_scheduling.sql"
       - "db/proposals/0007_bp35_event_dispatch.sql"
+      - "db/proposals/0008_bp39_checkpoint_recovery.sql"
+      - "tests/pkg001/bp39_recovery_acceptance.sql"
+      - "tests/pkg001/test_recovery.py"
+      - "runtime/recovery.py"
       - "tests/pkg001/event_dispatch_acceptance.sql"
       - "tests/pkg001/test_event_engine.py"
       - "runtime/scheduling.py"
@@ -59,6 +63,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_scheduling.py" -v
       - name: Run BP35-01 deterministic event engine tests
         run: python -m unittest discover -s tests/pkg001 -p "test_event_engine.py" -v
+      - name: Run BP39-01 recovery contract tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_recovery.py" -v
       - name: Run actor authorization and hidden-truth gate tests
         run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
 
@@ -100,6 +106,11 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
           after_event_engine=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp35_event_dispatch_schema_growth_bytes=$((after_event_engine-before_event_engine))"
+          before_recovery=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
+          after_recovery=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp39_checkpoint_recovery_schema_growth_bytes=$((after_recovery-before_recovery))"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_runtime' ORDER BY 2 DESC;"
           psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_runtime' ORDER BY 2 DESC;"
           after_schedule=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp37_schedule_schema_growth_bytes=$((after_schedule-before_schedule))"
@@ -138,6 +149,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/scheduling_acceptance.sql
       - name: Run BP35-01 PostgreSQL event dispatch acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/event_dispatch_acceptance.sql
+      - name: Run BP39-01 checkpoint and claim recovery acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp39_recovery_acceptance.sql
       - name: Test durable runtime adapter
         run: python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
       - name: Test authenticated player command runtime end to end
