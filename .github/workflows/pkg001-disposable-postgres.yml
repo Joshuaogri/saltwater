@@ -167,7 +167,7 @@ jobs:
           echo "database_growth_mib=$(awk -v d="$delta" 'BEGIN {printf "%.6f", d/1048576}')"
           echo "approx_growth_bytes_per_person=$(awk -v d="$delta" 'BEGIN {printf "%.2f", d/1000}')"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname, relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 3 DESC;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 2 DESC;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_and_aux_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 4 DESC;"
       - name: Install PostgreSQL Python driver
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Run SW-NAM-001 PostgreSQL concurrency and rollback tests
@@ -195,7 +195,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
           psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
           psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS reserved_names,pg_total_relation_size('sw_names.name_reservation') AS reservation_total_bytes,round(pg_total_relation_size('sw_names.name_reservation')::numeric/NULLIF(count(*),0),2) AS total_bytes_per_reserved_name FROM sw_names.name_reservation;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 2 DESC;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_and_aux_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 4 DESC;"
       - name: Test database access boundary
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/security_boundary.sql
       - name: Capture consistent BP39 checkpoint manifest
