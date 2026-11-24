@@ -393,7 +393,7 @@ The fixture is explicitly synthetic and does not decide unresolved BP-02 geograp
 **Status: PROPOSED — awaiting explicit user approval.** No SW-DB-001 implementation, test result or Neon production write is claimed.
 
 
-## 14. SW-NAM-001 — universal naming registry, generator and enforcement (proposed)
+## 14. SW-NAM-001 — universal naming registry, generator and enforcement (approved; implementation in progress)
 
 Prepared package: [SW-NAM-001 — Universal Naming Registry, Generator and Enforcement](approval-packages/SW-NAM-001-universal-naming-registry-generator-and-enforcement.md).
 
@@ -403,4 +403,4 @@ The repository audit found existing geography version names and person name fiel
 
 **User-approved naming exception (2026-11-24):** the sovereign territory and playable city retain the exact canonical name `Saltwater` as two distinct entities with separate IDs. The registry must permit this exact pair only; name-only search returns both as ambiguous, and no third entity or alias may claim the name. This exception is documented in SW-UNS-001 and tested in SW-NAM-001.
 
-**Status: PROPOSED — awaiting explicit implementation-package approval.** The package reserves disposable proposal `0009_universal_name_registry.sql`; SW-DB-001's later world-provisioning proposal must be renumbered to the next available sequence after a fresh audit. No registry implementation, test result, canon import or Neon production write is claimed.
+**Status: APPROVED — implementation in progress (2026-11-24).** Disposable proposal `0009_universal_name_registry.sql`, Python naming/generation service, geography/person adapters, SQL/Python/concurrency/rollback/restore tests and CI integration are committed on `main`. The workflow has been updated; execution evidence is pending. BP-04 and operational entity types remain NOT CONNECTED. SW-DB-001 uses proposal `0010` after the reserved 0009 sequence. No Neon production write or canon seed has occurred.
