@@ -1,7 +1,10 @@
 """Read-only SW-GEO-V1 readiness audit; never approves or imports operational geography."""
 from __future__ import annotations
+
 import json
-from pathlib import Path\nfrom runtime.geography_identity_reconciliation import validate_identity_map
+from pathlib import Path
+
+from runtime.geography_identity_reconciliation import validate_identity_map
 
 EXPECTED = {"districts": 8, "neighbourhoods": 24, "roads": 42, "nodes": 367, "segments": 685, "routes": 5}
 
@@ -20,18 +23,23 @@ def _closed_ring(poly):
 
 
 def audit_geography(path: str | Path) -> dict:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    source_path = Path(path)
+    data = json.loads(source_path.read_text(encoding="utf-8"))
     districts, hoods = data.get("districts", []), data.get("neighbourhoods", [])
     roads = data.get("roads", [])
     network = data.get("network", {})
     nodes, segments, routes = (network.get(k, []) for k in ("nodes", "segments", "routes"))
-    register_path = Path(path).with_name("bp04-03-stage-a-source-spatial-reconciliation-v1.json")
+    register_path = source_path.with_name("bp04-03-stage-a-source-spatial-reconciliation-v1.json")
     register = json.loads(register_path.read_text(encoding="utf-8")) if register_path.exists() else {}
     mapping_records = register.get("records", [])
-    unresolved_count = sum(1 for row in mapping_records if row.get("mapping_status") == "UNRESOLVED" and row.get("spatial_id") is None)
+    identity_map_path = source_path.with_name("saltwater-geography-v1-identity-map.json")
+    identity_map = json.loads(identity_map_path.read_text(encoding="utf-8")) if identity_map_path.exists() else {}
+    identity_result = validate_identity_map(data, identity_map) if identity_map else {"resolved": 0, "unresolved": 100}
+    unresolved_count = identity_result["unresolved"]
     node_ids = {n.get("id") for n in nodes}
     segment_ids = {s.get("id") for s in segments}
     district_ids = {d.get("id") for d in districts}
+    road_ids = {r.get("id") for r in roads}
     checks = {
         "canonical_dataset_id": data.get("dataset_id") == "SW-GEO-V1",
         "not_operationally_approved": data.get("status") == "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
@@ -53,7 +61,7 @@ def audit_geography(path: str | Path) -> dict:
         "neighbourhood_parent_integrity": all(h.get("district_id") in district_ids for h in hoods),
         "neighbourhood_rings_closed": all(_closed_ring(h.get("geometry", {})) for h in hoods),
         "segment_endpoints_resolve": all(s.get("from_node_id") in node_ids and s.get("to_node_id") in node_ids for s in segments),
-        "segment_roads_resolve": all(s.get("road_id") in {r.get("id") for r in roads} for s in segments),
+        "segment_roads_resolve": all(s.get("road_id") in road_ids for s in segments),
         "road_segment_membership_resolves": all(set(r.get("segment_ids", [])).issubset(segment_ids) for r in roads),
         "route_nodes_resolve": all(set(r.get("node_ids", [])).issubset(node_ids) for r in routes),
         "route_segments_resolve": all(set(r.get("segment_ids", [])).issubset(segment_ids) for r in routes),
@@ -64,8 +72,8 @@ def audit_geography(path: str | Path) -> dict:
     }
     blockers = [
         "Database spatial_id surrogates are generated per database and must be looked up by stable entity_code; they are not portable source identifiers.",
-        "Parcel fabric and canonical numbered addresses do not exist in SW-GEO-V1.",
-        "Building footprints and entrances do not exist in SW-GEO-V1.",
+        "Parcel fabric and canonical numbered addresses do not yet exist in the approved operational BP-02 geography.",
+        "Building footprints and entrances do not yet exist in the approved operational BP-02 geography.",
         "SW-GEO-V1 is planning-grade and has not been approved for operational seeding.",
         "Graph structural checks do not constitute full geometry QA or operational routing acceptance.",
     ]
@@ -79,7 +87,7 @@ def audit_geography(path: str | Path) -> dict:
         "failed_checks": [name for name, passed in checks.items() if not passed],
         "unresolved_source_to_spatial_id_mappings": unresolved_count,
         "resolved_source_to_entity_code_mappings": identity_result["resolved"],
-        "database_spatial_id_policy": "Generated per database; resolve by entity_code at materialisation.",\n        "resolved_source_to_entity_code_mappings": identity_result["resolved"],\n        "database_spatial_id_policy": "Generated per database; resolve by entity_code at materialisation.",
+        "database_spatial_id_policy": "Generated per database; resolve by entity_code at materialisation.",
         "blockers": blockers,
         "operational_seed_eligible": False,
         "geometry_import_performed": False,
