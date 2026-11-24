@@ -174,6 +174,9 @@ def import_dossiers(conn, data, manifest_sha):
                 ).fetchone()
                 if left_hood is None or right_hood is None:
                     raise ValueError("Parcel adjacency neighbourhood identity is unresolved")
+                if left_id > right_id:
+                    left_id, right_id = right_id, left_id
+                    left_hood, right_hood = right_hood, left_hood
                 cur.execute(
                     """INSERT INTO sw_geo.parcel_adjacency_candidate
                     (left_parcel_spatial_id,left_version_no,right_parcel_spatial_id,right_version_no,
