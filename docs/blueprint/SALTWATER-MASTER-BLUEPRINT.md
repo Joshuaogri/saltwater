@@ -8,7 +8,7 @@
 - Fictional sovereign **city-state** named Saltwater; one city, one sovereign jurisdiction; no second playable city, territory or world expansion.
 - Population ceiling **10,000 living people total**, police included. Initial design: 9,000 residents + 500 police = 9,500; 500 capacity reserve. Entries/deaths/permanent exits reconcile atomically.
 - At least **10,000 businesses**; all entities have stable IDs and coherent premises, people, schedules and records.
-- **SW-UNS-001 Universal Naming Standard is CORE and mandatory across all 44 divisions and every named entity.** One shared registry enforces unique canonical names, normalization, collision prevention, permanent reservations and immutable name history. [SW-UNS-001](decisions/SW-UNS-001-universal-naming-standard.md).
+- **SW-UNS-001 Universal Naming Standard is CORE and mandatory across all 44 divisions and every named entity.** One shared registry enforces globally unique canonical names, normalization, collision prevention, permanent reservations and immutable name history. The sole user-approved shared-name exception permits the sovereign territory and playable city to both be named Saltwater while retaining separate IDs; no other entity may use that canonical name. [SW-UNS-001](decisions/SW-UNS-001-universal-naming-standard.md).
 - Police is the deepest simulation; all other systems function sufficiently to support and affect policing, without equal simulation depth.
 - One individual officer is played; text-first is permanent and complete. Maps/graphics are optional.
 - No simulation time advances while the player is absent.
