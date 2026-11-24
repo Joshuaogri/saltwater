@@ -125,7 +125,7 @@ jobs:
       - name: Measure Stage E relation storage and representative lookups
         run: |
           psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY total_bytes DESC;"
-          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT property_id FROM sw_property.property_candidate_site WHERE candidate_parcel_id='BPC-WESTGATEGARDENS-001-01';"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT property_id FROM sw_property.property_candidate_site WHERE candidate_parcel_id=(SELECT candidate_parcel_id FROM sw_property.property_candidate_site LIMIT 1);"
           psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT premises_id FROM sw_property.premises WHERE building_id=(SELECT building_id FROM sw_property.building ORDER BY building_id LIMIT 1);"
           psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT unit_id FROM sw_property.unit_space WHERE premises_id=(SELECT premises_id FROM sw_property.premises ORDER BY premises_id LIMIT 1);"
       - name: Verify backup and restore preserve the asset inventory
@@ -136,7 +136,7 @@ jobs:
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.property_asset;')" = "420"
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.unit_space;')" = "15199"
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.asset_geometry_candidate;')" = "1572"
-          test "$(psql -d saltwater_restore -Atc 'SELECT encode(manifest_sha256,\x27hex\x27) FROM sw_property.asset_generation_batch LIMIT 1;')" = "$(psql -Atc 'SELECT encode(manifest_sha256,\x27hex\x27) FROM sw_property.asset_generation_batch LIMIT 1;')"
+          test "$(psql -d saltwater_restore -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")" = "$(psql -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")"
           echo "BP04_03_STAGE_E_BACKUP_RESTORE_PASS"
       - name: Preserve complete Stage E asset manifest
         uses: actions/upload-artifact@v4
