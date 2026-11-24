@@ -48,12 +48,26 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         self.assertEqual(first[0], ("help", "player.help.v1"))
         self.assertEqual(first[-1], ("where", "player.where.v1"))
 
-    def test_classification_distinguishes_reads_navigation_and_mutations(self):
-        self.assertEqual(COMMAND_BY_TOKEN["status"].classification, CommandClass.READ_ONLY)
-        self.assertEqual(COMMAND_BY_TOKEN["workspace"].classification, CommandClass.PRESENTATION_STATE)
-        self.assertEqual(COMMAND_BY_TOKEN["recruit"].classification, CommandClass.DOMAIN_MUTATION)
-        self.assertEqual(COMMAND_BY_TOKEN["start"].classification, CommandClass.DOMAIN_MUTATION)
-        self.assertFalse(COMMAND_BY_TOKEN["recruit"].may_advance_time)
+    def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
+        expected = {
+            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where"},
+            CommandClass.PRESENTATION_STATE: {"home", "workspace", "back"},
+            CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit"},
+        }
+        for classification, tokens in expected.items():
+            actual = {
+                item.token for item in COMMAND_CATALOGUE
+                if item.classification == classification
+            }
+            self.assertEqual(actual, tokens)
+        self.assertTrue(all(not item.may_advance_time for item in COMMAND_CATALOGUE))
+        self.assertTrue(all(not item.confirmation_required for item in COMMAND_CATALOGUE))
+
+    def test_international_input_is_preserved_without_guessing(self):
+        result = parse_player_command("workspace Łódź")
+        self.assertFalse(result.ok)
+        self.assertEqual(result.error.code, ParseErrorCode.INVALID_VALUE)
+        self.assertIn("Łódź", result.error.message)
 
     def test_exact_forms_parse_and_preserve_workspace_identifier(self):
         for token in COMMAND_BY_TOKEN:
