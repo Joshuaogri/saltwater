@@ -49,7 +49,7 @@
 | BP-36 | Relationships and Social Context | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-36](divisions/BP-36-RELATIONSHIPS-AND-SOCIAL-CONTEXT.md) |
 | BP-37 | Time and Scheduling | DESIGNED_DRAFT | IMPLEMENTED (BP37-01 slice) | TESTED (BP37-01) | VERIFIED (BP37-01) | [BP-37](divisions/BP-37-TIME-AND-SCHEDULING.md) |
 | BP-38 | Records and Databases | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-38](divisions/BP-38-RECORDS-AND-DATABASES.md) |
-| BP-39 | Persistence and Recovery | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-39](divisions/BP-39-PERSISTENCE-AND-RECOVERY.md) |
+| BP-39 | Persistence and Recovery | DESIGNED_DRAFT | IMPLEMENTED (BP39-01 slice) | TESTED (BP39-01) | VERIFIED (BP39-01 slice) | [BP-39](divisions/BP-39-PERSISTENCE-AND-RECOVERY.md) |
 | BP-40 | Interface | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-40](divisions/BP-40-INTERFACE.md) |
 | BP-41 | Notifications and Reporting | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-41](divisions/BP-41-NOTIFICATIONS-AND-REPORTING.md) |
 | BP-42 | Security and Permissions | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-42](divisions/BP-42-SECURITY-AND-PERMISSIONS.md) |
@@ -157,3 +157,6 @@ Statuses are independent across specification, implementation, testing and verif
 70. Dependency-led implementation sequence and dependency plan created at `docs/implementation/IMPLEMENTATION-SEQUENCE-AND-DEPENDENCY-PLAN.md`. It records the verified platform baseline, current implementation gaps, readiness gates (narrative quality, storage capacity, runtime integration and division approval), staged BP-01–BP-44 implementation dependencies, first playable vertical slice and per-stage exit criteria. Planning only: no division approval, production seed, Neon migration or other Neon write is authorised.
 
 71. Compact-storage design standard added at `docs/storage/COMPACT-STORAGE-DESIGN.md` and linked from BP-38 and the implementation plan. Storage policy JSON advanced to v2 with the verified 2026-11-23 direct SQL baseline; the 2026-11-22 provider logical-size metric is retained separately as historical and explicitly non-comparable. Design/documentation only; no Neon schema or data write.
+
+
+72. BP39-01 approved and implemented as a bounded slice (2026-11-24): repeatable-read checkpoint manifests, separate restore gates, controlled abandoned BP35 claim reconciliation, owner-confirmed quarantine resolution, Python adapter and disposable PostgreSQL acceptance/restore CI. Verified at commit `d0175b2933acd14dc4abb3d6a89838e83e516f2e`; [run 45376633160](https://github.com/Joshuaogri/saltwater/actions/runs/45376633160) and [run 45376633013](https://github.com/Joshuaogri/saltwater/actions/runs/45376633013) passed. Full BP-39 remains DESIGNED_DRAFT; the restore report intentionally retains unexecuted business-minimum, player-absence-freeze and permission/hidden-truth gates. No Neon production operation or restore was performed.
