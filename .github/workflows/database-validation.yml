@@ -6,6 +6,7 @@ on:
     paths:
       - "db/migrations/**"
       - "db/proposals/0002_runtime_city_population.sql"
+      - "db/proposals/0003_legacy_checksum_adoption.sql"
       - "scripts/migrate.py"
       - "scripts/verify_legacy_baseline.py"
       - "tests/database/**"
@@ -126,6 +127,21 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -f db/proposals/0002_runtime_city_population.sql
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -f tests/pkg001/database_acceptance.sql
+      - name: Test guarded legacy checksum adoption in disposable database only
+        env:
+          PGPASSWORD: test-only-password
+        run: |
+          createdb -h localhost -U saltwater saltwater_legacy_adoption
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_legacy_adoption -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_legacy_adoption -f db/proposals/0003_legacy_checksum_adoption.sql
+          adopted="$(psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_legacy_adoption -Atc "SELECT checksum_sha256 FROM sw_ops.schema_migration WHERE version = 1 AND migration_name = 'foundation'")"
+          test "$adopted" = "d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8"
+          if psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_legacy_adoption -f db/proposals/0003_legacy_checksum_adoption.sql; then
+            echo "ERROR: repeated checksum adoption did not fail closed"
+            exit 1
+          fi
+          unchanged="$(psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_legacy_adoption -Atc "SELECT checksum_sha256 FROM sw_ops.schema_migration WHERE version = 1 AND migration_name = 'foundation'")"
+          test "$unchanged" = "$adopted"
       - name: Replay exact 0001 source into an isolated baseline database
         env:
           PGPASSWORD: test-only-password
