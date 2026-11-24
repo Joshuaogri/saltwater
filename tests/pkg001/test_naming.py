@@ -1,8 +1,7 @@
 import unittest
 
 from runtime.naming import (
-    GeneratorConfig, NameCollision, NameRegistry, NameReviewRequired,
-    NamingError, generate_candidates, normalize_name,
+    NameCollision, NameRegistry, NameReviewRequired, NamingError, normalize_name,
 )
 
 
@@ -94,6 +93,9 @@ class NamingRegistryTests(unittest.TestCase):
         )
 
 
+from runtime.name_generation import GeneratorConfig, generate_batch, generate_candidates
+
+
 class NameGenerationTests(unittest.TestCase):
     def setUp(self):
         self.config = GeneratorConfig(
@@ -117,6 +119,14 @@ class NameGenerationTests(unittest.TestCase):
     def test_business_generation_is_deterministic_and_unique(self):
         values = generate_candidates("business", 12, seed=9, config=self.config)
         self.assertEqual(len(values), len({normalize_name(x) for x in values}))
+
+    def test_batch_records_version_seed_and_reproducible_manifest(self):
+        a = generate_batch("person", 8, seed=71, config=self.config)
+        b = generate_batch("person", 8, seed=71, config=self.config)
+        self.assertEqual(a, b)
+        self.assertEqual(a.generator_version, 1)
+        self.assertEqual(a.config_version, "1")
+        self.assertEqual(len(a.manifest_sha256), 64)
 
     def test_generator_refuses_exhausted_vocabulary_instead_of_adding_numbers(self):
         tiny = GeneratorConfig(("A",), ("B",), ("C",), ("Only",), ("Only",), ("Works",))
