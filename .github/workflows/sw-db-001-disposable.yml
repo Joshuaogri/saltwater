@@ -1,0 +1,164 @@
+name: SW-DB-001 disposable world provisioning and capacity proof
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "db/proposals/0010_canonical_world_provisioning.sql"
+      - "tests/pkg001/sw_db_001_*.sql"
+      - "tests/pkg001/test_population_concurrency.py"
+      - "scripts/verify_sw_db_001_contract.py"
+      - "tests/pkg001/test_sw_db_001_contract.py"
+      - ".github/workflows/sw-db-001-disposable.yml"
+      - "docs/implementation/approval-packages/SW-DB-001-canonical-world-provisioning-and-capacity-proof.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  python-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run runtime kernel tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
+      - name: Run player command interface tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_interface.py" -v
+      - name: Run canonical player command catalogue tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_commands.py" -v
+      - name: Run player workspace tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_workspace.py" -v
+      - name: Run recruitment adapter tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_recruitment.py" -v
+      - name: Run naming service and generator tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_naming.py" -v
+      - name: Run naming inventory tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_naming_inventory.py" -v
+      - name: Run PostgreSQL naming adapter contract tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_naming.py" -v
+      - name: Run player activation tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_activation.py" -v
+      - name: Run player application tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_application.py" -v
+      - name: Run authenticated player runtime tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_command_runtime.py" -v
+      - name: Run trusted host tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_host_adapter.py" -v
+      - name: Run ChatGPT tool handler tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_chatgpt_tool_handler.py" -v
+      - name: Run scheduler tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_scheduling.py" -v
+      - name: Run event engine tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_event_engine.py" -v
+      - name: Run recovery tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_recovery.py" -v
+      - name: Run authorization and hidden-truth tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
+      - name: Run SW-DB-001 contract tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_sw_db_001_contract.py" -v
+      - name: Run migration runner unit tests
+        run: python -m unittest discover -s tests/database -v
+
+  disposable-postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL Python driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Audit disposable proposal sequence
+        run: python scripts/verify_sw_db_001_contract.py
+      - name: Apply existing disposable platform proposals 0002-0009
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0005_player_identity_activation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0006_bp37_tick_scheduling.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+      - name: Measure proposal 0010 schema-only growth
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_canonical_world_provisioning.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "schema_database_bytes_before=$before"
+          echo "schema_database_bytes_after=$after"
+          echo "schema_incremental_bytes=$((after-before))"
+          echo "schema_incremental_mb=$(awk -v d="$((after-before))" 'BEGIN {printf "%.6f",d/1000000}')"
+          echo "schema_incremental_mib=$(awk -v d="$((after-before))" 'BEGIN {printf "%.6f",d/1048576}')"
+          echo "proposal_source_bytes=$(wc -c < db/proposals/0010_canonical_world_provisioning.sql)"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
+      - name: Provision deterministic opening population and business fixture
+        run: |
+          start=$(date +%s%N)
+          psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
+          end=$(date +%s%N)
+          echo "fixture_elapsed_ms=$(((end-start)/1000000))"
+          echo "fixture_source_bytes=$(wc -c < tests/pkg001/sw_db_001_world_fixture.sql)"
+          echo "fixture_manifest_sha256=9b8b4603031aa3516b6c18ae818b38ff6bbfa32a563da89bd70ab9b3537de348"
+      - name: Measure full-scale fixture storage and per-domain relation bytes
+        run: |
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "fixture_database_bytes_after=$after"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_aux_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_business','sw_names','sw_ops','sw_test') ORDER BY 5 DESC;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS people, (SELECT living_included FROM sw_people.population_counter WHERE singleton=1) AS population_counter, count(*) FILTER (WHERE c.cohort='RESIDENT') AS residents, count(*) FILTER (WHERE c.cohort='POLICE_SUBSET') AS police_subset FROM sw_test.person_cohort c;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS businesses, count(DISTINCT r.normalized_key) AS distinct_registered_names FROM sw_business.business b JOIN sw_names.name_reservation r ON r.entity_type='BUSINESS' AND r.entity_id=b.business_id;"
+      - name: Run SW-DB-001 opening, lifecycle, identity and rollback acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/sw_db_001_acceptance.sql
+      - name: Verify same-manifest provisioning is idempotent
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "idempotent_repeat_database_bytes_before=$before"
+          echo "idempotent_repeat_database_bytes_after=$after"
+          echo "idempotent_repeat_storage_delta_bytes=$((after-before))"
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/sw_db_001_acceptance.sql
+      - name: Measure population, person, business and reconciliation query latency
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT living_included,10000-living_included AS headroom FROM sw_people.population_counter WHERE singleton=1;"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT person_id,given_name,family_name FROM sw_people.person WHERE person_id=(SELECT min(person_id) FROM sw_people.person);"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT business_id FROM sw_business.business WHERE business_code='SWB-FX-01000';"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT count(*) FILTER (WHERE cohort='RESIDENT'),count(*) FILTER (WHERE cohort='POLICE_SUBSET'),count(DISTINCT person_id) FROM sw_test.person_cohort;"
+      - name: Backup and restore the opening provisioned world
+        run: |
+          cid=$(docker ps -q --filter ancestor=postgres:16 | head -n1)
+          test -n "$cid"
+          docker exec "$cid" pg_dump -U "$PGUSER" -d "$PGDATABASE" -Fc -f /tmp/sw-db-001.dump
+          docker exec "$cid" createdb -U "$PGUSER" saltwater_restore
+          docker exec "$cid" pg_restore -U "$PGUSER" --exit-on-error --no-owner -d saltwater_restore /tmp/sw-db-001.dump
+          docker exec -i "$cid" psql -U "$PGUSER" -d saltwater_restore -v ON_ERROR_STOP=1 < tests/pkg001/sw_db_001_backup_restore_assert.sql
+      - name: Test the shared population ceiling at 9,999 and concurrent final slot
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_cap_fixture.sql
+          python -m unittest discover -s tests/pkg001 -p "test_population_concurrency.py" -v
+          psql -v ON_ERROR_STOP=1 -c "SELECT living_included=10000 AS exactly_at_cap,world_tick=0 AS no_clock_advance FROM sw_people.population_counter CROSS JOIN sw_runtime.state WHERE population_counter.singleton=1 AND state.singleton=1;"
+      - name: Final SW-DB-001 reconciliation
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM sw_people.person) AS people, (SELECT living_included FROM sw_people.population_counter WHERE singleton=1) AS counted_population, (SELECT count(*) FROM sw_business.business) AS businesses, (SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS') AS business_names, (SELECT world_tick FROM sw_runtime.state WHERE singleton=1) AS world_tick;"
