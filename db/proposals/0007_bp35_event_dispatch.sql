@@ -305,6 +305,9 @@ BEGIN
   IF NOT FOUND OR runtime_row.state<>2 OR NOT runtime_row.player_present THEN
     RAISE EXCEPTION 'event dispatch is frozen outside running player-present state';
   END IF;
+  IF p_success IS NULL OR p_retryable IS NULL THEN
+    RAISE EXCEPTION 'dispatch outcome flags are required';
+  END IF;
   SELECT * INTO selected FROM sw_runtime.event_work WHERE event_id=p_event_id FOR UPDATE;
   IF NOT FOUND OR selected.status<>'claimed'
      OR selected.claim_token IS DISTINCT FROM p_claim_token THEN
