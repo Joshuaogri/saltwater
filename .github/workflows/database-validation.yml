@@ -85,6 +85,21 @@ jobs:
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \
             -c "ALTER TABLE sw_core.world_config DROP COLUMN bp38_drift_probe"
           python scripts/migrate.py
+      - name: Prove legacy NULL checksums are refused
+        env:
+          DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_test
+          PGPASSWORD: test-only-password
+        run: |
+          foundation_checksum="$(sha256sum db/migrations/0001_foundation.sql | awk '{print $1}')"
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -c "ALTER TABLE sw_ops.schema_migration ALTER COLUMN checksum_sha256 DROP NOT NULL"
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -c "UPDATE sw_ops.schema_migration SET checksum_sha256 = NULL WHERE version = 1"
+          if python scripts/migrate.py; then
+            echo "ERROR: legacy NULL checksum was not rejected"
+            exit 1
+          fi
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -c "UPDATE sw_ops.schema_migration SET checksum_sha256 = '$foundation_checksum' WHERE version = 1"
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -c "ALTER TABLE sw_ops.schema_migration ALTER COLUMN checksum_sha256 SET NOT NULL"
+          python scripts/migrate.py
       - name: Apply PKG-001 proposal to disposable PostgreSQL only
         env:
           PGPASSWORD: test-only-password
