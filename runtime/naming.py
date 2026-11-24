@@ -14,6 +14,7 @@ from typing import Iterable, Mapping
 
 
 NORMALIZER_VERSION = 1
+GENERATOR_VERSION = 1
 ROAD_SUFFIXES = {
     "rd": "road", "st": "street", "ave": "avenue", "av": "avenue",
     "cres": "crescent", "cl": "close", "ln": "lane", "dr": "drive",
@@ -182,6 +183,17 @@ class GeneratorConfig:
     place_roots: tuple[str, ...]
     business_roots: tuple[str, ...]
     business_forms: tuple[str, ...] = ("Works", "House", "Trading", "Services", "Group")
+    config_version: str = "1"
+
+
+@dataclass(frozen=True, slots=True)
+class GeneratedNameBatch:
+    domain: str
+    generator_version: int
+    config_version: str
+    seed: int
+    candidates: tuple[str, ...]
+    manifest_sha256: str
 
 
 def generate_candidates(domain: str, count: int, *, seed: int, config: GeneratorConfig) -> tuple[str, ...]:
@@ -219,3 +231,29 @@ def generate_candidates(domain: str, count: int, *, seed: int, config: Generator
     if len(output) != count:
         raise NamingError(f"vocabulary produced only {len(output)} unique candidates for {count} requested")
     return tuple(output)
+
+
+def generate_batch(domain: str, count: int, *, seed: int, config: GeneratorConfig) -> GeneratedNameBatch:
+    """Return deterministic candidates with a compact reproducibility manifest."""
+    import hashlib
+    import json
+
+    candidates = generate_candidates(domain, count, seed=seed, config=config)
+    manifest = {
+        "domain": domain.strip().casefold(),
+        "generator_version": GENERATOR_VERSION,
+        "config_version": config.config_version,
+        "seed": seed,
+        "candidates": candidates,
+    }
+    digest = hashlib.sha256(
+        json.dumps(manifest, ensure_ascii=False, separators=(",", ":"), sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    return GeneratedNameBatch(
+        domain=manifest["domain"],
+        generator_version=GENERATOR_VERSION,
+        config_version=config.config_version,
+        seed=seed,
+        candidates=candidates,
+        manifest_sha256=digest,
+    )
