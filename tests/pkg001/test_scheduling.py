@@ -1,7 +1,6 @@
 """BP37-01 deterministic clock scheduling tests."""
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from uuid import uuid4
 
 from runtime.kernel import InMemoryRuntimeStore, Lifecycle, RuntimeKernel
 from runtime.scheduling import (
