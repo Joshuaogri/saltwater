@@ -18,7 +18,7 @@ from runtime.player_host_adapter import (
 
 _ALLOWED_COMMANDS = frozenset({
     "help", "status", "profile", "recruit", "career",
-    "start", "pause", "resume", "quit",
+    "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
 })
 _ALLOWED_KEYS = frozenset({"command_text", "request_reference"})
 _MAX_COMMAND_LENGTH = 32
@@ -39,9 +39,21 @@ def _parse_arguments(tool_arguments: Any) -> dict[str, Any] | None:
     if "command_text" not in tool_arguments:
         return None
     command = tool_arguments["command_text"]
+    allowed_workspace_ids = {
+        "home", "operations", "cases", "people", "evidence-scenes",
+        "department", "legal-custody", "resources-finance",
+        "reports-notifications", "system-status",
+    }
+    valid_workspace = False
+    if isinstance(command, str):
+        parts = command.split()
+        valid_workspace = (
+            len(parts) == 2 and parts[0] == "workspace"
+            and parts[1] in allowed_workspace_ids
+        )
     if (not isinstance(command, str) or not command
             or len(command) > _MAX_COMMAND_LENGTH
-            or command not in _ALLOWED_COMMANDS):
+            or not (command in _ALLOWED_COMMANDS or valid_workspace)):
         return None
     reference = tool_arguments.get("request_reference")
     if reference is not None and (
