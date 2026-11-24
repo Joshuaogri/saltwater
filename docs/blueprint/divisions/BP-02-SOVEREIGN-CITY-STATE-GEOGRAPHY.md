@@ -509,7 +509,7 @@ No additional district, neighbourhood, city, territory or external playable area
 
 ## 19. Completion statement
 
-**Design status:** `DESIGNED_DRAFT`; complete architecture and domain contract drafted, with material city-map canon decisions outstanding.  
+**Design status:** `DESIGNED_DRAFT`; foundational geography canon is adopted by SW-CANON-001. Detailed map geometry, roads, parcels, addresses and routing remain to be implemented and validated.  
 **Implementation status:** `NOT_STARTED` unless separately evidenced.  
 **Test status:** `NOT_STARTED`.  
 **Verification status:** `NOT_STARTED`.
