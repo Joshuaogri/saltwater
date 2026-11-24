@@ -3,7 +3,8 @@
 BEGIN;
 
 CREATE TABLE sw_property.property_profile (
-  property_id bigint PRIMARY KEY REFERENCES sw_property.property_asset(property_id),
+  property_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  property_id bigint NOT NULL REFERENCES sw_property.property_asset(property_id),
   property_class text NOT NULL CHECK (property_class IN ('residential','mixed_use','commercial','industrial','civic','institutional','transport','utility','open_space','special_purpose','unknown')),
   primary_use text NOT NULL CHECK (length(btrim(primary_use)) BETWEEN 1 AND 80),
   secondary_uses text[] NOT NULL DEFAULT '{}',
@@ -16,10 +17,12 @@ CREATE TABLE sw_property.property_profile (
   utility_availability text NOT NULL CHECK (utility_availability IN ('full','partial','none','unknown','not_assessed')),
   source_ref text NOT NULL, actor_ref text NOT NULL, confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0), recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240)
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  UNIQUE(property_id,effective_from_tick)
 );
 CREATE TABLE sw_property.building_profile (
-  building_id bigint PRIMARY KEY REFERENCES sw_property.building(building_id),
+  building_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  building_id bigint NOT NULL REFERENCES sw_property.building(building_id),
   building_use text NOT NULL, building_form text NOT NULL CHECK (building_form IN ('detached','semi_detached','terraced','tower','slab','courtyard','shed','pavilion','underground','other','unknown')),
   structure_class text NOT NULL CHECK (structure_class IN ('low_rise','mid_rise','high_rise','industrial_span','lightweight','civil_engineering','other','unknown')),
   construction_system text NOT NULL CHECK (construction_system IN ('reinforced_concrete','steel_frame','masonry','timber','composite','modular','earth','other','unknown')),
@@ -34,10 +37,12 @@ CREATE TABLE sw_property.building_profile (
   heritage_status text NOT NULL CHECK (heritage_status IN ('designated','candidate','not_designated','unknown','not_assessed')),
   source_ref text NOT NULL, actor_ref text NOT NULL, confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0), recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240)
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  UNIQUE(building_id,effective_from_tick)
 );
 CREATE TABLE sw_property.premises_profile (
-  premises_id bigint PRIMARY KEY REFERENCES sw_property.premises(premises_id),
+  premises_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  premises_id bigint NOT NULL REFERENCES sw_property.premises(premises_id),
   premises_type text NOT NULL CHECK (premises_type IN ('shop','office','suite','department','warehouse','industrial_bay','civic_room','plant_space','residential_common','other','unknown')),
   primary_function text NOT NULL, floor_level text, orientation text,
   fitout_standard text NOT NULL CHECK (fitout_standard IN ('basic','standard','enhanced','specialist','shell','unknown','not_assessed')),
@@ -46,10 +51,12 @@ CREATE TABLE sw_property.premises_profile (
   accessibility_state text NOT NULL CHECK (accessibility_state IN ('accessible','partially_accessible','not_accessible','unknown','not_assessed')),
   source_ref text NOT NULL, actor_ref text NOT NULL, confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0), recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240)
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  UNIQUE(premises_id,effective_from_tick)
 );
 CREATE TABLE sw_property.unit_profile (
-  unit_id bigint PRIMARY KEY REFERENCES sw_property.unit_space(unit_id),
+  unit_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  unit_id bigint NOT NULL REFERENCES sw_property.unit_space(unit_id),
   unit_class text NOT NULL CHECK (unit_class IN ('dwelling','apartment','office','shop','kiosk','stall','room','storage','workshop','parking_bay','berth','plant_space','other','unknown')),
   local_locator text, floor_level text,
   room_count smallint CHECK (room_count>=0),
@@ -59,10 +66,12 @@ CREATE TABLE sw_property.unit_profile (
   accessibility_state text NOT NULL CHECK (accessibility_state IN ('accessible','partially_accessible','not_accessible','unknown','not_assessed')),
   source_ref text NOT NULL, actor_ref text NOT NULL, confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0), recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240)
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  UNIQUE(unit_id,effective_from_tick)
 );
 CREATE TABLE sw_property.access_point_profile (
-  access_point_id bigint PRIMARY KEY REFERENCES sw_property.access_point(access_point_id),
+  access_point_profile_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  access_point_id bigint NOT NULL REFERENCES sw_property.access_point(access_point_id),
   access_type text NOT NULL CHECK (access_type IN ('pedestrian_entrance','pedestrian_exit','vehicle_entrance','vehicle_exit','combined_gate','loading_bay','service_entrance','emergency_exit','controlled_passage','lobby_threshold','roof_access','plant_access','other','unknown')),
   access_modes text[] NOT NULL DEFAULT '{}',
   directionality text NOT NULL CHECK (directionality IN ('inbound','outbound','bidirectional','emergency_only','restricted','unknown')),
@@ -73,7 +82,8 @@ CREATE TABLE sw_property.access_point_profile (
   loading_capable boolean NOT NULL,
   source_ref text NOT NULL, actor_ref text NOT NULL, confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0), recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240)
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  UNIQUE(access_point_id,effective_from_tick)
 );
 
 -- Typed, provenance-bearing measurements. A missing measurement is not zero.
