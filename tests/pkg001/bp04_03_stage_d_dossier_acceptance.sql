@@ -46,7 +46,7 @@ BEGIN
     (parcel_spatial_id,version_no,frontage_candidate_id,road_segment_ids,road_id,road_name,road_class,contact_length_m,
      candidate_point_x_m,candidate_point_y_m,review_status,source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
   VALUES
-    (v_a,1,'PFC-TEST-A-01',ARRAY['SWS-TEST-01'],'SWR-TEST-01','Aster Road','local_street',10,5,0,
+    (v_a,1,'PFC-TEST-A-01',ARRAY['SWS-TEST-01'],'SWR-TEST-01','Aster Road','local_street',10,1,5,0,
      'UNREVIEWED_GEOMETRIC_CONTACT',v_manifest,'bp04-03-stage-d-test','test-runner','estimated','synthetic frontage');
 
   INSERT INTO sw_geo.parcel_access_location_candidate
