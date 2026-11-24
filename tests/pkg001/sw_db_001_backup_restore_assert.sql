@@ -29,7 +29,7 @@ BEGIN
     RAISE EXCEPTION 'restored business name registry mismatch';
   END IF;
   IF (SELECT encode(manifest_sha256,'hex') FROM sw_ops.world_provisioning_batch WHERE batch_id=v_batch)
-     <>'9b8b4603031aa3516b6c18ae818b38ff6bbfa32a563da89bd70ab9b3537de348' THEN
+     <>'0a5f0c1a1f692c33e392ab18d9f346b5d966022525c1f1d95b9e8e76b9e3d798' THEN
     RAISE EXCEPTION 'restored manifest checksum mismatch';
   END IF;
   IF EXISTS (SELECT 1 FROM sw_business.business
