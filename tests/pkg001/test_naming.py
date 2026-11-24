@@ -75,6 +75,8 @@ class NamingRegistryTests(unittest.TestCase):
     def test_only_the_exact_two_root_entities_may_share_saltwater(self):
         self.registry.reserve("geography_sovereign_root", "saltwater-state", "Saltwater")
         self.registry.reserve("geography_playable_city", "saltwater-city", "Saltwater")
+        with self.assertRaises(NameCollision):
+            self.registry.reserve("geography_sovereign_root", "saltwater-state", "SALTWATER")
         for entity_type, entity_id, name, form in (
             ("person", "p1", "Saltwater", "canonical"),
             ("business", "b1", "Saltwater", "canonical"),
