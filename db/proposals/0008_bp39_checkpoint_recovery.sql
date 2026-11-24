@@ -243,6 +243,30 @@ BEGIN
 END
 $bp39$;
 
+CREATE FUNCTION sw_runtime.count_canonical_businesses() RETURNS bigint
+LANGUAGE plpgsql STABLE AS $bp39$
+DECLARE r record; total bigint:=0; tables_found integer:=0; n bigint;
+BEGIN
+  FOR r IN SELECT table_schema,table_name FROM information_schema.tables
+    WHERE table_schema NOT IN ('pg_catalog','information_schema') AND table_name='business'
+  LOOP
+    tables_found:=tables_found+1;
+    EXECUTE format('SELECT count(*) FROM %I.%I',r.table_schema,r.table_name) INTO n;
+    total:=total+n;
+  END LOOP;
+  IF tables_found=0 THEN RETURN NULL; END IF;
+  RETURN total;
+END
+$bp39$;
+
+CREATE FUNCTION sw_runtime.reject_recovery_audit_mutation() RETURNS trigger
+LANGUAGE plpgsql AS $bp39$
+BEGIN RAISE EXCEPTION 'event claim recovery audit is append-only'; END
+$bp39$;
+CREATE TRIGGER event_claim_recovery_immutable
+BEFORE UPDATE OR DELETE ON sw_runtime.event_claim_recovery
+FOR EACH ROW EXECUTE FUNCTION sw_runtime.reject_recovery_audit_mutation();
+
 CREATE FUNCTION sw_runtime.capture_checkpoint_manifest(
   p_source_environment text,p_source_project text,p_source_branch text,
   p_source_database text,p_actor_ref text,p_approval_ref text
@@ -280,20 +304,7 @@ BEGIN
   SELECT COALESCE(jsonb_object_agg(status,n),'{}'::jsonb) INTO sched_counts
     FROM (SELECT status,count(*) n FROM sw_runtime.schedule GROUP BY status) q;
   SELECT living_included INTO people_total FROM sw_people.population_counter WHERE singleton=1;
-  SELECT count(*) INTO business_total
-    FROM information_schema.tables
-    WHERE table_schema NOT IN ('pg_catalog','information_schema')
-      AND table_name='business';
-  IF business_total=0 THEN business_total:=NULL; END IF;
-  IF business_total IS NOT NULL THEN
-    SELECT COALESCE(sum(row_count),0) INTO business_total
-    FROM (
-      SELECT (xpath('/row/c/text()',query_to_xml(
-        format('SELECT count(*) AS c FROM %I.%I',table_schema,table_name),false,true,'')))[1]::text::bigint row_count
-      FROM information_schema.tables
-      WHERE table_schema NOT IN ('pg_catalog','information_schema') AND table_name='business'
-    ) b;
-  END IF;
+  business_total:=sw_runtime.count_canonical_businesses();
   digest_value:=md5(concat_ws('|',new_id::text,1,p_source_environment,p_source_project,
     p_source_branch,p_source_database,schema_mark,state_row.state,state_row.player_present,
     state_row.world_tick,state_row.last_event_id,event_total,event_watermark,
@@ -325,7 +336,7 @@ DECLARE m sw_runtime.checkpoint_manifest%ROWTYPE;
   work_now jsonb;
   sched_now jsonb;
   people_now integer;
-  business_tables integer;
+  business_total bigint;
   gates jsonb;
   ok boolean;
 BEGIN
@@ -339,8 +350,7 @@ BEGIN
   SELECT COALESCE(jsonb_object_agg(status,n),'{}'::jsonb) INTO sched_now
     FROM (SELECT status,count(*) n FROM sw_runtime.schedule GROUP BY status) q;
   SELECT living_included INTO people_now FROM sw_people.population_counter WHERE singleton=1;
-  SELECT count(*) INTO business_tables FROM information_schema.tables
-    WHERE table_schema NOT IN ('pg_catalog','information_schema') AND table_name='business';
+  business_total:=sw_runtime.count_canonical_businesses();
   gates:=jsonb_build_object(
     'schema_watermark',jsonb_build_object('status',CASE WHEN schema_now=m.schema_watermark THEN 'pass' ELSE 'fail' END),
     'runtime_and_tick',jsonb_build_object('status',CASE WHEN s.state=m.runtime_state AND s.player_present=m.player_present AND s.world_tick=m.world_tick THEN 'pass' ELSE 'fail' END),
@@ -348,9 +358,10 @@ BEGIN
     'event_work',jsonb_build_object('status',CASE WHEN work_now=m.event_work_counts THEN 'pass' ELSE 'fail' END),
     'schedules',jsonb_build_object('status',CASE WHEN sched_now=m.schedule_counts THEN 'pass' ELSE 'fail' END),
     'population_cap',jsonb_build_object('status',CASE WHEN people_now=m.population_count AND people_now<=10000 THEN 'pass' ELSE 'fail' END),
-    'business_minimum',jsonb_build_object('status',CASE WHEN business_tables>0 AND m.business_count>=10000 THEN 'pass' ELSE 'not_executed' END),
+    'business_minimum',jsonb_build_object('status',CASE WHEN business_total IS NULL THEN 'not_executed' WHEN business_total>=10000 AND business_total=m.business_count THEN 'pass' ELSE 'fail' END),
     'manifest_identity',jsonb_build_object('status',CASE WHEN m.manifest_digest=md5(concat_ws('|',m.checkpoint_id::text,m.format_version,m.source_environment,m.source_project,m.source_branch,m.source_database,m.schema_watermark,m.runtime_state,m.player_present,m.world_tick,m.last_event_id,m.event_count,m.event_work_counts::text,m.schedule_counts::text,m.population_count,m.business_count,'repeatable_read',m.actor_ref,m.approval_ref)) THEN 'pass' ELSE 'fail' END),
-    'append_only_history',jsonb_build_object('status','pass'),
+    'structural_integrity',jsonb_build_object('status',CASE WHEN NOT EXISTS(SELECT 1 FROM pg_constraint WHERE contype='f' AND NOT convalidated) THEN 'pass' ELSE 'fail' END),
+    'append_only_history',jsonb_build_object('status',CASE WHEN EXISTS(SELECT 1 FROM pg_trigger WHERE tgname='event_work_attempt_immutable' AND NOT tgisinternal) AND EXISTS(SELECT 1 FROM pg_trigger WHERE tgname='event_claim_recovery_immutable' AND NOT tgisinternal) THEN 'pass' ELSE 'fail' END),
     'permission_hidden_truth',jsonb_build_object('status','not_executed'),
     'player_absence_freeze',jsonb_build_object('status',CASE WHEN NOT s.player_present OR s.state<>2 THEN 'pass' ELSE 'not_executed' END),
     'evidence_identity',jsonb_build_object('status',CASE WHEN m.actor_ref<>'' AND m.approval_ref<>'' AND m.source_environment<>'' THEN 'pass' ELSE 'fail' END)
@@ -363,6 +374,7 @@ END
 $bp39$;
 
 REVOKE ALL ON sw_runtime.checkpoint_manifest,sw_runtime.event_claim_recovery FROM PUBLIC;
+REVOKE ALL ON FUNCTION sw_runtime.count_canonical_businesses() FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_runtime.capture_checkpoint_manifest(text,text,text,text,text,text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_runtime.validate_checkpoint_manifest(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_runtime.begin_event_claim_recovery(text,text) FROM PUBLIC;
