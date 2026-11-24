@@ -7,9 +7,43 @@ SET LOCAL lock_timeout='10s';
 SET LOCAL statement_timeout='20min';
 SET LOCAL saltwater.source_revision TO :'source_revision';
 
-DO $$
+DO $fixture_guard$
+BEGIN
+  IF current_database() <> 'saltwater_test' THEN
+    RAISE EXCEPTION 'SW-DB-001 fixture is restricted to saltwater_test';
+  END IF;
+  IF current_setting('server_version_num')::integer / 10000 <> 16 THEN
+    RAISE EXCEPTION 'SW-DB-001 fixture requires disposable PostgreSQL 16';
+  END IF;
+  IF length(current_setting('saltwater.source_revision')) NOT BETWEEN 7 AND 64 THEN
+    RAISE EXCEPTION 'source revision must be supplied by the CI checkout';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM sw_runtime.state
+    WHERE singleton=1 AND state IN (0,1) AND bootstrap_open=true
+      AND world_tick=0 AND player_present=false
+  ) THEN
+    RAISE EXCEPTION 'world fixture requires stopped/ready bootstrap at tick zero';
+  END IF;
+END
+$fixture_guard$;
+
+CREATE SCHEMA IF NOT EXISTS sw_test;
+CREATE OR REPLACE FUNCTION sw_test.synthetic_word(p_seed text)
+RETURNS text LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+AS $fixture_word$
+  SELECT string_agg(
+    (ARRAY['ba','be','bi','bo','bu','da','de','di',
+           'do','du','ka','ke','ki','ko','ku','ra'])
+      [strpos('0123456789abcdef',substr(md5(p_seed),g,1))],
+    '' ORDER BY g
+  )
+  FROM generate_series(1,8) AS g
+$fixture_word$;
+
+DO $
 DECLARE
-  v_manifest bytea := decode('9b8b4603031aa3516b6c18ae818b38ff6bbfa32a563da89bd70ab9b3537de348','hex');
+  v_manifest bytea := decode('0a5f0c1a1f692c33e392ab18d9f346b5d966022525c1f1d95b9e8e76b9e3d798','hex');
   v_revision text := current_setting('saltwater.source_revision');
   v_batch bigint;
   v_name_batch bigint;
@@ -41,8 +75,8 @@ BEGIN
      source_revision,expected_residents,expected_police_subset,
      expected_living_people,expected_businesses,source_ref,actor_ref,reason)
   VALUES
-    (v_manifest,1,1,'saltwater-opening-fixture-v1',20261124,v_revision,
-     9000,500,9500,10000,'SW-DB-001:opening-fixture-v1',
+    (v_manifest,2,1,'saltwater-opening-fixture-v2',20261124,v_revision,
+     9000,500,9500,10000,'SW-DB-001:opening-fixture-v2',
      'disposable-ci-generator','deterministic structural and capacity fixture')
   ON CONFLICT (manifest_sha256) DO NOTHING;
 
@@ -50,7 +84,7 @@ BEGIN
   FROM sw_ops.world_provisioning_batch WHERE manifest_sha256=v_manifest;
   IF v_batch IS NULL OR NOT EXISTS (
     SELECT 1 FROM sw_ops.world_provisioning_batch
-    WHERE batch_id=v_batch AND generator_version=1
+    WHERE batch_id=v_batch AND generator_version=2
       AND config_version='saltwater-opening-fixture-v1'
       AND seed=20261124 AND expected_residents=9000
       AND expected_police_subset=500 AND expected_living_people=9500
@@ -61,12 +95,11 @@ BEGIN
   END IF;
 
   v_name_batch := sw_names.record_generation_batch(
-    'BUSINESS',1::smallint,1::smallint,'saltwater-opening-fixture-v1',20261124,
+    'BUSINESS',2::smallint,1::smallint,'saltwater-opening-fixture-v1',20261124,
     v_manifest,10000,'SW-DB-001:opening-fixture-v1',
     'disposable-ci-generator','business name fixture only; no production canon'
   );
 
-  CREATE SCHEMA IF NOT EXISTS sw_test;
   CREATE TABLE IF NOT EXISTS sw_test.person_cohort (
     fixture_person_key text PRIMARY KEY,
     batch_id bigint NOT NULL REFERENCES sw_ops.world_provisioning_batch(batch_id),
@@ -104,8 +137,8 @@ BEGIN
 
   INSERT INTO sw_people.person
     (given_name,family_name,created_tick,source_ref,last_event_id)
-  SELECT substr(md5('given:'||g::text),1,8),
-         substr(md5('family:'||g::text),1,8),
+  SELECT sw_test.synthetic_word('given:'||g::text),
+         sw_test.synthetic_word('family:'||g::text),
          0,'SW-DB-001:person:'||g,e.event_id
   FROM generate_series(1,9500) g
   JOIN sw_core.simulation_event e
@@ -163,7 +196,7 @@ BEGIN
 
   PERFORM sw_names.reserve_name(
     'BUSINESS',b.business_id,'canonical',
-    substr(md5('business-name:'||b.business_code),1,16)||' Trading',
+    sw_test.synthetic_word('business-name:'||b.business_code)||' Trading',
     'SW-DB-001:business-name:'||b.business_code,
     'disposable-ci-generator','unique deterministic test business identity',
     0,v_name_batch
