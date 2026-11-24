@@ -54,7 +54,7 @@ def render_workspace_catalogue(current: str) -> str:
     lines = ["WORKSPACES"]
     for item in WORKSPACES:
         marker = ">" if item.id == current else " "
-        availability = "READY" if item.availability == "available" else "NOT CONNECTED"
+        availability = "READY" if item.availability == "available" else "NOT CONNECTED — navigation only"
         lines.append(f"{marker} {item.id:<24} {item.label} [{availability}]")
     return "\n".join(lines)
 
