@@ -1,0 +1,27 @@
+name: BP04-03 Geography Readiness Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/geography_readiness.py"
+      - "tests/pkg001/test_geography_readiness.py"
+      - ".github/workflows/bp04-03-geography-readiness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  geography-readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run BP04-03 Stage A geography readiness regression
+        run: python -m unittest discover -s tests/pkg001 -p "test_geography_readiness.py" -v
+      - name: Emit read-only readiness report
+        run: python -m runtime.geography_readiness
