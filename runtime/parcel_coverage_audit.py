@@ -20,7 +20,7 @@ from runtime.parcel_candidate_generator import (
 
 
 def _polygon_area(feature):
-    geom = feature.get("geometry", {})
+    geom = feature if feature.get("type") == "Polygon" else feature.get("geometry", {})
     if geom.get("type") != "Polygon" or len(geom.get("coordinates", [])) != 1:
         raise ValueError(f"Unsupported area geometry: {feature.get('id')}")
     return _ring_area(geom["coordinates"][0][:-1])
