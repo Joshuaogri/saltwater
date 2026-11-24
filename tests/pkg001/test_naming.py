@@ -146,6 +146,7 @@ class NameGenerationTests(unittest.TestCase):
         b = generate_batch("person", 8, seed=71, config=self.config)
         self.assertEqual(a, b)
         self.assertEqual(a.generator_version, 1)
+        self.assertEqual(a.normalizer_version, 1)
         self.assertEqual(a.config_version, "1")
         self.assertEqual(len(a.manifest_sha256), 64)
 
