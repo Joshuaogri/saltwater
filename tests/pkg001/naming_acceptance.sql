@@ -3,6 +3,7 @@
 \set ON_ERROR_STOP on
 BEGIN;
 UPDATE sw_runtime.state SET state=1,player_present=false WHERE singleton=1 AND state=0;
+UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1 AND state=1;
 DO $test$
 DECLARE
   v_sovereign bigint;
