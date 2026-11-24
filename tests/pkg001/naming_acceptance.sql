@@ -29,8 +29,9 @@ BEGIN
         AND (entity_id=v_sovereign OR entity_id=v_city)) <> 2 THEN
     RAISE EXCEPTION 'approved Saltwater root pair was not registered separately';
   END IF;
-  IF (SELECT count(*) FROM sw_names.search_name('Saltwater')) <> 2 THEN
-    RAISE EXCEPTION 'Saltwater search must return both roots, not silently select one';
+  IF (SELECT count(*) FROM sw_names.search_name('Saltwater')) <> 2
+     OR NOT (SELECT bool_and(ambiguous) FROM sw_names.search_name('Saltwater')) THEN
+    RAISE EXCEPTION 'Saltwater search must return both roots with an explicit ambiguity flag';
   END IF;
 
   BEGIN
@@ -64,6 +65,20 @@ BEGIN
     RAISE EXCEPTION 'third entity unexpectedly claimed Saltwater';
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='third entity unexpectedly claimed Saltwater' THEN RAISE; END IF;
+  END;
+
+  INSERT INTO sw_geo.entity(entity_code,kind) VALUES ('sw-nam-unicode-one',7)
+    RETURNING spatial_id INTO v_extra;
+  INSERT INTO sw_geo.version(spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
+  VALUES (v_extra,1,0,'Straße Lane','sw-nam-unicode-one',1);
+  INSERT INTO sw_geo.entity(entity_code,kind) VALUES ('sw-nam-unicode-two',7)
+    RETURNING spatial_id INTO v_extra;
+  BEGIN
+    INSERT INTO sw_geo.version(spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
+    VALUES (v_extra,1,0,'STRASSE Lane','sw-nam-unicode-two',1);
+    RAISE EXCEPTION 'Unicode case-fold collision unexpectedly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='Unicode case-fold collision unexpectedly succeeded' THEN RAISE; END IF;
   END;
 
   INSERT INTO sw_geo.entity(entity_code,kind) VALUES ('sw-nam-road-test',7)
