@@ -21,6 +21,7 @@ CREATE TABLE sw_geo.parcel_dossier (
   interior_ring_count integer NOT NULL CHECK (interior_ring_count >= 0),
   road_frontage_length_m numeric(14,3) NOT NULL CHECK (road_frontage_length_m >= 0),
   frontage_segment_count integer NOT NULL CHECK (frontage_segment_count >= 0),
+  frontage_candidate_count integer NOT NULL CHECK (frontage_candidate_count >= 0),
   water_boundary_contact_length_m numeric(14,3) NOT NULL CHECK (water_boundary_contact_length_m >= 0),
   adjacent_water_feature_count integer NOT NULL CHECK (adjacent_water_feature_count >= 0),
   frontage_review_status text NOT NULL CHECK (frontage_review_status IN
@@ -45,7 +46,8 @@ CREATE INDEX parcel_dossier_water_idx
 CREATE TABLE sw_geo.parcel_frontage_candidate (
   parcel_spatial_id integer NOT NULL,
   version_no smallint NOT NULL,
-  road_segment_id text NOT NULL CHECK (length(btrim(road_segment_id)) BETWEEN 1 AND 80),
+  frontage_candidate_id text NOT NULL CHECK (length(btrim(frontage_candidate_id)) BETWEEN 1 AND 180),
+  road_segment_ids text[] NOT NULL CHECK (cardinality(road_segment_ids) > 0),
   road_id text NOT NULL CHECK (length(btrim(road_id)) BETWEEN 1 AND 80),
   road_name text NOT NULL CHECK (length(btrim(road_name)) BETWEEN 1 AND 160),
   road_class text NOT NULL CHECK (road_class IN ('local_street','district_connector','primary_arterial','bridge')),
@@ -59,7 +61,7 @@ CREATE TABLE sw_geo.parcel_frontage_candidate (
   confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
   recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  PRIMARY KEY(parcel_spatial_id,version_no,road_segment_id),
+  PRIMARY KEY(parcel_spatial_id,version_no,frontage_candidate_id),
   FOREIGN KEY(parcel_spatial_id,version_no)
     REFERENCES sw_geo.parcel_dossier(parcel_spatial_id,version_no)
 );
@@ -70,7 +72,7 @@ CREATE TABLE sw_geo.parcel_access_location_candidate (
   access_candidate_id text PRIMARY KEY CHECK (length(btrim(access_candidate_id)) BETWEEN 1 AND 160),
   parcel_spatial_id integer NOT NULL,
   version_no smallint NOT NULL,
-  road_segment_id text NOT NULL,
+  frontage_candidate_id text NOT NULL,
   candidate_x_m numeric(14,6) NOT NULL,
   candidate_y_m numeric(14,6) NOT NULL,
   candidate_type text NOT NULL CHECK (candidate_type='unclassified_access_location'),
@@ -81,9 +83,9 @@ CREATE TABLE sw_geo.parcel_access_location_candidate (
   confidence_code text NOT NULL CHECK (confidence_code IN ('verified','documented','observed','estimated','inferred','unknown')),
   reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
   recorded_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
-  UNIQUE(parcel_spatial_id,version_no,road_segment_id),
-  FOREIGN KEY(parcel_spatial_id,version_no,road_segment_id)
-    REFERENCES sw_geo.parcel_frontage_candidate(parcel_spatial_id,version_no,road_segment_id)
+  UNIQUE(parcel_spatial_id,version_no,frontage_candidate_id),
+  FOREIGN KEY(parcel_spatial_id,version_no,frontage_candidate_id)
+    REFERENCES sw_geo.parcel_frontage_candidate(parcel_spatial_id,version_no,frontage_candidate_id)
 );
 CREATE INDEX parcel_access_candidate_location_idx
   ON sw_geo.parcel_access_location_candidate(candidate_x_m,candidate_y_m);
