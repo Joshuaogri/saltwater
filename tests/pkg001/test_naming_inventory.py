@@ -35,6 +35,8 @@ class GeographyNameInventoryTests(unittest.TestCase):
         conflicts = {item.normalized_key: item for item in self.report.conflicts}
         self.assertIn("westgate", conflicts)
         self.assertEqual(len(conflicts["westgate"].candidates), 2)
+        self.assertIn("government square", conflicts)
+        self.assertEqual(len(conflicts["government square"].candidates), 2)
 
     def test_import_is_blocked_until_map_baseline_and_spatial_ids_are_resolved(self):
         self.assertFalse(self.report.can_import)
