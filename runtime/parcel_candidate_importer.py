@@ -17,17 +17,16 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 
-def _connection_string(args):
+def _connection_parameters(args):
     if args.dsn:
         return args.dsn
-    parts = {
+    return {
         "host": os.getenv("PGHOST", "localhost"),
-        "port": os.getenv("PGPORT", "5432"),
+        "port": int(os.getenv("PGPORT", "5432")),
         "dbname": os.getenv("PGDATABASE", "saltwater_test"),
         "user": os.getenv("PGUSER", "saltwater_test"),
         "password": os.getenv("PGPASSWORD", "test-only"),
     }
-    return " ".join(f"{k}={json.dumps(str(v))}" for k, v in parts.items())
 
 
 def validate_manifest(data):
@@ -187,7 +186,7 @@ def main():
     args = parser.parse_args()
     data = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
     manifest_sha = validate_manifest(data)
-    with psycopg.connect(_connection_string(args)) as conn:
+    with psycopg.connect(**_connection_parameters(args)) if isinstance(_connection_parameters(args), dict) else psycopg.connect(_connection_parameters(args)) as conn:
         report = import_candidates(conn, data, manifest_sha)
         with conn.cursor() as cur:
             cur.execute("ANALYZE sw_geo.parcel_profile")
