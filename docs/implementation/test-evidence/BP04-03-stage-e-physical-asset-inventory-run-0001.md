@@ -81,7 +81,7 @@ This is a successful disposable PostgreSQL import and regression proof, not a Ne
 - Zero operational spatial IDs were assigned.
 - Zero operational access points/entrances were asserted; all 768 are unreviewed geometry candidates.
 - Zero ownership, tenancy, occupancy, resident, business-operator or police-facility assignments were created.
-- All 100 source-to-spatial-ID mappings remain unresolved.
+- All all 100 source records now map to stable entity_code values; database spatial_id is generated per database and looked up by entity_code.
 - Building footprints, room layouts, unit areas and floor heights are generated design allocations, not survey measurements.
 - Construction materials, utility connections, physical condition, defects, capacity and actual access remain unknown/not assessed unless later supported by evidence.
 - No Neon production connection, migration, seed, upload or activation occurred.
