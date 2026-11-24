@@ -163,6 +163,14 @@ BEGIN
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
   END IF;
+  -- Lock the owning identity before checking the one-active-canonical invariant.
+  IF NEW.entity_type='GEOGRAPHY' THEN
+    PERFORM 1 FROM sw_geo.entity WHERE spatial_id=NEW.entity_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'geography identity does not exist'; END IF;
+  ELSIF NEW.entity_type='PERSON' THEN
+    PERFORM 1 FROM sw_people.person WHERE person_id=NEW.entity_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'person identity does not exist'; END IF;
+  END IF;
   IF NEW.generation_batch_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM sw_names.generation_batch b
     WHERE b.batch_id=NEW.generation_batch_id
@@ -297,6 +305,16 @@ BEGIN
   v_key := sw_names.normalize_name(p_display_name);
   p_entity_type := upper(p_entity_type);
   p_name_form := lower(p_name_form);
+
+  -- Serialize canonical-name changes for one identity. Different names racing
+  -- for the same person/place must not leave two active canonical assignments.
+  IF p_entity_type='GEOGRAPHY' THEN
+    PERFORM 1 FROM sw_geo.entity WHERE spatial_id=p_entity_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'geography identity does not exist'; END IF;
+  ELSIF p_entity_type='PERSON' THEN
+    PERFORM 1 FROM sw_people.person WHERE person_id=p_entity_id FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'person identity does not exist'; END IF;
+  END IF;
 
   IF v_key='saltwater' THEN
     IF p_entity_type <> 'GEOGRAPHY' OR p_name_form <> 'canonical' OR p_display_name <> 'Saltwater' THEN
