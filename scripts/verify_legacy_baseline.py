@@ -32,7 +32,10 @@ def normalized_schema(url: str) -> bytes:
     # body only. Object ordering is deterministic for a fixed PostgreSQL major.
     lines = raw.decode("utf-8").splitlines()
     body = [line for line in lines if not line.startswith("--")
-            and not line.startswith("SET ") and line.strip() not in ("",)]
+            and not line.startswith("SET ")
+            and not line.startswith("\\restrict ")
+            and not line.startswith("\\unrestrict")
+            and line.strip()]
     return ("\n".join(body) + "\n").encode("utf-8")
 
 
