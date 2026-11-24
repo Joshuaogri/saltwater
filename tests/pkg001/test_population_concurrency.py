@@ -30,23 +30,23 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                         )
                         current_tick = cur.fetchone()[0]
                         cur.execute(
-                            "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick) "
-                            "SELECT event_type_id,now(),%s FROM sw_core.event_type "
+                            "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref) "
+                            "SELECT event_type_id,now(),%s,'SW-DB-001:cap-race-person-created:'||%s FROM sw_core.event_type "
                             "WHERE event_code='PERSON_CREATED' RETURNING event_id",
-                            (current_tick,),
+                            (current_tick, number),
                         )
                         created_event = cur.fetchone()[0]
                         cur.execute(
-                            "INSERT INTO sw_people.person(given_name,family_name,created_tick,last_event_id) "
-                            "VALUES ('Concurrent','Attempt-'||substr(md5(%s::text),1,12),%s,%s) RETURNING person_id",
-                            (number, current_tick, created_event),
+                            "INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id) "
+                            "VALUES ('Concurrent','Attempt-'||substr(md5(%s::text),1,12),%s,'SW-DB-001:cap-race-person:'||%s,%s) RETURNING person_id",
+                            (number, current_tick, number, created_event),
                         )
                         person_id = cur.fetchone()[0]
                         cur.execute(
-                            "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick) "
-                            "SELECT event_type_id,now(),%s FROM sw_core.event_type "
+                            "INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref) "
+                            "SELECT event_type_id,now(),%s,'SW-DB-001:cap-race-population-state:'||%s FROM sw_core.event_type "
                             "WHERE event_code='POPULATION_STATE_CHANGED' RETURNING event_id",
-                            (current_tick,),
+                            (current_tick, number),
                         )
                         population_event = cur.fetchone()[0]
                         barrier.wait(timeout=15)
