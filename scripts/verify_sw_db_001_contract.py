@@ -44,6 +44,8 @@ def verify() -> None:
         raise SystemExit("business-owned identity schema is missing")
     if "CREATE OR REPLACE FUNCTION sw_names.guard_reservation" not in sql:
         raise SystemExit("business universal-naming adapter is missing")
+    if "provisioning_content_checksum" not in sql or "DISPOSABLE_TEST_ONLY" not in sql:
+        raise SystemExit("immutable test-only manifest/content checksums are missing")
     if "DATABASE_URL" in sql or "SUPABASE" in sql or "NEON_CONNECTION" in sql:
         raise SystemExit("production connection material is forbidden in disposable proposal")
     if "current_database() <> 'saltwater_test'" not in fixture:
