@@ -55,7 +55,7 @@ BEGIN
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM sw_names.name_reservation r
-    JOIN sw_names.generation_batch b USING(generation_batch_id)
+    JOIN sw_names.generation_batch b ON b.batch_id=r.generation_batch_id
   ) THEN
     RAISE EXCEPTION 'restored generator manifest is not linked to a reserved name';
   END IF;
