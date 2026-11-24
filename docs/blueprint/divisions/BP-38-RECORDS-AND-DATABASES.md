@@ -631,14 +631,14 @@ These decisions do not alter the fixed 44 divisions, approve a Neon write or per
 
 ## SW-NAM-001 — shared naming persistence slice
 
-Disposable proposal `db/proposals/0009_universal_name_registry.sql` adds immutable `sw_names.generation_batch` manifest records, `sw_names.name_reservation`, append-only `sw_names.name_event`, normalized registry/search view and transactional reservation/lifecycle functions. Generated reservations can reference the deterministic generator/configuration version, seed and SHA-256 manifest. It uses stable BP-02 `spatial_id` and BP-03 `person_id` references, database uniqueness constraints, an indexed `pg_trgm` near-duplicate review gate, append-only name history, domain triggers and controlled function grants. The command role receives no direct registry-table DML; the transactional Python adapter `runtime/postgres_naming.py` calls only the controlled SQL functions, while read-only lookup is exposed through the registry view/search function. Only `GEOGRAPHY` and `PERSON` adapters are connected. BP-04 and operational entity types remain NOT CONNECTED until authoritative schemas exist. This is a disposable schema proposal only; no Neon migration, schema write or production seed has occurred. CI and restore evidence are pending.
+Disposable proposal `db/proposals/0009_universal_name_registry.sql` adds immutable `sw_names.generation_batch` manifest records, `sw_names.name_reservation`, append-only `sw_names.name_event`, normalized registry/search view and transactional reservation/lifecycle functions. Generated reservations can reference the deterministic generator/configuration version, seed and SHA-256 manifest. It uses stable BP-02 `spatial_id` and BP-03 `person_id` references, database uniqueness constraints, an indexed `pg_trgm` near-duplicate review gate, append-only name history, domain triggers and controlled function grants. The command role receives no direct registry-table DML; the transactional Python adapter `runtime/postgres_naming.py` calls only the controlled SQL functions, while read-only lookup is exposed through the registry view/search function. Only `GEOGRAPHY` and `PERSON` adapters are connected. BP-04 and operational entity types remain NOT CONNECTED until authoritative schemas exist. This is a disposable schema proposal only; no Neon migration, schema write or production seed has occurred. The SW-NAM-001 disposable PostgreSQL migration, concurrency, access-control and backup/restore suite passed in run `45409845359`; final manifest-version/storage-detail rerun `45410340222` is pending.
 
 ## 25. Completion status
 
 - Specification: DESIGNED_DRAFT; review/approval pending.
-- Implementation: NOT_STARTED.
-- Test execution: NOT_STARTED. The 160 acceptance criteria are not execution evidence.
-- Verification: NOT_STARTED.
+- Implementation: Bounded SW-NAM-001 registry persistence and PostgreSQL adapter slice implemented; remainder of BP-38 not started.
+- Test execution: SW-NAM-001 bounded SQL/concurrency/restore tests passed in run `45409845359`; the remaining BP-38 acceptance criteria are not executed evidence.
+- Verification: Bounded SW-NAM-001 slice passed; BP-38 overall remains incomplete.
 - Neon connectivity: not newly tested by this specification task; no connectivity claim is made.
 - Neon writes: none performed or authorised.
 - Next division in fixed numeric order: BP-39 — Persistence and Recovery.
