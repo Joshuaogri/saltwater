@@ -91,63 +91,67 @@ BEGIN
   WHERE singleton=1 AND state=0 AND bootstrap_open=true
     AND world_tick=0 AND player_present=false;
 
-  WITH candidates AS (
-    SELECT g,
-           'SWDB001-P-'||lpad(g::text,5,'0') AS fixture_person_key
-    FROM generate_series(1,9500) g
-    WHERE NOT EXISTS (
-      SELECT 1 FROM sw_test.person_cohort c
-      WHERE c.fixture_person_key='SWDB001-P-'||lpad(g::text,5,'0')
-    )
-  ),
-  person_events AS (
-    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
-    SELECT et.event_type_id,transaction_timestamp(),0,
-           'SW-DB-001:person-created:'||c.g
-    FROM candidates c
-    CROSS JOIN sw_core.event_type et
-    WHERE et.event_code='PERSON_CREATED'
-    RETURNING event_id,source_ref
-  ),
-  new_people AS (
-    INSERT INTO sw_people.person
-      (given_name,family_name,created_tick,source_ref,last_event_id)
-    SELECT substr(md5('given:'||split_part(e.source_ref,':',3)),1,8),
-           substr(md5('family:'||split_part(e.source_ref,':',3)),1,8),
-           0,'SW-DB-001:person:'||split_part(e.source_ref,':',3),e.event_id
-    FROM person_events e
-    RETURNING person_id,source_ref
-  ),
-  population_events AS (
-    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
-    SELECT et.event_type_id,transaction_timestamp(),0,
-           'SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
-    FROM new_people p
-    CROSS JOIN sw_core.event_type et
-    WHERE et.event_code='POPULATION_STATE_CHANGED'
-    RETURNING event_id,source_ref
-  ),
-  population_states AS (
-    INSERT INTO sw_people.population_state
-      (person_id,life_status,scope_status,effective_tick,last_event_id)
-    SELECT p.person_id,1,1,0,e.event_id
-    FROM new_people p
-    JOIN population_events e
-      ON e.source_ref='SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
-    RETURNING person_id
-  ),
-  cohorts AS (
-    INSERT INTO sw_test.person_cohort
-      (fixture_person_key,batch_id,person_id,cohort)
-    SELECT 'SWDB001-P-'||lpad(split_part(p.source_ref,':',3),5,'0'),
-           v_batch,p.person_id,
-           CASE WHEN split_part(p.source_ref,':',3)::integer<=9000
-                THEN 'RESIDENT' ELSE 'POLICE_SUBSET' END
-    FROM new_people p
-    JOIN population_states ps USING (person_id)
-    RETURNING person_id
-  )
-  SELECT count(*) INTO v_count FROM cohorts;
+  INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
+  SELECT et.event_type_id,transaction_timestamp(),0,
+         'SW-DB-001:person-created:'||g
+  FROM generate_series(1,9500) g
+  CROSS JOIN sw_core.event_type et
+  WHERE et.event_code='PERSON_CREATED'
+    AND NOT EXISTS (
+      SELECT 1 FROM sw_people.person p
+      WHERE p.source_ref='SW-DB-001:person:'||g
+    );
+
+  INSERT INTO sw_people.person
+    (given_name,family_name,created_tick,source_ref,last_event_id)
+  SELECT substr(md5('given:'||g::text),1,8),
+         substr(md5('family:'||g::text),1,8),
+         0,'SW-DB-001:person:'||g,e.event_id
+  FROM generate_series(1,9500) g
+  JOIN sw_core.simulation_event e
+    ON e.source_ref='SW-DB-001:person-created:'||g
+  WHERE NOT EXISTS (
+    SELECT 1 FROM sw_people.person p
+    WHERE p.source_ref='SW-DB-001:person:'||g
+  );
+
+  INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
+  SELECT et.event_type_id,transaction_timestamp(),0,
+         'SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
+  FROM sw_people.person p
+  CROSS JOIN sw_core.event_type et
+  WHERE p.source_ref LIKE 'SW-DB-001:person:%'
+    AND et.event_code='POPULATION_STATE_CHANGED'
+    AND NOT EXISTS (
+      SELECT 1 FROM sw_people.population_state ps
+      WHERE ps.person_id=p.person_id
+    );
+
+  INSERT INTO sw_people.population_state
+    (person_id,life_status,scope_status,effective_tick,last_event_id)
+  SELECT p.person_id,1,1,0,e.event_id
+  FROM sw_people.person p
+  JOIN sw_core.simulation_event e
+    ON e.source_ref='SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
+  WHERE p.source_ref LIKE 'SW-DB-001:person:%'
+    AND NOT EXISTS (
+      SELECT 1 FROM sw_people.population_state ps
+      WHERE ps.person_id=p.person_id
+    );
+
+  INSERT INTO sw_test.person_cohort
+    (fixture_person_key,batch_id,person_id,cohort)
+  SELECT 'SWDB001-P-'||lpad(split_part(p.source_ref,':',3),5,'0'),
+         v_batch,p.person_id,
+         CASE WHEN split_part(p.source_ref,':',3)::integer<=9000
+              THEN 'RESIDENT' ELSE 'POLICE_SUBSET' END
+  FROM sw_people.person p
+  JOIN sw_people.population_state ps USING (person_id)
+  WHERE p.source_ref LIKE 'SW-DB-001:person:%'
+  ON CONFLICT (fixture_person_key) DO NOTHING;
+
+  SELECT count(*) INTO v_count FROM sw_test.person_cohort
+  WHERE batch_id=v_batch;
 
   INSERT INTO sw_business.business
     (business_code,created_batch_id,operating_status,site_assignment_status,
