@@ -9,7 +9,7 @@ Compare a fresh disposable PostgreSQL replay of the exact committed `0001_founda
 
 ## Tool
 
-`scripts/verify_legacy_baseline.py` uses `pg_dump` to create deterministic, owner/privilege-neutral schema DDL snapshots for `sw_core` and `sw_ops`, and a separate data-only snapshot for `sw_core.world_config`. It prints the exact migration source SHA-256 and byte count, snapshot hashes and pass/fail results.
+`scripts/verify_legacy_baseline.py` uses `pg_dump` to create deterministic, owner/privilege-neutral schema DDL snapshots for `sw_core` and `sw_ops`, and a separate canonical-data snapshot for `sw_core.world_config` that excludes the installation-specific `created_at` timestamp. It prints the exact migration source SHA-256 and byte count, snapshot hashes and pass/fail results.
 
 Environment variables:
 - `BASELINE_REFERENCE_DATABASE_URL`: disposable database where exact 0001 has been replayed.
@@ -30,7 +30,7 @@ Intentionally excluded:
 
 ## Run procedure
 
-1. Create a disposable PostgreSQL database using the same major version as Neon.
+1. Create a disposable PostgreSQL database using the same major version as Neon (currently PostgreSQL 18); use a matching `pg_dump`/`psql` client major version.
 2. Replay exact `db/migrations/0001_foundation.sql` into that disposable database.
 3. Set the reference URL to that disposable database.
 4. Set the target URL to Neon production using a protected secret; never print or commit either URL.
