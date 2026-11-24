@@ -78,6 +78,15 @@ class ParcelCandidateGeneratorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             _polygon_rect_intersection_area(feature, (0, 0, 5, 5))
 
+    def test_topology_report_has_zero_overlap_and_containment_violations(self):
+        result = build_candidates(SOURCE)
+        topology = result["generation"]["topology"]
+        self.assertEqual(topology["validation"], "PASS")
+        self.assertEqual(topology["candidate_interior_overlap_count"], 0)
+        self.assertEqual(topology["candidate_outside_neighbourhood_count"], 0)
+        self.assertTrue(topology["candidate_interiors_within_neighbourhoods"])
+        self.assertEqual(result["generation"]["source_grid_cell_count"], 432)
+
 
 if __name__ == "__main__":
     unittest.main()
