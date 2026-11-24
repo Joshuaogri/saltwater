@@ -23,7 +23,8 @@ The fixture creates 10,000 distinct business identities with unique globally res
 ## Idempotency and provenance
 
 - The checked-in JSON manifest is canonicalised with sorted keys and compact separators; its SHA-256 is recorded beside it and in the SQL fixture.
-- The batch records generator/normalizer versions, configuration, deterministic seed, source revision, exact expected cohort totals, source, actor and reason.
+- The batch records generator/normalizer versions, configuration, deterministic seed, source revision, exact expected cohort totals, source, actor and reason; its environment scope is constrained to DISPOSABLE_TEST_ONLY.
+- Immutable per-domain checksum rows record the 9,500-person and 10,000-business content counts and SHA-256 digests over ordered canonical fixture fields. Replays recompute and compare both digests.
 - Stable fixture keys map each person cohort row to one person ID; stable business codes prevent duplicate business identities.
 - Replaying the same manifest must not add people, businesses, canonical name reservations, or lifecycle history.
 - Provisioning runs in one transaction; any failure rolls back the whole batch.
