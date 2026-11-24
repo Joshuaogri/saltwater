@@ -89,7 +89,7 @@ def validate_identity_map(geo: dict, identity_map: dict) -> dict:
         "source_records": len(catalog),
         "resolved": len(entries),
         "unresolved": 0,
-        "spatial_ids_assigned": 0,
+        "portable_spatial_id_literals": 0,
         "stable_source_to_entity_code_mappings": len(entries),
         "spatial_id_policy": "DATABASE_GENERATED_SURROGATE; resolve by entity_code in each database",
     }
