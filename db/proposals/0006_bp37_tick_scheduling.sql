@@ -43,6 +43,63 @@ CREATE INDEX schedule_owner_subject_idx
 CREATE UNIQUE INDEX schedule_claim_token_uq
   ON sw_runtime.schedule(claim_token) WHERE claim_token IS NOT NULL;
 
+CREATE FUNCTION sw_runtime.guard_schedule_write() RETURNS trigger
+LANGUAGE plpgsql AS $
+DECLARE
+  runtime_row sw_runtime.state%ROWTYPE;
+BEGIN
+  SELECT * INTO runtime_row FROM sw_runtime.state WHERE singleton=1 FOR SHARE;
+  IF NOT FOUND OR runtime_row.state <> 2 OR NOT runtime_row.player_present THEN
+    RAISE EXCEPTION 'schedule writes require running player-present runtime';
+  END IF;
+
+  IF TG_OP = 'INSERT' THEN
+    IF NEW.created_tick <> runtime_row.world_tick OR NEW.due_tick < runtime_row.world_tick THEN
+      RAISE EXCEPTION 'schedule creation must use the committed world tick';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  IF ROW(NEW.owner_domain, NEW.subject_ref, NEW.interval_ticks, NEW.priority,
+         NEW.expires_at_tick, NEW.idempotency_key, NEW.created_tick, NEW.created_at)
+     IS DISTINCT FROM
+     ROW(OLD.owner_domain, OLD.subject_ref, OLD.interval_ticks, OLD.priority,
+         OLD.expires_at_tick, OLD.idempotency_key, OLD.created_tick, OLD.created_at) THEN
+    RAISE EXCEPTION 'schedule identity and definition are immutable';
+  END IF;
+  IF NOT (
+       (OLD.status IN ('pending','failed') AND NEW.status='claimed')
+    OR (OLD.status='claimed' AND NEW.status IN ('completed','failed'))
+    OR (OLD.status='claimed' AND NEW.status='pending' AND OLD.interval_ticks IS NOT NULL
+        AND NEW.due_tick = runtime_row.world_tick + OLD.interval_ticks)
+    OR (OLD.status IN ('pending','failed') AND NEW.status='expired')
+  ) THEN
+    RAISE EXCEPTION 'invalid schedule lifecycle transition';
+  END IF;
+  IF NEW.status='claimed' AND NEW.attempt_count <> OLD.attempt_count + 1 THEN
+    RAISE EXCEPTION 'schedule claim must increment attempt count exactly once';
+  END IF;
+  IF NEW.status<>'claimed' AND NEW.claim_token IS NOT NULL THEN
+    RAISE EXCEPTION 'only claimed schedules may hold a claim token';
+  END IF;
+  RETURN NEW;
+END
+$;
+
+CREATE TRIGGER schedule_write_guard
+BEFORE INSERT OR UPDATE ON sw_runtime.schedule
+FOR EACH ROW EXECUTE FUNCTION sw_runtime.guard_schedule_write();
+
+CREATE FUNCTION sw_runtime.reject_schedule_delete() RETURNS trigger
+LANGUAGE plpgsql AS $
+BEGIN
+  RAISE EXCEPTION 'schedule records are retained; cancel or expire through lifecycle';
+END
+$;
+CREATE TRIGGER schedule_no_delete
+BEFORE DELETE ON sw_runtime.schedule
+FOR EACH ROW EXECUTE FUNCTION sw_runtime.reject_schedule_delete();
+
 CREATE FUNCTION sw_runtime.create_schedule(
   p_owner_domain text,
   p_subject_ref text,
