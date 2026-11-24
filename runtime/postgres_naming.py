@@ -61,7 +61,7 @@ class PostgresNameRegistry:
                 """SELECT sw_names.record_generation_batch(
                      %s::text,%s::smallint,%s::smallint,%s::text,%s::bigint,%s::bytea,%s::integer,%s::text,%s::text,%s::text)""",
                 (
-                    batch.domain.upper(), batch.generator_version, NORMALIZER_VERSION,
+                    batch.domain.upper(), batch.generator_version, batch.normalizer_version,
                     batch.config_version, batch.seed,
                     bytes.fromhex(batch.manifest_sha256), len(batch.candidates),
                     source_ref, actor_ref, reason,
