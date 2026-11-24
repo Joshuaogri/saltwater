@@ -1,7 +1,7 @@
 # BP35-01 — Deterministic Event Intake and Dispatch Core
 
 **Division:** BP-35 — Simulation Engine  
-**Package status:** APPROVED — implementation committed; automated verification in progress  
+**Package status:** APPROVED — bounded implementation implemented, tested and verified  
 **Specification:** BP-35 v1.0, currently DESIGNED_DRAFT  
 **Target branch:** `main` only  
 **Dependencies:** PKG-001 runtime kernel and event ledger; BP-37-01 canonical world-tick/schedule eligibility; BP-38 existing event/record foundation; BP-42 existing permission enforcement interfaces  
@@ -114,7 +114,7 @@ Approve **BP35-01 — Deterministic Event Intake and Dispatch Core** for:
 
 Approval does not authorise any Neon production change, production data, new fictional calendar/time semantics, full BP-35 division approval, NPC simulation, or additional ChatGPT transport work.
 
-## 8. Approval and implementation record
+## 8. Approval, implementation and verification record
 
 **Approved:** 2026-11-24 — explicit user approval received.
 
@@ -124,6 +124,9 @@ Implemented directly on `main`:
 - `tests/pkg001/test_event_engine.py` and `tests/pkg001/event_dispatch_acceptance.sql`: unit and PostgreSQL acceptance coverage.
 - `.github/workflows/pkg001-disposable-postgres.yml`: disposable proposal application, storage measurement and Python/SQL test execution.
 
-**Implementation state:** bounded code and test artefacts committed. **Test state:** automated CI is in progress; not yet marked passed. **Verification:** pending successful complete regression and storage evidence.
+**Implementation state:** bounded code and test artefacts committed. **Test state:** passed. **Verification:** passed for BP35-01 only; full BP-35 remains incomplete. See `docs/implementation/test-evidence/BP35-01-run-0001.md`.
 
 No Neon production schema/data/configuration/credential change was made. BP-35 remains `DESIGNED_DRAFT`; NPC activation, world simulation, full replay/recovery, fairness/back-pressure and division-wide completion remain out of scope.
+
+
+**Verification result:** Full Python/disposable PostgreSQL regression [45369237153](https://github.com/Joshuaogri/saltwater/actions/runs/45369237153) and database migration validation [45369237232](https://github.com/Joshuaogri/saltwater/actions/runs/45369237232) passed. Proposal 0007 disposable schema growth was 229,376 bytes. Empty/fixture total relation sizes: event_work 40,960/81,920 bytes; event_work_attempt 32,768/65,536 bytes; event_work_prerequisite 16,384/40,960 bytes. Fixture counts were 3/8/1 and rolled back. Neon production remained unchanged.
