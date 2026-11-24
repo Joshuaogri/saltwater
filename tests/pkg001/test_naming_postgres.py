@@ -93,7 +93,7 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
             with conn.cursor() as cur:
                 cur.execute(
                     """SELECT sw_names.record_generation_batch(
-                         'GEOGRAPHY',1,1,'1',77,%s,1,
+                         'GEOGRAPHY'::text,1::smallint,1::smallint,'1'::text,77::bigint,%s,1::integer,
                          'sw-nam-generator-fixture','ci-test','manifest persistence test')""",
                     (digest,),
                 )
