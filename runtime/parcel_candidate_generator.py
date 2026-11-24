@@ -222,6 +222,46 @@ def build_candidates(source: dict) -> dict:
             "excluded_water_conflict_cells": sum(1 for c in conflicts if c["source_neighbourhood_id"] == hood["id"]),
             "coverage_status": "CANDIDATE_ONLY",
         })
+    # Deterministic topology checks: candidate interiors must remain inside
+    # their source neighbourhood and may not overlap another candidate interior.
+    parcel_boxes = []
+    for parcel in parcels:
+        ring = parcel["geometry"][0]
+        xs = [p[0] for p in ring[:-1]]
+        ys = [p[1] for p in ring[:-1]]
+        parcel_boxes.append((
+            parcel["candidate_parcel_id"],
+            parcel["source_neighbourhood_id"],
+            (min(xs), min(ys), max(xs), max(ys)),
+        ))
+    neighbourhood_bounds = {
+        hood["id"]: _bounds(hood["geometry"]) for hood in hoods
+    }
+    topology_violations = []
+    for parcel_id, hood_id, box in parcel_boxes:
+        hb = neighbourhood_bounds[hood_id]
+        if box[0] < hb[0] or box[1] < hb[1] or box[2] > hb[2] or box[3] > hb[3]:
+            topology_violations.append({
+                "type": "candidate_outside_neighbourhood",
+                "candidate_parcel_id": parcel_id,
+                "source_neighbourhood_id": hood_id,
+            })
+    for i, (left_id, left_hood, left_box) in enumerate(parcel_boxes):
+        for right_id, right_hood, right_box in parcel_boxes[i + 1:]:
+            if left_hood == right_hood and _overlaps(left_box, right_box):
+                topology_violations.append({
+                    "type": "candidate_interior_overlap",
+                    "candidate_parcel_ids": [left_id, right_id],
+                    "source_neighbourhood_id": left_hood,
+                })
+    if topology_violations:
+        raise ValueError(f"Candidate topology validation failed: {topology_violations[:5]}")
+
+    source_grid_cells = sum(
+        int((_bounds(h["geometry"])[2] - _bounds(h["geometry"])[0]) / GRID_M)
+        * int((_bounds(h["geometry"])[3] - _bounds(h["geometry"])[1]) / GRID_M)
+        for h in hoods
+    )
     body = {
         "schema": "saltwater-bp04-03-parcel-candidates/1.0",
         "candidate_set_id": "BP04-03-STAGE-B-PARCEL-CANDIDATES-001",
@@ -236,6 +276,14 @@ def build_candidates(source: dict) -> dict:
             "geometry_units": "metres",
             "parcel_candidate_count": len(parcels),
             "excluded_water_conflict_count": len(conflicts),
+            "source_grid_cell_count": source_grid_cells,
+            "topology": {
+                "candidate_interiors_within_neighbourhoods": True,
+                "candidate_interior_overlap_count": 0,
+                "candidate_outside_neighbourhood_count": 0,
+                "validation": "PASS",
+                "unallocated_area_note": "The difference between neighbourhood envelopes and candidate parcel interiors includes provisional 15m grid insets and entire cells excluded where water intersects; it is not classified as road, public space or developable land.",
+            },
             "unresolved_source_spatial_mappings": 100,
             "spatial_ids_assigned": 0,
             "canonical_addresses_created": 0,
