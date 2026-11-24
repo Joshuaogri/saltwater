@@ -20,6 +20,10 @@ BEGIN
      OR (SELECT count(*) FROM sw_test.business_profile WHERE fixture_only)<>10000 THEN
     RAISE EXCEPTION 'restored business identity/history/profile mismatch';
   END IF;
+  IF (SELECT count(*) FROM sw_ops.provisioning_content_checksum WHERE batch_id=v_batch)<>2
+     OR EXISTS (SELECT 1 FROM sw_ops.provisioning_content_checksum WHERE batch_id=v_batch AND record_count NOT IN (9500,10000)) THEN
+    RAISE EXCEPTION 'restored per-domain content checksum manifest mismatch';
+  END IF;
   IF (SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')<>10000 THEN
     RAISE EXCEPTION 'restored business name registry mismatch';
   END IF;
