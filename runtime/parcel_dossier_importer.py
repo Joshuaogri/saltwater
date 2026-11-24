@@ -36,8 +36,8 @@ def validate_manifest(data, candidates):
         dossier = row["dossier"]
         if dossier["area_m2"] <= 0 or dossier["perimeter_m"] <= 0:
             raise ValueError("Parcel dossier contains invalid geometry measurements")
-        frontage_ids = {item["road_segment_id"] for item in row["frontages"]}
-        if any(item["road_segment_id"] not in frontage_ids for item in row["access_candidates"]):
+        frontage_ids = {item["frontage_candidate_id"] for item in row["frontages"]}
+        if any(item["frontage_candidate_id"] not in frontage_ids for item in row["access_candidates"]):
             raise ValueError("Access location candidate has no matching frontage candidate")
     for row in data.get("adjacency", []):
         if row["left_candidate_parcel_id"] >= row["right_candidate_parcel_id"]:
@@ -105,7 +105,7 @@ def import_dossiers(conn, data, manifest_sha):
                     (parcel_id, bytes(geometry_hash), digest, dossier["perimeter_m"], dossier["compactness_index"],
                      dossier["centroid_x_m"], dossier["centroid_y_m"], dossier["label_point_x_m"], dossier["label_point_y_m"],
                      *bounds, dossier["exterior_vertex_count"], dossier["interior_ring_count"],
-                     dossier["road_frontage_length_m"], dossier["frontage_segment_count"],
+                     dossier["road_frontage_length_m"], dossier["frontage_segment_count"], dossier["frontage_candidate_count"],
                      dossier["water_boundary_contact_length_m"], len(dossier["adjacent_water_feature_ids"]),
                      dossier["frontage_review_status"], dossier["geometry_review_status"], dossier["measurement_basis"],
                      dossier["source_ref"], dossier["actor_ref"], dossier["confidence_code"], dossier["reason"]),
@@ -121,17 +121,16 @@ def import_dossiers(conn, data, manifest_sha):
                 for frontage in row["frontages"]:
                     cur.execute(
                         """INSERT INTO sw_geo.parcel_frontage_candidate
-                        (parcel_spatial_id,version_no,road_segment_id,road_id,road_name,road_class,
+                        (parcel_spatial_id,version_no,frontage_candidate_id,road_segment_ids,road_id,road_name,road_class,
                          contact_length_m,candidate_point_x_m,candidate_point_y_m,review_status,
                          source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
-                        VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,'UNREVIEWED_GEOMETRIC_CONTACT',%s,%s,
+                        VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,%s,'UNREVIEWED_GEOMETRIC_CONTACT',%s,%s,
                                 'BP04-03-PARCEL-DOSSIER-IMPORTER','estimated',
-                                'Derived road-reserve boundary contact; not approved legal frontage.')
+                                'Derived continuous road-reserve boundary contact; not approved legal frontage.')
                         ON CONFLICT DO NOTHING""",
-                        (parcel_id, frontage["road_segment_id"], frontage["road_id"], frontage["road_name"],
-                         frontage["road_class"], frontage["contact_length_m"],
-                         next(a["candidate_x_m"] for a in row["access_candidates"] if a["road_segment_id"] == frontage["road_segment_id"]),
-                         next(a["candidate_y_m"] for a in row["access_candidates"] if a["road_segment_id"] == frontage["road_segment_id"]),
+                        (parcel_id, frontage["frontage_candidate_id"], frontage["road_segment_ids"],
+                         frontage["road_id"], frontage["road_name"], frontage["road_class"],
+                         frontage["contact_length_m"], frontage["candidate_point_x_m"], frontage["candidate_point_y_m"],
                          digest, frontage["source_ref"]),
                     )
                     inserted["frontages"] += cur.rowcount
@@ -139,12 +138,12 @@ def import_dossiers(conn, data, manifest_sha):
                 for access in row["access_candidates"]:
                     cur.execute(
                         """INSERT INTO sw_geo.parcel_access_location_candidate
-                        (access_candidate_id,parcel_spatial_id,version_no,road_segment_id,candidate_x_m,candidate_y_m,
+                        (access_candidate_id,parcel_spatial_id,version_no,frontage_candidate_id,candidate_x_m,candidate_y_m,
                          candidate_type,review_status,source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
                         VALUES (%s,%s,1,%s,%s,%s,%s,%s,%s,%s,'BP04-03-PARCEL-DOSSIER-IMPORTER','estimated',
                                 'Unreviewed geometric point on a road-reserve contact; not an entrance or access-point identity.')
                         ON CONFLICT DO NOTHING""",
-                        (access["access_candidate_id"], parcel_id, access["road_segment_id"],
+                        (access["access_candidate_id"], parcel_id, access["frontage_candidate_id"],
                          access["candidate_x_m"], access["candidate_y_m"], access["candidate_type"],
                          access["review_status"], digest, access["source_ref"]),
                     )
