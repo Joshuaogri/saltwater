@@ -207,6 +207,11 @@ class InMemoryEventWorkStore:
                     or row["claim_token"] != work.claim_token):
                 raise EventEngineError("claim token is stale or does not own event work")
             if receipt.success:
+                if (not isinstance(receipt.outcome_ref, str)
+                        or not 1 <= len(receipt.outcome_ref) <= 200
+                        or receipt.error_code is not None
+                        or receipt.retry_after_tick is not None):
+                    raise EventEngineError("successful dispatch requires an outcome reference only")
                 status = "completed"
                 row["outcome_ref"] = receipt.outcome_ref
                 row["error_code"] = None
@@ -371,6 +376,23 @@ class EventEngine:
                     receipt = HandlerReceipt(False, error_code="owner_handler_error",
                                              retry_after_tick=state.world_tick + 1)
                 if not isinstance(receipt, HandlerReceipt) or type(receipt.success) is not bool:
+                    receipt = HandlerReceipt(False, error_code="invalid_handler_result",
+                                             retry_after_tick=state.world_tick, retryable=False)
+                elif receipt.success and (
+                    not isinstance(receipt.outcome_ref, str)
+                    or not 1 <= len(receipt.outcome_ref) <= 200
+                    or receipt.error_code is not None
+                    or receipt.retry_after_tick is not None
+                ):
+                    receipt = HandlerReceipt(False, error_code="invalid_handler_result",
+                                             retry_after_tick=state.world_tick, retryable=False)
+                elif not receipt.success and (
+                    not isinstance(receipt.error_code, str)
+                    or not _ERROR.fullmatch(receipt.error_code)
+                    or type(receipt.retry_after_tick) is not int
+                    or receipt.retry_after_tick < state.world_tick
+                    or type(receipt.retryable) is not bool
+                ):
                     receipt = HandlerReceipt(False, error_code="invalid_handler_result",
                                              retry_after_tick=state.world_tick, retryable=False)
         final_state = self.kernel.status()
