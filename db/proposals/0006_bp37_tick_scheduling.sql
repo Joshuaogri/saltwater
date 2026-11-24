@@ -209,7 +209,7 @@ BEGIN
         'schedule:complete:' || selected.schedule_id::text || ':' || selected.attempt_count::text
       );
       UPDATE sw_runtime.schedule SET status='pending',
-        due_tick=selected.due_tick + selected.interval_ticks,
+        due_tick=runtime_row.world_tick + selected.interval_ticks,
         retry_after_tick=0, claim_token=NULL, claimed_at_tick=NULL,
         last_event_id=event_id, last_error_code=NULL,
         expires_at_tick=selected.expires_at_tick
