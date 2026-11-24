@@ -1,6 +1,6 @@
 # PKG-006 — trusted host session context and ChatGPT command contract
 
-**Status:** Proposed; awaiting explicit user approval  
+**Status:** Approved 2026-11-24; implementation committed; CI verification pending  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Dependencies:** PKG-001 through PKG-005  
@@ -87,8 +87,20 @@ PKG-005 already provides the authenticated command runtime. This package adds a 
 
 ## Approval boundary
 
-Approval of PKG-006 will authorise the bounded repository implementation, contract documentation and Python tests described above. It will not authorise a deployed transport, ChatGPT plugin installation, external identity provider or any Neon production operation. Those require a separate, explicit proposal.
+The user approved PKG-006 on 2026-11-24. This authorises the bounded repository implementation, contract documentation and Python tests described above. It will not authorise a deployed transport, ChatGPT plugin installation, external identity provider or any Neon production operation. Those require a separate, explicit proposal.
 
 ## Approval requested
 
-**Do you approve PKG-006 for repository implementation and Python testing, with no deployed endpoint/plugin and Neon production remaining untouched?**
+**Approval recorded:** repository implementation and Python testing only. No deployed endpoint/plugin and Neon production remains untouched.
+
+
+## Implementation record
+
+The implementation is committed directly to main:
+- `runtime/player_host_adapter.py`: typed trusted host context, injected credential-provider protocol, narrow request/response types and the only adapter path into PKG-005.
+- `docs/integration/CHATGPT-PLAYER-RUNTIME-CONTRACT.md`: trust boundary, execution sequence, failure behavior and credential custody.
+- `docs/integration/player-command-tool.schema.json`: model-visible request/response contract; no identity or credential fields.
+- `tests/pkg001/test_player_host_adapter.py`: host-context, expiry, credential, allowlist, forwarding and secret-redaction tests.
+- Disposable PostgreSQL CI workflow now runs the new Python unit suite. The adapter itself performs no database operations and introduces no schema.
+
+**Current state:** implementation committed; CI verification pending. No endpoint, plugin, external identity provider, Neon production operation or live session was created.
