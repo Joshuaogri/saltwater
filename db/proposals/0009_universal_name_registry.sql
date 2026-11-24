@@ -88,7 +88,7 @@ END
 $$;
 
 CREATE FUNCTION sw_names.guard_reservation()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE
   v_code text;
   v_kind smallint;
@@ -178,7 +178,7 @@ FROM sw_names.name_reservation r;
 CREATE FUNCTION sw_names.reserve_name(
   p_entity_type text,p_entity_id bigint,p_name_form text,p_display_name text,
   p_source_ref text,p_actor_ref text,p_reason text,p_effective_tick bigint
-) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE
   v_key text;
   v_slot text := 'GLOBAL';
@@ -242,7 +242,7 @@ $$;
 CREATE FUNCTION sw_names.change_status(
   p_reservation_id bigint,p_event_code text,p_effective_tick bigint,
   p_source_ref text,p_actor_ref text,p_reason text
-) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE v_status text;
 BEGIN
   IF p_event_code NOT IN ('superseded','retired','reactivated','corrected') THEN
@@ -267,7 +267,7 @@ $$;
 CREATE FUNCTION sw_names.add_alias(
   p_entity_type text,p_entity_id bigint,p_alias text,p_source_ref text,
   p_actor_ref text,p_reason text,p_effective_tick bigint
-) RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+) RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
   SELECT sw_names.reserve_name(p_entity_type,p_entity_id,'alias',p_alias,
     p_source_ref,p_actor_ref,p_reason,p_effective_tick)
 $$;
@@ -275,7 +275,7 @@ $$;
 CREATE FUNCTION sw_names.search_name(p_value text)
 RETURNS TABLE(reservation_id bigint,entity_type text,entity_id bigint,name_form text,
               display_name text,status text)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
   SELECT r.reservation_id,r.entity_type,r.entity_id,r.name_form,r.display_name,
          sw_names.latest_status(r.reservation_id)
   FROM sw_names.name_reservation r
@@ -284,7 +284,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,
 $$;
 
 CREATE FUNCTION sw_names.sync_geography_name()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE
   v_prior sw_geo.version%ROWTYPE;
   v_new_id bigint;
@@ -319,7 +319,7 @@ AFTER INSERT ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_names.sync_geography_name();
 
 CREATE FUNCTION sw_names.sync_person_name()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE
   v_full_name text;
   v_tick bigint;
