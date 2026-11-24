@@ -111,7 +111,7 @@ BEGIN
     INSERT INTO sw_people.person
       (given_name,family_name,created_tick,source_ref,last_event_id)
     VALUES
-      ('Avenor','Keldrin-'||substr(md5(v_i::text),1,12),0,
+      (substr(md5('given:'||v_i::text),1,8),substr(md5('family:'||v_i::text),1,8),0,
        'SW-DB-001:person:'||v_i,v_event)
     RETURNING person_id INTO v_person;
 
@@ -147,7 +147,7 @@ BEGIN
     WHERE created_batch_id=v_batch
     ORDER BY business_code
   LOOP
-    v_name := 'Alder '||substr(md5(v_business.business_code),1,16);
+    v_name := substr(md5('business-name:'||v_business.business_code),1,16)||' Trading';
     PERFORM sw_names.reserve_name(
       'BUSINESS',v_business.business_id,'canonical',v_name,
       'SW-DB-001:business-name:'||v_business.business_code,
