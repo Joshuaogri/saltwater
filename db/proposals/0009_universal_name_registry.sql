@@ -235,7 +235,7 @@ BEFORE UPDATE OR DELETE ON sw_names.name_event
 FOR EACH ROW EXECUTE FUNCTION sw_names.reject_event_mutation();
 
 CREATE FUNCTION sw_names.latest_status(p_reservation_id bigint)
-RETURNS text LANGUAGE sql STABLE AS $$
+RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
   SELECT CASE e.event_code
     WHEN 'reserved' THEN 'reserved'
     WHEN 'activated' THEN 'active'
@@ -491,6 +491,7 @@ REVOKE ALL ON ALL TABLES IN SCHEMA sw_names FROM PUBLIC,sw_game_command,sw_game_
 GRANT SELECT ON sw_names.registry,sw_names.generation_batch TO sw_game_readonly;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_names FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION sw_names.search_name(text) TO sw_game_readonly;
+GRANT EXECUTE ON FUNCTION sw_names.latest_status(bigint) TO sw_game_readonly;
 GRANT EXECUTE ON FUNCTION sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint,bigint) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.record_generation_batch(text,smallint,smallint,text,bigint,bytea,integer,text,text,text) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.add_alias(text,bigint,text,text,text,text,bigint) TO sw_game_command;
