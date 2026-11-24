@@ -6,7 +6,7 @@ SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 DO $bp39$
 DECLARE
   tick bigint;
-  event_id bigint;
+  v_event_id bigint;
   claimed record;
   result_status text;
   checkpoint_id uuid;
@@ -19,12 +19,12 @@ BEGIN
   UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
   SELECT world_tick INTO tick FROM sw_runtime.state WHERE singleton=1;
 
-  event_id:=sw_runtime.submit_event_work(
+  v_event_id:=sw_runtime.submit_event_work(
     'GEO_CREATED','geography','geo.create',1,1,tick,0,'bp39-recovery-fixture',
     'test:actor','geography','fixture:recovery',NULL,NULL,'internal',3
   );
   SELECT * INTO claimed FROM sw_runtime.claim_due_event_work();
-  IF claimed.event_id<>event_id THEN RAISE EXCEPTION 'recovery fixture was not claimed'; END IF;
+  IF claimed.event_id<>v_event_id THEN RAISE EXCEPTION 'recovery fixture was not claimed'; END IF;
 
   PERFORM sw_runtime.begin_event_claim_recovery('test:operator','approval:BP39-01');
   IF (SELECT state FROM sw_runtime.state WHERE singleton=1)<>4
@@ -32,14 +32,14 @@ BEGIN
     RAISE EXCEPTION 'recovery did not freeze the runtime';
   END IF;
   result_status:=sw_runtime.reconcile_event_claim(
-    event_id,claimed.claim_token,'effect_committed','geography',
+    v_event_id,claimed.claim_token,'effect_committed','geography',
     'owner:geography:reconciliation:fixture','domain:geography:outcome:fixture',
     'test:operator','approval:BP39-01','owner_confirmed_committed',
     'bp39-recovery-decision-1',NULL
   );
   IF result_status<>'completed' THEN RAISE EXCEPTION 'committed owner effect was not finalised'; END IF;
-  IF (SELECT status FROM sw_runtime.event_work WHERE event_id=event_id)<>'completed'
-     OR (SELECT outcome_ref FROM sw_runtime.event_work WHERE event_id=event_id)
+  IF (SELECT status FROM sw_runtime.event_work WHERE event_id=v_event_id)<>'completed'
+     OR (SELECT outcome_ref FROM sw_runtime.event_work WHERE event_id=v_event_id)
        <>'domain:geography:outcome:fixture' THEN
     RAISE EXCEPTION 'recovery did not preserve the owner outcome reference';
   END IF;
@@ -51,7 +51,7 @@ BEGIN
     RAISE EXCEPTION 'recovery completion did not leave runtime safely ready and absent';
   END IF;
   IF (SELECT count(*) FROM sw_runtime.event_work_attempt
-      WHERE event_id=event_id AND attempt_status='completed')<>1 THEN
+      WHERE event_id=v_event_id AND attempt_status='completed')<>1 THEN
     RAISE EXCEPTION 'recovery completion attempt history missing';
   END IF;
 
