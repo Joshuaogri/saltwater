@@ -58,6 +58,7 @@ BEGIN
       AND seed=20261124 AND expected_residents=9000
       AND expected_police_subset=500 AND expected_living_people=9500
       AND expected_businesses=10000 AND source_revision=v_revision
+      AND environment_scope='DISPOSABLE_TEST_ONLY'
   ) THEN
     RAISE EXCEPTION 'existing provisioning manifest metadata does not match this fixture';
   END IF;
@@ -171,7 +172,7 @@ BEGIN
 
   SELECT sw_ops.digest(
     convert_to(string_agg(
-      concat_ws('|',c.fixture_person_key,c.cohort,p.given_name,p.family_name,
+      concat_ws('|',c.fixture_person_key,c.batch_id::text,c.person_id::text,c.cohort,p.given_name,p.family_name,
                 ps.life_status::text,ps.scope_status::text),
       E'\\n' ORDER BY c.fixture_person_key
     ),'UTF8'),'sha256')
@@ -183,7 +184,7 @@ BEGIN
 
   SELECT sw_ops.digest(
     convert_to(string_agg(
-      concat_ws('|',b.business_code,r.display_name,b.operating_status,
+      concat_ws('|',b.business_id::text,b.business_code,b.created_batch_id::text,r.display_name,r.normalized_key,b.operating_status,
                 b.site_assignment_status,coalesce(b.primary_spatial_id::text,''),
                 p.test_sector_code,p.test_legal_form,p.test_operating_basis,p.test_staff_band),
       E'\\n' ORDER BY b.business_code
