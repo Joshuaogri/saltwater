@@ -1,0 +1,64 @@
+name: BP38-02 read-only Neon baseline verification
+
+# Manual only. Replays migration 0001 into disposable PostgreSQL, then inspects
+# Neon with server-enforced read-only transactions. No production DDL/DML.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compare-neon-baseline:
+    runs-on: ubuntu-latest
+    services:
+      reference-postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: saltwater
+          POSTGRES_PASSWORD: disposable-only-password
+          POSTGRES_DB: saltwater_reference
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater -d saltwater_reference"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require protected Neon connection secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::Repository secret DATABASE_URL is not configured."
+            exit 1
+          fi
+      - name: Replay exact foundation into disposable reference and compare read-only
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set +x
+          docker run --rm --network host \
+            -e DATABASE_URL="$DATABASE_URL" \
+            -v "$GITHUB_WORKSPACE:/workspace" -w /workspace \
+            postgres:18-bookworm bash -ceu '
+              apt-get update -qq
+              apt-get install -y -qq --no-install-recommends python3
+              export BASELINE_REFERENCE_DATABASE_URL="postgresql://saltwater:disposable-only-password@127.0.0.1:5432/saltwater_reference"
+              psql "$BASELINE_REFERENCE_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+              export BASELINE_TARGET_DATABASE_URL="$DATABASE_URL"
+              export PGOPTIONS="-c default_transaction_read_only=on"
+              python3 scripts/verify_legacy_baseline.py
+              psql "$BASELINE_TARGET_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f scripts/inspect_legacy_baseline.sql > bp38-02-neon-supplementary-review.txt
+              echo "Read-only transaction enforcement: "
+              psql "$BASELINE_TARGET_DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "SHOW default_transaction_read_only"
+            '
+      - name: Upload non-secret verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp38-02-neon-read-only-verification
+          path: bp38-02-neon-supplementary-review.txt
+          if-no-files-found: error
+          retention-days: 14
