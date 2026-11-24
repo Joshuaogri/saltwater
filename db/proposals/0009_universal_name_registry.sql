@@ -211,6 +211,12 @@ BEGIN
   IF FOUND THEN
     IF v_existing.entity_type=p_entity_type AND v_existing.entity_id=p_entity_id
        AND v_existing.name_form=p_name_form THEN
+      IF sw_names.latest_status(v_existing.reservation_id) <> 'active' THEN
+        INSERT INTO sw_names.name_event
+          (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
+        VALUES (v_existing.reservation_id,'reactivated',p_effective_tick,
+          p_source_ref,p_actor_ref,'same entity restored its previously reserved name');
+      END IF;
       RETURN v_existing.reservation_id;
     END IF;
     RAISE EXCEPTION 'name is already permanently reserved: %',p_display_name;
