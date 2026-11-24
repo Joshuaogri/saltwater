@@ -7,6 +7,22 @@ BEGIN;
 CREATE SCHEMA sw_names;
 CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA sw_names;
 
+CREATE TABLE sw_names.generation_batch (
+  batch_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  domain text NOT NULL CHECK (domain IN
+    ('PERSON','GEOGRAPHY','ROAD','BUILDING','BUSINESS','ORGANISATION','OPERATIONAL')),
+  generator_version smallint NOT NULL CHECK (generator_version > 0),
+  normalizer_version smallint NOT NULL CHECK (normalizer_version > 0),
+  config_version text NOT NULL CHECK (length(btrim(config_version)) BETWEEN 1 AND 80),
+  seed bigint NOT NULL,
+  manifest_sha256 bytea NOT NULL UNIQUE CHECK (octet_length(manifest_sha256)=32),
+  candidate_count integer NOT NULL CHECK (candidate_count > 0),
+  source_ref text NOT NULL CHECK (length(btrim(source_ref)) BETWEEN 1 AND 200),
+  actor_ref text NOT NULL CHECK (length(btrim(actor_ref)) BETWEEN 1 AND 120),
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 240),
+  created_at timestamptz NOT NULL DEFAULT transaction_timestamp()
+);
+
 CREATE TABLE sw_names.name_reservation (
   reservation_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   entity_type text NOT NULL CHECK (entity_type IN ('GEOGRAPHY','PERSON')),
@@ -21,6 +37,7 @@ CREATE TABLE sw_names.name_reservation (
   source_ref text NOT NULL CHECK (length(source_ref) BETWEEN 1 AND 200),
   actor_ref text NOT NULL CHECK (length(actor_ref) BETWEEN 1 AND 120),
   reason text NOT NULL CHECK (length(reason) BETWEEN 1 AND 240),
+  generation_batch_id bigint REFERENCES sw_names.generation_batch(batch_id),
   created_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
   UNIQUE (normalized_key, namespace_slot),
   UNIQUE (entity_type, entity_id, normalized_key, name_form),
@@ -89,6 +106,56 @@ BEGIN
   RETURN v;
 END
 $$;
+
+CREATE FUNCTION sw_names.record_generation_batch(
+  p_domain text,p_generator_version smallint,p_normalizer_version smallint,
+  p_config_version text,p_seed bigint,p_manifest_sha256 bytea,
+  p_candidate_count integer,p_source_ref text,p_actor_ref text,p_reason text
+) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+DECLARE v_id bigint; v_existing sw_names.generation_batch%ROWTYPE;
+BEGIN
+  IF p_manifest_sha256 IS NULL OR octet_length(p_manifest_sha256)<>32
+     OR p_candidate_count IS NULL OR p_candidate_count<1
+     OR p_source_ref IS NULL OR btrim(p_source_ref)=''
+     OR p_actor_ref IS NULL OR btrim(p_actor_ref)=''
+     OR p_reason IS NULL OR btrim(p_reason)='' THEN
+    RAISE EXCEPTION 'generation manifest and provenance are required';
+  END IF;
+  p_domain := upper(p_domain);
+  SELECT * INTO v_existing FROM sw_names.generation_batch
+    WHERE manifest_sha256=p_manifest_sha256;
+  IF FOUND THEN
+    IF v_existing.domain=p_domain
+       AND v_existing.generator_version=p_generator_version
+       AND v_existing.normalizer_version=p_normalizer_version
+       AND v_existing.config_version=p_config_version
+       AND v_existing.seed=p_seed
+       AND v_existing.candidate_count=p_candidate_count THEN
+      RETURN v_existing.batch_id;
+    END IF;
+    RAISE EXCEPTION 'generation manifest hash is already bound to different metadata';
+  END IF;
+  INSERT INTO sw_names.generation_batch
+    (domain,generator_version,normalizer_version,config_version,seed,
+     manifest_sha256,candidate_count,source_ref,actor_ref,reason)
+  VALUES
+    (p_domain,p_generator_version,p_normalizer_version,p_config_version,p_seed,
+     p_manifest_sha256,p_candidate_count,p_source_ref,p_actor_ref,p_reason)
+  RETURNING batch_id INTO v_id;
+  RETURN v_id;
+END
+$;
+
+CREATE FUNCTION sw_names.reject_generation_batch_mutation()
+RETURNS trigger LANGUAGE plpgsql AS $
+BEGIN
+  RAISE EXCEPTION 'generation batch manifests are immutable';
+END
+$;
+CREATE TRIGGER generation_batch_immutable
+BEFORE UPDATE OR DELETE ON sw_names.generation_batch
+FOR EACH ROW EXECUTE FUNCTION sw_names.reject_generation_batch_mutation();
 
 CREATE FUNCTION sw_names.guard_reservation()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
@@ -191,7 +258,8 @@ FROM sw_names.name_reservation r;
 
 CREATE FUNCTION sw_names.reserve_name(
   p_entity_type text,p_entity_id bigint,p_name_form text,p_display_name text,
-  p_source_ref text,p_actor_ref text,p_reason text,p_effective_tick bigint
+  p_source_ref text,p_actor_ref text,p_reason text,p_effective_tick bigint,
+  p_generation_batch_id bigint DEFAULT NULL
 ) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE
   v_key text;
@@ -205,6 +273,11 @@ BEGIN
      OR p_actor_ref IS NULL OR btrim(p_actor_ref)=''
      OR p_reason IS NULL OR btrim(p_reason)='' THEN
     RAISE EXCEPTION 'entity, provenance, actor, reason and effective tick are required';
+  END IF;
+  IF p_generation_batch_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM sw_names.generation_batch WHERE batch_id=p_generation_batch_id
+  ) THEN
+    RAISE EXCEPTION 'generation manifest reference does not exist';
   END IF;
   v_key := sw_names.normalize_name(p_display_name);
   p_entity_type := upper(p_entity_type);
@@ -238,10 +311,10 @@ BEGIN
 
   INSERT INTO sw_names.name_reservation
     (entity_type,entity_id,name_form,display_name,normalized_key,namespace_slot,
-     source_ref,actor_ref,reason)
+     source_ref,actor_ref,reason,generation_batch_id)
   VALUES
     (p_entity_type,p_entity_id,p_name_form,p_display_name,v_key,v_slot,
-     p_source_ref,p_actor_ref,p_reason)
+     p_source_ref,p_actor_ref,p_reason,p_generation_batch_id)
   RETURNING reservation_id INTO v_id;
 
   INSERT INTO sw_names.name_event
@@ -415,10 +488,11 @@ VALUES ('migration','0009 universal naming registry','succeeded',
 REVOKE ALL ON SCHEMA sw_names FROM PUBLIC;
 GRANT USAGE ON SCHEMA sw_names TO sw_game_readonly,sw_game_command;
 REVOKE ALL ON ALL TABLES IN SCHEMA sw_names FROM PUBLIC,sw_game_command,sw_game_readonly;
-GRANT SELECT ON sw_names.registry TO sw_game_readonly;
+GRANT SELECT ON sw_names.registry,sw_names.generation_batch TO sw_game_readonly;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_names FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION sw_names.search_name(text) TO sw_game_readonly;
-GRANT EXECUTE ON FUNCTION sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint) TO sw_game_command;
+GRANT EXECUTE ON FUNCTION sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint,bigint) TO sw_game_command;
+GRANT EXECUTE ON FUNCTION sw_names.record_generation_batch(text,smallint,smallint,text,bigint,bytea,integer,text,text,text) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.add_alias(text,bigint,text,text,text,text,bigint) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.change_status(bigint,text,bigint,text,text,text) TO sw_game_command;
 
