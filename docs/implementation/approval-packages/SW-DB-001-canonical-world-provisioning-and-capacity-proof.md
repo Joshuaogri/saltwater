@@ -27,22 +27,22 @@ Neon remains the authoritative persistent game database. GitHub `main` remains t
 - Opening headroom: 500; do not silently fill it.
 - At least 10,000 distinct, coherent businesses.
 - One canonical person identity per person; police are a subset of the same population, not additional people.
-- No invented exact geography, districts, roads, parcels, addresses, coastline, dimensions or coordinates.
+- Geography canon is resolved by [SW-CANON-001](../../blueprint/decisions/SW-CANON-001-population-scope-and-foundational-geography.md): one contiguous coastal island city-state, 12 km × 9 km local-grid extent, eastern harbour, eight districts and 24 named neighbourhoods. This package must not fabricate the detailed polygons, roads, parcels or addresses; those require a coherent versioned map dataset.
+- Population counting is resolved by SW-CANON-001: count the distinct living-person union of usual residents, everyone physically present and active police-service members; each person counts once.
 - No duplicate/placeholder businesses merely to meet the minimum.
 - No simulation-time advance while player absent or paused.
 - Preserve full meaning, provenance, chronology, uncertainty and history; compress structure, never meaning.
 - No hidden offender/accomplice reveal except the exact `bingo` trigger.
 
-This package does not decide unresolved BP-02 geography, BP-03 population-scope categories or BP-04 business distribution rules. It uses only approved numeric and one-city canon for a clearly labelled disposable test fixture.
+Population-scope and foundational-geography canon are now resolved by SW-CANON-001 and the corresponding BP-02/BP-03 updates. BP-04 business category/site distribution remains a separate open design item and must not be silently invented by this package. The disposable fixture must use the adopted count formula and must label any business-category distribution as test-only.
 
 ## 3. Existing platform and blockers
 
 - Neon foundation migration 0001 is already applied; it contains the Saltwater world configuration and platform event/storage tables.
 - PKG-001's `db/proposals/0002_runtime_city_population.sql` is a disposable-only proposal. It must not be applied to Neon or treated as production-approved.
 - BP-02, BP-03, BP-04 and BP-38 specifications remain `DESIGNED_DRAFT`.
-- BP-03 explicitly leaves population-scope/countability semantics requiring user confirmation.
-- BP-02 does not establish exact geography, street inventory, map geometry or administrative areas.
-- BP-04 leaves business baseline/distribution decisions open.
+- BP-02/BP-03 population and foundational-geography canon decisions are closed in SW-CANON-001; the actual detailed map and individual person records remain to be implemented and tested.
+- BP-04 business baseline/category/site distribution decisions remain open and are not resolved by SW-DB-001.
 - Production simulation seeding remains blocked by the existing G1 narrative-quality and G2 capacity/reserve gates. The 16-record narrative fixture's manual review rows remain pending; AI-assisted review is not human sign-off.
 - The 1 GB Neon production capacity decision remains NOT APPROVED.
 
@@ -141,7 +141,7 @@ A green CI run means only that the disposable schema/fixture and listed tests pa
 - No Neon production migration, schema change, seed, import, bulk write, upload, credential change or production connection test.
 - No change to existing Neon branch/database configuration.
 - No production simulation data or live game activation.
-- No final resolution of BP-02 geography, BP-03 population-scope categories or BP-04 business distribution.
+- No change to the adopted BP-02/BP-03 canon; the package must implement against SW-CANON-001. No resolution of BP-04 business distribution.
 - No fabricated city map, roads, districts, parcels, addresses or coordinates.
 - No full 9,500-person biographies, social graphs, employment histories or NPC schedules; this is a structural/capacity fixture, not a completed world population.
 - No police employee, rank, unit, recruitment or career provisioning.
@@ -155,8 +155,8 @@ A green CI run means only that the disposable schema/fixture and listed tests pa
 A later production rollout cannot begin until all of the following are satisfied:
 
 1. BP-02, BP-03, BP-04 and BP-38 domain/schema specifications are reviewed, semantically complete and individually approved at the versions used.
-2. Population-scope/countability rules are explicitly resolved; the 9,500 opening population is reconciled without assumptions.
-3. Geography and business baseline/distribution decisions needed by the actual seed are approved; no invented geography or placeholder businesses.
+2. Population-scope/countability rules in SW-CANON-001 are implemented and the 9,500 opening population is reconciled to individual identities without double counting.
+3. The actual map dataset is built and validated against SW-CANON-001; BP-04 business baseline/category/site distribution decisions needed by the seed are separately approved, with no invented geography or placeholder businesses.
 4. G1 narrative-quality gate has independent human sign-off and the pending manual-review rows are resolved.
 5. G2 representative capacity/performance assessment is complete, reconciled against Neon provider accounting and reserve, and capacity is explicitly approved.
 6. G3 runtime integration and G4 relevant division approvals are satisfied for the operations being enabled.
@@ -178,4 +178,4 @@ This approval grants **zero Neon production write authority**. No Neon mutation 
 
 ## 9. Status
 
-**PROPOSED — awaiting explicit user approval.** No SW-DB-001 implementation, test result or Neon production write is claimed.
+**PROPOSED — awaiting explicit user approval.** Population-counting and foundational-geography canon blockers have been resolved by SW-CANON-001. No SW-DB-001 implementation, test result or Neon production write is claimed.
