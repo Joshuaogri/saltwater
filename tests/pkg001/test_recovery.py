@@ -102,6 +102,25 @@ class RecoveryContractTests(unittest.TestCase):
         self.assertEqual(conn.cursor_value.calls[0][1][0], 7)
         self.assertTrue(conn.closed)
 
+    def test_quarantine_resolution_requires_conclusive_owner_decision(self):
+        conn = FakeConnection([("failed",)])
+        store = PostgresRecoveryStore(lambda: conn)
+        decision = ClaimReconciliation(
+            9, uuid4(), "effect_absent", "geography", "owner:reconcile:9",
+            None, "test:actor", "approval:bp39-01", "owner_confirmed_absent", "resolution:9",
+        )
+        self.assertEqual(store.resolve_quarantined_claim(decision), "failed")
+        self.assertIn("resolve_quarantined_event_claim", conn.cursor_value.calls[0][0])
+
+    def test_indeterminate_decision_cannot_clear_quarantine(self):
+        store = PostgresRecoveryStore(lambda: self.fail("database must not be called"))
+        decision = ClaimReconciliation(
+            9, uuid4(), "indeterminate", "geography", "owner:reconcile:9",
+            None, "test:actor", "approval:bp39-01", "still_unknown", "resolution:9",
+        )
+        with self.assertRaises(RecoveryError):
+            store.resolve_quarantined_claim(decision)
+
     def test_checkpoint_validation_returns_separate_gates(self):
         expected = {"valid": False, "gates": {"schema_watermark": {"status": "pass"},
                                                "business_minimum": {"status": "not_executed"}}}
