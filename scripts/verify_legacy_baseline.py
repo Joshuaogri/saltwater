@@ -37,11 +37,23 @@ def normalized_schema(url: str) -> bytes:
 
 
 def canonical_data(url: str) -> bytes:
-    raw = dump(url, ["--data-only", "--table=sw_core.world_config"])
-    lines = raw.decode("utf-8").splitlines()
-    body = [line for line in lines if not line.startswith("--")
-            and not line.startswith("SET ") and line.strip()]
-    return ("\n".join(body) + "\n").encode("utf-8")
+    # created_at is an installation timestamp and legitimately differs between
+    # a historical production install and a fresh replay. Compare canonical
+    # invariants, not that incidental timestamp.
+    query = (
+        "SELECT COALESCE(jsonb_agg(jsonb_build_object("
+        "'world_id',world_id,'country_name',country_name,'city_name',city_name,"
+        "'sovereign_city_state',sovereign_city_state,"
+        "'living_population_limit',living_population_limit,"
+        "'playable_city_count',playable_city_count) ORDER BY world_id),'[]'::jsonb) "
+        "FROM sw_core.world_config"
+    )
+    result = subprocess.run(
+        ["psql", "--dbname", url, "--no-psqlrc", "--tuples-only",
+         "--no-align", "--set=ON_ERROR_STOP=1", "--command", query],
+        check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    return result.stdout.strip()
 
 
 def sha256(data: bytes) -> str:
