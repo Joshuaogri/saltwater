@@ -77,7 +77,7 @@ class RecoveryContractTests(unittest.TestCase):
 
     def test_checkpoint_capture_uses_repeatable_read_and_explicit_source(self):
         checkpoint_id = uuid4()
-        conn = FakeConnection([(checkpoint_id,)])
+        conn = FakeConnection([None, (checkpoint_id,)])
         store = PostgresRecoveryStore(lambda: conn)
         result = store.capture_checkpoint(
             CheckpointSource("disposable", "saltwater", "main", "saltwater_test",
