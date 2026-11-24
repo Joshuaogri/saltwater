@@ -104,6 +104,9 @@ class NameGenerationTests(unittest.TestCase):
             family_names=("Okafor", "Mensah", "Bennett", "Adeyemi"),
             place_roots=("Willowbank", "Bellview", "Foundry", "Quayside"),
             business_roots=("Harbour", "Meridian", "Foundry", "Civic"),
+            building_roots=("Quayside", "Civic", "Meridian", "Foundry"),
+            organisation_roots=("Civic", "Harbour", "Public", "Northbank"),
+            operational_roots=("Beacon", "Harbour", "Delta", "Summit"),
         )
 
     def test_generation_is_reproducible_for_same_seed(self):
@@ -127,6 +130,17 @@ class NameGenerationTests(unittest.TestCase):
         self.assertEqual(a.generator_version, 1)
         self.assertEqual(a.config_version, "1")
         self.assertEqual(len(a.manifest_sha256), 64)
+
+    def test_building_organisation_and_operational_candidates_are_supported(self):
+        for domain in ("building", "organisation", "operational"):
+            values = generate_candidates(domain, 12, seed=33, config=self.config)
+            with self.subTest(domain=domain):
+                self.assertEqual(len(values), len({normalize_name(x) for x in values}))
+
+    def test_large_batch_is_unique_and_deterministic(self):
+        values = generate_candidates("person", 50, seed=101, config=self.config)
+        self.assertEqual(len(values), 50)
+        self.assertEqual(len({normalize_name(x) for x in values}), 50)
 
     def test_generator_refuses_exhausted_vocabulary_instead_of_adding_numbers(self):
         tiny = GeneratorConfig(("A",), ("B",), ("C",), ("Only",), ("Only",), ("Works",))
