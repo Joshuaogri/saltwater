@@ -369,20 +369,34 @@ CREATE FUNCTION sw_names.change_status(
   p_reservation_id bigint,p_event_code text,p_effective_tick bigint,
   p_source_ref text,p_actor_ref text,p_reason text
 ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
-DECLARE v_status text;
+DECLARE v_status text; v_reservation sw_names.name_reservation%ROWTYPE;
 BEGIN
   IF p_event_code NOT IN ('superseded','retired','reactivated','corrected') THEN
     RAISE EXCEPTION 'unsupported name lifecycle event';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM sw_names.name_reservation WHERE reservation_id=p_reservation_id) THEN
-    RAISE EXCEPTION 'name reservation not found';
-  END IF;
+  SELECT * INTO v_reservation FROM sw_names.name_reservation WHERE reservation_id=p_reservation_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'name reservation not found'; END IF;
   v_status := sw_names.latest_status(p_reservation_id);
   IF p_event_code='reactivated' AND v_status NOT IN ('retired','superseded') THEN
     RAISE EXCEPTION 'only a retired or superseded reservation can be reactivated';
   END IF;
   IF p_event_code IN ('superseded','retired') AND v_status <> 'active' THEN
     RAISE EXCEPTION 'only an active name can be superseded or retired';
+  END IF;
+  IF p_event_code='corrected' AND v_status <> 'active' THEN
+    RAISE EXCEPTION 'only an active name can receive a correction event';
+  END IF;
+  IF p_event_code='reactivated' AND v_reservation.name_form='canonical' THEN
+    INSERT INTO sw_names.name_event
+      (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
+    SELECT r.reservation_id,'superseded',p_effective_tick,p_source_ref,p_actor_ref,
+           'another canonical name for this entity was reactivated'
+    FROM sw_names.name_reservation r
+    WHERE r.entity_type=v_reservation.entity_type
+      AND r.entity_id=v_reservation.entity_id
+      AND r.name_form='canonical'
+      AND r.reservation_id<>p_reservation_id
+      AND sw_names.latest_status(r.reservation_id)='active';
   END IF;
   INSERT INTO sw_names.name_event
     (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
