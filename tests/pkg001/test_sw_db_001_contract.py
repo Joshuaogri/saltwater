@@ -19,6 +19,8 @@ class SWDB001ContractTests(unittest.TestCase):
         self.assertIn(digest, fixture)
         self.assertEqual((manifest["residents"], manifest["police_subset"], manifest["living_people"]), (9000, 500, 9500))
         self.assertGreaterEqual(manifest["businesses"], 10000)
+        self.assertEqual(manifest["generator_version"], 2)
+        self.assertEqual(manifest["name_algorithm"], "md5-derived-twelve-syllable-pseudowords")
 
     def test_proposal_numbering_keeps_0010_disposable_only(self):
         proposals = {p.name for p in (ROOT / "db/proposals").glob("*.sql")}
