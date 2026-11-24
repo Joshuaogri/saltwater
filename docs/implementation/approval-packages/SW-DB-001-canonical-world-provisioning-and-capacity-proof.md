@@ -65,7 +65,7 @@ Any unresolved semantic field must be explicitly marked as unresolved in the des
 
 ### 4.2 Disposable PostgreSQL migration proposal
 
-Prepare the next numbered candidate SQL proposal (expected `db/proposals/0009_canonical_world_provisioning.sql`, subject to a migration-number audit) and apply it only to a fresh disposable PostgreSQL database.
+Prepare the next numbered candidate SQL proposal (expected `db/proposals/0010_canonical_world_provisioning.sql`, because SW-NAM-001 reserves proposal 0009 for the universal naming registry; perform a fresh migration-number audit before implementation) and apply it only to a fresh disposable PostgreSQL database.
 
 The proposal must:
 - be repeatable only where safe and fail clearly on incompatible prior state;
