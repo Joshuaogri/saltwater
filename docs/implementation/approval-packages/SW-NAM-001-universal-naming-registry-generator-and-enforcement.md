@@ -164,7 +164,9 @@ Required tests:
 19. Search resolves by stable ID and reports ambiguity instead of guessing.
 20. Rename, retirement, correction and history remain append-only and attributable.
 21. Registry backup/restore preserves current and historical reservations.
-22. Tests do not advance the fictional clock, mutate production data or reveal hidden simulation truth.\n23. The exact `Saltwater` canonical name is accepted for the sovereign-root and playable-city pair only.\n24. A third entity, alias, historical name or any other cross-type duplicate of `Saltwater` is rejected, and name-only lookup returns an explicit two-result ambiguity.
+22. Tests do not advance the fictional clock, mutate production data or reveal hidden simulation truth.
+23. The exact `Saltwater` canonical name is accepted for the sovereign-root and playable-city pair only.
+24. A third entity, alias, historical name or any other cross-type duplicate of `Saltwater` is rejected, and name-only lookup returns an explicit two-result ambiguity.
 
 CI must apply the foundation plus proposals 0002–0009 to a fresh disposable PostgreSQL 16 service, run the registry SQL acceptance suite and Python tests, and report storage measurements. No workflow may connect to Neon or require Neon secrets.
 
