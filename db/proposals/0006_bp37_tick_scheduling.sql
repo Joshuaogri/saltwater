@@ -91,7 +91,7 @@ BEFORE INSERT OR UPDATE ON sw_runtime.schedule
 FOR EACH ROW EXECUTE FUNCTION sw_runtime.guard_schedule_write();
 
 CREATE FUNCTION sw_runtime.reject_schedule_delete() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $bp37$
 BEGIN
   RAISE EXCEPTION 'schedule records are retained; cancel or expire through lifecycle';
 END
