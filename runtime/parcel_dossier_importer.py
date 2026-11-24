@@ -168,7 +168,8 @@ def import_dossiers(conn, data, manifest_sha, candidates):
                         ON CONFLICT DO NOTHING""",
                         (parcel_id, frontage["frontage_candidate_id"], frontage["road_segment_ids"],
                          frontage["road_id"], frontage["road_name"], frontage["road_class"],
-                         frontage["contact_length_m"], frontage["candidate_point_x_m"], frontage["candidate_point_y_m"],
+                         frontage["contact_length_m"], frontage["contact_component_count"],
+                         frontage["candidate_point_x_m"], frontage["candidate_point_y_m"],
                          digest, frontage["source_ref"]),
                     )
                     inserted["frontages"] += cur.rowcount
