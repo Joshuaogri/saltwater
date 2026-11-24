@@ -6,15 +6,15 @@ DECLARE
  n integer;
 BEGIN
  INSERT INTO sw_property.property_asset(entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
- VALUES('SWP-BP04-02-TEST-0001','BP04 Profile Test Property','unresolved',0,'bp04-02-test:property','test-runner','synthetic acceptance only') RETURNING property_id INTO p;
+ VALUES('SWP-BP04-02-TEST-0001','Juniper Arcade Parcel','unresolved',0,'bp04-02-test:property','test-runner','synthetic acceptance only') RETURNING property_id INTO p;
  INSERT INTO sw_property.building(entity_code,display_name,created_tick,source_ref,actor_ref,reason)
- VALUES('SWB-STR-BP04-02-0001','BP04 Profile Test Building',0,'bp04-02-test:building','test-runner','synthetic acceptance only') RETURNING building_id INTO b;
+ VALUES('SWB-STR-BP04-02-0001','Copper Finch Tower',0,'bp04-02-test:building','test-runner','synthetic acceptance only') RETURNING building_id INTO b;
  INSERT INTO sw_property.premises(entity_code,display_name,building_id,created_tick,source_ref,actor_ref,reason)
- VALUES('SWPR-BP04-02-TEST-0001','BP04 Profile Test Premises',b,0,'bp04-02-test:premises','test-runner','synthetic acceptance only') RETURNING premises_id INTO pr;
+ VALUES('SWPR-BP04-02-TEST-0001','Mosaic Lantern Gallery',b,0,'bp04-02-test:premises','test-runner','synthetic acceptance only') RETURNING premises_id INTO pr;
  INSERT INTO sw_property.unit_space(entity_code,display_name,premises_id,created_tick,source_ref,actor_ref,reason)
- VALUES('SWU-BP04-02-TEST-0001','BP04 Profile Test Unit',pr,0,'bp04-02-test:unit','test-runner','synthetic acceptance only') RETURNING unit_id INTO u;
+ VALUES('SWU-BP04-02-TEST-0001','Willow Compass Suite',pr,0,'bp04-02-test:unit','test-runner','synthetic acceptance only') RETURNING unit_id INTO u;
  INSERT INTO sw_property.access_point(entity_code,display_name,building_id,created_tick,source_ref,actor_ref,reason)
- VALUES('SWA-BP04-02-TEST-0001','BP04 Profile Test Access',b,0,'bp04-02-test:access','test-runner','synthetic acceptance only') RETURNING access_point_id INTO a;
+ VALUES('SWA-BP04-02-TEST-0001','Harbour Kite Entrance',b,0,'bp04-02-test:access','test-runner','synthetic acceptance only') RETURNING access_point_id INTO a;
 
  INSERT INTO sw_property.property_profile
  (property_id,property_class,primary_use,secondary_uses,development_form,site_state,boundary_status,terrain_code,drainage_state,perimeter_type,utility_availability,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason) VALUES
@@ -56,6 +56,12 @@ BEGIN
  VALUES('UNIT',u,'meter_serial',NULL,'not_assessed',0,'bp04-02-test:assertion','test-runner','unknown','meter not yet inspected'),
  ('UNIT',u,'ceiling_finish','plaster','known',0,'bp04-02-test:assertion','test-runner','observed','visible finish recorded');
 
+ INSERT INTO sw_property.property_profile
+ (property_id,property_class,primary_use,secondary_uses,development_form,site_state,boundary_status,terrain_code,drainage_state,perimeter_type,utility_availability,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason)
+ VALUES (p,'mixed_use','residential and retail',ARRAY['retail','residential'],'compound','developed','verified','level','adequate','fence','partial','bp04-02-test:profile-v2','test-runner','observed',1,transaction_timestamp(),'later effective-dated profile version');
+ IF (SELECT count(*) FROM sw_property.property_profile WHERE property_id=p)<>2 THEN
+  RAISE EXCEPTION 'effective-dated profile revision did not preserve prior version';
+ END IF;
  IF (SELECT count(*) FROM sw_property.physical_measurement WHERE entity_id IN (p,b,pr,u,a))<>5 THEN RAISE EXCEPTION 'measurement detail missing'; END IF;
  IF (SELECT count(*) FROM sw_property.building_component WHERE building_id=b)<>1
  OR (SELECT count(*) FROM sw_property.premises_room WHERE premises_id=pr)<>1
