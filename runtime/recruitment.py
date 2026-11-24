@@ -89,6 +89,10 @@ class PostgresRecruitmentService:
             raise ValueError("a valid supervisor person ID is required")
         if not appointment_source or not appointment_source.strip():
             raise ValueError("appointment source is required")
+        if not given_name or not given_name.strip() or not family_name or not family_name.strip():
+            raise ValueError("canonical person given_name and family_name are required")
+        if middle_name is not None and not middle_name.strip():
+            middle_name = None
         if not idempotency_key or len(idempotency_key.strip()) < 8:
             raise ValueError("idempotency_key must contain at least 8 characters")
         row = self._fetch_one(
