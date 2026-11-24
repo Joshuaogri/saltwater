@@ -177,7 +177,7 @@ Do not hide shared registry/index overhead inside per-entity byte figures; repor
 ## 8. Required acceptance tests
 
 1. All eight districts and 24 neighbourhoods reconcile to the approved geography version.
-2. All 100 source-to-entity_code mappings, now resolved and regression-tested are either resolved with provenance or remain explicit blockers; none are silently dropped.
+2. All 100 source records map one-to-one to stable entity_code values. The complete mapping is regression-tested against source type, canonical name and parent; PostgreSQL spatial_id values are looked up per database using entity_code.
 3. Parcel polygons pass validity, containment, overlap/gap and deterministic neighbourhood-assignment checks.
 4. Parcel split/merge/successor history is queryable and identity is never reused.
 5. Address uniqueness, alias history and parcel/road/locality relationships pass.
