@@ -294,6 +294,21 @@ class TickScheduler:
                     False, error_code="owner_handler_error",
                     retry_after_tick=state.world_tick + 1,
                 )
+        if type(result.success) is not bool:
+            result = ScheduleExecutionResult(
+                False, error_code="invalid_handler_result",
+                retry_after_tick=state.world_tick + 1,
+            )
+        elif not result.success and (
+            not isinstance(result.error_code, str)
+            or not 1 <= len(result.error_code) <= 64
+            or type(result.retry_after_tick) is not int
+            or result.retry_after_tick < state.world_tick
+        ):
+            result = ScheduleExecutionResult(
+                False, error_code="invalid_handler_result",
+                retry_after_tick=state.world_tick + 1,
+            )
         # Re-check after handler return; the PostgreSQL store independently
         # revalidates lifecycle under its runtime-row lock during finalization.
         final_state = self.kernel.status()
