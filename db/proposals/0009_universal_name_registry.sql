@@ -56,6 +56,9 @@ RETURNS text LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE AS $$
 DECLARE
   v text;
 BEGIN
+  IF p_value ~ '[[:cntrl:]]' THEN
+    RAISE EXCEPTION 'control characters are not permitted in names';
+  END IF;
   v := normalize(btrim(p_value), NFKC);
   v := lower(v);
   v := replace(v, 'ß', 'ss');
