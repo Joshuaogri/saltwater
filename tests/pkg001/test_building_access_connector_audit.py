@@ -38,7 +38,19 @@ class DirectAccessConnectorAuditTests(unittest.TestCase):
             counts["direct_connector_candidates_tested"],
         )
 
-    def test_feasible_lines_are_contained_and_do_not_cross_buildings_or_water(self):
+    def test_no_candidate_marked_feasible_crosses_a_building_or_water(self):
+        self.assertTrue(
+            self.report["checks"]["no_feasible_connector_crosses_its_origin_building_interior"],
+            self.report["exceptions"]["crosses_origin_building"][:10],
+        )
+        self.assertTrue(
+            self.report["checks"]["no_feasible_connector_crosses_another_building_interior"],
+            self.report["exceptions"]["crosses_other_building"][:10],
+        )
+        self.assertTrue(
+            self.report["checks"]["no_feasible_connector_crosses_mapped_water"],
+            self.report["exceptions"]["crosses_water"][:10],
+        )
         for row in self.report["connector_candidates"]:
             if row["geometry_status"] == "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED":
                 self.assertTrue(row["property_contains_connector"])

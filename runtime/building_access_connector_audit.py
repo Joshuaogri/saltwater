@@ -129,9 +129,18 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
             not errors["missing_parent"] and not errors["missing_frontage"]
         ),
         "every_connector_is_inside_its_parent_property": not errors["outside_parent_property"],
-        "no_connector_crosses_its_origin_building_interior": not errors["crosses_origin_building"],
-        "no_connector_crosses_another_building_interior": not errors["crosses_other_building"],
-        "no_connector_crosses_mapped_water": not errors["crosses_water"],
+        "no_feasible_connector_crosses_its_origin_building_interior": not any(
+            row["geometry_status"] == "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"
+            and row["crosses_origin_building"] for row in connectors
+        ),
+        "no_feasible_connector_crosses_another_building_interior": not any(
+            row["geometry_status"] == "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"
+            and row["crosses_other_building"] for row in connectors
+        ),
+        "no_feasible_connector_crosses_mapped_water": not any(
+            row["geometry_status"] == "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"
+            and row["crosses_water"] for row in connectors
+        ),
         "all_connectors_remain_unreviewed_candidates": all(
             row["review_status"] == "UNREVIEWED_GEOMETRIC_LINE_ONLY" for row in connectors
         ),

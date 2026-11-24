@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from shapely.geometry import Point, Polygon, box
+from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import nearest_points
 
 from runtime.parcel_candidate_generator import build_candidates
@@ -234,11 +234,10 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             (row, Point(row["candidate_x_m"], row["candidate_y_m"]))
             for row in frontage_candidates
         ]
+        first_access_boundary_point = None
         for access_no, fraction in ((1, .25), (2, .75)):
             if access_no == 1 and frontage_points:
-                # Select the frontage with the shortest possible straight-line
-                # gap to the building boundary, rather than using the building
-                # centroid as a proxy for the eventual access-point location.
+                # A01 selects the nearest boundary/frontage pair.
                 choices = []
                 for frontage_row, frontage_point in frontage_points:
                     boundary_candidate = nearest_points(footprint.boundary, frontage_point)[0]
@@ -248,6 +247,54 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 _, linked_frontage_id, boundary_point, linked_frontage_point = min(
                     choices, key=lambda item: (item[0], item[1])
                 )
+                first_access_boundary_point = boundary_point
+            elif access_no == 2 and frontage_points and first_access_boundary_point is not None:
+                # A02 searches deterministic samples around the footprint boundary.
+                # Reject any connector that enters the building interior or leaves
+                # the parent property. A minimum perimeter separation keeps A02
+                # distinct from A01 rather than duplicating its location.
+                boundary = footprint.boundary
+                perimeter = boundary.length
+                minimum_separation = max(5.0, perimeter * 0.10)
+                first_measure = boundary.project(first_access_boundary_point)
+                choices = []
+                for sample_no in range(128):
+                    measure = perimeter * sample_no / 128
+                    boundary_candidate = boundary.interpolate(measure)
+                    separation = abs(measure - first_measure)
+                    separation = min(separation, perimeter - separation)
+                    if separation < minimum_separation:
+                        continue
+                    for frontage_row, frontage_point in frontage_points:
+                        connector = LineString([
+                            (boundary_candidate.x, boundary_candidate.y),
+                            (frontage_point.x, frontage_point.y),
+                        ])
+                        if not site.covers(connector):
+                            continue
+                        if footprint.intersection(connector).length > 0.01:
+                            continue
+                        gap = boundary_candidate.distance(frontage_point)
+                        choices.append((
+                            round(gap, 9), frontage_row["access_candidate_id"],
+                            sample_no, boundary_candidate, frontage_point,
+                        ))
+                if choices:
+                    _, linked_frontage_id, _, boundary_point, linked_frontage_point = min(
+                        choices, key=lambda item: (item[0], item[1], item[2])
+                    )
+                else:
+                    # Keep an explicit blocked candidate rather than inventing
+                    # a feasible access route when no sampled line is clear.
+                    boundary_point = boundary.interpolate(perimeter * fraction)
+                    nearest_row, linked_frontage_point = min(
+                        frontage_points,
+                        key=lambda item: (
+                            round(boundary_point.distance(item[1]), 9),
+                            item[0]["access_candidate_id"],
+                        ),
+                    )
+                    linked_frontage_id = nearest_row["access_candidate_id"]
             else:
                 boundary_point = footprint.boundary.interpolate(
                     footprint.boundary.length * fraction
