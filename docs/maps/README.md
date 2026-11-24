@@ -38,3 +38,13 @@ This first baseline does not yet contain a parcel fabric, building footprints, p
 ## Authority and safe use
 
 SW-GEO-V1 is a committed source-data baseline for continued BP-02 implementation. It is fictional planning geometry, not survey-grade. It does not authorize a Neon migration, seed or production write. Do not infer missing access or speed attributes. Future corrections must create a new geography version and preserve the history of prior spatial references.
+
+
+## Approved canonical-name corrections — 2026-11-24
+
+The user approved two neighbourhood-only renames to resolve global canonical-name collisions while preserving all entity IDs:
+
+- `SW-D01-N1`: **Westgate** → **Westgate Gardens**. District `SW-D01` remains **Westgate**.
+- `SW-D03-N2`: **Government Square** → **Civic Terrace**. Landmark `SW-POI-002` remains **Government Square**.
+
+The source JSON and SVG labels reflect these approved names. The SW-GEO-V1 dataset remains `DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED`; no import or Neon write was performed. The 100 unresolved source-to-spatial-ID mappings remain an independent blocker.
