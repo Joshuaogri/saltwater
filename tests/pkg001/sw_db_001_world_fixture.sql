@@ -5,7 +5,7 @@
 BEGIN;
 SET LOCAL lock_timeout='10s';
 SET LOCAL statement_timeout='20min';
-SET LOCAL saltwater.source_revision :'source_revision';
+SET LOCAL saltwater.source_revision TO :'source_revision';
 
 DO $$
 DECLARE
@@ -81,6 +81,7 @@ BEGIN
        'TEST_LOGISTICS','TEST_CULTURE','TEST_HEALTH','TEST_EDUCATION','TEST_SERVICES')),
     test_legal_form text NOT NULL CHECK (test_legal_form IN
       ('TEST_SOLE','TEST_PARTNERSHIP','TEST_COMPANY')),
+    test_operating_basis text NOT NULL DEFAULT 'NON_GEOGRAPHIC_TEST_FIXTURE' CHECK (test_operating_basis='NON_GEOGRAPHIC_TEST_FIXTURE'),
     test_staff_band text NOT NULL CHECK (test_staff_band IN
       ('TEST_1_4','TEST_5_19','TEST_20_49','TEST_50_99','TEST_100_PLUS')),
     fixture_only boolean NOT NULL DEFAULT true CHECK (fixture_only)
@@ -154,12 +155,13 @@ BEGIN
   END LOOP;
 
   INSERT INTO sw_test.business_profile
-    (business_id,test_sector_code,test_legal_form,test_staff_band)
+    (business_id,test_sector_code,test_legal_form,test_operating_basis,test_staff_band)
   SELECT b.business_id,
          (ARRAY['TEST_TRADE','TEST_FOOD','TEST_MARITIME','TEST_FINANCE',
                 'TEST_REPAIR','TEST_LOGISTICS','TEST_CULTURE','TEST_HEALTH',
                 'TEST_EDUCATION','TEST_SERVICES'])[((row_number() OVER (ORDER BY b.business_code)-1)%10)+1],
          (ARRAY['TEST_SOLE','TEST_PARTNERSHIP','TEST_COMPANY'])[((row_number() OVER (ORDER BY b.business_code)-1)%3)+1],
+         'NON_GEOGRAPHIC_TEST_FIXTURE',
          (ARRAY['TEST_1_4','TEST_5_19','TEST_20_49','TEST_50_99','TEST_100_PLUS'])[((row_number() OVER (ORDER BY b.business_code)-1)%5)+1]
   FROM sw_business.business b
   WHERE b.created_batch_id=v_batch
