@@ -1,7 +1,7 @@
 -- BP37-01 acceptance: disposable PostgreSQL only; transaction rolls back.
 BEGIN;
 
-DO $$
+DO $bp37$
 DECLARE
   first_id bigint;
   repeated_id bigint;
@@ -79,7 +79,7 @@ BEGIN
     denied := true;
   END;
   IF NOT denied THEN RAISE EXCEPTION 'paused dispatch was not rejected'; END IF;
-END $;
+END $bp37$;
 
 SELECT pg_relation_size('sw_runtime.schedule') AS schedule_heap_bytes,
        pg_indexes_size('sw_runtime.schedule') AS schedule_index_bytes,
