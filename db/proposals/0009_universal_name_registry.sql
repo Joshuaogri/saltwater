@@ -169,6 +169,7 @@ BEGIN
   IF NEW.generation_batch_id IS NOT NULL AND NOT EXISTS (
     SELECT 1 FROM sw_names.generation_batch b
     WHERE b.batch_id=NEW.generation_batch_id
+      AND b.normalizer_version=NEW.normalizer_version
       AND ((NEW.entity_type='PERSON' AND b.domain='PERSON')
         OR (NEW.entity_type='GEOGRAPHY' AND b.domain IN ('GEOGRAPHY','ROAD')))
   ) THEN
