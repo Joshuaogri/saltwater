@@ -62,6 +62,8 @@ def validate_manifest(data, candidates):
             raise ValueError("Parcel dossier ring counts do not match candidate geometry")
         if dossier["frontage_candidate_count"] != len(row["frontages"]):
             raise ValueError("Parcel frontage candidate count does not match frontage rows")
+        if any(item["contact_component_count"] < 1 for item in row["frontages"]):
+            raise ValueError("Parcel frontage has no geometric contact component")
         if dossier["frontage_segment_count"] != sum(len(item["road_segment_ids"]) for item in row["frontages"]):
             raise ValueError("Parcel frontage segment count does not match frontage rows")
         if dossier["adjacent_water_feature_ids"] != sorted(item["water_feature_id"] for item in row["water_adjacencies"]):
