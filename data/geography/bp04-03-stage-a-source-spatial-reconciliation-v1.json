@@ -11,8 +11,10 @@
     "resolved": 100,
     "unresolved": 0,
     "stable_source_to_entity_code_mappings": 100,
-    "spatial_ids_assigned": 0,
-    "spatial_id_policy": "spatial_id is a database-generated surrogate; resolve it in each database by the stable entity_code. No environment-specific integer is stored in the portable source register."
+    "spatial_id_policy": "spatial_id is a database-generated surrogate; resolve it in each database by the stable entity_code. No environment-specific integer is stored in the portable source register.",
+    "spatial_ids_assigned_in_disposable_postgres": 100,
+    "production_spatial_ids_assigned": 0,
+    "materialization_evidence": "PKG-001 disposable PostgreSQL identity-map materialisation step; workflow run 45508321133, step 6 succeeded"
   },
   "records": [
     {
@@ -25,7 +27,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D01-N1",
@@ -37,7 +40,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D01-N2",
@@ -49,7 +53,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D01-N3",
@@ -61,7 +66,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D02",
@@ -73,7 +79,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D02-N1",
@@ -85,7 +92,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D02-N2",
@@ -97,7 +105,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D02-N3",
@@ -109,7 +118,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D03",
@@ -121,7 +131,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D03-N1",
@@ -133,7 +144,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D03-N2",
@@ -145,7 +157,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D03-N3",
@@ -157,7 +170,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D04",
@@ -169,7 +183,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D04-N1",
@@ -181,7 +196,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D04-N2",
@@ -193,7 +209,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D04-N3",
@@ -205,7 +222,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D05",
@@ -217,7 +235,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D05-N1",
@@ -229,7 +248,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D05-N2",
@@ -241,7 +261,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D05-N3",
@@ -253,7 +274,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D06",
@@ -265,7 +287,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D06-N1",
@@ -277,7 +300,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D06-N2",
@@ -289,7 +313,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D06-N3",
@@ -301,7 +326,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D07",
@@ -313,7 +339,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D07-N1",
@@ -325,7 +352,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D07-N2",
@@ -337,7 +365,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D07-N3",
@@ -349,7 +378,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D08",
@@ -361,7 +391,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D08-N1",
@@ -373,7 +404,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D08-N2",
@@ -385,7 +417,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-D08-N3",
@@ -397,7 +430,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-001",
@@ -409,7 +443,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-002",
@@ -421,7 +456,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-003",
@@ -433,7 +469,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-004",
@@ -445,7 +482,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-005",
@@ -457,7 +495,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-006",
@@ -469,7 +508,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-007",
@@ -481,7 +521,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-008",
@@ -493,7 +534,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-009",
@@ -505,7 +547,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-010",
@@ -517,7 +560,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-011",
@@ -529,7 +573,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-012",
@@ -541,7 +586,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-013",
@@ -553,7 +599,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-014",
@@ -565,7 +612,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-015",
@@ -577,7 +625,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-016",
@@ -589,7 +638,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-017",
@@ -601,7 +651,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-POI-018",
@@ -613,7 +664,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-RT-001",
@@ -625,7 +677,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-RT-002",
@@ -637,7 +690,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-RT-003",
@@ -649,7 +703,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-RT-004",
@@ -661,7 +716,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-RT-005",
@@ -673,7 +729,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-TERR-001",
@@ -685,7 +742,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-WTR-001",
@@ -697,7 +755,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SW-WTR-002",
@@ -709,7 +768,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-B1",
@@ -721,7 +781,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-B2",
@@ -733,7 +794,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H01",
@@ -745,7 +807,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H02",
@@ -757,7 +820,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H03",
@@ -769,7 +833,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H04",
@@ -781,7 +846,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H05",
@@ -793,7 +859,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H06",
@@ -805,7 +872,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H07",
@@ -817,7 +885,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H08",
@@ -829,7 +898,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H09",
@@ -841,7 +911,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H10",
@@ -853,7 +924,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H11",
@@ -865,7 +937,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H12",
@@ -877,7 +950,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H13",
@@ -889,7 +963,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H14",
@@ -901,7 +976,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H15",
@@ -913,7 +989,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H16",
@@ -925,7 +1002,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-H17",
@@ -937,7 +1015,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V01",
@@ -949,7 +1028,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V02",
@@ -961,7 +1041,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V03",
@@ -973,7 +1054,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V04",
@@ -985,7 +1067,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V05",
@@ -997,7 +1080,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V06",
@@ -1009,7 +1093,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V07",
@@ -1021,7 +1106,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V08",
@@ -1033,7 +1119,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V09",
@@ -1045,7 +1132,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V10",
@@ -1057,7 +1145,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V11",
@@ -1069,7 +1158,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V12",
@@ -1081,7 +1171,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V13",
@@ -1093,7 +1184,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V14",
@@ -1105,7 +1197,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V15",
@@ -1117,7 +1210,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V16",
@@ -1129,7 +1223,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V17",
@@ -1141,7 +1236,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V18",
@@ -1153,7 +1249,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V19",
@@ -1165,7 +1262,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V20",
@@ -1177,7 +1275,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V21",
@@ -1189,7 +1288,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V22",
@@ -1201,7 +1301,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     },
     {
       "source_id": "SWR-V23",
@@ -1213,7 +1314,8 @@
       "mapping_status": "RESOLVED_SOURCE_IDENTITY",
       "spatial_id": null,
       "review_status": "SOURCE_TO_ENTITY_CODE_VERIFIED",
-      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register."
+      "resolution_note": "Exact one-to-one mapping verified: source_id equals entity_code and matches the source dataset record, entity type, canonical display name and parent. Database spatial_id is generated per database and is resolved by entity_code at materialisation; it is intentionally not hard-coded in this portable register.",
+      "spatial_id_resolution": "LOOKUP_BY_ENTITY_CODE; MATERIALIZED_IN_DISPOSABLE_POSTGRESQL_16; PRODUCTION_ID_NOT_ASSIGNED"
     }
   ],
   "controls": [
