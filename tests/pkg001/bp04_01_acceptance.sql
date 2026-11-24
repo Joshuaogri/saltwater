@@ -8,9 +8,11 @@ DECLARE
   b_two bigint;
   prem_one bigint;
   prem_two bigint;
+  prem_three bigint;
   unit_one bigint;
   ap_one bigint;
   ap_unnamed bigint;
+  ap_unit bigint;
   parcel_id integer;
   address_id integer;
   wrong_kind integer;
@@ -18,6 +20,8 @@ DECLARE
   h_before integer;
   rh_before integer;
   existing_business_name text;
+  existing_geography_name text;
+  existing_person_name text;
   v_tick bigint;
 BEGIN
   IF current_database()<>'saltwater_test' THEN
@@ -88,10 +92,14 @@ BEGIN
   INSERT INTO sw_property.premises(entity_code,display_name,property_id,created_tick,source_ref,actor_ref,reason)
   VALUES('SWPR-BP04-0002','BP04 Premises Two',p_unresolved,v_tick,'bp04-test:premises-two','test-runner','property premises')
   RETURNING premises_id INTO prem_two;
+  INSERT INTO sw_property.premises(entity_code,display_name,building_id,created_tick,source_ref,actor_ref,reason)
+  VALUES('SWPR-BP04-0003','BP04 Premises Three',b_one,v_tick,'bp04-test:premises-three','test-runner','second premises in same building')
+  RETURNING premises_id INTO prem_three;
 
   INSERT INTO sw_property.building_premises
     (building_id,premises_id,valid_from_tick,source_ref,actor_ref,reason)
-  VALUES(b_one,prem_one,v_tick,'bp04-test:building-premises','test-runner','valid building premises');
+  VALUES(b_one,prem_one,v_tick,'bp04-test:building-premises','test-runner','valid building premises'),
+        (b_one,prem_three,v_tick,'bp04-test:building-premises-2','test-runner','second premises in same building');
 
   INSERT INTO sw_property.unit_space(entity_code,display_name,premises_id,created_tick,source_ref,actor_ref,reason)
   VALUES('SWU-BP04-0001','BP04 Unit One',prem_one,v_tick,'bp04-test:unit-one','test-runner','unit test')
@@ -106,9 +114,12 @@ BEGIN
   INSERT INTO sw_property.access_point(entity_code,premises_id,created_tick,source_ref,actor_ref,reason)
   VALUES('SWA-BP04-0002',prem_one,v_tick,'bp04-test:access-unnamed','test-runner','unnamed premises access')
   RETURNING access_point_id INTO ap_unnamed;
+  INSERT INTO sw_property.access_point(entity_code,display_name,unit_id,created_tick,source_ref,actor_ref,reason)
+  VALUES('SWA-BP04-0003','BP04 Unit Exit',unit_one,v_tick,'bp04-test:access-unit','test-runner','unit exit')
+  RETURNING access_point_id INTO ap_unit;
 
   IF (SELECT count(*) FROM sw_names.name_reservation WHERE entity_type IN
-      ('BUILDING','PREMISES','UNIT','ACCESS_POINT') AND name_form='canonical')<>6 THEN
+      ('BUILDING','PREMISES','UNIT','ACCESS_POINT') AND name_form='canonical')<>8 THEN
     RAISE EXCEPTION 'named physical identities did not all join SW-UNS';
   END IF;
   IF EXISTS (SELECT 1 FROM sw_names.name_reservation WHERE entity_type='ACCESS_POINT' AND entity_id=ap_unnamed) THEN
@@ -116,6 +127,9 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM sw_property.property_building WHERE property_id=p_resolved AND valid_to_tick IS NULL)<>2 THEN
     RAISE EXCEPTION 'one property must support multiple buildings';
+  END IF;
+  IF (SELECT count(*) FROM sw_property.building_premises WHERE building_id=b_one AND valid_to_tick IS NULL)<>2 THEN
+    RAISE EXCEPTION 'one building must support multiple premises';
   END IF;
 
   -- A business name is globally unavailable to a property identity.
@@ -144,9 +158,12 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='building deletion unexpectedly succeeded' THEN RAISE; END IF;
   END;
-  UPDATE sw_property.property_asset SET lifecycle_status='inactive' WHERE property_id=p_unresolved;
+  PERFORM sw_property.change_lifecycle('PROPERTY',p_unresolved,'inactive',v_tick+1,
+    'bp04-test:lifecycle-change','test-runner','test attributed lifecycle transition');
   IF (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='PROPERTY'
-      AND entity_id=p_unresolved AND event_code='status_changed' AND new_status='inactive')<>1 THEN
+      AND entity_id=p_unresolved AND event_code='status_changed' AND new_status='inactive'
+      AND effective_tick=v_tick+1 AND source_ref='bp04-test:lifecycle-change'
+      AND actor_ref='test-runner' AND reason='test attributed lifecycle transition')<>1 THEN
     RAISE EXCEPTION 'lifecycle status history was not appended';
   END IF;
 
@@ -168,6 +185,48 @@ BEGIN
     IF SQLERRM='invalid building-premises parent link unexpectedly accepted' THEN RAISE; END IF;
   END;
 
+  -- Global namespace rejects existing geography and person names as well as business names.
+  SELECT display_name INTO STRICT existing_geography_name
+  FROM sw_names.name_reservation WHERE entity_type='GEOGRAPHY' AND name_form='canonical'
+    AND normalized_key=sw_names.normalize_name('BP04 Test Parcel One');
+  BEGIN
+    INSERT INTO sw_property.property_asset
+      (entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
+    VALUES('SWP-BP04-GEO-COLLIDE-0001',existing_geography_name,'unresolved',v_tick,
+      'bp04-test:geography-name-collision','test-runner','cross-domain geography collision');
+    RAISE EXCEPTION 'geography/property global name collision unexpectedly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='geography/property global name collision unexpectedly succeeded' THEN RAISE; END IF;
+  END;
+  SELECT concat_ws(' ',given_name,middle_name,family_name) INTO STRICT existing_person_name
+  FROM sw_people.person WHERE given_name IS NOT NULL AND family_name IS NOT NULL LIMIT 1;
+  BEGIN
+    INSERT INTO sw_property.property_asset
+      (entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
+    VALUES('SWP-BP04-PERSON-COLLIDE-0001',existing_person_name,'unresolved',v_tick,
+      'bp04-test:person-name-collision','test-runner','cross-domain person collision');
+    RAISE EXCEPTION 'person/property global name collision unexpectedly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='person/property global name collision unexpectedly succeeded' THEN RAISE; END IF;
+  END;
+  BEGIN
+    INSERT INTO sw_property.building(entity_code,display_name,created_tick,source_ref,actor_ref,reason)
+    VALUES('SWB-STR-BP04-0003','BP04 Building One',v_tick,'bp04-test:bp04-name-collision',
+      'test-runner','cross-BP04 entity name collision');
+    RAISE EXCEPTION 'cross-BP04 global name collision unexpectedly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='cross-BP04 global name collision unexpectedly succeeded' THEN RAISE; END IF;
+  END;
+
+  -- Orphan endpoints are rejected by the physical foreign-key model.
+  BEGIN
+    INSERT INTO sw_property.premises(entity_code,display_name,building_id,created_tick,source_ref,actor_ref,reason)
+    VALUES('SWPR-BP04-ORPHAN-0001','BP04 Orphan Premises',9223372036854770000,v_tick,
+      'bp04-test:orphan','test-runner','orphan parent rejection');
+    RAISE EXCEPTION 'orphan premises parent unexpectedly accepted';
+  EXCEPTION WHEN foreign_key_violation THEN NULL;
+  END;
+
   -- A duplicate-name failure must roll back the newly-created physical identity.
   SELECT count(*) INTO n_before FROM sw_property.property_asset;
   BEGIN
@@ -186,15 +245,15 @@ BEGIN
   IF (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='BUILDING'
       AND entity_id IN (b_one,b_two) AND event_code='created')<>2
      OR (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='PREMISES'
-      AND entity_id IN (prem_one,prem_two) AND event_code='created')<>2
+      AND entity_id IN (prem_one,prem_two,prem_three) AND event_code='created')<>3
      OR (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='UNIT'
       AND entity_id=unit_one AND event_code='created')<>1
      OR (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='ACCESS_POINT'
-      AND entity_id IN (ap_one,ap_unnamed) AND event_code='created')<>2 THEN
+      AND entity_id IN (ap_one,ap_unnamed,ap_unit) AND event_code='created')<>2 THEN
     RAISE EXCEPTION 'physical identity creation history incomplete';
   END IF;
 
-  RAISE NOTICE 'BP04_01_ACCEPTANCE_PASS properties=2 buildings=2 premises=2 units=1 access_points=2';
+  RAISE NOTICE 'BP04_01_ACCEPTANCE_PASS properties=2 buildings=2 premises=3 units=1 access_points=3';
 END
 $$;
 ROLLBACK;
