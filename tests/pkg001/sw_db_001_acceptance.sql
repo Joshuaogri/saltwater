@@ -13,6 +13,12 @@ BEGIN
   SELECT batch_id INTO v_batch FROM sw_ops.world_provisioning_batch
   WHERE config_version='saltwater-opening-fixture-v1';
   IF v_batch IS NULL THEN RAISE EXCEPTION 'opening provisioning manifest missing'; END IF;
+  IF NOT EXISTS (SELECT 1 FROM sw_ops.world_provisioning_batch WHERE batch_id=v_batch AND environment_scope='DISPOSABLE_TEST_ONLY') THEN
+    RAISE EXCEPTION 'fixture manifest is not explicitly marked disposable-only';
+  END IF;
+  IF (SELECT count(*) FROM sw_ops.provisioning_content_checksum WHERE batch_id=v_batch)<>2 THEN
+    RAISE EXCEPTION 'person and business content checksums are not both recorded';
+  END IF;
 
   IF (SELECT count(*) FROM sw_people.person)<>9500
      OR (SELECT count(*) FROM sw_people.population_state WHERE life_status=1 AND scope_status=1)<>9500
