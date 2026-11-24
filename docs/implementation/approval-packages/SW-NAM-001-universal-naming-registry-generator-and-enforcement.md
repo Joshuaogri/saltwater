@@ -220,9 +220,9 @@ A green CI run proves only the tested disposable scope. It does not prove all 44
 - No public frontend/API deployment or ChatGPT transport integration.
 - No claim that every division is integrated until each applicable domain adapter and bypass test is evidenced.
 
-## 6. Approval requested
+## 6. Approval granted
 
-Approve **SW-NAM-001 — Universal Naming Registry, Generator and Enforcement** for:
+The user approved **SW-NAM-001 — Universal Naming Registry, Generator and Enforcement** on 2026-11-24 for the following scope:
 - implementation directly on GitHub `main`;
 - creation of disposable-only SQL proposal `0009_universal_name_registry.sql`;
 - Python normalization, reservation and deterministic generation services;
@@ -239,5 +239,5 @@ Approve **SW-NAM-001 — Universal Naming Registry, Generator and Enforcement** 
 **Policy:** ADOPTED — SW-UNS-001.  
 **Implementation package:** APPROVED — implementation in progress (2026-11-24).  
 **GitHub branch:** `main` only.  
-**Disposable PostgreSQL implementation/tests:** IN_PROGRESS; migration, runtime service and initial test suites committed; CI verification pending.  
+**Disposable PostgreSQL implementation/tests:** IN PROGRESS; core migration, Python services, SQL/Python/concurrency tests, full 10,000-person fixture, access controls and backup/restore passed in run `45409228297`; the added same-entity concurrent canonical-name regression and final storage remeasurement are running in `45409845359`.  
 **Neon production changes:** none authorised or performed.
