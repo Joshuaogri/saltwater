@@ -4,6 +4,7 @@
 BEGIN;
 
 CREATE SCHEMA sw_business;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA sw_ops;
 
 -- Cross-domain provisioning metadata only. Person and business truth remains in
 -- their owning schemas; this table stores immutable batch provenance/counts.
@@ -15,6 +16,8 @@ CREATE TABLE sw_ops.world_provisioning_batch (
   config_version text NOT NULL CHECK (length(btrim(config_version)) BETWEEN 1 AND 80),
   seed bigint NOT NULL,
   source_revision text NOT NULL CHECK (length(btrim(source_revision)) BETWEEN 7 AND 64),
+  environment_scope text NOT NULL DEFAULT 'DISPOSABLE_TEST_ONLY'
+    CHECK (environment_scope='DISPOSABLE_TEST_ONLY'),
   expected_residents integer NOT NULL CHECK (expected_residents=9000),
   expected_police_subset integer NOT NULL CHECK (expected_police_subset=500),
   expected_living_people integer NOT NULL CHECK (expected_living_people=9500),
@@ -35,6 +38,18 @@ END
 $$;
 CREATE TRIGGER world_provisioning_manifest_immutable
 BEFORE UPDATE OR DELETE ON sw_ops.world_provisioning_batch
+FOR EACH ROW EXECUTE FUNCTION sw_ops.reject_provisioning_manifest_mutation();
+
+CREATE TABLE sw_ops.provisioning_content_checksum (
+  batch_id bigint NOT NULL REFERENCES sw_ops.world_provisioning_batch(batch_id),
+  entity_type text NOT NULL CHECK (entity_type IN ('PERSON','BUSINESS')),
+  record_count integer NOT NULL CHECK (record_count > 0),
+  content_sha256 bytea NOT NULL CHECK (octet_length(content_sha256)=32),
+  created_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
+  PRIMARY KEY (batch_id,entity_type)
+);
+CREATE TRIGGER provisioning_content_checksum_immutable
+BEFORE UPDATE OR DELETE ON sw_ops.provisioning_content_checksum
 FOR EACH ROW EXECUTE FUNCTION sw_ops.reject_provisioning_manifest_mutation();
 
 -- BP-04 distribution/site canon remains open. The business identity deliberately
