@@ -6,9 +6,9 @@ rolls back, so domain creation and name reservation remain atomic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
-from runtime.naming import GeneratedNameBatch, normalize_name
+from runtime.naming import NORMALIZER_VERSION, GeneratedNameBatch, normalize_name
 
 
 @dataclass(frozen=True, slots=True)
@@ -39,7 +39,7 @@ class PostgresNameRegistry:
         with self._connection.cursor() as cursor:
             cursor.execute(
                 """SELECT sw_names.reserve_name(
-                     %s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                     %s::text,%s::bigint,%s::text,%s::text,%s::text,%s::text,%s::text,%s::bigint,%s::bigint)""",
                 (
                     entity_type.upper(), entity_id, name_form.lower(), display_name,
                     source_ref, actor_ref, reason, effective_tick, generation_batch_id,
@@ -59,9 +59,9 @@ class PostgresNameRegistry:
         with self._connection.cursor() as cursor:
             cursor.execute(
                 """SELECT sw_names.record_generation_batch(
-                     %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                     %s::text,%s::smallint,%s::smallint,%s::text,%s::bigint,%s::bytea,%s::integer,%s::text,%s::text,%s::text)""",
                 (
-                    batch.domain.upper(), batch.generator_version, 1,
+                    batch.domain.upper(), batch.generator_version, NORMALIZER_VERSION,
                     batch.config_version, batch.seed,
                     bytes.fromhex(batch.manifest_sha256), len(batch.candidates),
                     source_ref, actor_ref, reason,
@@ -79,7 +79,7 @@ class PostgresNameRegistry:
         normalize_name(alias)
         with self._connection.cursor() as cursor:
             cursor.execute(
-                """SELECT sw_names.add_alias(%s,%s,%s,%s,%s,%s,%s)""",
+                """SELECT sw_names.add_alias(%s::text,%s::bigint,%s::text,%s::text,%s::text,%s::text,%s::bigint)""",
                 (entity_type.upper(), entity_id, alias, source_ref, actor_ref, reason, effective_tick),
             )
             row = cursor.fetchone()
@@ -93,7 +93,7 @@ class PostgresNameRegistry:
     ) -> None:
         with self._connection.cursor() as cursor:
             cursor.execute(
-                "SELECT sw_names.change_status(%s,%s,%s,%s,%s,%s)",
+                "SELECT sw_names.change_status(%s::bigint,%s::text,%s::bigint,%s::text,%s::text,%s::text)",
                 (reservation_id, event_code.lower(), effective_tick, source_ref, actor_ref, reason),
             )
 
