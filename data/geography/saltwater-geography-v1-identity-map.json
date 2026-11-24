@@ -2,7 +2,6 @@
   "schema": "saltwater-spatial-identity-map/1.0",
   "dataset_id": "SW-GEO-V1",
   "source_dataset_status": "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
-  "source_dataset_sha": "27b3f7848af10f2d61dee04a4dada1eff1f9871b",
   "mapping_status": "DISPOSABLE_MAPPING_CANDIDATE_ONLY",
   "operational_seed_approved": false,
   "root_entities": [
@@ -1037,5 +1036,6 @@
       "source_ref": "SW-GEO-V1:road:SWR-V23",
       "spatial_id": null
     }
-  ]
+  ],
+  "source_dataset_git_blob_sha": "27b3f7848af10f2d61dee04a4dada1eff1f9871b"
 }
