@@ -235,7 +235,7 @@ BEFORE UPDATE OR DELETE ON sw_names.name_event
 FOR EACH ROW EXECUTE FUNCTION sw_names.reject_event_mutation();
 
 CREATE FUNCTION sw_names.latest_status(p_reservation_id bigint)
-RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+RETURNS text LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
   SELECT CASE e.event_code
     WHEN 'reserved' THEN 'reserved'
     WHEN 'activated' THEN 'active'
