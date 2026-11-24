@@ -14,6 +14,9 @@ on:
       - "db/proposals/0008_bp39_checkpoint_recovery.sql"
       - "db/proposals/0009_universal_name_registry.sql"
       - "runtime/naming.py"
+      - "runtime/name_generation.py"
+      - "runtime/naming_inventory.py"
+      - "tests/pkg001/test_naming_inventory.py"
       - "tests/pkg001/test_naming.py"
       - "tests/pkg001/test_naming_postgres.py"
       - "tests/pkg001/naming_acceptance.sql"
@@ -60,6 +63,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_recruitment.py" -v
       - name: Run SW-NAM-001 naming service and generator tests
         run: python -m unittest discover -s tests/pkg001 -p "test_naming.py" -v
+      - name: Run SW-NAM-001 canon inventory dry-run tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_naming_inventory.py" -v
       - name: Run accepted-player activation adapter tests
         run: python -m unittest discover -s tests/pkg001 -p "test_player_activation.py" -v
       - name: Run durable player application composition tests
