@@ -75,7 +75,7 @@ The initial map baseline contains 8 districts, 24 neighbourhoods, 42 named roads
 
 - [Read SW-UNS-001 — Universal Naming Standard](docs/blueprint/decisions/SW-UNS-001-universal-naming-standard.md)
 - Existing adopted names must be preserved and registered before new names are generated, including the eight districts, 24 neighbourhoods and 42 named SW-GEO-V1 roads.
-- Policy adoption is complete. SW-NAM-001 implementation is approved and in progress; disposable SQL/Python acceptance tests and CI have been added but are not yet verified. No Neon production changes were made or authorised.
+- Policy adoption is complete. SW-NAM-001 is approved; core disposable SQL/Python/PostgreSQL acceptance passed in runs `45409845359` and `45410340222`. A final heap/index/TOAST storage-detail run `45411243093` is pending. No Neon production changes were made or authorised.
 
 ### Universal naming implementation
 
