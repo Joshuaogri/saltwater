@@ -245,6 +245,83 @@ BEGIN
     RAISE EXCEPTION 'quarantine resolution requires frozen recovering runtime';
   END IF;
   IF p_decision IS NULL OR p_decision NOT IN ('effect_committed','effect_absent')
+     OR p_owner_domain IS NULL OR p_owner_domain !~ '^[a-z][a-z0-9_]{1,47}$'
+     OR p_owner_response_ref IS NULL OR length(p_owner_response_ref) NOT BETWEEN 1 AND 200
+     OR p_actor_ref IS NULL OR length(p_actor_ref) NOT BETWEEN 1 AND 200
+     OR p_approval_ref IS NULL OR length(p_approval_ref) NOT BETWEEN 1 AND 200
+     OR p_reason_code IS NULL OR p_reason_code !~ '^[a-z][a-z0-9_]{0,63}$'
+     OR p_recovery_key IS NULL OR length(p_recovery_key) NOT BETWEEN 1 AND 128 THEN
+    RAISE EXCEPTION 'invalid quarantine resolution or missing provenance';
+  END IF;
+  SELECT * INTO existing FROM sw_runtime.event_claim_recovery WHERE recovery_key=p_recovery_key;
+  IF FOUND THEN
+    IF (existing.event_id,existing.prior_claim_token,existing.decision,existing.owner_domain,
+        existing.owner_response_ref,existing.outcome_ref,existing.actor_ref,existing.approval_ref,
+        existing.reason_code,existing.checkpoint_id)
+       IS DISTINCT FROM
+       (p_event_id,p_original_claim_token,p_decision,p_owner_domain,p_owner_response_ref,
+        p_outcome_ref,p_actor_ref,p_approval_ref,p_reason_code,p_checkpoint_id) THEN
+      RAISE EXCEPTION 'quarantine resolution key conflicts with prior decision';
+    END IF;
+    RETURN existing.resulting_status;
+  END IF;
+  SELECT * INTO prior FROM sw_runtime.event_claim_recovery
+    WHERE event_id=p_event_id AND prior_claim_token=p_original_claim_token
+      AND decision='indeterminate'
+    ORDER BY recovery_id DESC LIMIT 1;
+  IF NOT FOUND THEN RAISE EXCEPTION 'no matching indeterminate recovery record exists'; END IF;
+  SELECT * INTO work_row FROM sw_runtime.event_work WHERE event_id=p_event_id FOR UPDATE;
+  IF NOT FOUND OR work_row.status<>'quarantined'
+     OR work_row.owner_domain<>p_owner_domain THEN
+    RAISE EXCEPTION 'quarantined work or owner does not match resolution';
+  END IF;
+  IF p_decision='effect_committed' THEN
+    IF p_outcome_ref IS NULL OR length(p_outcome_ref) NOT BETWEEN 1 AND 200 THEN
+      RAISE EXCEPTION 'committed effect requires durable owner outcome reference';
+    END IF;
+    final_status:='completed';
+  ELSE
+    IF p_outcome_ref IS NOT NULL THEN
+      RAISE EXCEPTION 'absent effect cannot carry an outcome reference';
+    END IF;
+    final_status:='failed';
+  END IF;
+  PERFORM set_config('sw_runtime.recovery_authorized','on',true);
+  UPDATE sw_runtime.event_work SET status=final_status,claim_token=NULL,
+    outcome_ref=p_outcome_ref,
+    last_error_code=CASE WHEN final_status='failed' THEN 'recovery_effect_absent' ELSE NULL END,
+    retry_after_tick=CASE WHEN final_status='failed' THEN state_row.world_tick ELSE retry_after_tick END
+    WHERE event_id=p_event_id;
+  INSERT INTO sw_runtime.event_work_attempt(
+    event_id,attempt_no,attempt_status,world_tick,error_code,outcome_ref
+  ) VALUES(p_event_id,work_row.attempt_count,final_status,state_row.world_tick,
+    CASE WHEN final_status='failed' THEN 'recovery_effect_absent' ELSE NULL END,p_outcome_ref);
+  INSERT INTO sw_runtime.event_claim_recovery(
+    recovery_key,event_id,prior_claim_token,decision,owner_domain,owner_response_ref,
+    outcome_ref,actor_ref,approval_ref,reason_code,checkpoint_id,world_tick,resulting_status
+  ) VALUES(
+    p_recovery_key,p_event_id,p_original_claim_token,p_decision,p_owner_domain,
+    p_owner_response_ref,p_outcome_ref,p_actor_ref,p_approval_ref,p_reason_code,
+    p_checkpoint_id,state_row.world_tick,final_status
+  );
+  RETURN final_status;
+END
+$bp39$;
+
+CREATE FUNCTION sw_runtime.finish_event_claim_recovery() RETURNS boolean
+
+DECLARE
+  state_row sw_runtime.state%ROWTYPE;
+  work_row sw_runtime.event_work%ROWTYPE;
+  prior sw_runtime.event_claim_recovery%ROWTYPE;
+  existing sw_runtime.event_claim_recovery%ROWTYPE;
+  final_status text;
+BEGIN
+  SELECT * INTO state_row FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
+  IF NOT FOUND OR state_row.state<>4 OR state_row.player_present THEN
+    RAISE EXCEPTION 'quarantine resolution requires frozen recovering runtime';
+  END IF;
+  IF p_decision IS NULL OR p_decision NOT IN ('effect_committed','effect_absent')
      OR p_owner_domain IS NULL OR p_owner_domain !~ '^[a-z][a-z0-9_]{1,47}
 LANGUAGE plpgsql AS $bp39$
 DECLARE state_row sw_runtime.state%ROWTYPE;
