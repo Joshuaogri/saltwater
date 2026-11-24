@@ -304,8 +304,8 @@ $$;
 GRANT USAGE ON SCHEMA sw_business TO sw_game_readonly,sw_game_command;
 REVOKE ALL ON ALL TABLES IN SCHEMA sw_business FROM PUBLIC,sw_game_command,sw_game_readonly;
 GRANT SELECT ON ALL TABLES IN SCHEMA sw_business TO sw_game_readonly;
-GRANT SELECT ON sw_ops.world_provisioning_batch TO sw_game_readonly;
-REVOKE ALL ON sw_ops.world_provisioning_batch FROM PUBLIC,sw_game_command;
+GRANT SELECT ON sw_ops.world_provisioning_batch,sw_ops.provisioning_content_checksum TO sw_game_readonly;
+REVOKE ALL ON sw_ops.world_provisioning_batch,sw_ops.provisioning_content_checksum FROM PUBLIC,sw_game_command;
 
 INSERT INTO sw_ops.storage_operation
   (operation_kind,description,status,measurement_notes)
