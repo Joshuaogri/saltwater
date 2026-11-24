@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://saltwater.invalid/contracts/player-command-tool.schema.json",
+  "title": "Saltwater Player Command Tool",
+  "description": "Model-controlled request shape only. Trusted host context and game-session credentials are injected separately by trusted server code and must never be tool arguments.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["command_text"],
+  "properties": {
+    "command_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit)$",
+      "description": "Exactly one supported command token; no arguments, scripts, SQL, shell or hidden-truth trigger."
+    },
+    "request_reference": {
+      "type": ["string", "null"],
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "Optional opaque correlation reference. Not an identity or authorization input."
+    }
+  },
+  "x-response": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["ok", "message"],
+    "properties": {
+      "ok": {"type": "boolean"},
+      "message": {"type": "string"}
+    }
+  }
+}
