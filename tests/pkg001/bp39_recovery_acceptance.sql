@@ -11,6 +11,9 @@ DECLARE
   result_status text;
   checkpoint_id uuid;
   report jsonb;
+  unresolved_id bigint;
+  unresolved_claim record;
+  blocked boolean:=false;
 BEGIN
   UPDATE sw_runtime.state SET state=1,player_present=false
     WHERE singleton=1 AND state=0;
@@ -53,6 +56,46 @@ BEGIN
   IF (SELECT count(*) FROM sw_runtime.event_work_attempt
       WHERE event_id=v_event_id AND attempt_status='completed')<>1 THEN
     RAISE EXCEPTION 'recovery completion attempt history missing';
+  END IF;
+
+  UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
+  unresolved_id:=sw_runtime.submit_event_work(
+    'GEO_CREATED','geography','geo.create',1,1,tick,0,'bp39-indeterminate-fixture',
+    'test:actor','geography','fixture:indeterminate',NULL,NULL,'internal',3
+  );
+  SELECT * INTO unresolved_claim FROM sw_runtime.claim_due_event_work();
+  IF unresolved_claim.event_id<>unresolved_id THEN
+    RAISE EXCEPTION 'indeterminate fixture was not claimed';
+  END IF;
+  PERFORM sw_runtime.begin_event_claim_recovery('test:operator','approval:BP39-01');
+  result_status:=sw_runtime.reconcile_event_claim(
+    unresolved_id,unresolved_claim.claim_token,'indeterminate','geography',
+    'owner:geography:reconciliation:indeterminate',NULL,
+    'test:operator','approval:BP39-01','owner_cannot_determine',
+    'bp39-indeterminate-decision',NULL
+  );
+  IF result_status<>'quarantined' THEN
+    RAISE EXCEPTION 'indeterminate effect was not quarantined';
+  END IF;
+  BEGIN
+    PERFORM sw_runtime.finish_event_claim_recovery();
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='unresolved or quarantined event claims block recovery completion' THEN
+      blocked:=true;
+    ELSE RAISE; END IF;
+  END;
+  IF NOT blocked THEN RAISE EXCEPTION 'quarantined work did not block recovery completion'; END IF;
+  result_status:=sw_runtime.resolve_quarantined_event_claim(
+    unresolved_id,unresolved_claim.claim_token,'effect_absent','geography',
+    'owner:geography:reconciliation:resolved-absent',NULL,
+    'test:operator','approval:BP39-01','owner_confirmed_absent',
+    'bp39-indeterminate-resolution',NULL
+  );
+  IF result_status<>'failed' THEN
+    RAISE EXCEPTION 'conclusive absence did not safely release work for retry';
+  END IF;
+  IF NOT sw_runtime.finish_event_claim_recovery() THEN
+    RAISE EXCEPTION 'resolved recovery did not finish';
   END IF;
 
   checkpoint_id:=sw_runtime.capture_checkpoint_manifest(
