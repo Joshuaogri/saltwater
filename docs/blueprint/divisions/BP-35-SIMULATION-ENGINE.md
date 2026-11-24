@@ -906,8 +906,8 @@ The following source IDs are mapped to BP-35 in the authoritative crosswalk. Ori
 ## 24. Completion status
 
 - Specification: **DESIGNED_DRAFT**; user review/approval pending.
-- Implementation: **NOT_STARTED**.
-- Test execution: **NOT_STARTED**. The 230 acceptance tests above are criteria, not execution evidence.
-- Verification: **NOT_STARTED**.
+- Implementation: **IN_PROGRESS** — bounded BP35-01 event intake/dispatch slice committed; full division remains incomplete.
+- Test execution: **IN_PROGRESS** — BP35-01 Python and disposable PostgreSQL acceptance suites are running; the 230 acceptance tests above remain design criteria, not all executed evidence.
+- Verification: **PENDING** — no division-wide verification claim.
 - Neon: **No database write performed or authorised**.
 - Next division in fixed numeric order: **BP-36 — Relationships and Social Context**.
