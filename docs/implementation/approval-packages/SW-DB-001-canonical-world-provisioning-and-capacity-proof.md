@@ -4,7 +4,7 @@
 **Package:** SW-DB-001  
 **Target:** Neon PostgreSQL production is the final intended destination; implementation/testing in this package is disposable PostgreSQL only  
 **Git branch:** `main` only  
-**Status:** PROPOSED — awaiting explicit user approval  
+**Status:** APPROVED — implementation in progress (2026-11-24)  
 **Prepared:** 2026-11-24  
 **Neon production write authority:** NONE
 
@@ -178,4 +178,4 @@ This approval grants **zero Neon production write authority**. No Neon mutation 
 
 ## 9. Status
 
-**PROPOSED — awaiting explicit user approval.** Population-counting and foundational-geography canon blockers have been resolved by SW-CANON-001. No SW-DB-001 implementation, test result or Neon production write is claimed.
+**APPROVED — implementation in progress (2026-11-24).** The user explicitly approved GitHub main implementation and disposable PostgreSQL provisioning/testing. Proposal 0010, deterministic 9,500-person/10,000-business fixture, test-only distribution overlay, acceptance/restore SQL and dedicated CI workflow are committed. Regression, storage/performance and backup/restore results remain pending. Neon production write authority remains NONE; no Neon operation has been performed.
