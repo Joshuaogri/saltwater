@@ -7,6 +7,8 @@ DECLARE
  v_parcel integer;
  v_address integer;
  v_other_address integer;
+ v_successor_parcel integer;
+ v_append_only_rejected boolean := false;
  v_payload bytea := convert_to('{"type":"Polygon","coordinates":[[[0,0],[10,0],[10,10],[0,10],[0,0]]]}','UTF8');
  v_hash bytea;
  v_duplicate_rejected boolean := false;
@@ -48,11 +50,18 @@ BEGIN
  END;
  IF NOT v_bad_road_rejected THEN RAISE EXCEPTION 'non-road spatial reference was accepted'; END IF;
 
+ INSERT INTO sw_geo.entity(entity_code,kind) VALUES('SWP-CAND-BP04-03-0002',6) RETURNING spatial_id INTO v_successor_parcel;
+ INSERT INTO sw_geo.version(spatial_id,version_no,effective_from_tick,parent_id,name,active,geometry_format,geometry_payload,geometry_sha256,source_ref,reason_code)
+ VALUES(v_successor_parcel,1,0,v_neighbourhood,'Candidate parcel 0002',true,1,v_payload,v_hash,'bp04-03-stage-b-test',1);
+ INSERT INTO sw_geo.parcel_profile(parcel_spatial_id,version_no,neighbourhood_spatial_id,land_use_code,development_state,area_m2,area_basis,geometry_quality,source_ref,actor_ref,confidence_code,reason)
+ VALUES(v_successor_parcel,1,v_neighbourhood,'mixed_use','developed',100,'derived_geometry','candidate_unreviewed','bp04-03-stage-b-test','test-runner','estimated','synthetic disposable acceptance');
  INSERT INTO sw_geo.parcel_lineage(predecessor_parcel_spatial_id,successor_parcel_spatial_id,relationship_code,effective_from_tick,source_ref,actor_ref,reason)
- VALUES(v_parcel,v_parcel+100000,'split_into',0,'bp04-03-stage-b-test','test-runner','synthetic lineage row');
- -- The FK on the successor deliberately rejects an unknown identity; rollback that subtest.
- EXCEPTION WHEN foreign_key_violation THEN
-   NULL;
+ VALUES(v_parcel,v_successor_parcel,'split_into',0,'bp04-03-stage-b-test','test-runner','synthetic lineage row');
+ BEGIN
+   UPDATE sw_geo.parcel_profile SET area_m2=101 WHERE parcel_spatial_id=v_parcel AND version_no=1;
+ EXCEPTION WHEN raise_exception THEN v_append_only_rejected := true;
+ END;
+ IF NOT v_append_only_rejected THEN RAISE EXCEPTION 'parcel profile mutation was accepted'; END IF;
 END
 $$;
 ROLLBACK;
