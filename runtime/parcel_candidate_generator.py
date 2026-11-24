@@ -51,6 +51,31 @@ def _polygon_parts(geom):
     return []
 
 
+def _candidate_name(candidate_id: str, occupied: set[str]) -> str:
+    """Generate a deterministic, pronounceable fictional parcel name."""
+    import hashlib
+    onsets = ("", "b", "br", "d", "dr", "f", "g", "gr", "h", "k", "l", "m", "n", "p", "r", "s", "sh", "t", "th", "v", "w", "z")
+    vowels = ("a", "e", "i", "o", "u", "ae", "ai", "ea", "ei", "ia", "io", "oa", "ou")
+    codas = ("n", "r", "l", "m", "s", "th", "nd", "st", "rn", "v", "k", "")
+    for attempt in range(1000):
+        digest = hashlib.sha256(
+            f"saltwater:SW-UNS-plot-name-v1:{candidate_id}:{attempt}".encode()
+        ).digest()
+        parts = []
+        offset = 0
+        for _ in range(3):
+            onset = onsets[digest[offset] % len(onsets)]
+            vowel = vowels[digest[offset + 1] % len(vowels)]
+            coda = codas[digest[offset + 2] % len(codas)]
+            parts.append(onset + vowel + coda)
+            offset += 3
+        name = "".join(parts).capitalize()
+        if name.casefold() not in occupied:
+            occupied.add(name.casefold())
+            return name
+    raise ValueError(f"Could not generate a unique candidate name for {candidate_id}")
+
+
 def _rings(poly):
     return [
         [[round(float(x), 9), round(float(y), 9)] for x, y in list(poly.exterior.coords)],
@@ -90,6 +115,7 @@ def build_candidates(source: dict) -> dict:
     water_ids = [(fid, geom) for fid, geom in water_features]
 
     parcels, cell_audit, coverage = [], [], []
+    occupied_names: set[str] = set()
     total_source_area = total_road_area = total_water_area = total_candidate_area = 0.0
     source_cell_count = 0
 
@@ -137,6 +163,7 @@ def build_candidates(source: dict) -> dict:
                             frontage.append(segment["segment_id"])
                     parcel = {
                         "candidate_parcel_id": parcel_id,
+                        "display_name": _candidate_name(parcel_id, occupied_names),
                         "source_dataset": source["dataset_id"],
                         "source_neighbourhood_id": hood["id"],
                         "source_district_id": hood["district_id"],
