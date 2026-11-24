@@ -136,6 +136,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_baseline_target -f db/migrations/0001_foundation.sql
       - name: Compare clean replay against read-only reference snapshot
         env:
+          PGPASSWORD: test-only-password
           BASELINE_REFERENCE_DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_baseline
           BASELINE_TARGET_DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_baseline_target
         run: |
