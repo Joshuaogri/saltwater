@@ -1,7 +1,7 @@
 # BP37-01 — Canonical Clock Core and Schedule Eligibility
 
 **Division:** BP-37 — Time and Scheduling  
-**Package status:** Proposed; awaiting explicit user approval  
+**Package status:** Approved; implementation and disposable verification in progress  
 **Specification:** BP-37 v1.0, currently DESIGNED_DRAFT  
 **Target branch:** `main` only  
 **Dependencies:** Existing PKG-001 runtime kernel and PostgreSQL runtime store; BP-35 runtime lifecycle; BP-38 record/event foundation  
@@ -63,8 +63,16 @@ Do not create a second clock, runtime singleton, event ledger, player identity, 
 
 Use deterministic in-memory tests for lifecycle, ordering, idempotency, retry and failure behaviour. Use disposable PostgreSQL 16 for transactional clock advancement, concurrent claims, persisted schedule lifecycle, rollback, player-absence/pause gates and existing regression acceptance. Measure database bytes before/after schema creation and representative schedule fixtures, including relation/index totals and per-schedule cost. Do not use production Neon for tests.
 
-## 7. Approval requested
+## 7. Approval record
 
-Approval authorises the bounded BP-37 v1.0 design increment and repository implementation described above, committed directly to `main`, plus disposable PostgreSQL/Python testing and measured storage reporting. It does not approve a fictional calendar/timezone or any production Neon operation.
+**Approved by the user on 2026-11-24.** Approval covers this bounded repository implementation, direct commits to `main`, Python tests, disposable PostgreSQL acceptance and storage measurement. It does not approve a fictional calendar/timezone or any production Neon operation.
 
-**Do you approve BP37-01 for implementation and disposable testing, with Neon production remaining untouched?**
+## 8. Implementation record
+
+Implemented so far:
+- `runtime/scheduling.py`: typed schedule definitions, deterministic due ordering, idempotent registration, interval scheduling, retryable failure, owner-domain handler injection, and runtime lifecycle gates.
+- `db/proposals/0006_bp37_tick_scheduling.sql`: compact schedule registry, immutable schedule identity, guarded lifecycle transitions, transactional create/claim/finalize functions, claim tokens, and deterministic due ordering. This remains a proposal and is applied only to disposable PostgreSQL in CI.
+- `tests/pkg001/test_scheduling.py` and `tests/pkg001/scheduling_acceptance.sql`: deterministic unit tests and PostgreSQL acceptance/storage fixture.
+- CI applies proposal 0006 only in the disposable PostgreSQL service and runs both new suites.
+
+Full PostgreSQL verification is still running. No Neon production changes have been made.
