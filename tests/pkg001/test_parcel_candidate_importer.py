@@ -12,8 +12,12 @@ SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_t
 
 
 class ParcelCandidateImporterTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.manifest = build_candidates(SOURCE)
+
     def setUp(self):
-        self.manifest = build_candidates(SOURCE)
+        self.manifest = self.__class__.manifest
 
     def _rehash(self, data):
         canonical = dict(data)
