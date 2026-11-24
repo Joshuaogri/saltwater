@@ -175,6 +175,19 @@ BEGIN
     IF SQLERRM='duplicate complete person name unexpectedly succeeded' THEN RAISE; END IF;
   END;
 
+  BEGIN
+    INSERT INTO sw_names.name_reservation
+      (entity_type,entity_id,name_form,display_name,normalized_key,namespace_slot,
+       source_ref,actor_ref,reason)
+    VALUES
+      ('GEOGRAPHY',v_extra,'canonical','Bypass Canonical Road',
+       sw_names.normalize_name('Bypass Canonical Road'),'GLOBAL',
+       'sw-nam-direct-bypass','test-runner','direct canonical insert bypass test');
+    RAISE EXCEPTION 'direct registry insert bypassed single-active-canonical guard';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='direct registry insert bypassed single-active-canonical guard' THEN RAISE; END IF;
+  END;
+
   IF (SELECT count(*) FROM sw_names.name_event e
       JOIN sw_names.name_reservation r USING(reservation_id)
       WHERE r.entity_id=v_extra AND r.entity_type='GEOGRAPHY') < 3 THEN
