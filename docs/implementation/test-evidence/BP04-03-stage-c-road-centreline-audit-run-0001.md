@@ -58,3 +58,57 @@ Preserved outputs:
 The bridge-length and road-width decisions are no longer blockers. The next implementation step is to dissolve the 685 segment corridors into a non-overlapping network-level road-reserve geometry, intersect it with the 24 neighbourhood polygons, and reconcile boundary coverage/gaps/overlaps. Then regenerate parcel candidates against those actual fictional road edges instead of the provisional 15m inset. Neighbourhood boundary rules and the city boundary will be encoded in the fictional geography data and tested deterministically.
 
 No operational addresses, property records, ownership, occupancy or city-wide built-asset inventory were created in this run. No Neon production connection, upload, migration, seed or activation occurred.
+
+
+# BP04-03 Stage C dissolved road-reserve and neighbourhood topology — run 0001
+
+**Date:** 2026-11-24  
+**Workflow:** [BP04-03 Stage B Disposable PostgreSQL](https://github.com/Joshuaogri/saltwater/actions/runs/45488230508)  
+**Result:** PASS  
+**Commit under test:** `2aee9701e23f7e8d49c828fee9c3d00fe555d38e`  
+**Geometry engine:** Shapely 2.1.2  
+**Production writes:** none
+
+## Dissolved road-reserve geometry
+
+The 685 segment-level corridor polygons were dissolved into one connected city road-reserve geometry. The operation removes **140,804.555 m²** of duplicate overlap contributed by segment corridors meeting at junctions.
+
+| Measure | Result |
+|---|---:|
+| Segment corridor polygons | 685 |
+| Sum of individual segment polygon areas | 7,197,950.587 m² |
+| Duplicate junction overlap removed | 140,804.555 m² |
+| Dissolved city road-reserve area | 7,057,146.032 m² |
+| Dissolved network components | 1 |
+| Road reserve outside city boundary | 0 m² |
+
+The dissolved geometry is wholly contained by the city boundary. Unique road-reserve area is calculated after dissolve, not by adding overlapping segment areas.
+
+## Neighbourhood boundary reconciliation
+
+All 24 neighbourhood polygons were validated against the sovereign city boundary:
+
+| Measure | Result |
+|---|---:|
+| City boundary area | 108,000,000 m² |
+| Neighbourhood union area | 108,000,000 m² |
+| Neighbourhood overlap area | 0 m² |
+| Neighbourhood coverage gap | 0 m² |
+| Neighbourhood area outside city | 0 m² |
+| Sum of neighbourhood road-reserve allocations | 7,057,146.032 m² |
+| Allocation difference from dissolved road reserve | 0 m² |
+
+The neighbourhood polygons tile the entire fictional city boundary exactly. Every square metre of dissolved road reserve is allocated once across the 24 neighbourhoods.
+
+## Verification
+
+[Run 45488230508](https://github.com/Joshuaogri/saltwater/actions/runs/45488230508) passed the full workflow. Five road-reserve topology tests passed; the full Python suites passed (4 + 5 + 5 + 5 + 5 tests). Disposable PostgreSQL candidate import and repeat-import idempotency also passed.
+
+Preserved outputs:
+- Dissolved road-reserve topology: [artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45488230508/artifacts/14964976654), **9,850 compressed bytes**, archive SHA-256 `6c48fa58105dcdc6aa64b97fcf94d6c538ea75ea16669c036abdb77977963379`.
+- Road corridor register: [artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45488230508/artifacts/14965495973), **23,915 compressed bytes**.
+- Parcel coverage area audit: [artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45488230508/artifacts/14965206332), **1,713 compressed bytes**.
+
+## Next implementation
+
+Regenerate parcel candidates using the dissolved SW-RDS-V1 road-reserve geometry and water geometry, replacing the provisional 15m inset. Preserve source-cell lineage, split disconnected land components deterministically, and rerun candidate validity, overlap, neighbourhood assignment, water exclusion, area reconciliation and disposable PostgreSQL idempotency. Then expand the physical asset population into detailed property, building, premises, unit and access-point dossiers.
