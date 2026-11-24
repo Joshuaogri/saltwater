@@ -12,7 +12,7 @@ BEGIN
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
       RETURNING event_id INTO ev;
     INSERT INTO sw_people.person(given_name,family_name,created_tick,last_event_id)
-      VALUES ('Synthetic','Person-'||i,0,ev) RETURNING person_id INTO pid;
+      VALUES ('Synthetic','Fixture-'||substr(md5(i::text),1,12),0,ev) RETURNING person_id INTO pid;
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
       RETURNING event_id INTO ev;
