@@ -134,6 +134,8 @@ At minimum, preserve and register:
 
 The import must be deterministic, repeatable and report every accepted name, pre-existing collision, skipped record and unresolved owner reference. It must not silently rename or overwrite canon. A collision discovered among existing canon becomes a recorded conflict requiring explicit resolution; it is not “fixed” by choosing one name to discard.
 
+**Known pre-existing collision to report:** proposal 0002 currently creates separate sovereign-root and playable-city spatial identities, and both version records are named `Saltwater`. Under SW-UNS-001's global canonical-name uniqueness rule, these are a collision if they remain two distinct named entities. The import must surface both stable spatial IDs and block their simultaneous canonical reservation until the user resolves whether they are one dual-role entity or require distinct canonical names. Do not silently merge IDs, invent an alias, or rename either root.
+
 The initial inventory must distinguish true entity names from descriptive labels, schema identifiers, example names and UI copy. Do not indiscriminately reserve every word appearing in documentation.
 
 ### 3.7 Automated tests and CI
