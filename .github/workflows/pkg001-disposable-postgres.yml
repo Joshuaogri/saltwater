@@ -190,6 +190,8 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
           psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS reserved_names,pg_total_relation_size('sw_names.name_reservation') AS reservation_total_bytes,round(pg_total_relation_size('sw_names.name_reservation')::numeric/NULLIF(count(*),0),2) AS total_bytes_per_reserved_name FROM sw_names.name_reservation;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 2 DESC;"
       - name: Test database access boundary
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/security_boundary.sql
       - name: Capture consistent BP39 checkpoint manifest
