@@ -47,7 +47,7 @@ The user approved two neighbourhood-only renames to resolve global canonical-nam
 - `SW-D01-N1`: **Westgate** → **Westgate Gardens**. District `SW-D01` remains **Westgate**.
 - `SW-D03-N2`: **Government Square** → **Civic Terrace**. Landmark `SW-POI-002` remains **Government Square**.
 
-The source JSON and SVG labels reflect these approved names. The SW-GEO-V1 dataset remains `DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED`; no import or Neon write was performed. The 100 unresolved source-to-spatial-ID mappings remain an independent blocker.
+The source JSON and SVG labels reflect these approved names. The SW-GEO-V1 dataset remains `DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED`; no import or Neon write was performed. The 100 source identities are now resolved to stable entity_code values; database-specific spatial_id surrogates are looked up by entity_code during materialisation.
 
 
 ## Geography source-identity reconciliation correction (2026-11-24)
