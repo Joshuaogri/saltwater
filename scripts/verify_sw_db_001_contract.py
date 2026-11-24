@@ -50,9 +50,9 @@ def verify() -> None:
         raise SystemExit("fixture is not database-name guarded")
     if "server_version_num" not in fixture:
         raise SystemExit("fixture must enforce disposable PostgreSQL version")
-    if re.search(r"INSERT\\s+INTO\\s+sw_police\\.personnel", fixture, re.I):
+    if re.search(r"INSERT\s+INTO\s+sw_police\.personnel", fixture, re.I):
         raise SystemExit("fixture must not fabricate police appointments")
-    if re.search(r"INSERT\\s+INTO\\s+sw_geo\\.entity", fixture, re.I):
+    if re.search(r"INSERT\s+INTO\s+sw_geo\.entity", fixture, re.I):
         raise SystemExit("fixture must not fabricate detailed geography")
     if "NON_GEOGRAPHIC_TEST_FIXTURE" not in fixture or "TEST_MARITIME" not in fixture:
         raise SystemExit("test-only non-geographic business variety is not explicitly labelled")
