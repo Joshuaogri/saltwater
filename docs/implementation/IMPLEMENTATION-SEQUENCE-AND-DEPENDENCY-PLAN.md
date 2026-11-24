@@ -432,12 +432,30 @@ The dedicated [SW-DB-001 disposable workflow](../../.github/workflows/sw-db-001-
 **Production boundary:** this approval grants no Neon production write authority. No Neon connection, migration, schema change, seed, import, upload or configuration change is part of SW-DB-001. BP-04 distribution canon, detailed geography, G1 narrative sign-off, G2 Neon capacity and later production release gates remain open.
 
 
-## 17. BP04-01 — property, building, premises, unit and access-point identity foundation (approved; disposable verification in progress)
+## 17. BP04-01 — property, building, premises, unit and access-point identity foundation
 
 Package: [BP04-01 — Property, Building, Premises, Unit and Access-Point Identity Foundation](approval-packages/BP04-01-property-premises-identity-foundation.md).
 
-SW-DB-001 is now implemented and verified in disposable PostgreSQL 16; its 9,500-person/10,000-business fixture, idempotency, content checksums, restore and exact population-cap boundary all passed in [run 45456851773](https://github.com/Joshuaogri/saltwater/actions/runs/45456851773). The next dependency is the BP-04 physical built-world identity layer. Proposal 0010 already owns business identity; do not duplicate it. BP04-01 is deliberately limited to property, building, premises, unit and access-point identities, typed references to BP-02 parcel/address entities, explicit unresolved-location states, parent relationships, lifecycle history and SW-UNS naming integration.
+BP04-01 is approved and implemented on `main`. It establishes canonical physical identities for property, building, premises, unit and access point; typed references to BP-02 parcel/address entities; explicit unresolved-location states; parent relationships; lifecycle/history; and SW-UNS naming integration. It does not populate the actual Saltwater property inventory, decide city-wide property distribution, or implement ownership/tenancy/occupancy.
 
-The package does not invent or import geography, populate city-wide property data, resolve BP-04 distribution decisions, or implement ownership/tenancy/occupancy. It uses the existing BP-02 geography entity kinds (parcel 6, address 11) only as typed references. The map remains unapproved for operational seeding.
+The first expanded disposable PostgreSQL run [45475731749](https://github.com/Joshuaogri/saltwater/actions/runs/45475731749) passed the complete Python regression and migration/schema-application steps, but the BP04-01 SQL acceptance stopped at its final creation-history count assertion. Three access points were deliberately created (two named and one unnamed); the test incorrectly expected only two creation-history rows. The test assertion was corrected to require all three entity-history rows. This is a test expectation correction, not yet a passing rerun. A fresh PostgreSQL acceptance run must pass before BP04-01 is marked verified.
 
-**Status: APPROVED — implementation committed on `main`; disposable PostgreSQL 16 verification in progress.** No Neon production operation is authorised. It grants zero Neon production write authority.
+**Status: APPROVED — implementation committed; disposable PostgreSQL acceptance rerun required.** No Neon production operation or physical inventory seed is authorised.
+
+## 18. BP04-02 — deep physical asset and space profiles (proposed)
+
+Package: [BP04-02 — Deep Physical Asset and Space Profiles](approval-packages/BP04-02-deep-physical-asset-and-space-profiles.md).
+
+BP04-02 extends all five BP04-01 identity types with extensive typed descriptive profiles and structured child records. It is expressly designed to prevent shallow records consisting only of an ID/name and a few generic fields. Required depth includes:
+
+- Property: classification/use, site form and dimensions, boundary/terrain/drainage, site components/facilities, utility availability, perimeter/security, condition, hazards and works history.
+- Building: function/form/construction/materials, footprint and distinct floor-area measures, levels/storeys/height, capacity, structural and envelope elements, vertical circulation, utility/service systems, fire/life-safety, security, accessibility, shared facilities, condition by element, defects and maintenance.
+- Premises: function/type, level/location, frontage/orientation, area and measurement basis, rooms/zones, fit-out, fixtures, dedicated/shared services, physical security, accessibility, fire/escape relationships, defects and refurbishment.
+- Unit: unit class/local locator, level/position, area, rooms/layout, fit-out/fixtures, utility points, access/security, accessibility, physical capacity/suitability and maintenance history.
+- Access point: type, parent and spatial/road/junction links, position/orientation, opening dimensions, access mode/direction, physical control, accessibility, vehicle limits, loading/turning capability, emergency egress, restriction/availability state, condition and verification history.
+
+Universal record rules: distinguish unknown/not assessed/not applicable/not present/zero; retain typed measurements and units; source, actor, confidence and reason; recorded and effective chronology; append-preserving assessments and changes; normalised child records; no invented precision; and universal SW-UNS naming. The package excludes ownership, tenancy, actual occupancy, business operators, police facilities, new geometry, city-wide inventory seeding and Neon production changes.
+
+Candidate migration: `0012_bp04_physical_asset_detail_profiles.sql`. After BP04-01 verification, BP04-02 requires explicit approval before implementation on `main` and disposable PostgreSQL 16 testing. The package and this depth standard are recorded in GitHub. The next actual city-inventory population work remains a later, separate step after the model and geography coverage are verified.
+
+**Status: PROPOSED — awaiting explicit approval.** No Neon production write authority.
