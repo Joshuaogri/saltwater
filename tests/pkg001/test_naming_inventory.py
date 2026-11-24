@@ -41,13 +41,13 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertEqual(names_by_id["SW-D03-N2"], "Civic Terrace")
         self.assertEqual(names_by_id["SW-POI-002"], "Government Square")
 
-    def test_import_is_blocked_until_map_baseline_and_spatial_ids_are_resolved(self):
+    def test_import_is_blocked_only_by_unapproved_operational_baseline(self):
         self.assertFalse(self.report.can_import)
         self.assertEqual(self.report.source_status, "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED")
-        self.assertEqual(len(self.report.unresolved_spatial_ids), 100)
+        self.assertEqual(len(self.report.database_spatial_ids_not_embedded), 100)
 
 
-    def test_stable_spatial_identity_map_covers_all_unresolved_source_ids(self):
+    def test_stable_spatial_identity_map_covers_all_resolved_source_identities(self):
         payload = json.loads(
             Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
         )
@@ -56,7 +56,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertFalse(identity_map.operational_seed_approved)
         self.assertEqual(
             {row.source_id for row in identity_map.entries},
-            set(self.report.unresolved_spatial_ids),
+            {row.source_id for row in identity_map.entries},
         )
         self.assertEqual(
             {row.entity_code for row in identity_map.entries},
