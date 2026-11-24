@@ -32,28 +32,28 @@ BEGIN
     (parcel_spatial_id,version_no,geometry_sha256,source_manifest_sha256,perimeter_m,compactness_index,
      centroid_x_m,centroid_y_m,label_point_x_m,label_point_y_m,bounds_min_x_m,bounds_min_y_m,
      bounds_max_x_m,bounds_max_y_m,exterior_vertex_count,interior_ring_count,road_frontage_length_m,
-     frontage_segment_count,water_boundary_contact_length_m,adjacent_water_feature_count,
+     frontage_segment_count,frontage_candidate_count,water_boundary_contact_length_m,adjacent_water_feature_count,
      frontage_review_status,geometry_review_status,measurement_basis,source_ref,actor_ref,confidence_code,reason)
   VALUES
-    (v_a,1,v_hash_a,v_manifest,40,0.78539816,5,5,5,5,0,0,10,10,4,0,10,1,0,0,
+    (v_a,1,v_hash_a,v_manifest,40,0.78539816,5,5,5,5,0,0,10,10,4,0,10,1,1,0,0,
      'REVIEW_REQUIRED','VALID_GENERATED_CANDIDATE','DERIVED_FROM_GENERATED_POLYGON_GEOMETRY',
      'bp04-03-stage-d-test','test-runner','estimated','synthetic dossier fixture'),
-    (v_b,1,v_hash_b,v_manifest,40,0.78539816,15,5,15,5,10,0,20,10,4,0,0,0,0,0,
+    (v_b,1,v_hash_b,v_manifest,40,0.78539816,15,5,15,5,10,0,20,10,4,0,0,0,0,0,0,
      'NO_ROAD_EDGE_CONTACT_REVIEW_REQUIRED','VALID_GENERATED_CANDIDATE','DERIVED_FROM_GENERATED_POLYGON_GEOMETRY',
      'bp04-03-stage-d-test','test-runner','estimated','synthetic dossier fixture');
 
   INSERT INTO sw_geo.parcel_frontage_candidate
-    (parcel_spatial_id,version_no,road_segment_id,road_id,road_name,road_class,contact_length_m,
+    (parcel_spatial_id,version_no,frontage_candidate_id,road_segment_ids,road_id,road_name,road_class,contact_length_m,
      candidate_point_x_m,candidate_point_y_m,review_status,source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
   VALUES
-    (v_a,1,'SWS-TEST-01','SWR-TEST-01','Aster Road','local_street',10,5,0,
+    (v_a,1,'PFC-TEST-A-01',ARRAY['SWS-TEST-01'],'SWR-TEST-01','Aster Road','local_street',10,5,0,
      'UNREVIEWED_GEOMETRIC_CONTACT',v_manifest,'bp04-03-stage-d-test','test-runner','estimated','synthetic frontage');
 
   INSERT INTO sw_geo.parcel_access_location_candidate
-    (access_candidate_id,parcel_spatial_id,version_no,road_segment_id,candidate_x_m,candidate_y_m,
+    (access_candidate_id,parcel_spatial_id,version_no,frontage_candidate_id,candidate_x_m,candidate_y_m,
      candidate_type,review_status,source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
   VALUES
-    ('PAC-TEST-A-01',v_a,1,'SWS-TEST-01',5,0,'unclassified_access_location',
+    ('PAC-TEST-A-01',v_a,1,'PFC-TEST-A-01',5,0,'unclassified_access_location',
      'UNREVIEWED_GEOMETRIC_CANDIDATE',v_manifest,'bp04-03-stage-d-test','test-runner','estimated','synthetic access candidate');
 
   INSERT INTO sw_geo.parcel_adjacency_candidate
