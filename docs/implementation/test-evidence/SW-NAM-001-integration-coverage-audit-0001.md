@@ -66,7 +66,7 @@ The previously approved source-name corrections are present in the repository:
 - `SW-D01-N1`: **Westgate Gardens**, while district `SW-D01` remains **Westgate**.
 - `SW-D03-N2`: **Civic Terrace**, while landmark `SW-POI-002` remains **Government Square**.
 
-The 100 non-root source IDs still lack materialised mappings to authoritative `sw_geo.entity.spatial_id` records. The map source is not approved for operational seeding. Therefore:
+A deterministic mapping candidate is now committed at [saltwater-geography-v1-identity-map.json](../../../data/geography/saltwater-geography-v1-identity-map.json). It maps all 100 non-root source IDs to the same stable `entity_code`, records the typed geography kind and parent source identity, and deliberately leaves every generated integer `spatial_id` NULL. The 100 integer spatial-ID mappings still require a disposable PostgreSQL materialisation run using `INSERT ... RETURNING`, followed by a recorded result. The map source is not approved for operational seeding. Therefore:
 - no geography canon import is performed;
 - no production names are reserved;
 - no generated geography names are accepted as canon;
