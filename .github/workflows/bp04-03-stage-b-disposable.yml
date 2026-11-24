@@ -91,6 +91,13 @@ jobs:
         run: python -m runtime.parcel_candidate_generator
       - name: Generate width-agnostic road corridor register
         run: python -m runtime.road_corridor_audit
+      - name: Preserve generated road corridor register
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-road-corridor-register-${{ github.run_id }}
+          path: bp04-03-road-corridor-register.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Install PostgreSQL Python driver
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Validate and import candidate manifest into disposable PostgreSQL
