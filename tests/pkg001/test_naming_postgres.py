@@ -118,6 +118,51 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
                 )
                 self.assertEqual(cur.fetchone()[0], batch_id)
 
+    def test_geography_rename_preserves_stable_id_and_historical_reservation(self):
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO sw_geo.entity(entity_code,kind) VALUES (%s,7) RETURNING spatial_id",
+                    (f"sw-nam-history-{uuid4()}",),
+                )
+                spatial_id = cur.fetchone()[0]
+                cur.execute(
+                    """INSERT INTO sw_geo.version
+                       (spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
+                       VALUES (%s,1,0,'Historic Registry Road','sw-nam-history-v1',1)""",
+                    (spatial_id,),
+                )
+                cur.execute(
+                    """INSERT INTO sw_geo.version
+                       (spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
+                       VALUES (%s,2,1,'Current Registry Road','sw-nam-history-v2',2)""",
+                    (spatial_id,),
+                )
+                cur.execute(
+                    """SELECT display_name,entity_id,status FROM sw_names.registry
+                       WHERE entity_type='GEOGRAPHY' AND entity_id=%s
+                         AND display_name IN ('Historic Registry Road','Current Registry Road')
+                       ORDER BY display_name""",
+                    (spatial_id,),
+                )
+                records = cur.fetchall()
+                self.assertEqual(
+                    records,
+                    [
+                        ("Current Registry Road", spatial_id, "active"),
+                        ("Historic Registry Road", spatial_id, "superseded"),
+                    ],
+                )
+        with self.assertRaises(psycopg.Error):
+            with connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT sw_names.reserve_name(
+                             'GEOGRAPHY',%s,'canonical','Historic Registry Road',
+                             'sw-nam-history-reuse','ci-test','historical name cannot be reused',0)""",
+                        (self.entity_ids[3],),
+                    )
+
     def test_failed_entity_creation_transaction_rolls_back_name_reservation(self):
         entity_id = self.entity_ids[1]
         with self.assertRaises(RuntimeError):
