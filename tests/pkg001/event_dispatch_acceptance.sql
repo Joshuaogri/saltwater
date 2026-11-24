@@ -12,6 +12,7 @@ DECLARE
   claimed record;
   result_status text;
   cycle_denied boolean := false;
+  stale_denied boolean := false;
   pause_denied boolean := false;
 BEGIN
   UPDATE sw_runtime.state SET state=1,player_present=false
@@ -21,7 +22,6 @@ BEGIN
   UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
   SELECT world_tick INTO tick FROM sw_runtime.state WHERE singleton=1;
 
-  -- Parent has lower priority; child has higher priority but cannot run first.
   parent_id:=sw_runtime.submit_event_work(
     'GEO_CREATED','geography','geo.create',1,1,tick,0,'bp35-parent',
     'test:actor','geography','fixture:parent',NULL,NULL,'internal',3
@@ -42,11 +42,8 @@ BEGIN
   BEGIN
     PERFORM sw_runtime.add_event_prerequisite(parent_id,child_id);
   EXCEPTION WHEN raise_exception THEN
-    IF SQLERRM='causal prerequisite would create a cycle' THEN
-      cycle_denied:=true;
-    ELSE
-      RAISE;
-    END IF;
+    IF SQLERRM='causal prerequisite would create a cycle' THEN cycle_denied:=true;
+    ELSE RAISE; END IF;
   END;
   IF NOT cycle_denied THEN RAISE EXCEPTION 'causal cycle was not rejected'; END IF;
 
@@ -54,33 +51,18 @@ BEGIN
   IF claimed.event_id<>parent_id THEN
     RAISE EXCEPTION 'causal child ran before parent or deterministic ordering failed';
   END IF;
-  SELECT sw_runtime.finish_event_work(
-    parent_id,gen_random_uuid(),true,'fixture:wrong-token',NULL,NULL,true
-  ) INTO result_status;
-  RAISE EXCEPTION 'stale claim token unexpectedly finalized event work';
-EXCEPTION WHEN raise_exception THEN
-  IF SQLERRM='stale claim token unexpectedly finalized event work' THEN RAISE; END IF;
-  IF SQLERRM<>'event claim token is stale or invalid' THEN RAISE; END IF;
-END
-$bp35$;
+  BEGIN
+    PERFORM sw_runtime.finish_event_work(
+      parent_id,gen_random_uuid(),true,'fixture:wrong-token',NULL,NULL,true
+    );
+    RAISE EXCEPTION 'stale claim token unexpectedly finalized event work';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='event claim token is stale or invalid' THEN stale_denied:=true;
+    ELSIF SQLERRM='stale claim token unexpectedly finalized event work' THEN RAISE;
+    ELSE RAISE; END IF;
+  END;
+  IF NOT stale_denied THEN RAISE EXCEPTION 'stale claim token was not rejected'; END IF;
 
--- Re-run the actual flow after the stale-token negative test in a separate block.
-DO $bp35$
-DECLARE
-  tick bigint;
-  parent_id bigint;
-  child_id bigint;
-  retry_id bigint;
-  claimed record;
-  result_status text;
-  pause_denied boolean := false;
-BEGIN
-  SELECT world_tick INTO tick FROM sw_runtime.state WHERE singleton=1;
-  SELECT event_id INTO parent_id FROM sw_runtime.event_work WHERE idempotency_key='bp35-parent';
-  SELECT event_id INTO child_id FROM sw_runtime.event_work WHERE idempotency_key='bp35-child';
-
-  SELECT * INTO claimed FROM sw_runtime.claim_due_event_work();
-  IF claimed.event_id<>parent_id THEN RAISE EXCEPTION 'parent was not next eligible event'; END IF;
   SELECT sw_runtime.finish_event_work(
     parent_id,claimed.claim_token,true,'fixture:parent-committed',NULL,NULL,true
   ) INTO result_status;
@@ -121,11 +103,11 @@ BEGIN
       'GEO_CREATED','geography','geo.create',1,1,tick,0,'bp35-paused',
       NULL,'geography','fixture:paused',NULL,NULL,'internal',2
     );
+    RAISE EXCEPTION 'paused event intake was not rejected';
   EXCEPTION WHEN raise_exception THEN
-    IF SQLERRM='event intake requires running player-present runtime' THEN
-      pause_denied:=true;
-    ELSE RAISE;
-    END IF;
+    IF SQLERRM='event intake requires running player-present runtime' THEN pause_denied:=true;
+    ELSIF SQLERRM='paused event intake was not rejected' THEN RAISE;
+    ELSE RAISE; END IF;
   END;
   IF NOT pause_denied THEN RAISE EXCEPTION 'paused event intake was not rejected'; END IF;
 END
