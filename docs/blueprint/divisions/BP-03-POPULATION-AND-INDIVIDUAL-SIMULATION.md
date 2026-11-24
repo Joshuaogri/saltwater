@@ -620,7 +620,7 @@ These tasks do not alter the binding population scope, one-person-one-ID rule, 1
 
 ## 21. Completion statement
 
-**Design status:** `DESIGNED_DRAFT`; complete population architecture drafted, with population-scope details requiring user confirmation before implementation.  
+**Design status:** `DESIGNED_DRAFT`; population scope and opening arithmetic are adopted by SW-CANON-001. Individual identity generation, processing budgets, event-ledger mechanics and full acceptance testing remain.  
 **Implementation status:** `NOT_STARTED` unless separately evidenced.  
 **Test status:** `NOT_STARTED`.  
 **Verification status:** `NOT_STARTED`.
