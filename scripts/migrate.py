@@ -85,12 +85,14 @@ def schema_fingerprint(conn) -> str:
     catalogue = []
     queries = [
         ("schemas", """
-            SELECT nspname FROM pg_namespace
+            SELECT nspname,COALESCE(nspacl::text,'')
+            FROM pg_namespace
             WHERE left(nspname,3)='sw_'
             ORDER BY nspname
         """),
         ( "relations", """
             SELECT n.nspname, c.relname, c.relkind,
+                   c.relrowsecurity,c.relforcerowsecurity,COALESCE(c.relacl::text,''),
                    COALESCE(pg_get_viewdef(c.oid, true), '')
             FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
             WHERE left(n.nspname,3)='sw_'
@@ -127,13 +129,13 @@ def schema_fingerprint(conn) -> str:
         """),
         ( "routines", """
             SELECT n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),
-                   p.prokind,pg_get_functiondef(p.oid)
+                   p.prokind,COALESCE(p.proacl::text,''),pg_get_functiondef(p.oid)
             FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
             WHERE left(n.nspname,3)='sw_' AND p.prokind IN ('f','p')
             ORDER BY n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)
         """),
         ( "triggers", """
-            SELECT n.nspname,c.relname,t.tgname,pg_get_triggerdef(t.oid,true)
+            SELECT n.nspname,c.relname,t.tgname,t.tgenabled,pg_get_triggerdef(t.oid,true)
             FROM pg_trigger t
             JOIN pg_class c ON c.oid=t.tgrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
