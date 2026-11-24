@@ -5,6 +5,7 @@
 BEGIN;
 
 CREATE SCHEMA sw_names;
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA sw_names;
 
 CREATE TABLE sw_names.name_reservation (
   reservation_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -36,6 +37,8 @@ CREATE INDEX name_reservation_owner_idx
   ON sw_names.name_reservation(entity_type,entity_id);
 CREATE INDEX name_reservation_key_idx
   ON sw_names.name_reservation(normalized_key);
+CREATE INDEX name_reservation_trgm_idx
+  ON sw_names.name_reservation USING gin(normalized_key sw_names.gin_trgm_ops);
 
 CREATE TABLE sw_names.name_event (
   name_event_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -95,6 +98,17 @@ DECLARE
 BEGIN
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
+  END IF;
+
+  -- High-similarity candidates are held for review before any domain row can
+  -- claim them. The GIN trigram index keeps the check bounded as the registry grows.
+  PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
+  IF EXISTS (
+    SELECT 1 FROM sw_names.name_reservation r
+    WHERE r.normalized_key <> NEW.normalized_key
+      AND r.normalized_key % NEW.normalized_key
+  ) THEN
+    RAISE EXCEPTION 'near-duplicate name requires review before reservation';
   END IF;
 
   IF NEW.entity_type='GEOGRAPHY' THEN
