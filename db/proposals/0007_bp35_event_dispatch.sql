@@ -273,9 +273,9 @@ BEGIN
   SELECT et.event_code INTO selected_code
     FROM sw_core.simulation_event se JOIN sw_core.event_type et USING(event_type_id)
     WHERE se.event_id=selected.event_id;
-  SELECT COALESCE(array_agg(prerequisite_event_id ORDER BY prerequisite_event_id),ARRAY[]::bigint[])
-    INTO prerequisites FROM sw_runtime.event_work_prerequisite
-    WHERE event_id=selected.event_id;
+  SELECT COALESCE(array_agg(dep.prerequisite_event_id ORDER BY dep.prerequisite_event_id),ARRAY[]::bigint[])
+    INTO prerequisites FROM sw_runtime.event_work_prerequisite dep
+    WHERE dep.event_id=selected.event_id;
   token:=gen_random_uuid();
   UPDATE sw_runtime.event_work SET status='claimed',claim_token=token,
     attempt_count=attempt_count+1 WHERE event_id=selected.event_id;
