@@ -67,6 +67,10 @@ def _feature_water(source):
         if feature.get("properties", {}).get("entity_type") in ("harbour_water", "constructed_water"):
             geom = _polygon(feature["geometry"], f"water feature {feature.get('id')}")
             water.append((feature.get("id"), geom))
+    for i, (left_id, left) in enumerate(water):
+        for right_id, right in water[i + 1:]:
+            if left.intersection(right).area > 0.001:
+                raise ValueError(f"Overlapping water polygons would double-count area: {left_id}, {right_id}")
     return water
 
 
