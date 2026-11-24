@@ -1,4 +1,5 @@
 """Disposable PostgreSQL race/rollback tests for the authoritative name registry."""
+import hashlib
 import os
 import threading
 import unittest
@@ -85,6 +86,37 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
         first = self.reserve(entity_id, "Idempotent Registry Road")
         second = self.reserve(entity_id, "Idempotent Registry Road")
         self.assertEqual(first, second)
+
+    def test_generator_manifest_is_persisted_idempotently_and_linked_to_names(self):
+        digest = hashlib.sha256(b"SW-NAM-001 generator fixture manifest v1").digest()
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT sw_names.record_generation_batch(
+                         'GEOGRAPHY',1,1,'1',77,%s,1,
+                         'sw-nam-generator-fixture','ci-test','manifest persistence test')""",
+                    (digest,),
+                )
+                batch_id = cur.fetchone()[0]
+                cur.execute(
+                    """SELECT sw_names.record_generation_batch(
+                         'GEOGRAPHY',1,1,'1',77,%s,1,
+                         'sw-nam-generator-fixture','ci-test','manifest persistence retry')""",
+                    (digest,),
+                )
+                self.assertEqual(cur.fetchone()[0], batch_id)
+                cur.execute(
+                    """SELECT sw_names.reserve_name(
+                         'GEOGRAPHY',%s,'canonical','Generated Manifest Fixture Road',
+                         'sw-nam-generator-fixture','ci-test','generated name provenance',0,%s)""",
+                    (self.entity_ids[0], batch_id),
+                )
+                reservation_id = cur.fetchone()[0]
+                cur.execute(
+                    "SELECT generation_batch_id FROM sw_names.name_reservation WHERE reservation_id=%s",
+                    (reservation_id,),
+                )
+                self.assertEqual(cur.fetchone()[0], batch_id)
 
     def test_failed_entity_creation_transaction_rolls_back_name_reservation(self):
         entity_id = self.entity_ids[1]
