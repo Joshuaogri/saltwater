@@ -544,3 +544,21 @@ SW-GEO-V1 is the initial detailed planning-grade geometry baseline and the sourc
 
 No Neon production schema or data was changed. The JSON dataset is committed source data only; production provisioning remains separately gated. Future geography corrections must create a new version and preserve historical references; do not silently overwrite IDs or historical geometries.
 
+
+
+## 20. Universal naming compliance — SW-UNS-001
+
+All geographic and spatial names are governed by the core [SW-UNS-001 Universal Naming Standard](../decisions/SW-UNS-001-universal-naming-standard.md). BP-02 owns the geographic vocabulary and lifecycle but does not operate a competing naming registry or exempt geography from global uniqueness.
+
+Requirements:
+- Every district, neighbourhood, locality, zone, road, path, junction where named, bridge, route, landmark, natural/constructed feature, parcel label and canonical address has a stable spatial ID and a registered canonical name or structured locator as appropriate.
+- Canonical geographic names must be unique in the shared Saltwater namespace across all entity types, not only within BP-02 or a district.
+- Name normalization must detect case, spacing, punctuation, abbreviation and Unicode variants. Near-duplicates and confusable spellings are held for review.
+- Names and aliases are never spatial primary keys. Stable geo/area/road/node/segment/parcel/address IDs remain authoritative through renames and geometry version changes.
+- Former names, aliases and retired road/place names remain historically traceable and cannot be reassigned to a different entity.
+- Road naming must use varied, coherent vocabularies (including appropriate forms such as Road, Street, Avenue, Crescent, Close, Lane, Drive and Walk) without repetitive suffix swapping or near-duplicate variants.
+- Address uniqueness is enforced through the structured canonical address key and valid multi-unit rules, not display punctuation alone.
+- Existing canon geography names must be registered before additional generation. Preserve the eight districts, 24 neighbourhoods and all 42 named roads in SW-GEO-V1; do not silently rename or overwrite them. Resolve any discovered collision through an explicit, versioned decision.
+- Every geography import, generated road, map revision and manual edit must use the shared name reservation and provenance process.
+
+BP-02 supplies its canonical spatial IDs and names to BP-03, BP-04 and all operational consumers. BP-38 owns the registry's authoritative persistence and constraints; BP-43 must test geographic name collisions, historical reservation, imports and concurrent creation. This section does not claim registry implementation or BP-02 completion and does not authorise Neon writes.
