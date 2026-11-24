@@ -114,14 +114,6 @@ class InMemoryScheduleStore:
 
     def claim_due(self, world_tick: int) -> DueSchedule | None:
         with self._lock:
-            for row in self._rows.values():
-                definition = row["definition"]
-                if (row["status"] in {"pending", "failed"}
-                        and definition.due_tick <= world_tick
-                        and row["retry_after_tick"] <= world_tick
-                        and (definition.expires_at_tick is None
-                             or definition.expires_at_tick >= world_tick)):
-                    pass
             eligible = [
                 (sid, row) for sid, row in self._rows.items()
                 if row["status"] in {"pending", "failed"}
@@ -174,7 +166,7 @@ class InMemoryScheduleStore:
                     d = row["definition"]
                     row["definition"] = ScheduleDefinition(
                         d.owner_domain, d.subject_ref,
-                        d.due_tick + d.interval_ticks, d.idempotency_key,
+                        world_tick + d.interval_ticks, d.idempotency_key,
                         d.interval_ticks, d.priority, d.expires_at_tick,
                     )
                     row["status"] = "pending"
