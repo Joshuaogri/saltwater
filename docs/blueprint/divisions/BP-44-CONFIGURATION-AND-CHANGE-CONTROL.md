@@ -339,13 +339,13 @@ The following source requirements/tests are mapped to BP-44 by the authoritative
 
 ## SW-NAM-001 — naming policy implementation record
 
-SW-UNS-001 remains the adopted universal policy. Its only approved shared canonical-name exception permits the sovereign territory and playable city to retain the exact name `Saltwater` under separate permanent IDs; all other entity names remain globally unique, and name-only lookup must return both roots as ambiguous. SW-NAM-001 implements normalizer version 1, deterministic generator version 1 with seed/configuration manifests for person, road, building, business, organisation and operational candidate domains, a dry-run geography canon inventory, explicit adapter coverage and versioned SQL proposal 0009. Any future normalizer change must be collision-audited before activation; no silent canon rewrite or name recycling is allowed. The implementation package is approved and in progress; its disposable CI evidence is pending. No Neon operation is authorised.
+SW-UNS-001 remains the adopted universal policy. Its only approved shared canonical-name exception permits the sovereign territory and playable city to retain the exact name `Saltwater` under separate permanent IDs; all other entity names remain globally unique, and name-only lookup must return both roots as ambiguous. SW-NAM-001 implements normalizer version 1, deterministic generator version 1 with seed/configuration manifests for person, road, building, business, organisation and operational candidate domains, a dry-run geography canon inventory, explicit adapter coverage and versioned SQL proposal 0009. Any future normalizer change must be collision-audited before activation; no silent canon rewrite or name recycling is allowed. The implementation package is approved and in progress; core disposable CI passed in run `45409845359`, with final manifest-version/storage-detail rerun `45410340222` pending. No Neon operation is authorised.
 
 ## 21. Completion status
 
 - Specification: DESIGNED_DRAFT; review/approval pending.
-- Implementation: NOT_STARTED.
-- Test execution: NOT_STARTED; acceptance criteria are not executed evidence.
-- Verification: NOT_STARTED.
+- Implementation: SW-UNS-001 and the bounded SW-NAM-001 normalizer/generator versioning slice are adopted/implemented; the wider BP-44 change-control programme remains incomplete.
+- Test execution: SW-NAM-001 bounded tests passed in run `45409845359`; remaining BP-44 acceptance criteria are not executed evidence.
+- Verification: Bounded naming policy/manifest slice verified; BP-44 overall remains incomplete.
 - No Neon writes, migrations, seed/import, bulk operations, uploads, credential changes or production deployments have been performed or authorised by this work.
 - BP-44 is the final division in the fixed 44-division blueprint. The next work is whole-blueprint semantic audit, gap resolution, cross-division consistency review and then explicit implementation planning; no new division is implied.
