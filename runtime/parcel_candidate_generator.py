@@ -49,10 +49,77 @@ def _polygon_bbox(feature):
     if geom.get("type") != "Polygon":
         return None
     ring = geom.get("coordinates", [[]])[0]
-    if not ring:
+    if len(ring) < 4:
         return None
     xs, ys = [p[0] for p in ring[:-1]], [p[1] for p in ring[:-1]]
     return min(xs), min(ys), max(xs), max(ys)
+
+
+def _clip_ring_to_rect(ring, rect):
+    """Sutherland-Hodgman clipping of a polygon ring to an axis-aligned rectangle."""
+    x0, y0, x1, y1 = rect
+    points = [tuple(p) for p in ring[:-1]]
+
+    def clip(poly, inside, intersect):
+        if not poly:
+            return []
+        out = []
+        previous = poly[-1]
+        previous_inside = inside(previous)
+        for current in poly:
+            current_inside = inside(current)
+            if current_inside:
+                if not previous_inside:
+                    out.append(intersect(previous, current))
+                out.append(current)
+            elif previous_inside:
+                out.append(intersect(previous, current))
+            previous, previous_inside = current, current_inside
+        return out
+
+    def vertical(boundary, a, b):
+        if b[0] == a[0]:
+            return (boundary, a[1])
+        t = (boundary - a[0]) / (b[0] - a[0])
+        return (boundary, a[1] + t * (b[1] - a[1]))
+
+    def horizontal(boundary, a, b):
+        if b[1] == a[1]:
+            return (a[0], boundary)
+        t = (boundary - a[1]) / (b[1] - a[1])
+        return (a[0] + t * (b[0] - a[0]), boundary)
+
+    points = clip(points, lambda p: p[0] >= x0, lambda a, b: vertical(x0, a, b))
+    points = clip(points, lambda p: p[0] <= x1, lambda a, b: vertical(x1, a, b))
+    points = clip(points, lambda p: p[1] >= y0, lambda a, b: horizontal(y0, a, b))
+    points = clip(points, lambda p: p[1] <= y1, lambda a, b: horizontal(y1, a, b))
+    return points
+
+
+def _ring_area(points):
+    if len(points) < 3:
+        return 0.0
+    return abs(sum(
+        points[i][0] * points[(i + 1) % len(points)][1]
+        - points[(i + 1) % len(points)][0] * points[i][1]
+        for i in range(len(points))
+    )) / 2.0
+
+
+def _polygon_rect_intersection_area(feature, rect):
+    """Exact area for a single simple Polygon outer ring clipped to a rectangle.
+
+    Current SW-GEO-V1 water polygons are single-ring rectangles. Interior holes
+    and MultiPolygon geometry are deliberately rejected rather than guessed.
+    """
+    geom = feature.get("geometry", {})
+    if geom.get("type") != "Polygon":
+        raise ValueError("Only Polygon water geometry is supported by Stage B v2")
+    rings = geom.get("coordinates", [])
+    if len(rings) != 1:
+        raise ValueError("Water polygon holes require an explicit geometry implementation")
+    clipped = _clip_ring_to_rect(rings[0], rect)
+    return _ring_area(clipped)
 
 
 def _overlaps(a, b):
@@ -82,10 +149,12 @@ def build_candidates(source: dict) -> dict:
     hoods = source["neighbourhoods"]
     segments = source["network"]["segments"]
     water = [
-        b for f in source.get("features", [])
+        f for f in source.get("features", [])
         if f.get("properties", {}).get("entity_type") in ("harbour_water", "constructed_water")
-        if (b := _polygon_bbox(f)) is not None
     ]
+    for feature in water:
+        if _polygon_bbox(feature) is None:
+            raise ValueError(f"Invalid water polygon feature: {feature.get('id')}")
     parcels, conflicts, coverage = [], [], []
     for hood in sorted(hoods, key=lambda x: x["id"]):
         x0, y0, x1, y1 = _bounds(hood["geometry"])
@@ -99,14 +168,19 @@ def build_candidates(source: dict) -> dict:
             while x < x1:
                 ix += 1
                 cell = (x, y, x + GRID_M, y + GRID_M)
-                water_hits = [i for i, w in enumerate(water) if _overlaps(cell, w)]
+                water_intersections = [
+                    (i, _polygon_rect_intersection_area(feature, cell))
+                    for i, feature in enumerate(water)
+                ]
+                water_hits = [(i, area) for i, area in water_intersections if area > 0]
                 if water_hits:
                     conflicts.append({
                         "candidate_cell_id": f"WATER-{hood['id']}-{ix:03d}",
                         "source_neighbourhood_id": hood["id"],
                         "cell_bbox_m": list(cell),
-                        "conflict": "water_feature_intersection",
-                        "water_feature_indexes": water_hits,
+                        "conflict": "exact_water_polygon_intersection",
+                        "water_feature_ids": [water[i].get("id") for i, _ in water_hits],
+                        "intersection_area_m2": round(sum(area for _, area in water_hits), 3),
                         "status": "EXCLUDED_UNRESOLVED",
                     })
                 else:
@@ -121,7 +195,7 @@ def build_candidates(source: dict) -> dict:
                         "source_district_id": hood["district_id"],
                         "land_use_code": LAND_USE[hood["name"]],
                         "development_state": "unknown",
-                        "geometry_format": "local_grid_polygon_v1",
+                        "geometry_format": "local_grid_polygon_v2",
                         "geometry": [[
                             [inner[0], inner[1]], [inner[2], inner[1]],
                             [inner[2], inner[3]], [inner[0], inner[3]],
@@ -136,7 +210,7 @@ def build_candidates(source: dict) -> dict:
                         "candidate_spatial_id": None,
                         "canonical_address_id": None,
                         "source_ref": f"{source['dataset_id']}:{hood['id']}:500m-cell:{ix:03d}",
-                        "actor_ref": "BP04-03-STAGE-B-GENERATOR-V1",
+                        "actor_ref": "BP04-03-STAGE-B-GENERATOR-V2",
                         "confidence_code": "estimated",
                         "reason": "Deterministic 500m planning-grid cell inset by a 15m candidate road-reserve allowance; not surveyed or operationally approved.",
                     })
@@ -155,7 +229,7 @@ def build_candidates(source: dict) -> dict:
         "source_status": source["status"],
         "operational_approval": False,
         "generation": {
-            "generator": "BP04-03-STAGE-B-GENERATOR-V1",
+            "generator": "BP04-03-STAGE-B-GENERATOR-V2",
             "grid_cell_m": GRID_M,
             "road_reserve_inset_m": ROAD_RESERVE_M,
             "geometry_crs": source["coordinate_reference"]["id"],
@@ -176,9 +250,9 @@ def build_candidates(source: dict) -> dict:
         },
         "limitations": [
             "Planning-grade grid-derived candidates only; not final cadastral parcels.",
-            "Water-intersecting cells are excluded and explicitly listed for resolution.",
+            "Cells with positive-area intersection against exact water polygon rings are excluded and explicitly listed for resolution.",
             "A 15m inset is a generated road-reserve allowance, not an approved right-of-way width.",
-            "Candidate frontage is a geometric edge match only; access, legal frontage and route connectivity remain unverified.",
+            "Candidate frontage is a geometric edge match only; access, legal frontage and route connectivity remain unverified. The 15m inset is still a provisional grid assumption, not a surveyed road-reserve polygon.",
             "No parcel is approved, canonical or eligible for production import.",
         ],
     }
