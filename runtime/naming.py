@@ -117,6 +117,8 @@ class NameRegistry:
 
         if key == "saltwater" and not self._saltwater_slot(owner, key, form):
             raise NameCollision("Saltwater is reserved only for the sovereign territory and playable city")
+        if key == "saltwater" and display_name != "Saltwater":
+            raise NameCollision("the Saltwater root exception permits only exact display spelling")
         if self._saltwater_slot(owner, key, form):
             for existing in self.records:
                 if existing.normalized_key == key:
