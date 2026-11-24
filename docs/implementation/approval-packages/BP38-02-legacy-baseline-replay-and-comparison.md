@@ -72,3 +72,22 @@ Workflow run [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/
 The live workflow passed on 2026-11-24. Exact schema DDL hashes and canonical world-config hashes matched the independent PostgreSQL 18 replay. The supplementary SELECT-only report was reviewed: Neon is PostgreSQL 18.7 at 9,306,112 bytes; the ledger remains at version 1 with a NULL checksum; the two storage-operation history rows and provider catalogue context were enumerated. No mismatch affecting the comparison was found. The workflow enforced read-only mode and made no production changes. See [live Neon run 0001](../test-evidence/BP38-02-live-neon-run-0001.md).
 
 **Next gate:** present the exact guarded one-row checksum adoption, expected storage delta/range and projected total for separate explicit production approval. Do not apply migration 0002 as part of that operation.
+
+
+## Production checksum-adoption operation — prepared, not executed
+
+**Target:** Neon project `misty-breeze-20463094`, production branch `br-bitter-rain-bdz9ddid`, database `neondb`.  
+**Baseline measured read-only after successful comparison:** `pg_database_size=9,306,112` bytes; `sw_ops.schema_migration` heap = 8,192 bytes; total ledger relation including indexes = 49,152 bytes. Exactly one eligible row exists: version 1, name `foundation`, checksum NULL. Its composite row size is 48 bytes; the proposed checksum is 64 ASCII hex characters. No index is defined on `checksum_sha256`.
+
+**Exact intended logical change:** set only `sw_ops.schema_migration.checksum_sha256` for that one eligible row to `d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8`. Use the guarded transaction in `db/proposals/0003_legacy_checksum_adoption.sql`; it aborts unless exactly one row is updated and verifies the resulting value.
+
+**Storage estimate (estimate, not a measured write):**
+- Additional field payload: 64 bytes.
+- Expected allocated database-size increase: **0 bytes**, because the table already occupies one 8 KiB heap page, the update does not add an index entry, and the new tuple is expected to fit in existing page space.
+- Conservative allowance: **0–8,192 bytes** (one additional 8 KiB heap page if page space is unexpectedly insufficient).
+- Projected database size: **9,306,112 bytes expected; no more than 9,314,304 bytes under the one-page allowance** (9.306–9.314 MB decimal; approximately 8.875–8.883 MiB).
+- This estimate excludes WAL/provider billing metrics and cannot guarantee physical storage accounting. Re-measure `pg_database_size`, ledger relation sizes and provider logical-size metric after any approved operation; compare actual values with this range.
+
+**Transaction/rollback:** the guarded proposal is one transaction. Before COMMIT, any guard or verification failure rolls back the entire update. After a successful commit, a compensating change to NULL would require a separately reviewed and explicitly approved operation; do not automatically reverse it. The proposal is idempotency-safe by failing closed on a second run.
+
+**Approval boundary:** this operation is prepared only. No production write has been made. The user must explicitly approve this exact one-row Neon checksum update before execution. Migration 0002, schema fingerprinting, seeds and all other changes are excluded and require their own separate approval.
