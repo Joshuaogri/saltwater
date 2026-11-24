@@ -46,6 +46,20 @@ def validate_manifest(data, candidates):
             raise ValueError("Parcel dossier area does not match candidate geometry")
         if abs(dossier["perimeter_m"] - round(polygon.length, 3)) > 0.001:
             raise ValueError("Parcel dossier perimeter does not match candidate geometry")
+        compactness = 4.0 * 3.141592653589793 * polygon.area / (polygon.length * polygon.length)
+        if abs(dossier["compactness_index"] - round(compactness, 8)) > 0.00000001:
+            raise ValueError("Parcel dossier compactness does not match candidate geometry")
+        centroid = polygon.centroid
+        representative = polygon.representative_point()
+        if abs(dossier["centroid_x_m"] - round(centroid.x, 6)) > 0.000001 or abs(dossier["centroid_y_m"] - round(centroid.y, 6)) > 0.000001:
+            raise ValueError("Parcel dossier centroid does not match candidate geometry")
+        if abs(dossier["label_point_x_m"] - round(representative.x, 6)) > 0.000001 or abs(dossier["label_point_y_m"] - round(representative.y, 6)) > 0.000001:
+            raise ValueError("Parcel dossier label point does not match candidate geometry")
+        bounds = [round(value, 6) for value in polygon.bounds]
+        if dossier["bounds_m"] != bounds:
+            raise ValueError("Parcel dossier bounds do not match candidate geometry")
+        if dossier["exterior_vertex_count"] != len(polygon.exterior.coords) - 1 or dossier["interior_ring_count"] != len(polygon.interiors):
+            raise ValueError("Parcel dossier ring counts do not match candidate geometry")
         if dossier["frontage_candidate_count"] != len(row["frontages"]):
             raise ValueError("Parcel frontage candidate count does not match frontage rows")
         if dossier["frontage_segment_count"] != sum(len(item["road_segment_ids"]) for item in row["frontages"]):
@@ -73,7 +87,7 @@ def _connection_parameters(args):
     }
 
 
-def import_dossiers(conn, data, manifest_sha):
+def import_dossiers(conn, data, manifest_sha, candidates):
     if conn.info.dbname != "saltwater_test":
         raise RuntimeError("Refusing parcel dossier import outside database saltwater_test")
     started = time.perf_counter()
@@ -86,6 +100,7 @@ def import_dossiers(conn, data, manifest_sha):
                 raise RuntimeError("Parcel dossier importer requires PostgreSQL 16")
             before = cur.execute("SELECT pg_database_size(current_database())").fetchone()[0]
             spatial_ids = {}
+            candidate_manifest_records = {item["candidate_parcel_id"]: item for item in candidates["parcels"]}
             for row in data["parcels"]:
                 dossier = row["dossier"]
                 candidate_id = dossier["candidate_parcel_id"]
@@ -107,6 +122,11 @@ def import_dossiers(conn, data, manifest_sha):
                     "SELECT geometry_sha256 FROM sw_geo.version WHERE spatial_id=%s AND version_no=1",
                     (parcel_id,),
                 ).fetchone()[0]
+                candidate_record = candidate_manifest_records[candidate_id]
+                candidate_geometry = {"type": "Polygon", "coordinates": candidate_record["geometry"]}
+                candidate_bytes = json.dumps(candidate_geometry, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                if bytes(geometry_hash) != hashlib.sha256(candidate_bytes).digest():
+                    raise ValueError(f"Candidate geometry checksum differs from disposable geography version: {candidate_id}")
                 bounds = dossier["bounds_m"]
                 cur.execute(
                     """INSERT INTO sw_geo.parcel_dossier
@@ -264,7 +284,7 @@ def main():
     manifest_sha = validate_manifest(data, candidates)
     params = _connection_parameters(args)
     with (psycopg.connect(**params) if isinstance(params, dict) else psycopg.connect(params)) as conn:
-        report = import_dossiers(conn, data, manifest_sha)
+        report = import_dossiers(conn, data, manifest_sha, candidates)
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
