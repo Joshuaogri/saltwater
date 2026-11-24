@@ -1,6 +1,6 @@
 # BP38-02 — Independent Legacy Baseline Replay and Comparison
 
-**Status:** Comparator implemented on `main`; independent disposable replay, drift detection and guarded checksum-adoption CI PASS (runs [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975) and [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/45435673095)); live reference-vs-Neon comparison NOT RUN.  
+**Status:** Comparator implemented on `main`; independent disposable replay, drift detection and guarded checksum-adoption CI PASS; live Neon schema and canonical-data comparison PASS in [run 45437263676](https://github.com/Joshuaogri/saltwater/actions/runs/45437263676), with supplementary catalogue review recorded in [live run 0001 evidence](../test-evidence/BP38-02-live-neon-run-0001.md). Checksum adoption is prepared but NOT applied.  
 **Production authority:** No Neon write or adoption approval is granted by this package.
 
 ## Purpose
@@ -44,7 +44,7 @@ A passing result is evidence for the compared categories only. It is not blanket
 
 A manual-only workflow is provided at [BP38-02 read-only Neon baseline verification](../../../.github/workflows/bp38-02-neon-read-only-verification.yml). It requires the protected repository secret `DATABASE_URL`, starts a disposable PostgreSQL 18 reference service, replays the exact committed 0001 migration there, and compares that reference with Neon. For target connections it sets PostgreSQL `default_transaction_read_only=on`; it runs no migration or production DDL/DML. It also emits a supplementary SELECT-only catalogue report covering database size/version, schema relation ownership/ACL/RLS, sequence configuration/current values, role memberships, extensions, selected database settings, migration ledger and storage-operation history. The report is uploaded as a 14-day workflow artifact. The workflow is `workflow_dispatch` only and has no push trigger.
 
-The workflow has been committed but has not yet been dispatched. A missing `DATABASE_URL`, permission failure, pg_dump failure, mismatch or unexplained supplementary difference must stop adoption. Do not put the connection URL in logs, artifacts, command output or repository files.
+The workflow completed successfully in [run 45437263676](https://github.com/Joshuaogri/saltwater/actions/runs/45437263676). Schema DDL and canonical world-config hashes matched exactly; the target session confirmed `default_transaction_read_only=on`. The supplementary report was reviewed and is recorded in [live run 0001 evidence](../test-evidence/BP38-02-live-neon-run-0001.md). Do not put the connection URL in logs, artifacts, command output or repository files.
 
 ## Guarded checksum-adoption proposal
 
@@ -65,3 +65,10 @@ Workflow run [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/
 ## CI evidence — run 0002
 
 Workflow run [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/45435673095) completed successfully. In addition to the independent PostgreSQL 18 replay/comparison and migration/runtime regression checks, it exercised the guarded legacy checksum-adoption proposal in disposable PostgreSQL only, including the one-row precondition and fail-closed repeat execution. All job steps, including container cleanup, completed. This is not live Neon comparison evidence and did not modify Neon. See [BP38-02 run 0002](../test-evidence/BP38-02-run-0002.md).
+
+
+## Live Neon evidence — run 0001
+
+The live workflow passed on 2026-11-24. Exact schema DDL hashes and canonical world-config hashes matched the independent PostgreSQL 18 replay. The supplementary SELECT-only report was reviewed: Neon is PostgreSQL 18.7 at 9,306,112 bytes; the ledger remains at version 1 with a NULL checksum; the two storage-operation history rows and provider catalogue context were enumerated. No mismatch affecting the comparison was found. The workflow enforced read-only mode and made no production changes. See [live Neon run 0001](../test-evidence/BP38-02-live-neon-run-0001.md).
+
+**Next gate:** present the exact guarded one-row checksum adoption, expected storage delta/range and projected total for separate explicit production approval. Do not apply migration 0002 as part of that operation.
