@@ -115,6 +115,21 @@ class GeographyNameInventoryTests(unittest.TestCase):
         ]
         self.assertEqual(manifest["entries"], expected)
 
+    def test_disposable_sql_fixture_matches_every_manifest_mapping(self):
+        manifest = json.loads(
+            Path("data/geography/saltwater-geography-v1-identity-map.json").read_text(encoding="utf-8")
+        )
+        sql = Path("tests/pkg001/geography_identity_map_acceptance.sql").read_text(encoding="utf-8")
+        def quote(value):
+            return "'" + str(value).replace("'", "''") + "'"
+        for row in manifest["entries"]:
+            expected = (
+                f"({quote(row['source_id'])},{quote(row['entity_code'])},"
+                f"{row['entity_kind']},{quote(row['display_name'])},"
+                f"{quote(row['parent_entity_code'])},{quote(row['source_ref'])})"
+            )
+            self.assertIn(expected, sql)
+
     def test_stable_spatial_identity_map_is_deterministic_and_preserves_neighbourhood_parent(self):
         payload = json.loads(
             Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
