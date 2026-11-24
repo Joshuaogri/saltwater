@@ -153,7 +153,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$$;
+$parcel$;
 CREATE TRIGGER parcel_profile_kind_guard
 BEFORE INSERT ON sw_geo.parcel_profile
 FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_parcel_profile_kind();
