@@ -30,13 +30,21 @@ The uploaded artifact `bp38-02-neon-read-only-verification` (1,492 bytes; artifa
 - Sequence definitions are consistent with the foundation: smallint event-type sequence and bigint simulation-event/storage-operation sequences; the storage-operation sequence last value is 2, while the other two have no last value.
 - Provider role memberships and the single `plpgsql` extension were enumerated.
 - Selected settings were recorded, including TimeZone `GMT`, `row_security=on`, and the session-level read-only setting.
-- Migration ledger contains exactly version 1, `foundation`, with `checksum_sha256=NULL`.
+- At the time of this read-only workflow, the migration ledger contained exactly version 1, `foundation`, with `checksum_sha256=NULL`. The subsequently approved checksum-adoption operation is recorded below.
 - Storage history contains the original foundation migration and the synthetic benchmark operation record; no simulation seed data is present.
 
 These supplementary values describe the live installation and are not required to equal a clean disposable replay. No unexplained schema or canonical-data difference was reported. Provider-managed role memberships and settings are documented as baseline context, not modified.
 
 ## Interpretation and limits
 
-The live comparison and supplementary inspection succeeded. The workflow was read-only against Neon; it performed no DDL/DML, migration, checksum adoption, seed, or configuration change. Neon remains at **9,306,112 bytes**, with the legacy checksum still NULL.
+The live comparison and supplementary inspection succeeded. The workflow itself was read-only against Neon; it performed no DDL/DML, migration, checksum adoption, seed, or configuration change. The later, separately approved checksum-adoption operation is recorded below.
 
-This evidence supports the exact one-row checksum-adoption proposal only. It does not approve or apply that production write. Migration 0002 remains unapplied and is a separate operation. Before either operation, present the exact SQL/operation, storage estimate and projected total, and obtain separate explicit approval.
+## Subsequent production checksum adoption
+
+The user explicitly approved the exact guarded update for version 1 / `foundation`. It executed successfully and a follow-up read-only query verified the exact committed migration-0001 SHA-256:
+
+`d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8`
+
+Database size before and after: **9,306,112 bytes** (0-byte delta). Ledger heap: **8,192 bytes** before and after. Ledger total relation: **49,152 bytes** before and after.
+
+Migration 0002 remains unapplied and requires its own separate explicit approval. Its production application plan is [BP38-01 migration 0002 plan](../approval-packages/BP38-01-migration-0002-production-application-plan.md).
