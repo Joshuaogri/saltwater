@@ -139,6 +139,19 @@ class NameRegistry:
             if matches:
                 raise NameReviewRequired("near-duplicate review required: " + ", ".join(matches))
 
+        if form == "canonical":
+            for index, existing in enumerate(self.records):
+                if (
+                    self._owner(existing.entity_type, existing.entity_id) == owner
+                    and existing.name_form == "canonical"
+                    and existing.status == "active"
+                    and existing.normalized_key != key
+                ):
+                    self.records[index] = NameRecord(
+                        existing.entity_type, existing.entity_id, existing.display_name,
+                        existing.normalized_key, existing.name_form, "superseded",
+                        existing.normalizer_version,
+                    )
         record = NameRecord(owner[0], owner[1], display_name, key, form)
         self.records.append(record)
         return record
