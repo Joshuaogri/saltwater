@@ -109,6 +109,27 @@ BEGIN
     RAISE EXCEPTION 'person full name did not register through the domain trigger';
   END IF;
 
+  INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref)
+  SELECT event_type_id,clock_timestamp(),v_tick,'person',v_person_id,'sw-nam-person-rename'
+  FROM sw_core.event_type WHERE event_code='PERSON_PROFILE_CHANGED'
+  RETURNING event_id INTO v_person_event;
+  UPDATE sw_people.person
+    SET middle_name='Nneka',last_event_id=v_person_event
+    WHERE person_id=v_person_id;
+  IF NOT EXISTS (
+    SELECT 1 FROM sw_names.registry
+    WHERE entity_type='PERSON' AND entity_id=v_person_id
+      AND normalized_key=sw_names.normalize_name('Aderonke Nneka Bennett')
+      AND status='active'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM sw_names.registry
+    WHERE entity_type='PERSON' AND entity_id=v_person_id
+      AND normalized_key=sw_names.normalize_name('Aderonke Mira Bennett')
+      AND status='superseded'
+  ) THEN
+    RAISE EXCEPTION 'person rename failed to preserve stable identity and former name';
+  END IF;
+
   BEGIN
     PERFORM sw_names.add_alias('PERSON',v_person_id,'Registry Fixture Road',
       'sw-nam-test','test-runner','cross-type alias collision',v_tick);
