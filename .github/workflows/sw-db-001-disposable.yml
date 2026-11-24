@@ -124,11 +124,22 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
       - name: Provision deterministic opening population and business fixture
         run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           start=$(date +%s%N)
           psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
           end=$(date +%s%N)
-          echo "fixture_elapsed_ms=$(((end-start)/1000000))"
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          elapsed_ms=$(((end-start)/1000000))
+          delta=$((after-before))
+          echo "database_bytes_before_fixture=$before"
+          echo "database_bytes_after_fixture=$after"
+          echo "fixture_database_growth_bytes=$delta"
+          echo "fixture_database_growth_mb=$(awk -v d="$delta" 'BEGIN {printf "%.6f",d/1000000}')"
+          echo "fixture_database_growth_mib=$(awk -v d="$delta" 'BEGIN {printf "%.6f",d/1048576}')"
+          echo "fixture_elapsed_ms=$elapsed_ms"
+          echo "fixture_rows_per_second=$(awk -v ms="$elapsed_ms" 'BEGIN {if(ms>0) printf "%.2f",19500/(ms/1000); else print "n/a"}')"
           echo "fixture_source_bytes=$(wc -c < tests/pkg001/sw_db_001_world_fixture.sql)"
+          echo "manifest_source_bytes=$(wc -c < data/fixtures/sw-db-001-opening-manifest.json)"
           echo "fixture_manifest_sha256=9b8b4603031aa3516b6c18ae818b38ff6bbfa32a563da89bd70ab9b3537de348"
       - name: Measure full-scale fixture storage and per-domain relation bytes
         run: |
