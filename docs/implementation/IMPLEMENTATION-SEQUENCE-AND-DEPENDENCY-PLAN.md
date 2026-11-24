@@ -380,3 +380,14 @@ Prepared package: [BP40-02 — Stable Player Command Catalogue and Typed Input P
 This is the next bounded interface increment after verified BP40-01. It consolidates the existing command grammar, ownership, classifications and permission action into one immutable registry/parser shared by the player router, authorization gateway and trusted host/tool boundaries. It introduces no new domain commands or permissions and preserves the exact ten workspace IDs, hidden-truth gate and no-offline-time rule.
 
 **Status: PROPOSED — awaiting explicit user approval.** No BP40-02 implementation or test result is claimed. BP-40 remains `DESIGNED_DRAFT`.
+
+
+## 13. SW-DB-001 — canonical Saltwater world provisioning and capacity proof (proposed)
+
+Prepared package: [SW-DB-001 — Canonical Saltwater World Provisioning and Capacity Proof](approval-packages/SW-DB-001-canonical-world-provisioning-and-capacity-proof.md).
+
+This is the first database-first world implementation increment. It audits the existing disposable schema proposals, prepares a versioned canonical-world schema candidate, and builds a deterministic **disposable-only** full-scale fixture: 9,000 residents + 500 police-subset persons (9,500 total), 500 unused headroom and at least 10,000 distinct test businesses. It proves the 10,000-person cap, atomic admission, idempotency, referential integrity, reconciliation, restore and measured PostgreSQL storage/performance.
+
+The fixture is explicitly synthetic and does not decide unresolved BP-02 geography, BP-03 population-scope semantics or BP-04 business distribution. BP-02/BP-03/BP-04/BP-38 specification approval and existing G1 narrative-quality/G2 capacity gates remain prerequisites for real production seeding. A separate exact-operation approval is required before any Neon production migration or data write.
+
+**Status: PROPOSED — awaiting explicit user approval.** No SW-DB-001 implementation, test result or Neon production write is claimed.
