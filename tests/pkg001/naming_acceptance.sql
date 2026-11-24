@@ -2,7 +2,7 @@
 -- Run after foundation and proposals 0002-0009. Entire test is rolled back.
 \set ON_ERROR_STOP on
 BEGIN;
-UPDATE sw_runtime.state SET state=1,player_present=false WHERE singleton=1 AND state=0;
+UPDATE sw_runtime.state SET state=1,player_present=false,bootstrap_open=false WHERE singleton=1 AND state=0;
 UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1 AND state=1;
 DO $test$
 DECLARE
