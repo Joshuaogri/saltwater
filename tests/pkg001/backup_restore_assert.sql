@@ -34,7 +34,7 @@ BEGIN
   IF roots <> 2 THEN
     RAISE EXCEPTION 'restored canonical geography roots mismatch: %',roots;
   END IF;
-  IF name_count < 10009 OR name_event_count < 20019 OR generation_batch_count < 1 THEN
+  IF name_count < 10011 OR name_event_count < 20025 OR generation_batch_count < 1 THEN
     RAISE EXCEPTION 'restored naming registry/history/manifests incomplete: reservations %, events %, batches %',name_count,name_event_count,generation_batch_count;
   END IF;
   IF (SELECT count(*) FROM sw_names.registry WHERE normalized_key='saltwater' AND status='active') <> 2 THEN
