@@ -32,7 +32,7 @@ class ParcelDossierImporterTests(unittest.TestCase):
         bad = copy.deepcopy(self.manifest)
         bad["parcels"][0]["dossier"]["perimeter_m"] += 1
         self._rehash(bad)
-        with self.assertRaisesRegex(ValueError, "SHA-256"):
+        with self.assertRaisesRegex(ValueError, "perimeter does not match"):
             validate_manifest(bad, self.candidates)
 
     def test_mismatched_candidate_manifest_is_rejected(self):
