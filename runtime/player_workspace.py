@@ -65,7 +65,7 @@ def render_home(profile, status, navigation: WorkspaceNavigation) -> str:
         f"Player: {profile.display_name}",
         f"Player ID: {profile.player_id}",
         f"Career: {profile.career_stage}",
-        f"Runtime: {status.lifecycle.value}",
+        f"Runtime: {status.lifecycle.value.upper()}",
         f"Player present: {'yes' if status.player_present else 'no'}",
         f"World tick: {status.world_tick}",
         f"Current workspace: {current.label} ({current.id})",
