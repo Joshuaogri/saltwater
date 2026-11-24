@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "data/geography/saltwater-geography-v1.json"
-      - "runtime/geography_readiness.py"
+      - "runtime/geography_readiness.py"\n      - "runtime/geography_identity_reconciliation.py"\n      - "data/geography/saltwater-geography-v1-identity-map.json"\n      - "tests/pkg001/test_geography_identity_reconciliation.py"\n      - "data/geography/bp04-03-stage-a-source-spatial-reconciliation-v1.json"
       - "tests/pkg001/test_geography_readiness.py"
       - ".github/workflows/bp04-03-geography-readiness.yml"
   workflow_dispatch:
