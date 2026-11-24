@@ -6,17 +6,13 @@ bounded request reference. This module never creates sessions or grants.
 """
 from __future__ import annotations
 
-import shlex
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Protocol, runtime_checkable
 
 from runtime.player_command_runtime import PostgresPlayerCommandRuntime
+from runtime.player_commands import parse_player_command
 
-_ALLOWED_COMMANDS = frozenset({
-    "help", "status", "profile", "recruit", "career",
-    "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
-})
 _MAX_REQUEST_REFERENCE = 128
 
 
@@ -101,22 +97,10 @@ class TrustedPlayerHostAdapter:
         if context.expires_at <= datetime.now(timezone.utc):
             return HostCommandResponse(False, "Access denied.")
 
-        try:
-            parts = shlex.split(request.command_text)
-        except (TypeError, ValueError):
+        parsed = parse_player_command(request.command_text)
+        if not parsed.ok:
             return HostCommandResponse(False, "Invalid command.")
-        if not parts:
-            return HostCommandResponse(False, "Invalid command.")
-        command = parts[0].casefold()
-        valid_shape = (len(parts) == 1 and command in _ALLOWED_COMMANDS) or (
-            command == "workspace" and len(parts) == 2 and parts[1] in {
-                "home", "operations", "cases", "people", "evidence-scenes",
-                "department", "legal-custody", "resources-finance",
-                "reports-notifications", "system-status",
-            }
-        )
-        if not valid_shape:
-            return HostCommandResponse(False, "Invalid command.")
+
 
         try:
             credential = self._credential_provider.resolve(context)
