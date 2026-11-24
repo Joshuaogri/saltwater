@@ -1,0 +1,13 @@
+{
+  "package": "SW-DB-001",
+  "generator_version": 1,
+  "normalizer_version": 1,
+  "config_version": "saltwater-opening-fixture-v1",
+  "seed": 20261124,
+  "residents": 9000,
+  "police_subset": 500,
+  "living_people": 9500,
+  "businesses": 10000,
+  "geography": "roots-only-no-site-assignments",
+  "business_distribution": "test-only-sidecar"
+}
