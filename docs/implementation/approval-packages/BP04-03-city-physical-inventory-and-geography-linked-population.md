@@ -1,6 +1,6 @@
 # BP04-03 — Saltwater City Physical Inventory and Geography-Linked Population
 
-**Status:** PROPOSED — design package prepared; implementation approval requested  
+**Status:** APPROVED — implementation on GitHub `main` and disposable PostgreSQL testing only  
 **Target:** GitHub `main` only; disposable PostgreSQL 16 first  
 **Depends on:** BP-02 canonical geography and parcel/address authority; BP-04-01 identity foundation; BP04-02 deep profiles; SW-UNS-001; SW-DB-001  
 **Production authority:** NONE. This package does not authorise a Neon production connection, migration, seed, import, upload or configuration change.
@@ -213,7 +213,7 @@ BP04-03 does not implement:
 
 These remain separate BP-02/BP-03/BP-04 and operational packages.
 
-## 10. Delivery and approval request
+## 10. Delivery and approval record
 
 Recommended sequence after approval:
 
@@ -225,4 +225,6 @@ Recommended sequence after approval:
 6. Publish evidence and update README/implementation sequence.
 7. Only then prepare a separately measured production migration/seed proposal. No Neon production write is included here.
 
-**Decision requested:** approve BP04-03 for GitHub `main` design/implementation and disposable PostgreSQL testing, including the staged geography reconciliation and parcel/address candidate work described above. This approval would not authorise Neon production access or writes, operational geography approval, or production inventory seeding.
+**Approval recorded 2026-11-24:** the user approved BP04-03 for GitHub `main` implementation and disposable PostgreSQL testing, including staged geography reconciliation and parcel/address candidate work. This approval does not authorise Neon production access or writes, operational geography approval, or production inventory seeding.
+
+**Implementation log:** Stage A read-only geography readiness audit, tests and dedicated CI workflow committed to `main`. First validation run: [45480250963](https://github.com/Joshuaogri/saltwater/actions/runs/45480250963). Stage A remains in progress until CI passes and a reviewed reconciliation register is published.
