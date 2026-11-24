@@ -105,6 +105,19 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
                     (digest,),
                 )
                 self.assertEqual(cur.fetchone()[0], batch_id)
+        with self.assertRaises(psycopg.Error):
+            with connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "UPDATE sw_names.generation_batch SET seed=seed+1 WHERE batch_id=%s",
+                        (batch_id,),
+                    )
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT seed FROM sw_names.generation_batch WHERE batch_id=%s", (batch_id,))
+                self.assertEqual(cur.fetchone()[0], 77)
+        with connect() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     """SELECT sw_names.reserve_name(
                          'GEOGRAPHY',%s,'canonical','Generated Manifest Fixture Road',
