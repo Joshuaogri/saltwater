@@ -1,5 +1,7 @@
 """BP37-01 deterministic clock scheduling tests."""
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from uuid import uuid4
 
 from runtime.kernel import InMemoryRuntimeStore, Lifecycle, RuntimeKernel
 from runtime.scheduling import (
@@ -114,6 +116,15 @@ class TickSchedulerTests(unittest.TestCase):
         self.kernel.advance_tick()
         self.assertTrue(self.scheduler.dispatch_one())
         self.assertEqual(self.store.inspect(sid)["attempt_count"], 2)
+
+    def test_concurrent_claims_never_return_the_same_schedule_twice(self):
+        self.start()
+        sid = self.scheduler.register(ScheduleDefinition("police", "one", 0, "one"))
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            claims = list(pool.map(lambda _: self.store.claim_due(0), range(8)))
+        claimed = [claim for claim in claims if claim is not None]
+        self.assertEqual(len(claimed), 1)
+        self.assertEqual(claimed[0].schedule_id, sid)
 
     def test_registration_idempotency_and_definition_conflict(self):
         self.start()
