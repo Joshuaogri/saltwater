@@ -38,7 +38,7 @@ AS $fixture_word$
       [strpos('0123456789abcdef',substr(md5(p_seed),g,1))],
     '' ORDER BY g
   )
-  FROM generate_series(1,8) AS g
+  FROM generate_series(1,8) AS x(g)
 $fixture_word$;
 
 DO $
