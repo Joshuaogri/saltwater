@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Package:** SW-NAM-001  
 **Classification:** CORE FOUNDATIONAL IMPLEMENTATION  
-**Status:** APPROVED — implementation in progress (2026-11-24)  
+**Status:** APPROVED — core implementation and full disposable regression verified; universal domain integration remains in progress (2026-11-24)  
 **Prepared:** 2026-11-24  
 **Target:** GitHub `main`; disposable PostgreSQL 16 for schema and integration validation  
 **Authority:** Adopted policy [SW-UNS-001](../../blueprint/decisions/SW-UNS-001-universal-naming-standard.md)  
@@ -247,3 +247,6 @@ The user approved **SW-NAM-001 — Universal Naming Registry, Generator and Enfo
 **Geography identity mapping follow-up:** deterministic source-ID mapping candidate [saltwater-geography-v1-identity-map.json](../../../data/geography/saltwater-geography-v1-identity-map.json) now covers all 100 non-root map entities, preserving source IDs as future stable `entity_code` values and parent references. Integer `spatial_id` values are deliberately unassigned pending disposable PostgreSQL materialisation and `INSERT ... RETURNING` evidence. The [integration coverage audit](../test-evidence/SW-NAM-001-integration-coverage-audit-0001.md) records connected and NOT CONNECTED domains.
 
 **Neon production changes:** none authorised or performed.
+
+
+**Full regression and identity-map evidence (2026-11-24):** [run 45441551968](https://github.com/Joshuaogri/saltwater/actions/runs/45441551968) passed both Python and disposable PostgreSQL jobs. It materialised all 100 geography identity-map entries and naming reservations in disposable PostgreSQL, passed the concurrent 10,000-person cap boundary and full fixture, access controls, checkpoint-manifest capture and backup/restore. The final storage measurements and exact restore manifest are recorded in [SW-NAM-001 run 0001 evidence](../test-evidence/SW-NAM-001-run-0001.md). The checkpoint validator intentionally reported `valid=false` because business-minimum, player-absence-freeze and permission/hidden-truth gates were not executed; all executed structural gates passed. This package is not yet universally integrated across all domains: BP-04 and other operational named-entity adapters remain disconnected until their authoritative schemas are available. No production geography import or Neon write occurred.
