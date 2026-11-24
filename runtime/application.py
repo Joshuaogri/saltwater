@@ -46,15 +46,22 @@ class AuthorizedPlayerCommandGateway:
             parts = shlex.split(line)
         except ValueError:
             return CommandResult(False, "Invalid command.")
-        if not parts or len(parts) != 1:
+        if not parts:
             return CommandResult(False, "Invalid command.")
 
         command = parts[0].casefold()
         allowed_commands = {
             "help", "status", "profile", "recruit", "career",
-            "start", "pause", "resume", "quit",
+            "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
         }
-        if command not in allowed_commands:
+        valid_shape = (len(parts) == 1 and command in allowed_commands) or (
+            command == "workspace" and len(parts) == 2 and parts[1] in {
+                "home", "operations", "cases", "people", "evidence-scenes",
+                "department", "legal-custody", "resources-finance",
+                "reports-notifications", "system-status",
+            }
+        )
+        if not valid_shape:
             return CommandResult(False, "Access denied.")
 
         decision = self.authorization.decide(
