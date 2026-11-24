@@ -442,11 +442,26 @@ No decision here authorises a provider change, database write, backup export or 
 
 ## 24. Completion status
 
-- Specification: DESIGNED_DRAFT; review/approval pending.
-- Implementation: NOT_STARTED.
-- Test execution: NOT_STARTED; acceptance criteria are not executed evidence.
-- Verification: NOT_STARTED.
-- Live backup configuration: not newly inspected or changed.
-- Live restore capability: not newly tested; no capability claim is made.
+- Full BP-39 specification: DESIGNED_DRAFT; division review/approval remains pending.
+- Full BP-39 implementation: NOT_COMPLETE.
+- Full BP-39 test execution and verification: NOT_COMPLETE.
+- Bounded BP39-01 implementation/test/verification status: COMPLETE for its approved scope only; see [BP39-01 run 0001 evidence](../../implementation/test-evidence/BP39-01-run-0001.md).
+- Live backup configuration: not changed or newly certified.
+- Live restore capability: not tested; no Neon PITR/provider capability claim is made.
 - Neon writes/restores: none performed or authorised.
-- Next division: BP-40 — Interface.
+- Next division priority: BP-40 — Interface.
+
+### 24.1 BP39-01 bounded implementation status
+
+The user approved BP39-01 on 2026-11-24. The following slice is implemented directly on `main`, tested and verified:
+
+- Repeatable-read checkpoint manifest with source identity, schema/runtime/tick/event/work/schedule/population watermarks, digest and operation provenance.
+- Separate restore-validation gates; unavailable gates remain `not_executed` and prevent an aggregate valid/promotable result.
+- Controlled BP35 abandoned-claim reconciliation in frozen RECOVERING state.
+- Owner-confirmed committed effect, owner-confirmed absent effect, indeterminate quarantine, and later conclusive resolution of quarantined work.
+- Append-only recovery decisions, stable idempotency identity, stale-token/conflict rejection and pause/absence-safe lifecycle continuation.
+- Separate disposable PostgreSQL restore validation and measured storage evidence.
+
+Verification: [full Python + disposable PostgreSQL workflow 45376633160](https://github.com/Joshuaogri/saltwater/actions/runs/45376633160) and [database migration validation 45376633013](https://github.com/Joshuaogri/saltwater/actions/runs/45376633013) passed.
+
+This slice does not select RPO/RTO, backup cadence/retention, encryption/key policy, provider topology or recovery SLA. It does not create a physical backup, change Neon configuration, prove Neon PITR, authorise production restore, or promote a restored database.
