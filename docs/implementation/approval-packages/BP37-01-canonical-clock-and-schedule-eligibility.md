@@ -1,7 +1,7 @@
 # BP37-01 — Canonical Clock Core and Schedule Eligibility
 
 **Division:** BP-37 — Time and Scheduling  
-**Package status:** Approved; implementation and disposable verification in progress  
+**Package status:** IMPLEMENTED, TESTED and VERIFIED  
 **Specification:** BP-37 v1.0, currently DESIGNED_DRAFT  
 **Target branch:** `main` only  
 **Dependencies:** Existing PKG-001 runtime kernel and PostgreSQL runtime store; BP-35 runtime lifecycle; BP-38 record/event foundation  
@@ -75,4 +75,6 @@ Implemented so far:
 - `tests/pkg001/test_scheduling.py` and `tests/pkg001/scheduling_acceptance.sql`: deterministic unit tests and PostgreSQL acceptance/storage fixture.
 - CI applies proposal 0006 only in the disposable PostgreSQL service and runs both new suites.
 
-Full PostgreSQL verification is still running. No Neon production changes have been made.
+**Verification complete:** Python suite and full disposable PostgreSQL workflow passed in run [45310150181](https://github.com/Joshuaogri/saltwater/actions/runs/45310150181). Database migration validation passed in run [45310150194](https://github.com/Joshuaogri/saltwater/actions/runs/45310150194). Disposable measurements: schedule schema/database growth 131,072 bytes; empty schedule relation plus indexes 49,152 bytes; 1,001 representative rows measured 155,648 heap bytes + 278,528 index bytes = 466,944 total bytes, approximately 466.48 bytes per schedule including indexes. The 1,001-row fixture and all test data were rolled back. No Neon production changes were made.
+
+**Remaining BP-37 work:** fictional calendar/epoch/timezone, civil-time conversion, richer recurrence and exception/version semantics, schedule cancellation/suspension policy, occurrence history, crash-recovery/reclaim of abandoned claims, and domain-specific owner schedules remain outside BP37-01. Claimed schedules are deliberately not auto-reclaimed; owner handlers receive a stable idempotency key to protect against ambiguous retries.
