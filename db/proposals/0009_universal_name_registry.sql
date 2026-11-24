@@ -40,7 +40,6 @@ CREATE TABLE sw_names.name_reservation (
   generation_batch_id bigint REFERENCES sw_names.generation_batch(batch_id),
   created_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
   UNIQUE (normalized_key, namespace_slot),
-  UNIQUE (entity_type, entity_id, normalized_key, name_form),
   CHECK (
     (namespace_slot='GLOBAL' AND normalized_key <> 'saltwater')
     OR (namespace_slot='SOVEREIGN_ROOT' AND normalized_key='saltwater'
@@ -52,8 +51,6 @@ CREATE TABLE sw_names.name_reservation (
 
 CREATE INDEX name_reservation_owner_idx
   ON sw_names.name_reservation(entity_type,entity_id);
-CREATE INDEX name_reservation_key_idx
-  ON sw_names.name_reservation(normalized_key);
 CREATE INDEX name_reservation_trgm_idx
   ON sw_names.name_reservation USING gin(normalized_key sw_names.gin_trgm_ops);
 
