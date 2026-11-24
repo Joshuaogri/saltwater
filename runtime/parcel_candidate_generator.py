@@ -108,6 +108,7 @@ def build_candidates(source: dict) -> dict:
     road_reserve = shape(topology["city_road_reserve_geometry"])
     if not road_reserve.is_valid or road_reserve.is_empty:
         raise ValueError("Dissolved fictional road reserve is invalid")
+    road_edge_boundary = road_reserve.boundary
     water_features = _feature_water(source)
     water_union = unary_union([g for _, g in water_features]) if water_features else Polygon()
     if not water_union.is_valid:
@@ -156,11 +157,13 @@ def build_candidates(source: dict) -> dict:
                     parcel_id = f"BPC-{hood['id'].replace('-', '')}-{cell_index:03d}-{component_no:02d}"
                     frontage = []
                     boundary = poly.boundary
-                    for segment in corridors["segments"]:
-                        seg_poly = Polygon(segment["reserve_polygon"][0])
-                        shared = boundary.intersection(seg_poly.boundary)
-                        if shared.length > 0.01:
-                            frontage.append(segment["segment_id"])
+                    actual_road_edge_contact = boundary.intersection(road_edge_boundary)
+                    if actual_road_edge_contact.length > 0.01:
+                        for segment in corridors["segments"]:
+                            seg_poly = Polygon(segment["reserve_polygon"][0])
+                            shared = boundary.intersection(seg_poly.boundary).intersection(road_edge_boundary)
+                            if shared.length > 0.01:
+                                frontage.append(segment["segment_id"])
                     parcel = {
                         "candidate_parcel_id": parcel_id,
                         "display_name": _candidate_name(parcel_id, occupied_names),
