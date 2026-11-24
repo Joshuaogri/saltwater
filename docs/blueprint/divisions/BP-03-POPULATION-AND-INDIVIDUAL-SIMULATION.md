@@ -71,7 +71,7 @@ The population-scope model must explicitly distinguish:
 
 A person may have multiple memberships but one person identity and one population count contribution.
 
-### 3.2 Proposed countability semantics for approval
+### 3.2 Binding countability semantics
 
 To prevent an uncounted-person loophole, this draft proposes:
 1. A permanent or temporary Saltwater resident counts while alive, including during temporary travel outside the city-state.
@@ -82,7 +82,7 @@ To prevent an uncounted-person loophole, this draft proposes:
 6. A deceased or permanently departed person remains in historical records but no longer contributes to the living count.
 7. A person cannot evade counting through multiple addresses, jobs, roles, aliases, memberships or duplicate identities.
 
-These rules require explicit user confirmation as canon before implementation. The countable categories and boundary events must be frozen in the population policy.
+The binding population-scope rules are adopted in [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md). The categories below are implemented using that decision record; they are not provisional alternatives.
 
 ### 3.3 Counting formula
 
@@ -603,16 +603,20 @@ Required test classes: boundary/cap, duplicate identity, concurrency/race, lifec
 | S42.R01–R03; S42.T01 | Event processing, relevance and state consistency |
 | X01–X06 | Identity, source of truth, time, reconciliation, epistemic distinctions and original records |
 
-## 20. Open decisions
+## 20. Closed population canon and remaining implementation decisions
 
-1. Confirm exact population-scope/countability rules for nonresident visitors, commuters and temporary presence.
-2. Confirm whether the opening 9,000 residents and 500 police are exact seeded identities or initial aggregate targets before individual generation.
-3. Confirm population category breakdowns beyond the 9,000 residents and 500 police, if any; no extra persons may be added without consuming headroom.
-4. Define any additional person fields that are genuinely required by gameplay; no unnecessary sensitive attributes.
-5. Define the exact processing-tier budgets and promotion trigger implementation under BP-35.
-6. Define exact population event types and recovery/ledger implementation under BP-38/BP-39.
+Population scope and opening arithmetic are closed by [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md). There are no unresolved canon questions about residents, police, visitors, commuters, temporary presence, temporary absence, permanent departure, death or the 10,000-person cap.
 
-These decisions do not weaken the 10,000 hard cap, one-person-one-ID rule or permanent-promotion rule.
+The binding formula is the distinct living-person union of: usual Saltwater residents; all persons physically present inside Saltwater; and active Saltwater Police Service members. Each canonical person ID counts once. The exact opening cohorts are 9,000 civilian usual residents plus 500 active police-service personnel, for 9,500 unique people and 500 unused shared capacity. All 500 police personnel are included in the cap.
+
+Remaining work is specification/implementation detail rather than unresolved population canon:
+1. Define and test the additional person fields genuinely required by gameplay; avoid unnecessary sensitive attributes.
+2. Define processing-tier budgets and permanent-promotion trigger implementation under BP-35/BP-43.
+3. Define exact population event types, ledger/projection reconciliation and recovery implementation under BP-38/BP-39.
+4. Generate the individual opening identities and prove count reconciliation before any production seed.
+5. Test concurrent arrivals, boundary entry/exit, resident moves, police appointment/separation, death, duplicate/retried events and recovery against the adopted union formula.
+
+These tasks do not alter the binding population scope, one-person-one-ID rule, 10,000 hard cap or permanent-promotion rule.
 
 ## 21. Completion statement
 
