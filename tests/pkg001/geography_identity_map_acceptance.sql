@@ -118,8 +118,15 @@ VALUES
 ('SWR-V22','SWR-V22',7,'Coastline Drive','saltwater-city','SW-GEO-V1:road:SWR-V22'),
 ('SWR-V23','SWR-V23',7,'Eastern Promenade','saltwater-city','SW-GEO-V1:road:SWR-V23');
 
-DO $$
+DO $
 BEGIN
+  IF current_database() <> 'saltwater_test' THEN
+    RAISE EXCEPTION 'geography identity-map fixture is restricted to saltwater_test';
+  END IF;
+  IF current_setting('server_version_num')::integer < 160000
+     OR current_setting('server_version_num')::integer >= 170000 THEN
+    RAISE EXCEPTION 'geography identity-map fixture requires disposable PostgreSQL 16';
+  END IF;
   IF (SELECT count(*) FROM expected_geography_identity) <> 100 THEN
     RAISE EXCEPTION 'identity map must contain exactly 100 non-root records';
   END IF;
