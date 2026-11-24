@@ -36,6 +36,9 @@ class ParcelCandidateGeneratorTests(unittest.TestCase):
     def test_every_parcel_is_valid_and_has_cell_lineage(self):
         ids = [p["candidate_parcel_id"] for p in self.result["parcels"]]
         self.assertEqual(len(ids), len(set(ids)))
+        names = [p["display_name"].casefold() for p in self.result["parcels"]]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertTrue(all(len(name) >= 6 and " " not in name for name in names))
         for parcel in self.result["parcels"]:
             polygon = Polygon(parcel["geometry"][0], parcel["geometry"][1:])
             self.assertTrue(polygon.is_valid)
