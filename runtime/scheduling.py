@@ -164,13 +164,17 @@ class InMemoryScheduleStore:
                     row["completed_at_tick"] = world_tick
                 else:
                     d = row["definition"]
-                    row["definition"] = ScheduleDefinition(
-                        d.owner_domain, d.subject_ref,
-                        world_tick + d.interval_ticks, d.idempotency_key,
-                        d.interval_ticks, d.priority, d.expires_at_tick,
-                    )
-                    row["status"] = "pending"
-                    row["retry_after_tick"] = 0
+                    next_due_tick = world_tick + d.interval_ticks
+                    if d.expires_at_tick is not None and next_due_tick > d.expires_at_tick:
+                        row["status"] = "expired"
+                    else:
+                        row["definition"] = ScheduleDefinition(
+                            d.owner_domain, d.subject_ref,
+                            next_due_tick, d.idempotency_key,
+                            d.interval_ticks, d.priority, d.expires_at_tick,
+                        )
+                        row["status"] = "pending"
+                        row["retry_after_tick"] = 0
                 row["last_error_code"] = None
             else:
                 if (not result.error_code or len(result.error_code) > 64
