@@ -184,7 +184,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             premises_name = _name("PREMISES", f"{parcel_id}:F{floor:02d}", occupied)
             floor_area = footprint_area * 0.82
             premises_type = {
-                "residential": "other", "mixed_use": "suite", "commercial": "office",
+                "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
                 "civic": "civic_room", "education": "department", "industrial": "industrial_bay",
                 "freight_logistics": "warehouse", "port_maritime": "warehouse",
                 "waterfront": "suite", "utility": "plant_space",
@@ -245,8 +245,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             access_name = _name("ACCESS_POINT", f"{parcel_id}:A{access_no:02d}", occupied)
             access_points.append({
                 "candidate_access_point_id": access_code, "display_name": access_name,
-                "building_id": building_code, "property_id": property_code,
-                "premises_id": premises[ -storeys ]["candidate_premises_id"] if premises else None,
+                "building_id": building_code,
                 "access_type": "unknown", "access_modes": [],
                 "directionality": "unknown", "control_type": "unknown",
                 "availability_state": "not_assessed", "accessibility_state": "not_assessed",
