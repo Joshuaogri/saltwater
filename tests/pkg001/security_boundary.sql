@@ -7,6 +7,8 @@ SET ROLE sw_game_readonly;
 SELECT world_tick FROM sw_runtime.state WHERE singleton=1;
 SELECT count(*) FROM sw_geo.entity;
 SELECT count(*) FROM sw_people.person;
+SELECT count(*) FROM sw_names.registry;
+SELECT count(*) FROM sw_names.generation_batch;
 DO $$
 BEGIN
   IF has_table_privilege(current_user,'sw_people.person','INSERT') THEN
@@ -20,6 +22,9 @@ BEGIN
   END IF;
   IF has_table_privilege(current_user,'sw_runtime.state','UPDATE') THEN
     RAISE EXCEPTION 'readonly role unexpectedly has runtime UPDATE';
+  END IF;
+  IF NOT has_table_privilege(current_user,'sw_names.registry','SELECT') THEN
+    RAISE EXCEPTION 'readonly role cannot read the naming registry view';
   END IF;
 END
 $$;
@@ -42,11 +47,20 @@ BEGIN
      OR has_table_privilege(current_user,'sw_people.person','UPDATE')
      OR has_table_privilege(current_user,'sw_people.person','DELETE')
      OR has_table_privilege(current_user,'sw_runtime.state','UPDATE')
-     OR has_table_privilege(current_user,'sw_core.simulation_event','INSERT') THEN
+     OR has_table_privilege(current_user,'sw_core.simulation_event','INSERT')
+     OR has_table_privilege(current_user,'sw_names.name_reservation','INSERT')
+     OR has_table_privilege(current_user,'sw_names.name_event','INSERT')
+     OR has_table_privilege(current_user,'sw_names.generation_batch','INSERT') THEN
     RAISE EXCEPTION 'command role unexpectedly has direct table mutation privileges';
   END IF;
+  IF NOT has_function_privilege(current_user,
+       'sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint,bigint)','EXECUTE')
+     OR NOT has_function_privilege(current_user,
+       'sw_names.record_generation_batch(text,smallint,smallint,text,bigint,bytea,integer,text,text,text)','EXECUTE') THEN
+    RAISE EXCEPTION 'command role lacks controlled naming functions';
+  END IF;
 END
-$$;
+$;
 RESET ROLE;
 
 -- Owner-level append-only guards must also reject direct history mutation.
