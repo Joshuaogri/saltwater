@@ -85,6 +85,34 @@ class GeographyNameInventoryTests(unittest.TestCase):
             "LANDMARK": 18,
         })
 
+    def test_committed_identity_map_manifest_matches_builder_output(self):
+        source = json.loads(
+            Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        )
+        manifest = json.loads(
+            Path("data/geography/saltwater-geography-v1-identity-map.json").read_text(encoding="utf-8")
+        )
+        built = build_spatial_identity_map(source)
+        self.assertEqual(manifest["schema"], "saltwater-spatial-identity-map/1.0")
+        self.assertEqual(manifest["dataset_id"], built.dataset_id)
+        self.assertEqual(manifest["source_dataset_status"], built.source_status)
+        self.assertEqual(manifest["mapping_status"], "DISPOSABLE_MAPPING_CANDIDATE_ONLY")
+        self.assertFalse(manifest["operational_seed_approved"])
+        expected = [
+            {
+                "source_id": row.source_id,
+                "entity_code": row.entity_code,
+                "entity_type": row.entity_type,
+                "entity_kind": row.entity_kind,
+                "display_name": row.display_name,
+                "parent_entity_code": row.parent_entity_code,
+                "source_ref": row.source_ref,
+                "spatial_id": None,
+            }
+            for row in built.entries
+        ]
+        self.assertEqual(manifest["entries"], expected)
+
     def test_stable_spatial_identity_map_is_deterministic_and_preserves_neighbourhood_parent(self):
         payload = json.loads(
             Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
