@@ -11,6 +11,10 @@ BEGIN
   UPDATE sw_runtime.state
     SET state=1,player_present=false,bootstrap_open=false
     WHERE singleton=1 AND state IN (0,1) AND bootstrap_open=true AND world_tick=0;
+  -- Earlier adapter tests may leave the disposable runtime stopped after
+  -- closing bootstrap. Re-enter ready, then running, without reopening bootstrap.
+  UPDATE sw_runtime.state SET state=1,player_present=false
+    WHERE singleton=1 AND state=0 AND bootstrap_open=false;
   UPDATE sw_runtime.state SET state=2,player_present=true
     WHERE singleton=1 AND state=1 AND bootstrap_open=false;
   -- Runtime adapter tests may deliberately leave the disposable world paused.
