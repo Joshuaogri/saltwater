@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 
 from shapely.geometry import Polygon, Point
-from shapely.ops import unary_union
+from shapely.ops import linemerge, unary_union
 from shapely.strtree import STRtree
 
 from runtime.parcel_candidate_generator import build_candidates
@@ -66,35 +66,68 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
         boundary = geom.boundary
         frontage_rows = []
         access_rows = []
+        contacts_by_road = {}
         for segment_id in parcel.get("road_frontage_segment_ids", []):
             segment = segment_by_id[segment_id]
             contact = boundary.intersection(segment_polygons[segment_id].boundary)
             lines = _line_parts(contact)
-            contact_length = sum(line.length for line in lines)
-            if contact_length <= 0.01:
-                continue
-            longest = sorted(lines, key=lambda line: (-line.length, line.wkb_hex))[0]
-            point = longest.interpolate(0.5, normalized=True)
-            road = roads[segment["road_id"]]
-            frontage_rows.append({
-                "road_segment_id": segment_id,
-                "road_id": segment["road_id"],
-                "road_name": road["name"],
-                "road_class": segment["road_class"],
-                "contact_length_m": round(contact_length, 3),
-                "source_ref": f"{source['dataset_id']}:{segment_id}",
-                "confidence_code": "estimated",
-            })
-            access_rows.append({
-                "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-{len(access_rows)+1:02d}",
-                "road_segment_id": segment_id,
-                "candidate_x_m": round(point.x, 6),
-                "candidate_y_m": round(point.y, 6),
-                "candidate_type": "unclassified_access_location",
-                "review_status": "UNREVIEWED_GEOMETRIC_CANDIDATE",
-                "source_ref": f"{source['dataset_id']}:{segment_id}",
-                "confidence_code": "estimated",
-            })
+            if sum(line.length for line in lines) > 0.01:
+                contacts_by_road.setdefault(segment["road_id"], []).append((segment, lines))
+
+        # A continuous parcel edge along one named road is one frontage
+        # candidate, even when the road centre-line is split into many source
+        # network segments. Access-location candidates are therefore not
+        # multiplied by every small road-network segment.
+        for road_id in sorted(contacts_by_road):
+            entries = contacts_by_road[road_id]
+            all_lines = [line for _, lines in entries for line in lines]
+            merged = unary_union(all_lines)
+            if merged.geom_type in ("MultiLineString", "GeometryCollection"):
+                merged = linemerge(merged)
+            components = sorted(
+                _line_parts(merged),
+                key=lambda line: (round(line.bounds[0], 6), round(line.bounds[1], 6),
+                                  round(line.bounds[2], 6), round(line.bounds[3], 6), line.wkb_hex),
+            )
+            road = roads[road_id]
+            classes = {segment["road_class"] for segment, _ in entries}
+            if len(classes) != 1:
+                raise ValueError(f"Road {road_id} has inconsistent segment classes")
+            for component_no, line in enumerate(components, start=1):
+                if line.length <= 0.01:
+                    continue
+                contributing_segments = sorted({
+                    segment["segment_id"]
+                    for segment, source_lines in entries
+                    if sum(line.intersection(source_line).length for source_line in source_lines) > 0.01
+                })
+                if not contributing_segments:
+                    raise ValueError(f"Frontage component has no source segment: {parcel['candidate_parcel_id']}")
+                point = line.interpolate(0.5, normalized=True)
+                frontage_id = f"PFC-{parcel['candidate_parcel_id']}-{road_id}-{component_no:02d}"
+                frontage_rows.append({
+                    "frontage_candidate_id": frontage_id,
+                    "road_segment_ids": contributing_segments,
+                    "road_id": road_id,
+                    "road_name": road["name"],
+                    "road_class": next(iter(classes)),
+                    "contact_length_m": round(line.length, 3),
+                    "candidate_point_x_m": round(point.x, 6),
+                    "candidate_point_y_m": round(point.y, 6),
+                    "source_ref": f"{source['dataset_id']}:{road_id}:{','.join(contributing_segments)}",
+                    "confidence_code": "estimated",
+                })
+                access_rows.append({
+                    "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-{road_id}-{component_no:02d}",
+                    "frontage_candidate_id": frontage_id,
+                    "road_id": road_id,
+                    "candidate_x_m": round(point.x, 6),
+                    "candidate_y_m": round(point.y, 6),
+                    "candidate_type": "unclassified_access_location",
+                    "review_status": "UNREVIEWED_GEOMETRIC_CANDIDATE",
+                    "source_ref": f"{source['dataset_id']}:{road_id}",
+                    "confidence_code": "estimated",
+                })
 
         unique_frontage_length = boundary.intersection(road_reserve.boundary).length
         water_contact = boundary.intersection(water_union.boundary).length if water_union else 0.0
@@ -131,7 +164,8 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             "exterior_vertex_count": len(geom.exterior.coords) - 1,
             "interior_ring_count": len(geom.interiors),
             "road_frontage_length_m": round(unique_frontage_length, 3),
-            "frontage_segment_count": len(frontage_rows),
+            "frontage_segment_count": sum(len(row["road_segment_ids"]) for row in frontage_rows),
+            "frontage_candidate_count": len(frontage_rows),
             "water_boundary_contact_length_m": round(water_contact, 3),
             "adjacent_water_feature_ids": adjacent_water_ids,
             "frontage_review_status": "REVIEW_REQUIRED" if frontage_rows else "NO_ROAD_EDGE_CONTACT_REVIEW_REQUIRED",
@@ -202,6 +236,9 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             "frontage_review_required_count": frontage_count,
             "no_road_edge_contact_count": len(parcel_rows) - frontage_count,
             "frontage_candidate_count": sum(len(row["frontages"]) for row in parcel_rows),
+            "frontage_segment_contact_count": sum(
+                len(frontage["road_segment_ids"]) for row in parcel_rows for frontage in row["frontages"]
+            ),
             "access_location_candidate_count": access_count,
             "adjacency_relationship_count": len(adjacency_rows),
             "shared_boundary_relationship_count": sum(1 for r in adjacency_rows if r["relationship_code"] == "SHARED_BOUNDARY_CANDIDATE"),
