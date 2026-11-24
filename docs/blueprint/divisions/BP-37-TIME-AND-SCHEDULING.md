@@ -4,7 +4,9 @@
 **Division:** BP-37 of the fixed 44-division master structure  
 **Version:** 1.0  
 **Specification status:** DESIGNED_DRAFT — review/approval pending  
-**Implementation / test execution / verification:** NOT_STARTED  
+**Implementation:** PARTIAL — BP37-01 bounded canonical tick/scheduling slice implemented.
+**Test execution:** BP37-01 TESTED — Python and disposable PostgreSQL suites passed.
+**Verification:** BP37-01 VERIFIED — regression workflow and migration validation passed. Remaining BP-37 scope is not implemented.  
 **Authority:** Saltwater master blueprint, original 52-division source and authoritative 52→44 crosswalk.  
 **Database status:** This specification authorises no Neon schema, migration, seed, import or other database write.
 
@@ -411,3 +413,12 @@ These are fictional/technical configuration decisions, not permission to introdu
 - Verification: NOT_STARTED.
 - Neon: No database write performed or authorised.
 - Next division in fixed numeric order: BP-38 — Records and Databases.
+
+
+## 22. BP37-01 implementation and verification record
+
+BP37-01 implements the existing persisted monotonic `world_tick` as the sole clock input to a first tick-based schedule registry. It does not assign tick duration or calendar semantics. The implementation adds deterministic due ordering (due tick, descending priority, stable schedule ID), one-off and interval schedules, expiry, claim tokens, attempt counts, idempotent registration, transactional claim/finalization, retryable failure, owner-domain handler dispatch and runtime lifecycle gates. Recurring schedules are re-anchored to the actual committed dispatch tick plus interval, avoiding missed-interval catch-up bursts. Domain handlers receive stable idempotency keys and must validate their own action authority.
+
+The implementation is in `runtime/scheduling.py`; disposable SQL proposal `db/proposals/0006_bp37_tick_scheduling.sql`; tests `tests/pkg001/test_scheduling.py` and `tests/pkg001/scheduling_acceptance.sql`. Verification: [full Python and disposable PostgreSQL workflow](https://github.com/Joshuaogri/saltwater/actions/runs/45310150181) passed; [database migration validation](https://github.com/Joshuaogri/saltwater/actions/runs/45310150194) passed. Schema growth was 131,072 bytes. A 1,001-row fixture measured 466,944 bytes total heap plus indexes, approximately 466.48 bytes per schedule. Fixtures were rolled back. No production Neon schema or data was changed.
+
+This is a bounded first implementation slice, not completion of all BP-37. Calendar, civil-time, timezone, richer recurrence/exception/version semantics, occurrence history, cancellation policy, abandoned-claim recovery and domain-specific schedule policies remain outstanding. Abandoned claims are not automatically reclaimed in this increment, preventing uncertain duplicate execution.
