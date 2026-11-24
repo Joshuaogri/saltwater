@@ -1,6 +1,6 @@
 # BP38-01 — Database Integrity and Migration Foundation
 
-**Status:** IMPLEMENTED ON `main` — DISPOSABLE TESTS PASS; final code review pending  
+**Status:** IMPLEMENTED ON `main` — FINAL CODE REVIEW PASSED; Neon legacy-baseline adoption remains pending  
 **Approval:** User approved BP38-01 implementation on 2026-11-24.  
 **Blueprint:** BP-38, fixed BP-01–BP-44 structure.  
 **Database authority:** Neon PostgreSQL.  
@@ -18,8 +18,8 @@ Implement the smallest reliable database-integrity foundation around the existin
 4. PostgreSQL advisory lock to serialize concurrent migration runners.
 5. One transaction per migration, including its ledger record.
 6. Refuse unknown, missing, reordered, modified or checksum-less applied migrations.
-7. Record a deterministic schema-catalogue fingerprint and detect live drift.
-8. Fingerprint all Saltwater (`sw_*`) schemas, including relations, columns, constraints, indexes, routines, triggers and row-security policies.
+7. Record a deterministic schema-catalogue fingerprint and detect drift within its explicitly defined catalogue coverage.
+8. Fingerprint Saltwater (`sw_*`) schemas, including relations, columns, constraints, indexes, routines, triggers, row-security policies, schema/relation ACLs and routine ACLs.
 9. Validate the canonical schema with disposable PostgreSQL integration tests.
 10. Keep migration credentials outside GitHub source and test workflows.
 11. Preserve compact storage; add no duplicate migration/audit tables.
@@ -61,13 +61,17 @@ No Neon production migration, data write, upload, credential change or schema mu
 | BP38-01-AT-09 | Source checksum mismatch is rejected | Disposable PostgreSQL |
 | BP38-01-AT-10 | Live schema drift is rejected | Disposable PostgreSQL |
 | BP38-01-AT-11 | Legacy NULL checksums are not silently adopted | Disposable PostgreSQL negative test |
-| BP38-01-AT-12 | Schema fingerprint covers every `sw_*` schema and security object | Disposable PostgreSQL drift test |\n| BP38-01-AT-13 | No production Neon write occurs | Production audit / no write action |
+| BP38-01-AT-12 | Fingerprint detects drift in the catalogue categories it explicitly queries; it is not a universal PostgreSQL object/security fingerprint | Disposable PostgreSQL drift test |\n| BP38-01-AT-13 | No production Neon write occurs | Production audit / no write action |
 
-The disposable proposals 0002 and 0009 no longer insert themselves into the authoritative migration ledger. A proposal fixture is not an applied source migration; only the ordered migration runner may write that ledger. This removes version-number collisions and keeps proposal execution separate from migration history.\n\n## 7. Execution and status
+The disposable proposals 0002 and 0009 no longer insert themselves into the authoritative migration ledger. A proposal fixture is not an applied source migration; only the ordered migration runner may write that ledger. This removes version-number collisions and keeps proposal execution separate from migration history.\n\n## 7. Fingerprint scope and exclusions
+
+The current fingerprint is a deterministic hash of the catalogue query results in `scripts/migrate.py`. It covers the listed schema/relation/column/constraint/index/routine/trigger/policy categories and selected schema, relation and routine ACL fields. It does **not** claim to cover every PostgreSQL object or security property. In particular, it does not comprehensively encode enum labels, domain definitions, composite-type attributes, sequence parameters/state, column-level ACLs, default privileges, role memberships, ownership changes, extension configuration or all database-level settings. These are excluded from the current drift detector and must be included in a separate baseline comparison where relevant.
+
+## 8. Execution and status
 
 Implementation files are committed directly to `main`. Disposable PostgreSQL validation passed in [BP38-01 run 0001](../test-evidence/BP38-01-run-0001.md), GitHub Actions run [45428332686](https://github.com/Joshuaogri/saltwater/actions/runs/45428332686). All 17 workflow steps passed, including migration replay, checksum mismatch, schema drift, legacy NULL refusal, unit tests and existing runtime-kernel tests. A successful workflow proves only the disposable environment; it does not approve or apply anything to Neon production.
 
-## 8. Exit criteria
+## 9. Exit criteria
 
 BP38-01 can be marked verified only after:
 - [x] the complete disposable workflow passes;
@@ -76,4 +80,6 @@ BP38-01 can be marked verified only after:
 - [x] the final disposable schema and migration ledger are inspected by acceptance queries;
 - [x] the implementation register and README report the actual evidence;
 - [x] production remains unchanged;
-- [ ] final code review and integration-register closure.
+- [x] final code review; scope limitations are documented.
+- [ ] independent clean-replay comparison against the legacy production baseline and integration-register closure.
+- [ ] separately approved production adoption of the verified legacy checksum, followed by migration 0002.
