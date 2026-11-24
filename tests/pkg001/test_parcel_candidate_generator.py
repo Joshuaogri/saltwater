@@ -2,7 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.parcel_candidate_generator import build_candidates
+from runtime.parcel_candidate_generator import build_candidates, _polygon_rect_intersection_area
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
@@ -53,6 +53,30 @@ class ParcelCandidateGeneratorTests(unittest.TestCase):
         self.assertEqual(result["generation"]["canonical_addresses_created"], 0)
         self.assertEqual(result["address_generation"]["records_created"], 0)
         self.assertEqual(result["generation"]["unresolved_source_spatial_mappings"], 100)
+
+    def test_exact_polygon_clipping_area_and_boundary_touch(self):
+        feature = {
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [[[2, 2], [8, 2], [8, 8], [2, 8], [2, 2]]],
+            }
+        }
+        self.assertEqual(_polygon_rect_intersection_area(feature, (0, 0, 5, 5)), 9.0)
+        self.assertEqual(_polygon_rect_intersection_area(feature, (8, 0, 10, 10)), 0.0)
+        self.assertEqual(_polygon_rect_intersection_area(feature, (0, 0, 10, 10)), 36.0)
+
+    def test_unsupported_water_holes_fail_closed(self):
+        feature = {
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [[0, 0], [10, 0], [10, 10], [0, 10], [0, 0]],
+                    [[2, 2], [4, 2], [4, 4], [2, 4], [2, 2]],
+                ],
+            }
+        }
+        with self.assertRaises(ValueError):
+            _polygon_rect_intersection_area(feature, (0, 0, 5, 5))
 
 
 if __name__ == "__main__":
