@@ -14,7 +14,10 @@ DECLARE
   v_old_reservation bigint;
   v_new_reservation bigint;
   v_tick bigint;
+  v_initial_tick bigint;
+  v_repeat_id bigint;
 BEGIN
+  SELECT world_tick INTO v_initial_tick FROM sw_runtime.state WHERE singleton=1;
   SELECT spatial_id INTO STRICT v_sovereign FROM sw_geo.entity WHERE entity_code='saltwater-state';
   SELECT spatial_id INTO STRICT v_city FROM sw_geo.entity WHERE entity_code='saltwater-city';
 
@@ -34,6 +37,21 @@ BEGIN
     RAISE EXCEPTION 'Saltwater alias unexpectedly bypassed the root exception';
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='Saltwater alias unexpectedly bypassed the root exception' THEN RAISE; END IF;
+  END;
+
+  SELECT sw_names.reserve_name('GEOGRAPHY',v_sovereign,'canonical','Saltwater',
+    'sw-nam-repeat','test-runner','idempotent canon import check',0) INTO v_repeat_id;
+  IF v_repeat_id <> (SELECT reservation_id FROM sw_names.name_reservation
+      WHERE entity_type='GEOGRAPHY' AND entity_id=v_sovereign AND namespace_slot='SOVEREIGN_ROOT') THEN
+    RAISE EXCEPTION 'repeat canon import was not idempotent';
+  END IF;
+
+  BEGIN
+    PERFORM sw_names.reserve_name('BUSINESS',999,'canonical','Unsupported Entity',
+      'sw-nam-test','test-runner','unknown adapter test',0);
+    RAISE EXCEPTION 'unregistered entity type unexpectedly accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='unregistered entity type unexpectedly accepted' THEN RAISE; END IF;
   END;
 
   INSERT INTO sw_geo.entity(entity_code,kind) VALUES ('sw-nam-third-root-test',3)
@@ -107,10 +125,26 @@ BEGIN
     IF SQLERRM='incomplete person name unexpectedly succeeded' THEN RAISE; END IF;
   END;
 
+  BEGIN
+    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,source_ref)
+    SELECT event_type_id,clock_timestamp(),v_tick,'person','sw-nam-duplicate-person'
+    FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
+    RETURNING event_id INTO v_person_event;
+    INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id)
+    VALUES ('Aderonke','Mira Bennett',v_tick,'sw-nam-duplicate-person',v_person_event);
+    RAISE EXCEPTION 'duplicate complete person name unexpectedly succeeded';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='duplicate complete person name unexpectedly succeeded' THEN RAISE; END IF;
+  END;
+
   IF (SELECT count(*) FROM sw_names.name_event e
       JOIN sw_names.name_reservation r USING(reservation_id)
       WHERE r.entity_id=v_extra AND r.entity_type='GEOGRAPHY') < 3 THEN
     RAISE EXCEPTION 'name history did not preserve reservation and rename events';
+  END IF;
+
+  IF (SELECT world_tick FROM sw_runtime.state WHERE singleton=1) <> v_initial_tick THEN
+    RAISE EXCEPTION 'naming acceptance advanced the fictional clock';
   END IF;
 
   RAISE NOTICE 'SW_NAM_001_ACCEPTANCE_PASS roots=2 geography_rename=pass person_adapter=pass collisions=blocked';
