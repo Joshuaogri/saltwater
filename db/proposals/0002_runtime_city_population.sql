@@ -571,10 +571,8 @@ REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_runtime, sw_geo, sw_people, sw_core, sw
 INSERT INTO sw_runtime.state(singleton, state, player_present, bootstrap_open)
 VALUES (1, 0, false, true);
 
-INSERT INTO sw_ops.schema_migration(version, migration_name)
-VALUES (2, 'runtime_city_population')
-ON CONFLICT (version) DO NOTHING;
-
+-- This is a disposable schema proposal, not an applied source migration.
+-- The authoritative migration runner alone writes the schema_migration ledger.
 INSERT INTO sw_ops.storage_operation
   (operation_kind, description, status, measurement_notes)
 VALUES
