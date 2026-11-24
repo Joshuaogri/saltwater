@@ -10,6 +10,8 @@ on:
       - "runtime/parcel_candidate_importer.py"
       - "tests/pkg001/test_parcel_candidate_importer.py"
       - "runtime/parcel_candidate_generator.py"
+      - "runtime/road_corridor_audit.py"
+      - "tests/pkg001/test_road_corridor_audit.py"
       - "data/geography/saltwater-geography-v1.json"
       - "tests/pkg001/geography_identity_map_acceptance.sql"
       - "tests/pkg001/bp04_01_geography_fixture.sql"
@@ -50,6 +52,8 @@ jobs:
           python-version: "3.12"
       - name: Run BP04-03 Stage B contract tests
         run: python -m unittest discover -s tests/pkg001 -p "test_bp04_03_stage_b_contract.py" -v
+      - name: Run BP04-03 road corridor audit tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_road_corridor_audit.py" -v
       - name: Install PostgreSQL Python driver for importer contract tests
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Run BP04-03 candidate importer validation tests
@@ -85,6 +89,8 @@ jobs:
 
       - name: Generate deterministic candidate manifest
         run: python -m runtime.parcel_candidate_generator
+      - name: Generate width-agnostic road corridor register
+        run: python -m runtime.road_corridor_audit
       - name: Install PostgreSQL Python driver
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Validate and import candidate manifest into disposable PostgreSQL
