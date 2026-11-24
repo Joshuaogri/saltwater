@@ -277,8 +277,8 @@ BEGIN
     INTO prerequisites FROM sw_runtime.event_work_prerequisite dep
     WHERE dep.event_id=selected.event_id;
   token:=gen_random_uuid();
-  UPDATE sw_runtime.event_work SET status='claimed',claim_token=token,
-    attempt_count=attempt_count+1 WHERE event_id=selected.event_id;
+  UPDATE sw_runtime.event_work ew SET status='claimed',claim_token=token,
+    attempt_count=ew.attempt_count+1 WHERE ew.event_id=selected.event_id;
   INSERT INTO sw_runtime.event_work_attempt(event_id,attempt_no,attempt_status,world_tick)
     VALUES(selected.event_id,selected.attempt_count+1,'claimed',runtime_row.world_tick);
   RETURN QUERY SELECT selected.event_id,selected_code,selected.owner_domain,
