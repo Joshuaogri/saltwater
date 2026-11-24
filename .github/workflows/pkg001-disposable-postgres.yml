@@ -59,6 +59,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
       - name: Run player command interface tests
         run: python -m unittest discover -s tests/pkg001 -p "test_player_interface.py" -v
+      - name: Run BP40-02 canonical command catalogue and parser tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_commands.py" -v
       - name: Run BP40-01 player workspace tests
         run: python -m unittest discover -s tests/pkg001 -p "test_player_workspace.py" -v
       - name: Run recruit-entry adapter tests
