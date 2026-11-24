@@ -7,7 +7,8 @@ BEGIN;
 INSERT INTO sw_core.event_type(event_code, description) VALUES
   ('SCHEDULE_CREATED', 'A domain-owned tick schedule was registered'),
   ('SCHEDULE_COMPLETED', 'A due schedule action completed through its owner handler'),
-  ('SCHEDULE_FAILED', 'A due schedule action failed through its owner handler')
+  ('SCHEDULE_FAILED', 'A due schedule action failed through its owner handler'),
+  ('SCHEDULE_EXPIRED', 'A recurring schedule reached its configured expiry')
 ON CONFLICT (event_code) DO NOTHING;
 
 CREATE TABLE sw_runtime.schedule (
@@ -70,6 +71,9 @@ BEGIN
   IF NOT (
        (OLD.status IN ('pending','failed') AND NEW.status='claimed')
     OR (OLD.status='claimed' AND NEW.status IN ('completed','failed'))
+    OR (OLD.status='claimed' AND NEW.status='expired' AND OLD.interval_ticks IS NOT NULL
+        AND OLD.expires_at_tick IS NOT NULL
+        AND OLD.expires_at_tick < runtime_row.world_tick + OLD.interval_ticks)
     OR (OLD.status='claimed' AND NEW.status='pending' AND OLD.interval_ticks IS NOT NULL
         AND NEW.due_tick = runtime_row.world_tick + OLD.interval_ticks)
     OR (OLD.status IN ('pending','failed') AND NEW.status='expired')
@@ -261,16 +265,27 @@ BEGIN
         last_error_code=NULL
       WHERE schedule_id=p_schedule_id;
     ELSE
-      event_id := sw_runtime.insert_schedule_event(
-        'SCHEDULE_COMPLETED', runtime_row.world_tick,
-        'schedule:complete:' || selected.schedule_id::text || ':' || selected.attempt_count::text
-      );
-      UPDATE sw_runtime.schedule SET status='pending',
-        due_tick=runtime_row.world_tick + selected.interval_ticks,
-        retry_after_tick=0, claim_token=NULL, claimed_at_tick=NULL,
-        last_event_id=event_id, last_error_code=NULL,
-        expires_at_tick=selected.expires_at_tick
-      WHERE schedule_id=p_schedule_id;
+      IF selected.expires_at_tick IS NOT NULL
+         AND selected.expires_at_tick < runtime_row.world_tick + selected.interval_ticks THEN
+        event_id := sw_runtime.insert_schedule_event(
+          'SCHEDULE_EXPIRED', runtime_row.world_tick,
+          'schedule:expired:' || selected.schedule_id::text || ':' || selected.attempt_count::text
+        );
+        UPDATE sw_runtime.schedule SET status='expired',
+          claim_token=NULL, claimed_at_tick=NULL,
+          last_event_id=event_id, last_error_code=NULL
+        WHERE schedule_id=p_schedule_id;
+      ELSE
+        event_id := sw_runtime.insert_schedule_event(
+          'SCHEDULE_COMPLETED', runtime_row.world_tick,
+          'schedule:complete:' || selected.schedule_id::text || ':' || selected.attempt_count::text
+        );
+        UPDATE sw_runtime.schedule SET status='pending',
+          due_tick=runtime_row.world_tick + selected.interval_ticks,
+          retry_after_tick=0, claim_token=NULL, claimed_at_tick=NULL,
+          last_event_id=event_id, last_error_code=NULL
+        WHERE schedule_id=p_schedule_id;
+      END IF;
     END IF;
   ELSE
     IF p_error_code IS NULL OR length(p_error_code) NOT BETWEEN 1 AND 64
