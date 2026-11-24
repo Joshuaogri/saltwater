@@ -59,7 +59,7 @@ class RecruitmentAdapterTests(unittest.TestCase):
         result = self.service.accept_intake(
             intake_id, supervisor_person_id=12, appointment_source="Recruitment decision",
             idempotency_key="accept-0001", authorised_by_principal_id=approver_id,
-            given_name="Alex",
+            given_name="Alex", middle_name="Morgan", family_name="Taylor",
         )
         self.assertEqual(result, self.row[0])
         sql, params = self.connection.cursor_value.executed
@@ -71,6 +71,15 @@ class RecruitmentAdapterTests(unittest.TestCase):
     def test_rejects_short_idempotency_key_before_database_call(self):
         with self.assertRaises(ValueError):
             self.service.request_intake(uuid4(), "Player", "short")
+        self.assertIsNone(self.connection.cursor_value.executed)
+
+    def test_rejects_incomplete_canonical_name_before_database_call(self):
+        with self.assertRaises(ValueError):
+            self.service.accept_intake(
+                uuid4(), supervisor_person_id=12, appointment_source="Decision",
+                idempotency_key="accept-0003", authorised_by_principal_id=uuid4(),
+                given_name="Alex",
+            )
         self.assertIsNone(self.connection.cursor_value.executed)
 
     def test_rejects_missing_supervisor_before_database_call(self):
