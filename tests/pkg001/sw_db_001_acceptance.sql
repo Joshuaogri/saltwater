@@ -11,7 +11,7 @@ DECLARE
   v_before bigint;
 BEGIN
   SELECT batch_id INTO v_batch FROM sw_ops.world_provisioning_batch
-  WHERE config_version='saltwater-opening-fixture-v1';
+  WHERE config_version='saltwater-opening-fixture-v2';
   IF v_batch IS NULL THEN RAISE EXCEPTION 'opening provisioning manifest missing'; END IF;
   IF NOT EXISTS (SELECT 1 FROM sw_ops.world_provisioning_batch WHERE batch_id=v_batch AND environment_scope='DISPOSABLE_TEST_ONLY') THEN
     RAISE EXCEPTION 'fixture manifest is not explicitly marked disposable-only';
