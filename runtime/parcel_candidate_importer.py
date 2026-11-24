@@ -49,8 +49,8 @@ def validate_manifest(data):
     if len(parcels) != generation.get("parcel_candidate_count"):
         raise ValueError("Candidate count does not match manifest")
     for parcel in parcels:
-        ring = parcel["geometry"][0]
-        if len(ring) < 4 or ring[0] != ring[-1]:
+        rings = parcel.get("geometry", [])
+        if not rings or any(len(ring) < 4 or ring[0] != ring[-1] for ring in rings):
             raise ValueError(f"Invalid closed polygon ring: {parcel['candidate_parcel_id']}")
         if parcel["candidate_spatial_id"] is not None or parcel["canonical_address_id"] is not None:
             raise ValueError("Candidate artifact unexpectedly contains operational identifiers")
