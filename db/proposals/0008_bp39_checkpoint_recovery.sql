@@ -21,7 +21,7 @@ CREATE TABLE sw_runtime.checkpoint_manifest (
   schedule_counts jsonb NOT NULL,
   population_count integer,
   business_count bigint,
-  consistency_boundary text NOT NULL CHECK (consistency_boundary='repeatable_read'),
+  consistency_boundary text NOT NULL DEFAULT 'repeatable_read' CHECK (consistency_boundary='repeatable_read'),
   manifest_digest text NOT NULL CHECK (manifest_digest ~ '^[0-9a-f]{32}$'),
   validation_state text NOT NULL DEFAULT 'captured'
     CHECK (validation_state IN ('captured','validated','failed')),
