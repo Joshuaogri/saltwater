@@ -94,41 +94,47 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             classes = {segment["road_class"] for segment, _ in entries}
             if len(classes) != 1:
                 raise ValueError(f"Road {road_id} has inconsistent segment classes")
-            for component_no, line in enumerate(components, start=1):
-                if line.length <= 0.01:
-                    continue
-                contributing_segments = sorted({
-                    segment["segment_id"]
-                    for segment, source_lines in entries
-                    if sum(line.intersection(source_line).length for source_line in source_lines) > 0.01
-                })
-                if not contributing_segments:
-                    raise ValueError(f"Frontage component has no source segment: {parcel['candidate_parcel_id']}")
-                point = line.interpolate(0.5, normalized=True)
-                frontage_id = f"PFC-{parcel['candidate_parcel_id']}-{road_id}-{component_no:02d}"
-                frontage_rows.append({
-                    "frontage_candidate_id": frontage_id,
-                    "road_segment_ids": contributing_segments,
-                    "road_id": road_id,
-                    "road_name": road["name"],
-                    "road_class": next(iter(classes)),
-                    "contact_length_m": round(line.length, 3),
-                    "candidate_point_x_m": round(point.x, 6),
-                    "candidate_point_y_m": round(point.y, 6),
-                    "source_ref": f"{source['dataset_id']}:{road_id}:{','.join(contributing_segments)}",
-                    "confidence_code": "estimated",
-                })
-                access_rows.append({
-                    "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-{road_id}-{component_no:02d}",
-                    "frontage_candidate_id": frontage_id,
-                    "road_id": road_id,
-                    "candidate_x_m": round(point.x, 6),
-                    "candidate_y_m": round(point.y, 6),
-                    "candidate_type": "unclassified_access_location",
-                    "review_status": "UNREVIEWED_GEOMETRIC_CANDIDATE",
-                    "source_ref": f"{source['dataset_id']}:{road_id}",
-                    "confidence_code": "estimated",
-                })
+            if not components:
+                continue
+            contributing_segments = sorted({
+                segment["segment_id"]
+                for segment, source_lines in entries
+                if sum(
+                    component.intersection(source_line).length
+                    for component in components for source_line in source_lines
+                ) > 0.01
+            })
+            if not contributing_segments:
+                raise ValueError(f"Frontage component has no source segment: {parcel['candidate_parcel_id']}")
+            longest = sorted(components, key=lambda line: (-line.length, line.wkb_hex))[0]
+            point = longest.interpolate(0.5, normalized=True)
+            frontage_id = f"PFC-{parcel['candidate_parcel_id']}-{road_id}"
+            total_contact_length = sum(line.length for line in components)
+            frontage_rows.append({
+                "frontage_candidate_id": frontage_id,
+                "road_segment_ids": contributing_segments,
+                "road_id": road_id,
+                "road_name": road["name"],
+                "road_class": next(iter(classes)),
+                "contact_length_m": round(total_contact_length, 3),
+                "contact_component_count": len(components),
+                "candidate_point_x_m": round(point.x, 6),
+                "candidate_point_y_m": round(point.y, 6),
+                "source_ref": f"{source['dataset_id']}:{road_id}:{','.join(contributing_segments)}",
+                "confidence_code": "estimated",
+            })
+            access_rows.append({
+                "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-{road_id}",
+                "frontage_candidate_id": frontage_id,
+                "road_id": road_id,
+                "candidate_x_m": round(point.x, 6),
+                "candidate_y_m": round(point.y, 6),
+                "candidate_type": "unclassified_access_location",
+                "review_status": "UNREVIEWED_GEOMETRIC_CANDIDATE",
+                "source_ref": f"{source['dataset_id']}:{road_id}",
+                "confidence_code": "estimated",
+            })
+
 
         unique_frontage_length = boundary.intersection(road_reserve.boundary).length
         water_contact = boundary.intersection(water_union.boundary).length if water_union else 0.0
