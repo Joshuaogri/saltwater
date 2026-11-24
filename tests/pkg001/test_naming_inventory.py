@@ -15,7 +15,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
 
     def test_inventory_covers_adopted_map_name_groups(self):
         self.assertEqual(self.report.dataset_id, "SW-GEO-V1")
-        self.assertEqual(len(self.report.candidates), 101)
+        self.assertEqual(len(self.report.candidates), 102)
         kinds = {}
         for candidate in self.report.candidates:
             kinds[candidate.source_ref.rsplit(":", 1)[-1]] = (
@@ -39,7 +39,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
     def test_import_is_blocked_until_map_baseline_and_spatial_ids_are_resolved(self):
         self.assertFalse(self.report.can_import)
         self.assertEqual(self.report.source_status, "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED")
-        self.assertEqual(len(self.report.unresolved_spatial_ids), 99)
+        self.assertEqual(len(self.report.unresolved_spatial_ids), 100)
 
 
 if __name__ == "__main__":
