@@ -907,7 +907,7 @@ The following source IDs are mapped to BP-35 in the authoritative crosswalk. Ori
 
 - Specification: **DESIGNED_DRAFT**; user review/approval pending.
 - Implementation: **IN_PROGRESS** — bounded BP35-01 event intake/dispatch slice committed; full division remains incomplete.
-- Test execution: **IN_PROGRESS** — BP35-01 Python and disposable PostgreSQL acceptance suites are running; the 230 acceptance tests above remain design criteria, not all executed evidence.
-- Verification: **PENDING** — no division-wide verification claim.
+- Test execution: **BP35-01 bounded suite PASSED** — full Python/disposable PostgreSQL regression run 45369237153 and database migration validation 45369237232 passed. The 230 acceptance tests above remain design criteria; they have not all been executed.
+- Verification: **BP35-01 slice VERIFIED** — see `docs/implementation/test-evidence/BP35-01-run-0001.md`. No division-wide verification claim.
 - Neon: **No database write performed or authorised**.
 - Next division in fixed numeric order: **BP-36 — Relationships and Social Context**.
