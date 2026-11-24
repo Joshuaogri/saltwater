@@ -53,7 +53,7 @@ def _polygon_parts(geom):
 
 def _rings(poly):
     return [
-        [[round(float(x), 6), round(float(y), 6)] for x, y in list(poly.exterior.coords)],
+        [[round(float(x), 9), round(float(y), 9)] for x, y in list(poly.exterior.coords)],
         *[
             [[round(float(x), 6), round(float(y), 6)] for x, y in list(ring.coords)]
             for ring in poly.interiors
