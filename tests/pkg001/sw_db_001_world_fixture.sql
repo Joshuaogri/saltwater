@@ -5,6 +5,8 @@
 BEGIN;
 SET LOCAL lock_timeout='10s';
 SET LOCAL statement_timeout='20min';
+-- Bulk fixture names must use the existing trigram GIN index for the SW-UNS near-duplicate guard.
+SET LOCAL enable_seqscan=off;
 SET LOCAL saltwater.source_revision TO :'source_revision';
 
 DO $fixture_guard$
