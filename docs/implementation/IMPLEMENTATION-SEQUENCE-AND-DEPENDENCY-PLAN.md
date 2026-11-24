@@ -432,7 +432,7 @@ The dedicated [SW-DB-001 disposable workflow](../../.github/workflows/sw-db-001-
 **Production boundary:** this approval grants no Neon production write authority. No Neon connection, migration, schema change, seed, import, upload or configuration change is part of SW-DB-001. BP-04 distribution canon, detailed geography, G1 narrative sign-off, G2 Neon capacity and later production release gates remain open.
 
 
-## 17. BP04-01 — property, building, premises, unit and access-point identity foundation (proposed)
+## 17. BP04-01 — property, building, premises, unit and access-point identity foundation (approved; disposable verification in progress)
 
 Package: [BP04-01 — Property, Building, Premises, Unit and Access-Point Identity Foundation](approval-packages/BP04-01-property-premises-identity-foundation.md).
 
@@ -440,4 +440,4 @@ SW-DB-001 is now implemented and verified in disposable PostgreSQL 16; its 9,500
 
 The package does not invent or import geography, populate city-wide property data, resolve BP-04 distribution decisions, or implement ownership/tenancy/occupancy. It uses the existing BP-02 geography entity kinds (parcel 6, address 11) only as typed references. The map remains unapproved for operational seeding.
 
-**Status: PROPOSED — awaiting explicit approval.** Approval would permit GitHub-main implementation and disposable PostgreSQL 16 testing only. It grants zero Neon production write authority.
+**Status: APPROVED — implementation committed on `main`; disposable PostgreSQL 16 verification in progress.** No Neon production operation is authorised. It grants zero Neon production write authority.
