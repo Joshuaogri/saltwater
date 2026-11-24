@@ -112,7 +112,7 @@ CREATE FUNCTION sw_names.record_generation_batch(
   p_config_version text,p_seed bigint,p_manifest_sha256 bytea,
   p_candidate_count integer,p_source_ref text,p_actor_ref text,p_reason text
 ) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER
-SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
+SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
 DECLARE v_id bigint; v_existing sw_names.generation_batch%ROWTYPE;
 BEGIN
   IF p_manifest_sha256 IS NULL OR octet_length(p_manifest_sha256)<>32
@@ -148,7 +148,7 @@ END
 $;
 
 CREATE FUNCTION sw_names.reject_generation_batch_mutation()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'generation batch manifests are immutable';
 END
