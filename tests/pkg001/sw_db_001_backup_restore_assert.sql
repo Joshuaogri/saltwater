@@ -4,7 +4,7 @@ DECLARE
   v_batch bigint;
 BEGIN
   SELECT batch_id INTO v_batch FROM sw_ops.world_provisioning_batch
-  WHERE config_version='saltwater-opening-fixture-v1';
+  WHERE config_version='saltwater-opening-fixture-v2';
   IF v_batch IS NULL THEN RAISE EXCEPTION 'restored provisioning manifest missing'; END IF;
   IF (SELECT count(*) FROM sw_people.person)<>9500
      OR (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>9500
