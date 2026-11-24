@@ -91,3 +91,24 @@ The live workflow passed on 2026-11-24. Exact schema DDL hashes and canonical wo
 **Transaction/rollback:** the guarded proposal is one transaction. Before COMMIT, any guard or verification failure rolls back the entire update. After a successful commit, a compensating change to NULL would require a separately reviewed and explicitly approved operation; do not automatically reverse it. The proposal is idempotency-safe by failing closed on a second run.
 
 **Approval boundary:** this operation is prepared only. No production write has been made. The user must explicitly approve this exact one-row Neon checksum update before execution. Migration 0002, schema fingerprinting, seeds and all other changes are excluded and require their own separate approval.
+
+
+## Production checksum adoption — executed and verified
+
+**User authorization:** explicit approval received in this conversation for the exact one-row update described above.  
+**Execution date:** 2026-11-24.  
+**Target:** Neon production `neondb`, branch `br-bitter-rain-bdz9ddid`.
+
+The guarded DO-block executed successfully. Its precondition matched exactly one row (`version=1`, `migration_name='foundation'`, checksum NULL); it updated that row and verified the exact expected SHA-256 before returning successfully.
+
+Post-write read-only verification returned:
+- Version/name: `1 / foundation`
+- Checksum: `d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8`
+- Exact checksum verification: **true**
+- Database size before: **9,306,112 bytes**
+- Database size after: **9,306,112 bytes**
+- Measured database-size delta: **0 bytes**
+- Migration ledger heap: **8,192 bytes** before and after
+- Migration ledger total relation size: **49,152 bytes** before and after
+
+No schema migration, migration 0002, seed data, or other production change was included. The expected storage estimate was met: measured database-size growth was zero. This closes the BP38-02 legacy checksum-adoption operation; migration 0002 remains a separate, unapplied change requiring its own explicit approval.
