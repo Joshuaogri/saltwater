@@ -41,9 +41,9 @@ AS $fixture_word$
   FROM generate_series(1,12) AS x(g)
 $fixture_word$;
 
-DO $
+DO $fixture_batch$
 DECLARE
-  v_manifest bytea := decode('0a5f0c1a1f692c33e392ab18d9f346b5d966022525c1f1d95b9e8e76b9e3d798','hex');
+  v_manifest bytea := decode('811d0adaecd0e009e80bbd50532545b5ecb226390a079b9833b0a5a8e6d23e6d','hex');
   v_revision text := current_setting('saltwater.source_revision');
   v_batch bigint;
   v_name_batch bigint;
@@ -85,7 +85,7 @@ BEGIN
   IF v_batch IS NULL OR NOT EXISTS (
     SELECT 1 FROM sw_ops.world_provisioning_batch
     WHERE batch_id=v_batch AND generator_version=2
-      AND config_version='saltwater-opening-fixture-v1'
+      AND config_version='saltwater-opening-fixture-v2'
       AND seed=20261124 AND expected_residents=9000
       AND expected_police_subset=500 AND expected_living_people=9500
       AND expected_businesses=10000 AND source_revision=v_revision
@@ -95,8 +95,8 @@ BEGIN
   END IF;
 
   v_name_batch := sw_names.record_generation_batch(
-    'BUSINESS',2::smallint,1::smallint,'saltwater-opening-fixture-v1',20261124,
-    v_manifest,10000,'SW-DB-001:opening-fixture-v1',
+    'BUSINESS',2::smallint,1::smallint,'saltwater-opening-fixture-v2',20261124,
+    v_manifest,10000,'SW-DB-001:opening-fixture-v2',
     'disposable-ci-generator','business name fixture only; no production canon'
   );
 
@@ -286,5 +286,5 @@ BEGIN
     RAISE EXCEPTION 'business canonical names do not reconcile to 10000';
   END IF;
 END
-$$;
+$fixture_batch$;
 COMMIT;
