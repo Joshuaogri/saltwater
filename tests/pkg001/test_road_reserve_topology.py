@@ -45,8 +45,9 @@ class RoadReserveTopologyTests(unittest.TestCase):
 
     def test_junction_overlaps_are_dissolved_before_area_accounting(self):
         summary = self.result["summary"]
-        self.assertLess(
-            summary["dissolved_city_road_reserve_area_m2"],
+        self.assertGreater(summary["junction_overlap_area_removed_by_dissolve_m2"], 0)
+        self.assertGreaterEqual(
+            summary["sum_of_segment_corridor_areas_m2"],
             summary["raw_road_reserve_area_before_city_clip_m2"],
         )
         self.assertIn("Dissolved once", self.result["method"]["junction_overlap"])
