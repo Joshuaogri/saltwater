@@ -19,6 +19,51 @@ def _polyline_length(points):
     )
 
 
+def _offset_side(points, half_width, side):
+    normals = []
+    for a, b in zip(points, points[1:]):
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        length = (dx * dx + dy * dy) ** 0.5
+        if length == 0:
+            raise ValueError("Road centreline contains a zero-length edge")
+        normals.append((-dy / length * side, dx / length * side))
+    result = []
+    for i, point in enumerate(points):
+        if i == 0:
+            nx, ny = normals[0]
+            result.append([point[0] + nx * half_width, point[1] + ny * half_width])
+        elif i == len(points) - 1:
+            nx, ny = normals[-1]
+            result.append([point[0] + nx * half_width, point[1] + ny * half_width])
+        else:
+            n1, n2 = normals[i - 1], normals[i]
+            mx, my = n1[0] + n2[0], n1[1] + n2[1]
+            magnitude = (mx * mx + my * my) ** 0.5
+            if magnitude < 1e-9:
+                raise ValueError("Road centreline has a reversing cusp")
+            mx, my = mx / magnitude, my / magnitude
+            denominator = mx * n2[0] + my * n2[1]
+            if abs(denominator) < 1e-6:
+                raise ValueError("Road centreline offset has an unstable miter")
+            scale = min(half_width / denominator, half_width * 4)
+            result.append([point[0] + mx * scale, point[1] + my * scale])
+    return result
+
+
+def _corridor_polygon(points, width):
+    half = width / 2
+    left = _offset_side(points, half, 1)
+    right = _offset_side(points, half, -1)
+    ring = left + list(reversed(right)) + [left[0]]
+    area2 = sum(
+        ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1]
+        for i in range(len(ring) - 1)
+    )
+    if abs(area2) < 1e-6:
+        raise ValueError("Generated road corridor has zero area")
+    return [ring]
+
+
 def build_road_corridor_audit(source: dict) -> dict:
     network = source["network"]
     nodes = {node["id"]: node for node in network["nodes"]}
@@ -97,11 +142,19 @@ def build_road_corridor_audit(source: dict) -> dict:
                     visited.add(neighbour)
                     queue.append(neighbour)
 
+    design = source.get("road_reserve_design_standard")
+    if not design or design.get("status") != "FICTIONAL_CANONICAL_DESIGN_STANDARD":
+        raise ValueError("Missing fictional canonical road reserve design standard")
+    widths = design["widths_m"]
     corridor_segments = []
     length_exceptions = []
     for segment in sorted(segments, key=lambda item: item["id"]):
         measured = _polyline_length(segment["geometry"])
         delta = round(measured - segment["length_m"], 6)
+        if segment["class"] not in widths:
+            raise ValueError(f"Missing road reserve width for class {segment['class']}")
+        reserve_width = widths[segment["class"]]
+        reserve_polygon = _corridor_polygon(segment["geometry"], reserve_width)
         if abs(delta) > 0.01:
             length_exceptions.append({
                 "segment_id": segment["id"],
@@ -125,10 +178,10 @@ def build_road_corridor_audit(source: dict) -> dict:
             "declared_length_m": segment["length_m"],
             "measured_polyline_length_m": round(measured, 6),
             "length_reconciliation": "MATCH" if abs(delta) <= 0.01 else "SOURCE_EXCEPTION",
-            "reserve_width_m": None,
+            "reserve_width_m": reserve_width,
             "reserve_area_m2": None,
-            "reserve_polygon": None,
-            "reserve_geometry_status": "BLOCKED_WIDTH_AND_ROAD_EDGE_UNSPECIFIED",
+            "reserve_polygon": reserve_polygon,
+            "reserve_geometry_status": "GENERATED_FROM_SW_RDS_V1_CENTRELINE_BUFFER",
             "source_ref": f'{source["dataset_id"]}:{segment["id"]}',
         })
 
@@ -143,10 +196,10 @@ def build_road_corridor_audit(source: dict) -> dict:
             "segment_count": len(own),
             "declared_length_total_m": sum(s["length_m"] for s in own),
             "measured_polyline_length_total_m": round(sum(_polyline_length(s["geometry"]) for s in own), 6),
-            "reserve_width_m": None,
+            "reserve_width_m": widths[road["class"]],
             "reserve_area_m2": None,
             "reserve_polygon": None,
-            "reserve_geometry_status": "BLOCKED_WIDTH_AND_ROAD_EDGE_UNSPECIFIED",
+            "reserve_geometry_status": "SEGMENT_POLYGONS_GENERATED_SEE_SEGMENTS",
         })
 
     if errors:
@@ -157,9 +210,9 @@ def build_road_corridor_audit(source: dict) -> dict:
         "source_dataset": source["dataset_id"],
         "source_status": source["status"],
         "operational_approval": False,
-        "road_reserve_polygon_generation": "BLOCKED",
-        "road_reserve_width_source": None,
-        "road_edge_source": None,
+        "road_reserve_polygon_generation": "SEGMENT_POLYGONS_GENERATED",
+        "road_reserve_width_source": design["version"],
+        "road_edge_source": "SW-GEO-V1 centreline buffered by SW-RDS-V1 fictional canonical widths",
         "summary": {
             "road_count": len(roads),
             "segment_count": len(segments),
@@ -170,20 +223,22 @@ def build_road_corridor_audit(source: dict) -> dict:
             "road_membership_errors": 0,
             "endpoint_geometry_errors": 0,
             "length_reconciliation_exception_count": len(length_exceptions),
-            "corridor_widths_unresolved": len(segments),
-            "reserve_polygons_created": 0,
+            "corridor_widths_unresolved": 0,
+            "reserve_polygons_created": len(corridor_segments),
             "reserve_area_assigned_m2": 0,
+            "junction_overlap_policy": "SEGMENT_CORRIDORS_OVERLAP_AT_SHARED_NODES; DISSOLVE_BEFORE_PARCEL_EDGE_USE",
         },
         "class_summary": dict(sorted(Counter(s["class"] for s in segments).items())),
+        "road_reserve_design_standard": design,
         "roads": road_records,
         "segments": corridor_segments,
         "node_degree_exceptions": degree_mismatches,
         "length_exceptions": length_exceptions,
         "limitations": [
-            "This register preserves source road centre-lines; it does not create road-reserve or right-of-way polygons.",
-            "SW-GEO-V1 contains no surveyed road-edge geometry or road-reserve widths.",
-            "No reserve width, road-edge offset, reserve area or land-use deduction is inferred.",
-            "The declared lengths of bridge segments SWS-0684 and SWS-0685 do not reconcile to their stored polylines; source values are preserved and flagged.",
+            "Road reserve widths are fictional canonical design dimensions from SW-RDS-V1, not real-world measurements.",
+            "Segment corridor polygons are generated from centre-lines and the SW-RDS-V1 width schedule.",
+            "Adjacent segment corridor polygons overlap at shared junction nodes; dissolve the network before parcel-edge overlay or reserve-area accounting.",
+            "Reserve area is not summed from overlapping segment polygons.",
             "Centre-line intersection is not proof of legal frontage, driveway access, pedestrian access or emergency access.",
             "All records are non-operational candidates pending authoritative BP-02 geography approval.",
         ],
