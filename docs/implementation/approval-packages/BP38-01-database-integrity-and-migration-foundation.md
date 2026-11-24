@@ -65,7 +65,7 @@ No Neon production migration, data write, upload, credential change or schema mu
 
 The disposable proposals 0002 and 0009 no longer insert themselves into the authoritative migration ledger. A proposal fixture is not an applied source migration; only the ordered migration runner may write that ledger. This removes version-number collisions and keeps proposal execution separate from migration history.\n\n## 7. Execution and status
 
-Implementation files are committed directly to `main`. Disposable PostgreSQL validation passed in [BP38-01 run 0001](../test-evidence/BP38-01-run-0001.md), GitHub Actions run [45427965698](https://github.com/Joshuaogri/saltwater/actions/runs/45427965698). All 17 workflow steps passed, including migration replay, checksum mismatch, schema drift, legacy NULL refusal, unit tests and existing runtime-kernel tests. A successful workflow proves only the disposable environment; it does not approve or apply anything to Neon production.
+Implementation files are committed directly to `main`. Disposable PostgreSQL validation passed in [BP38-01 run 0001](../test-evidence/BP38-01-run-0001.md), GitHub Actions run [45428332686](https://github.com/Joshuaogri/saltwater/actions/runs/45428332686). All 17 workflow steps passed, including migration replay, checksum mismatch, schema drift, legacy NULL refusal, unit tests and existing runtime-kernel tests. A successful workflow proves only the disposable environment; it does not approve or apply anything to Neon production.
 
 ## 8. Exit criteria
 
