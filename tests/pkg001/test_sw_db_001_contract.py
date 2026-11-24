@@ -22,6 +22,21 @@ class SWDB001ContractTests(unittest.TestCase):
         self.assertEqual(manifest["generator_version"], 2)
         self.assertEqual(manifest["name_algorithm"], "md5-derived-twelve-syllable-pseudowords")
 
+    def test_generator_v2_is_deterministic_and_collision_free_at_opening_scale(self):
+        syllables = ["ba", "be", "bi", "bo", "bu", "da", "de", "di",
+                     "do", "du", "ka", "ke", "ki", "ko", "ku", "ra"]
+
+        def word(seed):
+            digest = hashlib.md5(seed.encode("utf-8")).hexdigest()
+            return "".join(syllables[int(char, 16)] for char in digest[:12])
+
+        people = [word(f"given:{i}") + " " + word(f"family:{i}") for i in range(1, 9501)]
+        businesses = [word(f"business-name:SWB-FX-{i:05d}") + " Trading" for i in range(1, 10001)]
+        self.assertEqual(len(set(people)), 9500)
+        self.assertEqual(len(set(businesses)), 10000)
+        self.assertEqual(len(set(people + businesses)), 19500)
+        self.assertNotEqual(word("given:1"), word("given:2"))
+
     def test_proposal_numbering_keeps_0010_disposable_only(self):
         proposals = {p.name for p in (ROOT / "db/proposals").glob("*.sql")}
         migrations = {p.name for p in (ROOT / "db/migrations").glob("*.sql")}
