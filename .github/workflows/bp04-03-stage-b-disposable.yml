@@ -54,14 +54,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install deterministic geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run BP04-03 parcel candidate geometry tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_parcel_candidate_generator.py" -v
       - name: Run BP04-03 Stage B contract tests
         run: python -m unittest discover -s tests/pkg001 -p "test_bp04_03_stage_b_contract.py" -v
       - name: Run BP04-03 road corridor audit tests
         run: python -m unittest discover -s tests/pkg001 -p "test_road_corridor_audit.py" -v
       - name: Run BP04-03 parcel coverage area audit tests
         run: python -m unittest discover -s tests/pkg001 -p "test_parcel_coverage_audit.py" -v
-      - name: Install deterministic geometry engine
-        run: python -m pip install "shapely==2.1.2"
       - name: Run BP04-03 dissolved road reserve and boundary topology tests
         run: python -m unittest discover -s tests/pkg001 -p "test_road_reserve_topology.py" -v
       - name: Install PostgreSQL Python driver for importer contract tests
@@ -99,6 +101,13 @@ jobs:
 
       - name: Generate deterministic candidate manifest
         run: python -m runtime.parcel_candidate_generator
+      - name: Preserve geometry-derived parcel candidate manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-parcel-candidates-${{ github.run_id }}
+          path: bp04-03-stage-b-parcel-candidates.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Generate fictional canonical road reserve corridor register
         run: python -m runtime.road_corridor_audit
       - name: Generate parcel coverage area reconciliation
@@ -140,8 +149,9 @@ jobs:
           import json
           first=json.load(open('/tmp/bp04-03-import-first.json'))
           second=json.load(open('/tmp/bp04-03-import-repeat.json'))
-          assert first['candidate_profiles_present']==396
-          assert second['candidate_profiles_present']==396
+          assert first['candidate_profiles_present']==first['candidate_count_expected']
+          assert second['candidate_profiles_present']==first['candidate_count_expected']
+          assert second['candidate_count_expected']==first['candidate_count_expected']
           assert second['candidate_entities_inserted_this_run']==0
           assert second['geometry_versions_inserted_this_run']==0
           assert second['parcel_profiles_inserted_this_run']==0
