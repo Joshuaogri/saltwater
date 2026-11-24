@@ -357,6 +357,10 @@ The following source requirements/tests are assigned to BP-43 by the authoritati
 14. Artifact retention, reproducibility and test data disposal.
 15. Approval roles for exceptions and quality-gate waivers.
 
+## SW-NAM-001 — naming test slice
+
+Added deterministic Python tests for NFKC/case-folding, punctuation and road suffix variants, display-spelling preservation, collision classes, near-duplicate review, retired-name protection, rename history, generator reproducibility and the exact two-root `Saltwater` exception. Disposable SQL acceptance covers the root pair, third-entity/alias rejection, geography rename history, person full-name enforcement and rename identity continuity. PostgreSQL concurrency tests race same-name and distinct-name reservations, test idempotency and transaction rollback. Backup/restore assertions now include reservation and name-event counts. These tests are committed but are **not yet reported as passing**; GitHub Actions execution and evidence remain pending. All fixtures use disposable PostgreSQL and do not write Neon.
+
 ## 22. Completion status
 
 - Specification: DESIGNED_DRAFT; review/approval pending.
