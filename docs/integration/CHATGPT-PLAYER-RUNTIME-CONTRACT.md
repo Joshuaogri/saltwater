@@ -16,10 +16,10 @@ The request has exactly these fields:
 
 | Field | Type | Rule |
 |---|---|---|
-| command_text | string | Exactly one command token from the allowlist; no arguments or scripts |
+| command_text | string | One allowlisted command, or `workspace` plus one exact workspace ID; no other arguments or scripts |
 | request_reference | string or null | Optional opaque correlation value, 1–128 nonblank characters |
 
-Allowed commands: help, status, profile, recruit, career, start, pause, resume, quit.
+Allowed commands: help, status, profile, recruit, career, start, pause, resume, quit, home, workspaces, back and where. The only argument-bearing form is `workspace <id>`, where `<id>` is one exact stable ID: home, operations, cases, people, evidence-scenes, department, legal-custody, resources-finance, reports-notifications or system-status.
 
 No identity, credential, database, role, permission, session or profile fields are accepted. bingo is not a command and this adapter does not expose a hidden-truth operation.
 

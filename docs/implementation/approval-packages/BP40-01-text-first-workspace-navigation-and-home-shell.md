@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Division:** BP-40 — Interface (fixed BP-01–BP-44 structure)  
 **Package:** BP40-01  
-**Status:** PROPOSED — awaiting explicit user approval  
+**Status:** APPROVED — implementation in progress  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Neon production authority:** NONE

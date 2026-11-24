@@ -11,8 +11,8 @@
       "type": "string",
       "minLength": 1,
       "maxLength": 32,
-      "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit)$",
-      "description": "Exactly one supported command token; no arguments, scripts, SQL, shell or hidden-truth trigger."
+      "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit|home|workspaces|back|where|workspace (home|operations|cases|people|evidence-scenes|department|legal-custody|resources-finance|reports-notifications|system-status))$",
+      "description": "One supported command or workspace followed by one exact stable workspace ID; no scripts, SQL, shell or hidden-truth trigger."
     },
     "request_reference": {
       "type": ["string", "null"],

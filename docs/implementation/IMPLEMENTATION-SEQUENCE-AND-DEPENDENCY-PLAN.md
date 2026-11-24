@@ -352,7 +352,7 @@ The user approved BP39-01 on 2026-11-24. The implementation is committed directl
 **Boundary:** BP-39 remains `DESIGNED_DRAFT`; only BP39-01 is implemented/tested/verified. No physical backup, Neon PITR capability, production backup setting, RPO/RTO, retention policy, authoritative restore or promotion is claimed or authorised. No Neon production operation occurred.
 
 
-## 11. BP40-01 — text-first workspace navigation and home shell (proposed)
+## 11. BP40-01 — text-first workspace navigation and home shell (approved implementation)
 
 Prepared package: [BP40-01 — Text-First Workspace Navigation and Home Shell](approval-packages/BP40-01-text-first-workspace-navigation-and-home-shell.md).
 
@@ -360,4 +360,11 @@ This is the next bounded gameplay-facing increment. It builds on the existing pl
 
 The package targets a narrow subset of BP-40 acceptance criteria and requires Python tests plus the existing disposable PostgreSQL regression workflow. It does not authorise a browser frontend, public deployment, new permission grants, domain mutations, database schema changes or Neon production operations.
 
-**Status: PROPOSED — awaiting explicit user approval.** No BP40-01 implementation or test result is claimed. BP-40 remains DESIGNED_DRAFT.
+**Status: APPROVED for bounded repository implementation on main.** Approval received 2026-11-24. Implementation and verification are recorded below; BP-40 remains DESIGNED_DRAFT.
+
+
+### BP40-01 implementation record
+
+The user approved BP40-01 on 2026-11-24. The bounded implementation adds `runtime/player_workspace.py` with the fixed ten-ID catalogue, immutable bounded navigation history, exact-ID selection and plain-text home/catalogue rendering. `PlayerCommandInterface` exposes `home`, `workspaces`, `workspace <id>`, `back` and `where`; the trusted gateway, host adapter and strict tool handler accept only these read-only forms and reject all other argument shapes. The host contract/schema documents the exact workspace command grammar. Non-home operational workspaces are explicitly marked navigation-only / not connected; no domain service, record, database credential, mutation or simulation tick is accessed by navigation.
+
+Tests are added for catalogue stability, exact-ID rejection, bounded/back navigation, text output, lifecycle-independent read-only rendering, no tick advance, gateway permission checks and host/tool input validation. BP-40 remains DESIGNED_DRAFT; only BP40-01 is in scope. Neon production is unchanged.

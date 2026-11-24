@@ -13,6 +13,7 @@ from uuid import UUID
 
 from runtime.kernel import KernelError, Lifecycle, RuntimeKernel
 from runtime.recruitment import PostgresRecruitmentService, RecruitmentError
+from runtime.player_workspace import (WorkspaceNavigation, WORKSPACE_BY_ID, render_home, render_workspace_catalogue)
 
 
 @dataclass(frozen=True, slots=True)
