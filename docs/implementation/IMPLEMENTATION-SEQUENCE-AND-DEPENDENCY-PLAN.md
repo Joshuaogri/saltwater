@@ -335,4 +335,18 @@ The user approved BP37-01 on 2026-11-24. The bounded implementation is committed
 
 **BP-37 remains partially implemented:** calendar/epoch/timezone, civil-time, richer recurrence and exception/versioning, cancellation/suspension, occurrence history, abandoned-claim recovery and domain-specific schedules remain outstanding. Abandoned claims are not auto-reclaimed in this increment; stable handler idempotency keys preserve safe retry boundaries.
 
-**Next implementation priority:** continue actual gameplay blueprint work, not ChatGPT transport. Proceed to the next dependency-ready BP-35/BP-39/BP-40/BP-41 gameplay-runtime increment, then the geography/population/built-world layers.
+**Next implementation priority:** proceed with BP-40 text-first player interface and gameplay controls. BP39-01 is now verified; do not repeat its checkpoint/recovery package. Continue the actual gameplay blueprint rather than ChatGPT transport.
+
+
+## 10. BP39-01 — consistent checkpoint and controlled event-claim recovery (verified bounded slice)
+
+The user approved BP39-01 on 2026-11-24. The implementation is committed directly to `main` and verified at `d0175b2933acd14dc4abb3d6a89838e83e516f2e`.
+
+- Proposal `db/proposals/0008_bp39_checkpoint_recovery.sql` is disposable-only. It adds a repeatable-read checkpoint manifest, separate restore-validation gates, controlled BP35 claim reconciliation, append-only recovery evidence, and conclusive owner resolution for quarantined work.
+- `runtime/recovery.py` exposes the checkpoint/recovery functions through an injected PostgreSQL connection. It does not create schema or select a database target.
+- Python and PostgreSQL acceptance suites cover committed, absent and indeterminate effects; later quarantine resolution; idempotency, owner matching, stale claim protection, lifecycle freeze and checkpoint mismatch.
+- CI validates a separately restored disposable target. Schema/runtime/tick/event/event-work/schedule/population/manifest/structural/history/evidence gates passed. Business minimum, restore permission/hidden-truth and player-absence-freeze gates remain explicitly `not_executed`, so aggregate restore validity is false and the target is not promotable.
+- [Full regression run 45376633160](https://github.com/Joshuaogri/saltwater/actions/runs/45376633160) and [database migration validation run 45376633013](https://github.com/Joshuaogri/saltwater/actions/runs/45376633013) passed.
+- Disposable proposal schema growth: 155,648 bytes. Representative tuple sizes: checkpoint manifest 296 bytes; recovery audit 248 bytes. Empty and fixture relation/index sizes are recorded in [BP39-01 run 0001 evidence](test-evidence/BP39-01-run-0001.md).
+
+**Boundary:** BP-39 remains `DESIGNED_DRAFT`; only BP39-01 is implemented/tested/verified. No physical backup, Neon PITR capability, production backup setting, RPO/RTO, retention policy, authoritative restore or promotion is claimed or authorised. No Neon production operation occurred.
