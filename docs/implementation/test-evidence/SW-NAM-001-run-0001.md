@@ -45,3 +45,19 @@ The per-reservation figure includes the table and its indexes; it is not a raw r
 ## Follow-up verification
 
 A follow-up workflow [45410340222](https://github.com/Joshuaogri/saltwater/actions/runs/45410340222) rechecks the final generator-manifest normalizer-version metadata and the separate heap/index/TOAST storage report. Its final result must be recorded separately.
+
+## Follow-up verification — final manifest version
+
+**Result:** PASS  
+**Workflow:** [PKG-001 disposable PostgreSQL validation](https://github.com/Joshuaogri/saltwater/actions/runs/45410340222)  
+**Tested commit:** `a2e04e601b85c98a84946a6aae5f85bc1c594563`
+
+This rerun passed the final Python generator-manifest normalizer-version metadata, SQL migration, all naming and runtime tests, same-entity concurrent canonical-name reservations, the 10,000-person population/cap fixture, access controls, checkpoint consistency and backup/restore.
+
+Updated 10,011-name registry measurements:
+- `sw_names.name_reservation`: 8,568,832 bytes total, including indexes (855.94 bytes per reservation).
+- `sw_names.name_event`: 3,694,592 bytes total.
+- `sw_names.generation_batch`: 49,152 bytes total.
+- Schema growth remains 417,792 bytes.
+
+A subsequent workflow revision now prints separate heap, index and TOAST/auxiliary bytes. That storage-only detail is awaiting its own run; it does not affect the passing functional/restore result above.
