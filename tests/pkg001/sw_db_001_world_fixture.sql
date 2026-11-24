@@ -135,8 +135,6 @@ BEGIN
       WHERE p.source_ref='SW-DB-001:person:'||g
     );
 
-  -- Plan the SW-UNS near-duplicate guard with its trigram GIN index during bulk person naming.
-  PERFORM set_config('enable_seqscan','off',true);
   INSERT INTO sw_people.person
     (given_name,family_name,created_tick,source_ref,last_event_id)
   SELECT sw_test.synthetic_word('given:'||g::text),
@@ -149,8 +147,6 @@ BEGIN
     SELECT 1 FROM sw_people.person p
     WHERE p.source_ref='SW-DB-001:person:'||g
   );
-
-  PERFORM set_config('enable_seqscan','on',true);
 
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
   SELECT et.event_type_id,transaction_timestamp(),0,
@@ -198,7 +194,6 @@ BEGIN
   FROM generate_series(1,10000) g
   ON CONFLICT (business_code) DO NOTHING;
 
-  PERFORM set_config('enable_seqscan','off',true);
   PERFORM sw_names.reserve_name(
     'BUSINESS',b.business_id,'canonical',
     sw_test.synthetic_word('business-name:'||b.business_code)||' Trading',
@@ -209,7 +204,6 @@ BEGIN
   FROM sw_business.business b
   WHERE b.created_batch_id=v_batch
   ORDER BY b.business_code;
-  PERFORM set_config('enable_seqscan','on',true);
 
   INSERT INTO sw_test.business_profile
     (business_id,test_sector_code,test_legal_form,test_operating_basis,test_staff_band)
