@@ -101,6 +101,8 @@ def build_road_reserve_topology(source: dict, corridor_register: dict) -> dict:
             "neighbourhood_overlap_area_m2": round(overlap_area, 6),
             "neighbourhood_gap_area_m2": round(gap_geometry.area, 6),
             "neighbourhood_outside_city_area_m2": round(outside_geometry.area, 6),
+            "sum_of_segment_corridor_areas_m2": round(sum(p.area for _, p in segment_polygons), 3),
+            "junction_overlap_area_removed_by_dissolve_m2": round(sum(p.area for _, p in segment_polygons) - raw_union.area, 3),
             "raw_road_reserve_area_before_city_clip_m2": round(raw_union.area, 3),
             "road_reserve_outside_city_area_m2": round(outside_city.area, 3),
             "dissolved_city_road_reserve_area_m2": round(clipped.area, 3),
