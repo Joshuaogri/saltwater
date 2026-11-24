@@ -35,9 +35,14 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
         self.assertEqual(summary["no_road_edge_contact_count"], 2)
         self.assertGreaterEqual(summary["frontage_candidate_count"], 418)
         self.assertEqual(summary["access_location_candidate_count"], summary["frontage_candidate_count"])
+        self.assertGreaterEqual(summary["frontage_segment_contact_count"], summary["frontage_candidate_count"])
         self.assertEqual(summary["operational_access_points_created"], 0)
         for row in self.result["parcels"]:
+            frontage_ids = {frontage["frontage_candidate_id"] for frontage in row["frontages"]}
+            for frontage in row["frontages"]:
+                self.assertGreater(len(frontage["road_segment_ids"]), 0)
             for access in row["access_candidates"]:
+                self.assertIn(access["frontage_candidate_id"], frontage_ids)
                 self.assertEqual(access["review_status"], "UNREVIEWED_GEOMETRIC_CANDIDATE")
                 self.assertEqual(access["candidate_type"], "unclassified_access_location")
 
