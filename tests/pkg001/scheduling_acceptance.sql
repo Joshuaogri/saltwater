@@ -54,6 +54,18 @@ BEGIN
     RAISE EXCEPTION 'failed handler state was not retained';
   END IF;
 
+  -- Representative 1,000-row schedule fixture for storage measurement.
+  INSERT INTO sw_runtime.schedule(
+    owner_domain, subject_ref, due_tick, interval_ticks, priority,
+    expires_at_tick, retry_after_tick, status, attempt_count,
+    idempotency_key, created_tick, last_event_id
+  )
+  SELECT 'benchmark', 'fixture:' || g::text, current_tick + 100,
+    NULL, 0, NULL, 0, 'pending', 0,
+    'bp37-storage-' || g::text, current_tick,
+    (SELECT last_event_id FROM sw_runtime.schedule WHERE schedule_id=second_id)
+  FROM generate_series(1,1000) AS g;
+
   UPDATE sw_runtime.state SET state=3, player_present=false WHERE singleton=1;
   SELECT * INTO claimed FROM sw_runtime.claim_due_schedule();
   IF claimed.schedule_id IS NOT NULL THEN
@@ -67,6 +79,11 @@ BEGIN
     denied := true;
   END;
   IF NOT denied THEN RAISE EXCEPTION 'paused dispatch was not rejected'; END IF;
-END $$;
+END $;
+
+SELECT pg_relation_size('sw_runtime.schedule') AS schedule_heap_bytes,
+       pg_indexes_size('sw_runtime.schedule') AS schedule_index_bytes,
+       pg_total_relation_size('sw_runtime.schedule') AS schedule_total_bytes,
+       (pg_total_relation_size('sw_runtime.schedule')::numeric / 1001) AS approx_bytes_per_schedule_including_indexes;
 
 ROLLBACK;
