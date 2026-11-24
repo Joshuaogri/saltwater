@@ -138,6 +138,8 @@ jobs:
           echo "sw_nam_001_schema_growth_bytes=$((after_naming-before_naming))"
           psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_and_aux_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 4 DESC;"
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/naming_acceptance.sql
+      - name: Materialise SW-GEO-V1 identity map in disposable PostgreSQL only
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
           psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_runtime' ORDER BY 2 DESC;"
           psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_runtime' ORDER BY 2 DESC;"
           after_schedule=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
