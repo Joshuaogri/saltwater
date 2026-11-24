@@ -46,6 +46,12 @@ A manual-only workflow is provided at [BP38-02 read-only Neon baseline verificat
 
 The workflow has been committed but has not yet been dispatched. A missing `DATABASE_URL`, permission failure, pg_dump failure, mismatch or unexplained supplementary difference must stop adoption. Do not put the connection URL in logs, artifacts, command output or repository files.
 
+## Guarded checksum-adoption proposal
+
+A proposal-only SQL file is committed at [`db/proposals/0003_legacy_checksum_adoption.sql`](../../../db/proposals/0003_legacy_checksum_adoption.sql). It targets exactly one row: `version=1`, `migration_name='foundation'`, and `checksum_sha256 IS NULL`. It writes the committed migration 0001 SHA-256 `d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8`, aborts unless exactly one row changes, verifies the resulting value, and rolls back on any failed guard. A second execution is intentionally rejected. CI tests it only against a disposable database. This SQL is not in `db/migrations/` and must not be run against Neon until the live comparison and supplementary review pass and the exact production operation receives separate explicit approval.
+
+Expected production effect if separately approved: one existing ledger row metadata field updated; no game-world records, schema objects, sequence values or simulation data are intentionally changed. Measure database size before/after if executed; do not assume a zero-byte physical storage delta.
+
 ## Adoption gate
 
 No checksum adoption is included. After the full comparison and supplementary review pass, prepare a separate exact, conditional one-row update for `version=1`, `migration_name='foundation'`, and `checksum_sha256 IS NULL`. Present the exact SHA-256, statement, row-count guard, expected storage effect and rollback considerations for explicit user approval. Migration 0002 remains a distinct subsequent operation requiring separate approval.
