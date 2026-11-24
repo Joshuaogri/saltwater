@@ -1,0 +1,33 @@
+name: BP04-03 Parcel Dossier Geometry QA
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/parcel_dossier_geometry_audit.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/road_reserve_topology.py"
+      - "tests/pkg001/test_parcel_dossier_geometry_audit.py"
+      - ".github/workflows/bp04-03-parcel-dossier-geometry-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parcel-dossier-geometry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run parcel dossier geometry regression suite
+        run: python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_geometry_audit.py" -v
+      - name: Emit independent parcel dossier geometry audit
+        run: python -m runtime.parcel_dossier_geometry_audit
