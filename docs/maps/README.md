@@ -48,3 +48,10 @@ The user approved two neighbourhood-only renames to resolve global canonical-nam
 - `SW-D03-N2`: **Government Square** → **Civic Terrace**. Landmark `SW-POI-002` remains **Government Square**.
 
 The source JSON and SVG labels reflect these approved names. The SW-GEO-V1 dataset remains `DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED`; no import or Neon write was performed. The 100 unresolved source-to-spatial-ID mappings remain an independent blocker.
+
+
+## Geography source-identity reconciliation correction (2026-11-24)
+
+The earlier statement that 100 source-to-spatial mappings remained unresolved is superseded. All **100 source records now map one-to-one to stable `sw_geo.entity.entity_code` values**: 8 districts, 24 neighbourhoods, 18 landmarks, 5 routes, 3 geography zones and 42 roads. The exact source record, entity type/kind, canonical name and parent are checked against SW-GEO-V1 by `runtime/geography_identity_reconciliation.py`; the readiness workflow runs regression tests for full coverage, duplicate IDs, incorrect parents and missing records. The reconciliation register now reports 100 resolved and 0 unresolved source-identity mappings.
+
+PostgreSQL `spatial_id` is a GENERATED ALWAYS AS IDENTITY surrogate, so its integer is database-specific and must be looked up using the stable `entity_code` in each database. The portable source manifest intentionally does not freeze a disposable integer as a production ID. This correction resolves source-to-identity mapping; it does **not** approve SW-GEO-V1 for operational seeding, create parcel/address/entrance geometry, or authorize Neon writes. Those separate geography quality and activation gates remain.
