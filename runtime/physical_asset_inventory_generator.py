@@ -84,17 +84,16 @@ def _footprint(site: Polygon, land_use: str) -> Polygon | None:
     minx, miny, maxx, maxy = safe.bounds
     if maxx - minx < 8 or maxy - miny < 8:
         return None
-    # Search from the representative point outwards on a fixed 10m lattice.
+    # A bounded, deterministic 9x9 search avoids pathological work on
+    # narrow candidate fragments while retaining reproducible placement.
     anchor = safe.representative_point()
     candidates = [(anchor.x, anchor.y)]
-    step = 10.0
-    nx = min(30, int((maxx - minx) / step) + 1)
-    ny = min(30, int((maxy - miny) / step) + 1)
-    for ring in range(1, max(nx, ny) + 1):
-        for dx in range(-ring, ring + 1):
-            for dy in range(-ring, ring + 1):
-                if max(abs(dx), abs(dy)) == ring:
-                    candidates.append((anchor.x + dx * step, anchor.y + dy * step))
+    for ix in range(9):
+        for iy in range(9):
+            candidates.append((
+                minx + (maxx-minx) * (ix + 0.5) / 9,
+                miny + (maxy-miny) * (iy + 0.5) / 9,
+            ))
     sizes = []
     for scale in (1.0, .85, .7, .55, .4, .3):
         w, h = max(6.0, width * scale), max(6.0, height * scale)
