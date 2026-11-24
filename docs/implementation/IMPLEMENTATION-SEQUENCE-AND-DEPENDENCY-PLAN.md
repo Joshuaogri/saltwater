@@ -381,7 +381,7 @@ The user explicitly approved BP40-02 on 2026-11-24. The bounded implementation a
 
 `PlayerCommandInterface`, `AuthorizedPlayerCommandGateway`, `TrustedPlayerHostAdapter` and `runtime/chatgpt_tool_handler.py` now consume the shared parser. The gateway authorizes the canonical action before dispatch; host/tool syntax validation happens before credential resolution. Typed errors distinguish empty input, malformed syntax, unknown command, missing argument, invalid argument count and invalid workspace value. The exact ten workspace IDs, permission grants, recruit/lifecycle rules, hidden-truth gate and player-absence time freeze are unchanged. No new police-domain command, permission, schema, migration, seed or Neon operation is included.
 
-**Implementation committed directly to `main`; regression verification pending.** BP-40 remains `DESIGNED_DRAFT`; only BP40-01 and BP40-02 bounded slices are in scope. Evidence will be recorded in [BP40-02 run 0001](../test-evidence/BP40-02-run-0001.md).
+**Status: IMPLEMENTED AND VERIFIED — bounded package complete.** The full Python regression, dedicated parser acceptance, full disposable PostgreSQL regression and database migration validation passed. Evidence: [BP40-02 run 0001](../test-evidence/BP40-02-run-0001.md). The later immutable-registry refinement was covered by the latest dedicated parser test. BP-40 remains `DESIGNED_DRAFT`; only BP40-01 and BP40-02 bounded slices are in scope. No Neon production operation occurred.
 
 
 ## 13. SW-DB-001 — canonical Saltwater world provisioning and capacity proof (proposed)
