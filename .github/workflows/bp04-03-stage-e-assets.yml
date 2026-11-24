@@ -1,0 +1,61 @@
+name: BP04-03 Stage E Physical Asset Candidates
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/road_reserve_topology.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "tests/pkg001/test_physical_asset_inventory_generator.py"
+      - ".github/workflows/bp04-03-stage-e-assets.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run physical asset candidate regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_generator.py" -v
+      - name: Generate complete physical asset candidate inventory
+        run: python -m runtime.physical_asset_inventory_generator
+      - name: Validate generated manifest and publish concise counts
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p=Path("bp04-03-stage-e-physical-assets.json")
+          data=json.loads(p.read_text())
+          claimed=data.pop("manifest_sha256")
+          actual=hashlib.sha256(json.dumps(data,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
+          assert claimed==actual
+          assert data["operational_approval"] is False
+          assert data["generation"]["property_count"]==420
+          assert data["generation"]["canonical_addresses_created"]==0
+          assert data["generation"]["operational_access_points_created"]==0
+          print(json.dumps({
+            "artifact_source_bytes":p.stat().st_size,
+            "manifest_sha256":claimed,
+            **data["generation"]
+          },indent=2,sort_keys=True))
+          PY
+      - name: Preserve physical asset candidate inventory
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-stage-e-physical-assets-${{ github.run_id }}
+          path: bp04-03-stage-e-physical-assets.json
+          if-no-files-found: error
+          retention-days: 14
