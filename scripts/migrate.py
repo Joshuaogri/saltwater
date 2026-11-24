@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import re
 import sys
@@ -66,14 +67,99 @@ def unwrap_transaction(sql: str) -> str:
     return body
 
 
-def ledger_rows(conn) -> list[tuple[int, str, str | None]]:
+def ledger_rows(conn) -> list[tuple[int, str, str | None, str | None]]:
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT version, migration_name, checksum_sha256
+            SELECT version, migration_name, checksum_sha256,
+                   CASE WHEN EXISTS (
+                       SELECT 1 FROM information_schema.columns
+                       WHERE table_schema='sw_ops' AND table_name='schema_migration'
+                         AND column_name='schema_fingerprint_sha256'
+                   ) THEN NULL ELSE NULL END
             FROM sw_ops.schema_migration
             ORDER BY version
         """)
-        return cur.fetchall()
+        rows = cur.fetchall()
+        # Keep compatibility with the original three-column ledger until 0002.
+        with conn.cursor() as check:
+            check.execute("""
+                SELECT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_schema='sw_ops' AND table_name='schema_migration'
+                      AND column_name='schema_fingerprint_sha256'
+                )
+            """)
+            has_fingerprint = check.fetchone()[0]
+        if has_fingerprint:
+            with conn.cursor() as cur2:
+                cur2.execute("""
+                    SELECT version, migration_name, checksum_sha256,
+                           schema_fingerprint_sha256
+                    FROM sw_ops.schema_migration ORDER BY version
+                """)
+                return cur2.fetchall()
+        return [(v, n, c, None) for v, n, c, _ in rows]
+
+
+def schema_fingerprint(conn) -> str:
+    """Hash stable schema metadata, excluding OIDs, owners and physical statistics."""
+    catalogue = []
+    queries = [
+        ( "relations", """
+            SELECT n.nspname, c.relname, c.relkind,
+                   COALESCE(pg_get_viewdef(c.oid, true), '')
+            FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname IN ('sw_core','sw_ops')
+              AND c.relkind IN ('r','p','v','m','S')
+            ORDER BY n.nspname,c.relname
+        """),
+        ( "columns", """
+            SELECT n.nspname,c.relname,a.attnum,a.attname,
+                   pg_catalog.format_type(a.atttypid,a.atttypmod),
+                   a.attnotnull,COALESCE(pg_get_expr(d.adbin,d.adrelid),''),
+                   a.attidentity,a.attgenerated
+            FROM pg_attribute a
+            JOIN pg_class c ON c.oid=a.attrelid
+            JOIN pg_namespace n ON n.oid=c.relnamespace
+            LEFT JOIN pg_attrdef d ON d.adrelid=c.oid AND d.adnum=a.attnum
+            WHERE n.nspname IN ('sw_core','sw_ops')
+              AND a.attnum>0 AND NOT a.attisdropped
+            ORDER BY n.nspname,c.relname,a.attnum
+        """),
+        ( "constraints", """
+            SELECT n.nspname,c.relname,con.conname,con.contype,
+                   pg_get_constraintdef(con.oid,true)
+            FROM pg_constraint con
+            JOIN pg_class c ON c.oid=con.conrelid
+            JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE n.nspname IN ('sw_core','sw_ops')
+            ORDER BY n.nspname,c.relname,con.conname
+        """),
+        ( "indexes", """
+            SELECT schemaname,tablename,indexname,indexdef
+            FROM pg_indexes
+            WHERE schemaname IN ('sw_core','sw_ops')
+            ORDER BY schemaname,tablename,indexname
+        """),
+    ]
+    with conn.cursor() as cur:
+        for label, query in queries:
+            cur.execute(query)
+            catalogue.append([label, cur.fetchall()])
+    payload = json.dumps(catalogue, ensure_ascii=False, separators=(',', ':'), default=str)
+    return hashlib.sha256(payload.encode('utf-8')).hexdigest()
+
+
+def has_fingerprint_column(conn) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema='sw_ops' AND table_name='schema_migration'
+                  AND column_name='schema_fingerprint_sha256'
+            )
+        """)
+        return cur.fetchone()[0]
 
 
 def verify(conn, migrations: list[Migration]) -> None:
@@ -86,7 +172,7 @@ def verify(conn, migrations: list[Migration]) -> None:
     rows = ledger_rows(conn)
     by_version = {m.version: m for m in migrations}
     seen: set[int] = set()
-    for version, name, checksum in rows:
+    for version, name, checksum, fingerprint in rows:
         migration = by_version.get(version)
         if migration is None:
             raise RuntimeError(f"Database has unknown migration version {version}")
@@ -105,7 +191,15 @@ def verify(conn, migrations: list[Migration]) -> None:
     pending = [m.filename for m in migrations if m.version not in seen]
     if pending:
         raise RuntimeError("Pending migrations: " + ", ".join(pending))
-    print(f"OK: {len(rows)} applied migrations; identity and SHA-256 checksums match source")
+    if rows and has_fingerprint_column(conn):
+        latest_fingerprint = rows[-1][3]
+        actual_fingerprint = schema_fingerprint(conn)
+        if not latest_fingerprint:
+            raise RuntimeError("Latest migration has no schema fingerprint")
+        if latest_fingerprint.strip().lower() != actual_fingerprint:
+            raise RuntimeError("Live schema drift detected: catalogue fingerprint differs from latest migration")
+    print(f"OK: {len(rows)} applied migrations; checksums match" +
+          ("; live schema fingerprint matches" if rows and has_fingerprint_column(conn) else ""))
 
 
 def apply(conn, migrations: list[Migration]) -> None:
@@ -117,10 +211,14 @@ def apply(conn, migrations: list[Migration]) -> None:
             ledger_exists = cur.fetchone()[0]
         applied = ledger_rows(conn) if ledger_exists else []
         by_version = {row[0]: row for row in applied}
+        if applied and has_fingerprint_column(conn):
+            latest = applied[-1]
+            if not latest[3] or latest[3].strip().lower() != schema_fingerprint(conn):
+                raise RuntimeError('Live schema drift detected before migration')
         for migration in migrations:
             existing = by_version.get(migration.version)
             if existing:
-                _, name, checksum = existing
+                _, name, checksum, fingerprint = existing
                 if name != migration.name:
                     raise RuntimeError(f"Migration identity mismatch at {migration.version}")
                 if checksum is None:
@@ -149,6 +247,13 @@ def apply(conn, migrations: list[Migration]) -> None:
                             checksum_sha256 = EXCLUDED.checksum_sha256
                         WHERE sw_ops.schema_migration.migration_name = EXCLUDED.migration_name
                     """, (migration.version, migration.name, migration.checksum))
+                    if has_fingerprint_column(conn):
+                        fingerprint = schema_fingerprint(conn)
+                        cur.execute("""
+                            UPDATE sw_ops.schema_migration
+                            SET schema_fingerprint_sha256 = %s
+                            WHERE version = %s
+                        """, (fingerprint, migration.version))
                     cur.execute("""
                         SELECT migration_name, checksum_sha256
                         FROM sw_ops.schema_migration WHERE version = %s
@@ -156,7 +261,7 @@ def apply(conn, migrations: list[Migration]) -> None:
                     recorded = cur.fetchone()
                     if not recorded or recorded[0] != migration.name or recorded[1].strip() != migration.checksum:
                         raise RuntimeError(f"Ledger write did not verify for {migration.filename}")
-            by_version[migration.version] = (migration.version, migration.name, migration.checksum)
+            by_version[migration.version] = (migration.version, migration.name, migration.checksum, None)
         verify(conn, migrations)
     finally:
         with conn.cursor() as cur:
