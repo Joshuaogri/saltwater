@@ -350,3 +350,14 @@ The user approved BP39-01 on 2026-11-24. The implementation is committed directl
 - Disposable proposal schema growth: 155,648 bytes. Representative tuple sizes: checkpoint manifest 296 bytes; recovery audit 248 bytes. Empty and fixture relation/index sizes are recorded in [BP39-01 run 0001 evidence](test-evidence/BP39-01-run-0001.md).
 
 **Boundary:** BP-39 remains `DESIGNED_DRAFT`; only BP39-01 is implemented/tested/verified. No physical backup, Neon PITR capability, production backup setting, RPO/RTO, retention policy, authoritative restore or promotion is claimed or authorised. No Neon production operation occurred.
+
+
+## 11. BP40-01 — text-first workspace navigation and home shell (proposed)
+
+Prepared package: [BP40-01 — Text-First Workspace Navigation and Home Shell](approval-packages/BP40-01-text-first-workspace-navigation-and-home-shell.md).
+
+This is the next bounded gameplay-facing increment. It builds on the existing player command router and durable application gateway to deliver a plain-text laptop-style home/shift desk, stable navigation across the ten defined workspaces, current-workspace context and truthful domain-availability labels. Navigation remains read-only and must not create records, call unfinished domain systems, expose protected content or advance simulation time.
+
+The package targets a narrow subset of BP-40 acceptance criteria and requires Python tests plus the existing disposable PostgreSQL regression workflow. It does not authorise a browser frontend, public deployment, new permission grants, domain mutations, database schema changes or Neon production operations.
+
+**Status: PROPOSED — awaiting explicit user approval.** No BP40-01 implementation or test result is claimed. BP-40 remains DESIGNED_DRAFT.
