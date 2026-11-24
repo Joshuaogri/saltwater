@@ -191,7 +191,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             }.get(land_use, "other")
             premises.append({
                 "candidate_premises_id": premises_code, "display_name": premises_name,
-                "building_id": building_code, "property_id": property_code,
+                "building_id": building_code,
                 "floor_order": floor, "floor_code": "G" if floor == 0 else f"L{floor}",
                 "premises_type": premises_type, "primary_function": use_code,
                 "floor_area_m2": round(floor_area, 3),
@@ -207,7 +207,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 unit_name = _name("UNIT", f"{parcel_id}:F{floor:02d}:U{unit_no:02d}", occupied)
                 units.append({
                     "candidate_unit_id": unit_code, "display_name": unit_name,
-                    "premises_id": premises_code, "building_id": building_code,
+                    "premises_id": premises_code,
                     "unit_class": {
                         "residential": "dwelling", "mixed_use": "other",
                         "commercial": "office", "civic": "room", "education": "room",
