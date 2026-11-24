@@ -150,10 +150,10 @@ jobs:
           echo "pkg004_schema_growth_bytes=$delta"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_player' ORDER BY 3 DESC;"
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/auth_persistence_acceptance.sql
-      - name: Materialise SW-GEO-V1 identity map in disposable PostgreSQL only
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
       - name: Run PKG-001 database acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/database_acceptance.sql
+      - name: Materialise SW-GEO-V1 identity map in disposable PostgreSQL only
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
       - name: Run PKG-003 recruit-entry acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/recruit_entry_acceptance.sql
       - name: Measure representative 1,000-person storage growth
