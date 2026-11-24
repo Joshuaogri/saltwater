@@ -303,7 +303,7 @@ BEGIN
     selected.priority,selected.attempt_count+1,token,selected.idempotency_key,
     selected.actor_ref,selected.source_division,selected.source_ref,
     se.causation_event_id,se.correlation_id,selected.visibility_class,prerequisites,
-    selected.max_attempts
+    selected.max_attempts::integer
     FROM sw_core.simulation_event se WHERE se.event_id=selected.event_id;
 END
 $bp35$;
