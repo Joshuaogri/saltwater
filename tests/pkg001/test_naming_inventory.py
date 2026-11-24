@@ -96,6 +96,8 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertEqual(manifest["schema"], "saltwater-spatial-identity-map/1.0")
         self.assertEqual(manifest["dataset_id"], built.dataset_id)
         self.assertEqual(manifest["source_dataset_status"], built.source_status)
+        self.assertEqual(manifest["source_dataset_git_blob_sha"], "27b3f7848af10f2d61dee04a4dada1eff1f9871b")
+        self.assertNotIn("source_dataset_sha", manifest)
         self.assertEqual(manifest["mapping_status"], "DISPOSABLE_MAPPING_CANDIDATE_ONLY")
         self.assertFalse(manifest["operational_seed_approved"])
         expected = [
