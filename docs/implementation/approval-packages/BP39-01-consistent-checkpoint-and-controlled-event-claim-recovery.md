@@ -1,7 +1,7 @@
 # BP39-01 — Consistent Checkpoint and Controlled Event-Claim Recovery
 
 **Division:** BP-39 — Persistence and Recovery  
-**Package status:** PROPOSED — awaiting explicit user approval  
+**Package status:** APPROVED — implemented, tested and verified (bounded BP39-01 slice)  
 **Target:** `Joshuaogri/saltwater`, `main` only  
 **Baseline:** `b6094d03da1cc96d8cc6d76ba2fca347e16d0c26`  
 **Dependencies:** PKG-001 runtime kernel; BP37-01 canonical tick/schedule core; BP35-01 event-work/claim/attempt ledger; existing disposable PostgreSQL regression harness  
@@ -129,16 +129,21 @@ Python and disposable PostgreSQL tests must cover:
 - No full BP-39 division approval or completion.
 - No change to the fixed BP-01–BP-44 structure or Saltwater canon.
 
-## 7. Approval requested
+## 7. Approval and implementation record
 
-Approve **BP39-01 — Consistent Checkpoint and Controlled Event-Claim Recovery** for:
-1. Repository implementation directly on `main`.
-2. Python unit tests and disposable PostgreSQL proposal/integration/acceptance tests.
-3. CI changes required to apply proposal 0008 only to disposable PostgreSQL and run the tests.
-4. Restore-validation fixtures, measured storage results and reproducible evidence documentation.
+The user explicitly approved **BP39-01 — Consistent Checkpoint and Controlled Event-Claim Recovery** on 2026-11-24. The approved work was implemented directly on `main`, with Python tests, disposable PostgreSQL proposal/acceptance tests, CI wiring, a separately restored disposable target, storage measurements and reproducible evidence.
 
-Approval does not authorise any Neon production operation, provider backup configuration, production restore, RPO/RTO selection, secret/credential change, or authoritative promotion.
+Approval did not authorise any Neon production operation, provider backup configuration, production restore, RPO/RTO selection, secret/credential change, or authoritative promotion. None was performed.
 
-## 8. Status
+## 8. Verified status
 
-**PROPOSED — awaiting explicit user approval.** No implementation or test result is claimed by this package. BP-39 remains `DESIGNED_DRAFT`; this package, if approved and verified, changes only the recorded status of this bounded slice.
+**BP39-01 bounded slice: IMPLEMENTED / TESTED / VERIFIED.**
+
+- Verified commit: `d0175b2933acd14dc4abb3d6a89838e83e516f2e`.
+- [Full Python + disposable PostgreSQL regression, run 45376633160](https://github.com/Joshuaogri/saltwater/actions/runs/45376633160): PASS.
+- [Database migration validation, run 45376633013](https://github.com/Joshuaogri/saltwater/actions/runs/45376633013): PASS.
+- Detailed implementation, restore-gate disposition and storage measurements: [BP39-01 run 0001 evidence](../test-evidence/BP39-01-run-0001.md).
+
+The separate disposable restore matched its source manifest. Technical/schema, runtime/tick, event watermark/work, schedule, population-cap, manifest identity, structural-integrity, append-only-history and evidence-identity gates passed. Business minimum, permission/hidden-truth restore validation and player-absence freeze were explicitly `not_executed`; the report correctly returned `valid=false`. It is not a promotable or all-gates-valid restore.
+
+**BP-39 as a complete division remains `DESIGNED_DRAFT`.** This package does not approve or complete the full division, select RPO/RTO or backup-retention policy, assert provider backup/PITR capability, create a physical backup, or authorise a production restore/promotion.
