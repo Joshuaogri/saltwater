@@ -75,7 +75,7 @@ def import_candidates(conn, data, manifest_sha):
 
             for parcel in data["parcels"]:
                 code = "SWP-CAND-" + parcel["candidate_parcel_id"].removeprefix("BPC-")
-                display_name = "Candidate Parcel " + parcel["candidate_parcel_id"]
+                display_name = parcel["display_name"]
                 cur.execute(
                     "INSERT INTO sw_geo.entity(entity_code,kind) VALUES(%s,6) "
                     "ON CONFLICT(entity_code) DO NOTHING",
