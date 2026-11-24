@@ -135,7 +135,7 @@ BEGIN
 END
 $$;
 
-SELECT pg_database_size(current_database()) AS map_before_bytes \\gset
+SELECT pg_database_size(current_database()) AS map_before_bytes \gset
 
 INSERT INTO sw_geo.entity(entity_code,kind)
 SELECT entity_code,entity_kind
@@ -193,19 +193,20 @@ $$;
 
 SELECT
   pg_database_size(current_database()) AS map_after_bytes,
+  (pg_database_size(current_database()) - :map_before_bytes::bigint) AS map_delta_bytes,
   pg_total_relation_size('sw_geo.entity'::regclass) AS geography_entity_total_bytes,
   pg_total_relation_size('sw_geo.version'::regclass) AS geography_version_total_bytes,
   pg_total_relation_size('sw_names.name_reservation'::regclass) AS name_reservation_total_bytes,
   pg_total_relation_size('sw_names.name_event'::regclass) AS name_event_total_bytes
-\\gset
+\gset
 
-\\echo SW_GEO_IDENTITY_MAP_DATABASE_BEFORE_BYTES=:map_before_bytes
-\\echo SW_GEO_IDENTITY_MAP_DATABASE_AFTER_BYTES=:map_after_bytes
-\\echo SW_GEO_IDENTITY_MAP_DATABASE_DELTA_BYTES=$((:map_after_bytes - :map_before_bytes))
-\\echo SW_GEO_IDENTITY_MAP_ENTITY_RELATION_BYTES=:geography_entity_total_bytes
-\\echo SW_GEO_IDENTITY_MAP_VERSION_RELATION_BYTES=:geography_version_total_bytes
-\\echo SW_GEO_IDENTITY_MAP_NAME_RESERVATION_RELATION_BYTES=:name_reservation_total_bytes
-\\echo SW_GEO_IDENTITY_MAP_NAME_EVENT_RELATION_BYTES=:name_event_total_bytes
+\echo SW_GEO_IDENTITY_MAP_DATABASE_BEFORE_BYTES=:map_before_bytes
+\echo SW_GEO_IDENTITY_MAP_DATABASE_AFTER_BYTES=:map_after_bytes
+\echo SW_GEO_IDENTITY_MAP_DATABASE_DELTA_BYTES=:map_delta_bytes
+\echo SW_GEO_IDENTITY_MAP_ENTITY_RELATION_BYTES=:geography_entity_total_bytes
+\echo SW_GEO_IDENTITY_MAP_VERSION_RELATION_BYTES=:geography_version_total_bytes
+\echo SW_GEO_IDENTITY_MAP_NAME_RESERVATION_RELATION_BYTES=:name_reservation_total_bytes
+\echo SW_GEO_IDENTITY_MAP_NAME_EVENT_RELATION_BYTES=:name_event_total_bytes
 
 SELECT m.source_id,m.entity_code,e.spatial_id,m.entity_kind,m.display_name,
        m.parent_entity_code,p.spatial_id AS parent_spatial_id
