@@ -90,3 +90,69 @@ The user approved and the repository source now records:
 - `SW-D03-N2`: **Civic Terrace** (landmark `SW-POI-002` remains **Government Square**).
 
 The source IDs and geometry are unchanged. The 100 unresolved source-to-spatial-ID mappings remain; SW-GEO-V1 is not approved for operational seeding and no canon import or Neon write occurred.
+
+
+## Full regression, geography identity and storage verification — run 45441551968
+
+**Result:** PASS — both workflow jobs and every step completed successfully  
+**Workflow:** [Full Saltwater Python and disposable PostgreSQL regression](https://github.com/Joshuaogri/saltwater/actions/runs/45441551968)  
+**Tested commit:** `64ccb19ca8fad1f0caef62a138a6d8cfa4447aa4`  
+**Database:** Disposable PostgreSQL 16 only  
+**Production Neon:** Not connected or modified
+
+### Full regression coverage
+
+The Python job passed the runtime kernel, player command interface, BP40-01 workspace, recruit-entry adapter, SW-NAM-001 naming/generator/canon inventory/PostgreSQL adapter, accepted-player activation, durable player composition, authenticated command runtime, trusted host adapter, ChatGPT tool handler, BP37-01 scheduler, BP35-01 event engine, BP39-01 recovery, actor authorization and hidden-truth gate suites.
+
+The disposable PostgreSQL job passed foundation and PKG-001 acceptance; all 100 geography identity-map rows and parent links; all 100 naming-trigger reservations; recruit-entry acceptance; representative 1,000-person storage; naming concurrency, idempotency and rollback; persistent session verifier/audit sink; BP37 schedule, BP35 event dispatch and BP39 checkpoint/claim recovery; durable runtime adapter and authenticated command E2E; the 9,999-person fill and concurrent final-slot boundary; the full 10,000-person fixture; database access boundary; consistent checkpoint-manifest capture; and full backup/restore.
+
+### Geography identity acceptance
+
+- All 100 non-root SW-GEO-V1 source IDs materialised in disposable PostgreSQL.
+- All parent references resolved and validated.
+- All 100 geography name reservations created through the naming trigger.
+- PostgreSQL-generated `spatial_id` values were captured through `INSERT ... RETURNING`.
+- The fixture's hard guard restricted execution to database `saltwater_test` on PostgreSQL 16; no Neon or production connection was involved.
+- This validates the disposable identity mapping only. It does not approve operational canon seeding or remove the separate map approval gate.
+
+### Measured storage
+
+| Measurement | Result |
+|---|---:|
+| Empty disposable database before SW-NAM-001 schema | 10,066,967 bytes |
+| After naming schema | 10,484,759 bytes |
+| Naming schema incremental growth | 417,792 bytes |
+| Full disposable database before 10,000-person fixture | 11,172,887 bytes |
+| After 10,000-person fixture | 13,507,607 bytes |
+| 10,000-person fixture growth | 2,334,720 bytes (2.226562 MiB) |
+| Average fixture growth per person | 2,334.72 bytes |
+| Full database after population and naming fixture | 32,250,903 bytes |
+| Reserved names after full fixture | 10,111 |
+| Name-reservation total relation | 8,642,560 bytes (854.77 bytes per reservation) |
+| Name-event total relation | 3,727,360 bytes |
+| Generator-batch total relation | 49,152 bytes |
+
+At the full fixture stage, the naming relations separately measured:
+
+| Relation | Heap bytes | Index bytes | TOAST/auxiliary bytes | Total bytes |
+|---|---:|---:|---:|---:|
+| `name_reservation` | 2,023,424 | 6,578,176 | 40,960 | 8,642,560 |
+| `name_event` | 2,555,904 | 1,130,496 | 40,960 | 3,727,360 |
+| `generation_batch` | 8,192 | 32,768 | 8,192 | 49,152 |
+
+These are disposable PostgreSQL measurements, not Neon production growth or a 1 GB capacity approval. The per-person value is the incremental database growth divided by 1,000 fixture persons, not a raw row width or a forecast of full narrative records.
+
+### Backup/restore and checkpoint limitations
+
+Backup/restore passed. The restored fixture exactly matched the source manifest:
+
+`people=10000; states=10000; population=10000; events=20022; max_event=20058; tick=2; living_included=10000; names=10111; name_events=20225; generator_batches=1`.
+
+The restore assertion reported `RESTORE_PASS`. The checkpoint validator deliberately returned `valid=false` because three gates were `not_executed`: `business_minimum`, `player_absence_freeze` and `permission_hidden_truth`. All executed structural, schema, event, schedule, population-cap, identity and append-only-history gates passed. The CI step asserted this exact expected partial-validation state. This is not a claim of a fully valid production-world checkpoint or of business-minimum completion.
+
+### Outstanding integration boundaries
+
+- BP-04 business/property/organisation and other operational named-entity adapters remain disconnected until their authoritative schemas exist.
+- The 100-entry identity map remains a disposable mapping candidate; no production spatial IDs or operational canon seed were written.
+- SW-GEO-V1 remains subject to its separate operational map approval gate.
+- No Neon production migration, seed, import or write occurred in this run.
