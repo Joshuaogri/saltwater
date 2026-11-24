@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Package:** SW-NAM-001  
 **Classification:** CORE FOUNDATIONAL IMPLEMENTATION  
-**Status:** PROPOSED — awaiting explicit user approval  
+**Status:** APPROVED — implementation in progress (2026-11-24)  
 **Prepared:** 2026-11-24  
 **Target:** GitHub `main`; disposable PostgreSQL 16 for schema and integration validation  
 **Authority:** Adopted policy [SW-UNS-001](../../blueprint/decisions/SW-UNS-001-universal-naming-standard.md)  
@@ -230,7 +230,7 @@ Approve **SW-NAM-001 — Universal Naming Registry, Generator and Enforcement** 
 ## 7. Status
 
 **Policy:** ADOPTED — SW-UNS-001.  
-**Implementation package:** PROPOSED — awaiting explicit user approval.  
+**Implementation package:** APPROVED — implementation in progress (2026-11-24).  
 **GitHub branch:** `main` only.  
-**Disposable PostgreSQL implementation/tests:** NOT_STARTED.  
+**Disposable PostgreSQL implementation/tests:** IN_PROGRESS; migration, runtime service and initial test suites committed; CI verification pending.  
 **Neon production changes:** none authorised or performed.
