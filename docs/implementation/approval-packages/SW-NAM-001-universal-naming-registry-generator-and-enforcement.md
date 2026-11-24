@@ -48,7 +48,7 @@ The schema candidate must provide:
 - reservation/active/superseded/retired/rejected lifecycle;
 - effective-time interval, source, actor/process, reason and provenance;
 - immutable append-only rename/history events;
-- generator/configuration version and source-manifest provenance where generated;
+- immutable generator-batch manifest (generator and normalizer versions, configuration version, deterministic seed, candidate count, SHA-256 manifest and provenance), linked to each generated name reservation;
 - unique constraints and transactional reservation protection.
 
 The registry stores naming authority and name history, not a duplicate copy of domain facts. It must not create a second person table, geography authority, business register or substitute primary key.
