@@ -283,7 +283,11 @@ class PostgresEventWorkStore:
                 with conn.cursor() as cur:
                     cur.execute("SELECT * FROM sw_runtime.claim_due_event_work()")
                     row = cur.fetchone()
-                    return EventWork(*row) if row else None
+                    if row is None:
+                        return None
+                    values = list(row)
+                    values[17] = tuple(values[17] or ())
+                    return EventWork(*values)
         finally:
             conn.close()
 
@@ -398,5 +402,12 @@ class EventEngine:
         final_state = self.kernel.status()
         if final_state.lifecycle != Lifecycle.RUNNING or not final_state.player_present:
             return None
+        if (not receipt.success and receipt.retry_after_tick is not None
+                and receipt.retry_after_tick < final_state.world_tick):
+            receipt = HandlerReceipt(
+                False, error_code=receipt.error_code,
+                retry_after_tick=final_state.world_tick,
+                retryable=receipt.retryable,
+            )
         status = self.store.finish(work, receipt, final_state.world_tick)
         return DispatchResult(work.event_id, status)
