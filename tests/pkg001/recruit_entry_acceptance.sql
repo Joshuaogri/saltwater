@@ -48,14 +48,14 @@ BEGIN
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),0,'person','pkg003-supervisor-a','{}','pkg003-supervisor-a')
   RETURNING event_id INTO v_event;
-  INSERT INTO sw_people.person(created_tick,source_ref,last_event_id)
-  VALUES (0,'pkg003-supervisor-a',v_event) RETURNING person_id INTO v_person_a;
+  INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id)
+  VALUES ('Senior','Officer',0,'pkg003-supervisor-a',v_event) RETURNING person_id INTO v_person_a;
 
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),0,'person','pkg003-supervisor-b','{}','pkg003-supervisor-b')
   RETURNING event_id INTO v_event;
-  INSERT INTO sw_people.person(created_tick,source_ref,last_event_id)
-  VALUES (0,'pkg003-supervisor-b',v_event) RETURNING person_id INTO v_person_b;
+  INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id)
+  VALUES ('Second','Supervisor',0,'pkg003-supervisor-b',v_event) RETURNING person_id INTO v_person_b;
 
   SELECT event_type_id INTO STRICT v_event_type FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED';
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key)
@@ -109,9 +109,9 @@ BEGIN
   IF v_count <> 2 THEN RAISE EXCEPTION 'failed supervisor check left a partial person'; END IF;
 
   v_career := sw_police.accept_recruit_intake(v_intake,v_person_a,'Authorised recruitment decision',
-    'pkg003-accept-0001',v_admin,'Player');
+    'pkg003-accept-0001',v_admin,'Player','Avery','Officer');
   v_replayed_career := sw_police.accept_recruit_intake(v_intake,v_person_a,'Authorised recruitment decision',
-    'pkg003-accept-replay',v_admin,'Player');
+    'pkg003-accept-replay',v_admin,'Player','Avery','Officer');
   IF v_career <> v_replayed_career THEN RAISE EXCEPTION 'appointment replay created a different career'; END IF;
 
   INSERT INTO sw_auth.principal(principal_id,issuer,subject,principal_kind,status)
