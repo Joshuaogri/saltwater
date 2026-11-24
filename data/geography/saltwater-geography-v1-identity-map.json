@@ -2,7 +2,7 @@
   "schema": "saltwater-spatial-identity-map/1.0",
   "dataset_id": "SW-GEO-V1",
   "source_dataset_status": "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
-  "mapping_status": "DISPOSABLE_MAPPING_CANDIDATE_ONLY",
+  "mapping_status": "SOURCE_IDENTITY_MAPPINGS_RESOLVED",
   "operational_seed_approved": false,
   "root_entities": [
     {
@@ -31,9 +31,11 @@
       "ROUTE": 5,
       "GEO_ZONE": 3,
       "ROAD": 42
-    }
+    },
+    "resolved_source_to_entity_code_mappings": 100,
+    "unresolved_source_to_entity_code_mappings": 0
   },
-  "identity_rule": "For every non-root source record, preserve source_id exactly as sw_geo.entity.entity_code. PostgreSQL spatial_id is generated only during a disposable materialisation and must be recorded from INSERT ... RETURNING; this manifest never invents integer spatial IDs.",
+  "identity_rule": "For every non-root source record, source_id maps exactly and uniquely to entity_code. PostgreSQL spatial_id is an environment-specific GENERATED ALWAYS AS IDENTITY surrogate; obtain it with SELECT spatial_id FROM sw_geo.entity WHERE entity_code = source_id in each database. Never hard-code a disposable integer into this portable source manifest.",
   "parent_rule": "Districts, roads, routes, zones and landmarks are children of saltwater-city; each neighbourhood is a child of its source district_id.",
   "entries": [
     {
@@ -44,7 +46,10 @@
       "display_name": "Westgate",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D01",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D01-N1",
@@ -54,7 +59,10 @@
       "display_name": "Westgate Gardens",
       "parent_entity_code": "SW-D01",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D01-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D01-N2",
@@ -64,7 +72,10 @@
       "display_name": "Foundry Quarter",
       "parent_entity_code": "SW-D01",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D01-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D01-N3",
@@ -74,7 +85,10 @@
       "display_name": "Garden Ward",
       "parent_entity_code": "SW-D01",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D01-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D02",
@@ -84,7 +98,10 @@
       "display_name": "Northbank",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D02",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D02-N1",
@@ -94,7 +111,10 @@
       "display_name": "Northbank West",
       "parent_entity_code": "SW-D02",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D02-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D02-N2",
@@ -104,7 +124,10 @@
       "display_name": "Northbank East",
       "parent_entity_code": "SW-D02",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D02-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D02-N3",
@@ -114,7 +137,10 @@
       "display_name": "University Quarter",
       "parent_entity_code": "SW-D02",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D02-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D03",
@@ -124,7 +150,10 @@
       "display_name": "Civic Core",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D03",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D03-N1",
@@ -134,7 +163,10 @@
       "display_name": "Assembly Quarter",
       "parent_entity_code": "SW-D03",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D03-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D03-N2",
@@ -144,7 +176,10 @@
       "display_name": "Civic Terrace",
       "parent_entity_code": "SW-D03",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D03-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D03-N3",
@@ -154,7 +189,10 @@
       "display_name": "Museum Gardens",
       "parent_entity_code": "SW-D03",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D03-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D04",
@@ -164,7 +202,10 @@
       "display_name": "East Harbour",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D04",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D04-N1",
@@ -174,7 +215,10 @@
       "display_name": "Port Quarter",
       "parent_entity_code": "SW-D04",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D04-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D04-N2",
@@ -184,7 +228,10 @@
       "display_name": "Customs Ward",
       "parent_entity_code": "SW-D04",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D04-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D04-N3",
@@ -194,7 +241,10 @@
       "display_name": "Marina Point",
       "parent_entity_code": "SW-D04",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D04-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D05",
@@ -204,7 +254,10 @@
       "display_name": "Greenfields",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D05",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D05-N1",
@@ -214,7 +267,10 @@
       "display_name": "Parkside",
       "parent_entity_code": "SW-D05",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D05-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D05-N2",
@@ -224,7 +280,10 @@
       "display_name": "Reservoir Ward",
       "parent_entity_code": "SW-D05",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D05-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D05-N3",
@@ -234,7 +293,10 @@
       "display_name": "South Gardens",
       "parent_entity_code": "SW-D05",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D05-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D06",
@@ -244,7 +306,10 @@
       "display_name": "Southworks",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D06",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D06-N1",
@@ -254,7 +319,10 @@
       "display_name": "Industrial Park",
       "parent_entity_code": "SW-D06",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D06-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D06-N2",
@@ -264,7 +332,10 @@
       "display_name": "Rail Yards",
       "parent_entity_code": "SW-D06",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D06-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D06-N3",
@@ -274,7 +345,10 @@
       "display_name": "Canal End",
       "parent_entity_code": "SW-D06",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D06-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D07",
@@ -284,7 +358,10 @@
       "display_name": "Central Market",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D07",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D07-N1",
@@ -294,7 +371,10 @@
       "display_name": "Grand Market",
       "parent_entity_code": "SW-D07",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D07-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D07-N2",
@@ -304,7 +384,10 @@
       "display_name": "Exchange Ward",
       "parent_entity_code": "SW-D07",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D07-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D07-N3",
@@ -314,7 +397,10 @@
       "display_name": "Theatre Quarter",
       "parent_entity_code": "SW-D07",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D07-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D08",
@@ -324,7 +410,10 @@
       "display_name": "Old Quays",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:district:SW-D08",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D08-N1",
@@ -334,7 +423,10 @@
       "display_name": "Old Harbour",
       "parent_entity_code": "SW-D08",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D08-N1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D08-N2",
@@ -344,7 +436,10 @@
       "display_name": "Ropewalk",
       "parent_entity_code": "SW-D08",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D08-N2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-D08-N3",
@@ -354,7 +449,10 @@
       "display_name": "Dockside",
       "parent_entity_code": "SW-D08",
       "source_ref": "SW-GEO-V1:neighbourhood:SW-D08-N3",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-001",
@@ -364,7 +462,10 @@
       "display_name": "Saltwater Assembly Hall",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-001",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-002",
@@ -374,7 +475,10 @@
       "display_name": "Government Square",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-002",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-003",
@@ -384,7 +488,10 @@
       "display_name": "National Records and Courts",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-003",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-004",
@@ -394,7 +501,10 @@
       "display_name": "Saltwater Central Police Headquarters",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-004",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-005",
@@ -404,7 +514,10 @@
       "display_name": "Central General Hospital",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-005",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-006",
@@ -414,7 +527,10 @@
       "display_name": "Northbank University",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-006",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-007",
@@ -424,7 +540,10 @@
       "display_name": "Grand Market Exchange",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-007",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-008",
@@ -434,7 +553,10 @@
       "display_name": "Theatre and Arts Hall",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-008",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-009",
@@ -444,7 +566,10 @@
       "display_name": "Port Customs House",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-009",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-010",
@@ -454,7 +579,10 @@
       "display_name": "Eastern Container Terminal",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-010",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-011",
@@ -464,7 +592,10 @@
       "display_name": "Passenger Ferry Terminal",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-011",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-012",
@@ -474,7 +605,10 @@
       "display_name": "Old Quays Maritime Museum",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-012",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-013",
@@ -484,7 +618,10 @@
       "display_name": "Southworks Rail Freight Yard",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-013",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-014",
@@ -494,7 +631,10 @@
       "display_name": "Canal Freight Basin",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-014",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-015",
@@ -504,7 +644,10 @@
       "display_name": "Greenfields Reservoir",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-015",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-016",
@@ -514,7 +657,10 @@
       "display_name": "Parkside Civic Park",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-016",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-017",
@@ -524,7 +670,10 @@
       "display_name": "Westgate Interchange",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-017",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-POI-018",
@@ -534,7 +683,10 @@
       "display_name": "Northbank Transit Interchange",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:landmark:SW-POI-018",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-RT-001",
@@ -544,7 +696,10 @@
       "display_name": "Central Orbital Distributor",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:route:SW-RT-001",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-RT-002",
@@ -554,7 +709,10 @@
       "display_name": "Civic North-South Spine",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:route:SW-RT-002",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-RT-003",
@@ -564,7 +722,10 @@
       "display_name": "Central East-West Boulevard",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:route:SW-RT-003",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-RT-004",
@@ -574,7 +735,10 @@
       "display_name": "Eastern Port Emergency Access",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:route:SW-RT-004",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-RT-005",
@@ -584,7 +748,10 @@
       "display_name": "Westgate Emergency Connector",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:route:SW-RT-005",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-TERR-001",
@@ -594,7 +761,10 @@
       "display_name": "Central-Western Ridge",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:geo_zone:SW-TERR-001",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-WTR-001",
@@ -604,7 +774,10 @@
       "display_name": "Saltwater Principal Harbour",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:geo_zone:SW-WTR-001",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SW-WTR-002",
@@ -614,7 +787,10 @@
       "display_name": "Southworks Freight Canal Basin",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:geo_zone:SW-WTR-002",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-B1",
@@ -624,7 +800,10 @@
       "display_name": "Harbour Bridge",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-B1",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-B2",
@@ -634,7 +813,10 @@
       "display_name": "Customs Bridge",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-B2",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H01",
@@ -644,7 +826,10 @@
       "display_name": "South Coast Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H01",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H02",
@@ -654,7 +839,10 @@
       "display_name": "Garden Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H02",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H03",
@@ -664,7 +852,10 @@
       "display_name": "Reservoir Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H03",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H04",
@@ -674,7 +865,10 @@
       "display_name": "Parkway",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H04",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H05",
@@ -684,7 +878,10 @@
       "display_name": "Canal Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H05",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H06",
@@ -694,7 +891,10 @@
       "display_name": "Railway Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H06",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H07",
@@ -704,7 +904,10 @@
       "display_name": "Industrial Way",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H07",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H08",
@@ -714,7 +917,10 @@
       "display_name": "Southworks Boulevard",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H08",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H09",
@@ -724,7 +930,10 @@
       "display_name": "Market Cross",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H09",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H10",
@@ -734,7 +943,10 @@
       "display_name": "Central Boulevard",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H10",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H11",
@@ -744,7 +956,10 @@
       "display_name": "Civic Link",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H11",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H12",
@@ -754,7 +969,10 @@
       "display_name": "Northbank Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H12",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H13",
@@ -764,7 +982,10 @@
       "display_name": "University Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H13",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H14",
@@ -774,7 +995,10 @@
       "display_name": "Museum Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H14",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H15",
@@ -784,7 +1008,10 @@
       "display_name": "Government Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H15",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H16",
@@ -794,7 +1021,10 @@
       "display_name": "North Ridge Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H16",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-H17",
@@ -804,7 +1034,10 @@
       "display_name": "North Coast Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-H17",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V01",
@@ -814,7 +1047,10 @@
       "display_name": "West Coast Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V01",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V02",
@@ -824,7 +1060,10 @@
       "display_name": "Beacon Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V02",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V03",
@@ -834,7 +1073,10 @@
       "display_name": "Crown Street",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V03",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V04",
@@ -844,7 +1086,10 @@
       "display_name": "Foundry Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V04",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V05",
@@ -854,7 +1099,10 @@
       "display_name": "Westgate Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V05",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V06",
@@ -864,7 +1112,10 @@
       "display_name": "Ridgeway Drive",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V06",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V07",
@@ -874,7 +1125,10 @@
       "display_name": "University Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V07",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V08",
@@ -884,7 +1138,10 @@
       "display_name": "Assembly Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V08",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V09",
@@ -894,7 +1151,10 @@
       "display_name": "Civic Spine",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V09",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V10",
@@ -904,7 +1164,10 @@
       "display_name": "Market Street",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V10",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V11",
@@ -914,7 +1177,10 @@
       "display_name": "Exchange Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V11",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V12",
@@ -924,7 +1190,10 @@
       "display_name": "Quays Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V12",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V13",
@@ -934,7 +1203,10 @@
       "display_name": "Customs Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V13",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V14",
@@ -944,7 +1216,10 @@
       "display_name": "Port Access Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V14",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V15",
@@ -954,7 +1229,10 @@
       "display_name": "Marina Drive",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V15",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V16",
@@ -964,7 +1242,10 @@
       "display_name": "Dock Street",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V16",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V17",
@@ -974,7 +1255,10 @@
       "display_name": "Ropewalk Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V17",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V18",
@@ -984,7 +1268,10 @@
       "display_name": "Harbour View Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V18",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V19",
@@ -994,7 +1281,10 @@
       "display_name": "Eastbank Avenue",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V19",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V20",
@@ -1004,7 +1294,10 @@
       "display_name": "Seafarers Way",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V20",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V21",
@@ -1014,7 +1307,10 @@
       "display_name": "Breakwater Road",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V21",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V22",
@@ -1024,7 +1320,10 @@
       "display_name": "Coastline Drive",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V22",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     },
     {
       "source_id": "SWR-V23",
@@ -1034,7 +1333,10 @@
       "display_name": "Eastern Promenade",
       "parent_entity_code": "saltwater-city",
       "source_ref": "SW-GEO-V1:road:SWR-V23",
-      "spatial_id": null
+      "spatial_id": null,
+      "mapping_status": "RESOLVED_SOURCE_IDENTITY",
+      "mapping_method": "EXACT_SOURCE_ID_TO_ENTITY_CODE",
+      "spatial_id_resolution": "DATABASE_LOOKUP_BY_ENTITY_CODE"
     }
   ],
   "source_dataset_git_blob_sha": "27b3f7848af10f2d61dee04a4dada1eff1f9871b"
