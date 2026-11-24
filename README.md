@@ -59,3 +59,12 @@ Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22
 - Foundational geography is fixed: one contiguous coastal island city-state, 12 km × 9 km fictional local grid, eastern harbour, eight districts and 24 neighbourhoods. Detailed map construction and routing validation remain implementation work.
 - BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP-04 business distribution remains a separate open design item.
 - No Neon production write or seed has been authorised or performed.
+
+## Detailed map and road network — SW-GEO-V1
+
+- [Open the master Saltwater map (SVG)](docs/maps/saltwater-master-map-v1.svg)
+- [Machine-readable geography and routable road graph](data/geography/saltwater-geography-v1.json)
+- [Map register, network specification and limitations](docs/maps/README.md)
+
+The initial map baseline contains 8 districts, 24 neighbourhoods, 42 named roads, 367 junction nodes, 685 connected road/bridge segments and 5 named route definitions. It uses the fictional `SW-LOCAL-01` metre grid. Structural graph checks passed at generation time; parcel/address/building coverage and full BP-02 operational acceptance remain outstanding. This is planning-grade fictional geometry, not survey-grade, and no Neon production data was changed.
+
