@@ -11,6 +11,8 @@ on:
       - "tests/pkg001/test_parcel_candidate_importer.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/road_corridor_audit.py"
+      - "runtime/parcel_coverage_audit.py"
+      - "tests/pkg001/test_parcel_coverage_audit.py"
       - "tests/pkg001/test_road_corridor_audit.py"
       - "data/geography/saltwater-geography-v1.json"
       - "tests/pkg001/geography_identity_map_acceptance.sql"
@@ -54,6 +56,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_bp04_03_stage_b_contract.py" -v
       - name: Run BP04-03 road corridor audit tests
         run: python -m unittest discover -s tests/pkg001 -p "test_road_corridor_audit.py" -v
+      - name: Run BP04-03 parcel coverage area audit tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_parcel_coverage_audit.py" -v
       - name: Install PostgreSQL Python driver for importer contract tests
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Run BP04-03 candidate importer validation tests
@@ -91,6 +95,15 @@ jobs:
         run: python -m runtime.parcel_candidate_generator
       - name: Generate width-agnostic road corridor register
         run: python -m runtime.road_corridor_audit
+      - name: Generate parcel coverage area reconciliation
+        run: python -m runtime.parcel_coverage_audit
+      - name: Preserve parcel coverage area audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-parcel-coverage-area-${{ github.run_id }}
+          path: bp04-03-parcel-coverage-area-audit.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Preserve generated road corridor register
         uses: actions/upload-artifact@v4
         with:
