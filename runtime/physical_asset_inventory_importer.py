@@ -83,8 +83,10 @@ def validate_manifests(inventory: dict, candidates: dict, dossiers: dict) -> tup
         raise ValueError("Stage E cannot create ownership or tenancy")
     if generation.get("occupancy_records_created") != 0 or generation.get("business_assignments_created") != 0:
         raise ValueError("Stage E cannot create occupancy or business assignments")
-    if generation.get("unresolved_source_spatial_mappings") != 100:
-        raise ValueError("All 100 unresolved source-to-spatial mappings must remain explicit")
+    if (generation.get("resolved_source_entity_code_mappings") != 100
+            or generation.get("unresolved_source_entity_code_mappings") != 0
+            or generation.get("unresolved_source_spatial_mappings") != 0):
+        raise ValueError("All 100 source entity_code mappings must be resolved; database-specific spatial_id values remain unassigned")
     return expected, candidates["candidate_set_id"]
 
 
@@ -438,7 +440,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
         "database_growth_bytes": after_bytes-before_bytes,
         "elapsed_ms": elapsed_ms,
         "canonical_addresses_created": 0, "operational_access_points_created": 0,
-        "unresolved_source_spatial_mappings": 100,
+        "unresolved_source_spatial_mappings": 0,
+        "resolved_source_entity_code_mappings": 100,
+        "unresolved_source_entity_code_mappings": 0,
     }
 
 

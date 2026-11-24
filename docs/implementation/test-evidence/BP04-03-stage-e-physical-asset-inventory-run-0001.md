@@ -88,7 +88,7 @@ This is a successful disposable PostgreSQL import and regression proof, not a Ne
 
 ## Next
 
-Proceed to operational reconciliation only after the BP-02 geography approval/version gate and resolution of the 100 source-to-spatial mappings. Downstream business-site, resident, household, tenancy, ownership, occupancy and police-facility assignments remain separate controlled work.
+Proceed to operational reconciliation only after the BP-02 geography approval/version gate. All 100 source records already resolve to stable entity_code values; production spatial_id surrogates remain database-specific and unassigned until activation. Downstream business-site, resident, household, tenancy, ownership, occupancy and police-facility assignments remain separate controlled work.
 
 
 ## Geography source-identity reconciliation correction (2026-11-24)

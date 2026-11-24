@@ -151,7 +151,9 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         self.assertEqual(generation["tenancy_records_created"], 0)
         self.assertEqual(generation["occupancy_records_created"], 0)
         self.assertEqual(generation["business_assignments_created"], 0)
-        self.assertEqual(generation["unresolved_source_spatial_mappings"], 100)
+        self.assertEqual(generation["resolved_source_entity_code_mappings"], 100)
+        self.assertEqual(generation["unresolved_source_entity_code_mappings"], 0)
+        self.assertEqual(generation["unresolved_source_spatial_mappings"], 0)
 
     def test_geometry_audit_matches_generated_buildings(self):
         audit = [row for row in self.manifest["geometry_audit"] if "building" in row]

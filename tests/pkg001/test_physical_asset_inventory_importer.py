@@ -55,6 +55,18 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "operational access"):
             validate_manifests(tampered, self.candidates, self.dossiers)
 
+    def test_source_entity_code_reconciliation_must_be_complete(self):
+        self.assertEqual(self.inventory["generation"]["resolved_source_entity_code_mappings"], 100)
+        self.assertEqual(self.inventory["generation"]["unresolved_source_entity_code_mappings"], 0)
+        self.assertEqual(self.inventory["generation"]["unresolved_source_spatial_mappings"], 0)
+        tampered = copy.deepcopy(self.inventory)
+        tampered["generation"]["unresolved_source_entity_code_mappings"] = 1
+        tampered["manifest_sha256"] = __import__(
+            "runtime.physical_asset_inventory_importer", fromlist=["_sha"]
+        )._sha(tampered)
+        with self.assertRaisesRegex(ValueError, "100 source entity_code mappings"):
+            validate_manifests(tampered, self.candidates, self.dossiers)
+
     def test_geojson_payload_checksum_is_deterministic(self):
         payload = _geojson("Point", [10.5, 20.25])
         self.assertEqual(payload, {"type": "Point", "coordinates": [10.5, 20.25]})

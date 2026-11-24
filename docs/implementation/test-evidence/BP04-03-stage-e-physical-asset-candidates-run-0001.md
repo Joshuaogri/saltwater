@@ -32,7 +32,7 @@ Each building has two boundary access-location candidates. Building footprints a
 
 This run proves deterministic candidate generation and geometry containment; it does not import the asset records into PostgreSQL. Building footprints and access locations are generated design candidates, not surveyed or operational facts. Physical materials, installed utilities, defects, condition, detailed room inventories and actual capacity are not fabricated. Unknown and not-assessed states remain explicit.
 
-The run created zero operational spatial IDs, canonical addresses, operational access points, ownership records, tenancy records, occupancy records or business assignments. All 100 source-to-spatial-ID mappings remain unresolved. No Neon connection, migration, seed, upload or production activation occurred.
+The run created zero operational spatial IDs, canonical addresses, operational access points, ownership records, tenancy records, occupancy records or business assignments. All 100 source records resolve one-to-one to stable entity_code values (100 resolved, 0 unresolved). Production spatial_id surrogates remain unassigned until operational activation and are looked up by entity_code in each target database. No Neon connection, migration, seed, upload or production activation occurred.
 
 ## Next implementation
 

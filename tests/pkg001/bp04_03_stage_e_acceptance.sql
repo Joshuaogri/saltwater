@@ -22,6 +22,8 @@ BEGIN
   IF n<>1572 THEN RAISE EXCEPTION 'Asset geometry candidate count mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_generation_batch;
   IF n<>1 THEN RAISE EXCEPTION 'Expected one immutable generation batch, got %',n; END IF;
+  SELECT unresolved_source_mapping_count INTO n FROM sw_property.asset_generation_batch;
+  IF n<>0 THEN RAISE EXCEPTION 'Expected zero unresolved source mappings; stable entity_code mappings are complete, got %',n; END IF;
 
   SELECT count(*) INTO n FROM sw_property.property_profile;
   IF n<>420 THEN RAISE EXCEPTION 'Property profile coverage mismatch: %',n; END IF;
