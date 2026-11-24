@@ -44,7 +44,7 @@ The schema candidate must provide:
 - owning entity type and stable domain entity ID reference;
 - canonical, preferred, legal, trading, alias, former and other controlled name forms;
 - exact approved display spelling plus deterministic normalized comparison key;
-- global canonical-name namespace and collision-safe alias reservation;
+- global canonical-name namespace and collision-safe alias reservation, with the sole exact Saltwater sovereign-territory/playable-city shared-name exception approved by the user;
 - reservation/active/superseded/retired/rejected lifecycle;
 - effective-time interval, source, actor/process, reason and provenance;
 - immutable append-only rename/history events;
@@ -134,7 +134,7 @@ At minimum, preserve and register:
 
 The import must be deterministic, repeatable and report every accepted name, pre-existing collision, skipped record and unresolved owner reference. It must not silently rename or overwrite canon. A collision discovered among existing canon becomes a recorded conflict requiring explicit resolution; it is not “fixed” by choosing one name to discard.
 
-**Known pre-existing collision to report:** proposal 0002 currently creates separate sovereign-root and playable-city spatial identities, and both version records are named `Saltwater`. Under SW-UNS-001's global canonical-name uniqueness rule, these are a collision if they remain two distinct named entities. The import must surface both stable spatial IDs and block their simultaneous canonical reservation until the user resolves whether they are one dual-role entity or require distinct canonical names. Do not silently merge IDs, invent an alias, or rename either root.
+**Approved exception — resolved:** the user has expressly approved both existing root entities retaining the exact canonical name `Saltwater`. The sovereign territory (`kind=1`, `saltwater-state`) and playable city (`kind=2`, `saltwater-city`) remain separate entities with separate stable spatial IDs and records. The registry must implement a narrow explicit exception for this exact pair only. No third entity, alias, historical name or other entity type may use the normalized key `saltwater`. A name-only lookup must return both roots as ambiguous and require entity-type or stable-ID disambiguation. Do not merge the entities or alter their IDs.
 
 The initial inventory must distinguish true entity names from descriptive labels, schema identifiers, example names and UI copy. Do not indiscriminately reserve every word appearing in documentation.
 
@@ -164,7 +164,7 @@ Required tests:
 19. Search resolves by stable ID and reports ambiguity instead of guessing.
 20. Rename, retirement, correction and history remain append-only and attributable.
 21. Registry backup/restore preserves current and historical reservations.
-22. Tests do not advance the fictional clock, mutate production data or reveal hidden simulation truth.
+22. Tests do not advance the fictional clock, mutate production data or reveal hidden simulation truth.\n23. The exact `Saltwater` canonical name is accepted for the sovereign-root and playable-city pair only.\n24. A third entity, alias, historical name or any other cross-type duplicate of `Saltwater` is rejected, and name-only lookup returns an explicit two-result ambiguity.
 
 CI must apply the foundation plus proposals 0002–0009 to a fresh disposable PostgreSQL 16 service, run the registry SQL acceptance suite and Python tests, and report storage measurements. No workflow may connect to Neon or require Neon secrets.
 
@@ -188,7 +188,7 @@ The package is complete only when all of the following are evidenced:
 - the SQL registry schema applies cleanly to disposable PostgreSQL 16 after proposals 0002–0008;
 - existing geography and person name writes are enforced through the registry;
 - domain ownership and stable IDs are preserved;
-- all 22 required test groups pass with attached execution evidence;
+- all 24 required test groups pass with attached execution evidence;
 - deterministic canon import registers all in-scope current names and reports every conflict;
 - generator produces varied, reproducible candidates and cannot bypass reservations;
 - concurrent uniqueness is enforced by PostgreSQL, not only Python;
@@ -207,7 +207,7 @@ A green CI run proves only the tested disposable scope. It does not prove all 44
 - No automatic rewrite of adopted canon names.
 - No invention of BP-04 unresolved business distribution or property/address canon.
 - No creation of a parallel person, geography or business identity authority.
-- No weakening of the global canonical-name namespace to make generation easier.
+- No general weakening of the global canonical-name namespace; only the expressly approved exact sovereign/city `Saltwater` pair exception is permitted.
 - No alteration of the fixed BP-01–BP-44 structure.
 - No change to hidden-truth rules, player agency, simulation-time pause rules or the 10,000-person cap.
 - No public frontend/API deployment or ChatGPT transport integration.
