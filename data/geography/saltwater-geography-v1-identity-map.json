@@ -1039,5 +1039,13 @@
       "spatial_id": null
     }
   ],
-  "source_dataset_git_blob_sha": "27b3f7848af10f2d61dee04a4dada1eff1f9871b"
+  "source_dataset_git_blob_sha": "27b3f7848af10f2d61dee04a4dada1eff1f9871b",
+  "disposable_materialization": {
+    "status": "VERIFIED",
+    "workflow_run_id": 45508321133,
+    "workflow_url": "https://github.com/Joshuaogri/saltwater/actions/runs/45508321133",
+    "entity_count": 100,
+    "database": "disposable PostgreSQL 16",
+    "production_ids_assigned": 0
+  }
 }
