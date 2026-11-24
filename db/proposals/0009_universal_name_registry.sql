@@ -88,7 +88,7 @@ END
 $$;
 
 CREATE FUNCTION sw_names.guard_reservation()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
 DECLARE
   v_code text;
   v_kind smallint;
@@ -178,7 +178,7 @@ FROM sw_names.name_reservation r;
 CREATE FUNCTION sw_names.reserve_name(
   p_entity_type text,p_entity_id bigint,p_name_form text,p_display_name text,
   p_source_ref text,p_actor_ref text,p_reason text,p_effective_tick bigint
-) RETURNS bigint LANGUAGE plpgsql AS $$
+) RETURNS bigint LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
 DECLARE
   v_key text;
   v_slot text := 'GLOBAL';
@@ -242,7 +242,7 @@ $$;
 CREATE FUNCTION sw_names.change_status(
   p_reservation_id bigint,p_event_code text,p_effective_tick bigint,
   p_source_ref text,p_actor_ref text,p_reason text
-) RETURNS void LANGUAGE plpgsql AS $$
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
 DECLARE v_status text;
 BEGIN
   IF p_event_code NOT IN ('superseded','retired','reactivated','corrected') THEN
@@ -267,7 +267,7 @@ $$;
 CREATE FUNCTION sw_names.add_alias(
   p_entity_type text,p_entity_id bigint,p_alias text,p_source_ref text,
   p_actor_ref text,p_reason text,p_effective_tick bigint
-) RETURNS bigint LANGUAGE sql AS $$
+) RETURNS bigint LANGUAGE sql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
   SELECT sw_names.reserve_name(p_entity_type,p_entity_id,'alias',p_alias,
     p_source_ref,p_actor_ref,p_reason,p_effective_tick)
 $$;
@@ -275,7 +275,7 @@ $$;
 CREATE FUNCTION sw_names.search_name(p_value text)
 RETURNS TABLE(reservation_id bigint,entity_type text,entity_id bigint,name_form text,
               display_name text,status text)
-LANGUAGE sql STABLE AS $$
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
   SELECT r.reservation_id,r.entity_type,r.entity_id,r.name_form,r.display_name,
          sw_names.latest_status(r.reservation_id)
   FROM sw_names.name_reservation r
@@ -284,7 +284,7 @@ LANGUAGE sql STABLE AS $$
 $$;
 
 CREATE FUNCTION sw_names.sync_geography_name()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
 DECLARE
   v_prior sw_geo.version%ROWTYPE;
   v_new_id bigint;
@@ -319,7 +319,7 @@ AFTER INSERT ON sw_geo.version
 FOR EACH ROW EXECUTE FUNCTION sw_names.sync_geography_name();
 
 CREATE FUNCTION sw_names.sync_person_name()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
 DECLARE
   v_full_name text;
   v_tick bigint;
@@ -395,5 +395,17 @@ ON CONFLICT (version) DO NOTHING;
 INSERT INTO sw_ops.storage_operation(operation_kind,description,status,measurement_notes)
 VALUES ('migration','0009 universal naming registry','succeeded',
   'Measure disposable database and relation/index bytes before and after. No Neon production operation.');
+
+-- Only the controlled functions are callable by the command role; no direct
+-- table DML is granted. Read-only access is through the registry view/search.
+REVOKE ALL ON SCHEMA sw_names FROM PUBLIC;
+GRANT USAGE ON SCHEMA sw_names TO sw_game_readonly,sw_game_command;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_names FROM PUBLIC,sw_game_command,sw_game_readonly;
+GRANT SELECT ON sw_names.registry TO sw_game_readonly;
+REVOKE ALL ON ALL FUNCTIONS IN SCHEMA sw_names FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION sw_names.search_name(text) TO sw_game_readonly;
+GRANT EXECUTE ON FUNCTION sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint) TO sw_game_command;
+GRANT EXECUTE ON FUNCTION sw_names.add_alias(text,bigint,text,text,text,text,bigint) TO sw_game_command;
+GRANT EXECUTE ON FUNCTION sw_names.change_status(bigint,text,bigint,text,text,text) TO sw_game_command;
 
 COMMIT;
