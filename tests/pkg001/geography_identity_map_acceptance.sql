@@ -118,7 +118,7 @@ VALUES
 ('SWR-V22','SWR-V22',7,'Coastline Drive','saltwater-city','SW-GEO-V1:road:SWR-V22'),
 ('SWR-V23','SWR-V23',7,'Eastern Promenade','saltwater-city','SW-GEO-V1:road:SWR-V23');
 
-DO $
+DO $$
 BEGIN
   IF current_database() <> 'saltwater_test' THEN
     RAISE EXCEPTION 'geography identity-map fixture is restricted to saltwater_test';
