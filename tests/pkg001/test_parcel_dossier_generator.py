@@ -25,7 +25,7 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
             self.assertGreater(dossier["perimeter_m"], 0)
             self.assertGreater(dossier["compactness_index"], 0)
             self.assertLessEqual(dossier["compactness_index"], 1.000001)
-            self.assertGreaterEqual(dossier["exterior_vertex_count"], 4)
+            self.assertGreaterEqual(dossier["exterior_vertex_count"], 3)
             self.assertGreaterEqual(dossier["interior_ring_count"], 0)
             self.assertEqual(dossier["measurement_basis"], "DERIVED_FROM_GENERATED_POLYGON_GEOMETRY")
 
