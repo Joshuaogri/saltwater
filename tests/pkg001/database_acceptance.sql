@@ -46,8 +46,8 @@ BEGIN
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
       RETURNING event_id INTO ev;
-    INSERT INTO sw_people.person(given_name,created_tick,last_event_id)
-      VALUES ('Over-cap',0,ev) RETURNING person_id INTO pid;
+    INSERT INTO sw_people.person(given_name,family_name,created_tick,last_event_id)
+      VALUES ('Over-cap','Resident',0,ev) RETURNING person_id INTO pid;
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
       RETURNING event_id INTO ev;
