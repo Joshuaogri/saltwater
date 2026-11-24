@@ -1,7 +1,7 @@
 # PKG-007 — ChatGPT Tool Handler and Trusted Context Injection
 
 **Package:** PKG-007  
-**Status:** Proposed; awaiting explicit user approval  
+**Status:** Approved; implementation committed; CI verification pending  
 **Target branch:** `main` only  
 **Depends on:** PKG-005 verified; PKG-006 verified  
 **Approval boundary:** Repository implementation and Python/contract tests only. No deployed endpoint, ChatGPT app/plugin, external identity provider, production secret store, Neon production change or live player session.
