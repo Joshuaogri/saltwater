@@ -1,6 +1,6 @@
 # PKG-006 — trusted host session context and ChatGPT command contract
 
-**Status:** Approved 2026-11-24; implementation committed; CI verification pending  
+**Status:** Approved, implemented and verified 2026-11-24  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Dependencies:** PKG-001 through PKG-005  
@@ -103,4 +103,4 @@ The implementation is committed directly to main:
 - `tests/pkg001/test_player_host_adapter.py`: host-context, expiry, credential, allowlist, forwarding and secret-redaction tests.
 - Disposable PostgreSQL CI workflow now runs the new Python unit suite. The adapter itself performs no database operations and introduces no schema.
 
-**Current state:** implementation committed; CI verification pending. No endpoint, plugin, external identity provider, Neon production operation or live session was created.
+**Verification:** Python and full disposable PostgreSQL workflow passed on CI run [45294966792](https://github.com/Joshuaogri/saltwater/actions/runs/45294966792), including the new trusted host adapter test suite and existing population, security, backup/restore and authenticated command acceptance tests. Database migration validation also passed on [45294932282](https://github.com/Joshuaogri/saltwater/actions/runs/45294932282). No endpoint, plugin, external identity provider, Neon production operation or live session was created. **PKG-006 is verified complete.**
