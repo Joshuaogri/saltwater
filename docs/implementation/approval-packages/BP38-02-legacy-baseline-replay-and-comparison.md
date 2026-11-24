@@ -1,7 +1,7 @@
 # BP38-02 — Independent Legacy Baseline Replay and Comparison
 
-**Status:** Comparator implemented on `main`; independent disposable replay, drift detection and guarded checksum-adoption CI PASS; live Neon schema and canonical-data comparison PASS in [run 45437263676](https://github.com/Joshuaogri/saltwater/actions/runs/45437263676), with supplementary catalogue review recorded in [live run 0001 evidence](../test-evidence/BP38-02-live-neon-run-0001.md). Checksum adoption is prepared but NOT applied.  
-**Production authority:** No Neon write or adoption approval is granted by this package.
+**Status:** COMPLETE — independent disposable replay, drift detection and guarded checksum-adoption CI PASS; live Neon schema and canonical-data comparison PASS in [run 45437263676](https://github.com/Joshuaogri/saltwater/actions/runs/45437263676); supplementary catalogue review complete; guarded one-row checksum adoption explicitly approved, executed and verified on Neon production. Migration 0002 remains a separate BP38-01 operation.  
+**Production record:** This package's exact one-row checksum adoption was separately approved and executed. This does not grant approval for migration 0002 or any other production write.
 
 ## Purpose
 
@@ -71,7 +71,7 @@ Workflow run [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/
 
 The live workflow passed on 2026-11-24. Exact schema DDL hashes and canonical world-config hashes matched the independent PostgreSQL 18 replay. The supplementary SELECT-only report was reviewed: Neon is PostgreSQL 18.7 at 9,306,112 bytes; the ledger remains at version 1 with a NULL checksum; the two storage-operation history rows and provider catalogue context were enumerated. No mismatch affecting the comparison was found. The workflow enforced read-only mode and made no production changes. See [live Neon run 0001](../test-evidence/BP38-02-live-neon-run-0001.md).
 
-**Next gate:** present the exact guarded one-row checksum adoption, expected storage delta/range and projected total for separate explicit production approval. Do not apply migration 0002 as part of that operation.
+**Completed gate:** the guarded one-row checksum adoption described above was approved, executed and verified on 2026-11-24. Neon database size remained 9,306,112 bytes (0-byte delta); ledger heap remained 8,192 bytes and total relation size remained 49,152 bytes. Migration 0002 was not included. Its separate production application plan is [BP38-01 migration 0002 plan](BP38-01-migration-0002-production-application-plan.md).
 
 
 ## Production checksum-adoption operation — prepared, not executed
