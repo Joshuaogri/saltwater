@@ -543,10 +543,8 @@ VALUES ('NAME_RESERVED','Canonical or alternate name reserved'),
        ('NAME_RETIRED','Name retired but permanently reserved')
 ON CONFLICT (event_code) DO NOTHING;
 
-INSERT INTO sw_ops.schema_migration(version,migration_name)
-VALUES (9,'universal_name_registry')
-ON CONFLICT (version) DO NOTHING;
-
+-- This is a disposable schema proposal, not an applied source migration.
+-- The authoritative migration runner alone writes the schema_migration ledger.
 INSERT INTO sw_ops.storage_operation(operation_kind,description,status,measurement_notes)
 VALUES ('migration','0009 universal naming registry','succeeded',
   'Measure disposable database and relation/index bytes before and after. No Neon production operation.');
