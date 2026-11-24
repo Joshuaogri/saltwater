@@ -13,6 +13,10 @@ BEGIN
     WHERE singleton=1 AND state IN (0,1) AND bootstrap_open=true AND world_tick=0;
   UPDATE sw_runtime.state SET state=2,player_present=true
     WHERE singleton=1 AND state=1 AND bootstrap_open=false;
+  -- Runtime adapter tests may deliberately leave the disposable world paused.
+  -- Resume only from the explicit paused state; never bypass recovery/stopped states.
+  UPDATE sw_runtime.state SET state=2,player_present=true
+    WHERE singleton=1 AND state=3 AND bootstrap_open=false;
   SELECT living_included INTO current_count
     FROM sw_people.population_counter WHERE singleton=1;
   SELECT world_tick INTO current_tick
