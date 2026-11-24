@@ -36,6 +36,8 @@ class SWDB001ContractTests(unittest.TestCase):
         self.assertNotIn("business_category", sql)
         self.assertIn("primary_spatial_id integer REFERENCES sw_geo.entity", sql)
         self.assertIn("site_assignment_status='unassigned' AND primary_spatial_id IS NULL", sql)
+        self.assertIn("provisioning_content_checksum", sql)
+        self.assertIn("DISPOSABLE_TEST_ONLY", sql)
 
     def test_fixture_is_guarded_and_does_not_seed_police_employment_or_geography(self):
         fixture = (ROOT / "tests/pkg001/sw_db_001_world_fixture.sql").read_text()
