@@ -299,7 +299,7 @@ BEGIN
     COALESCE(NEW.source_ref,'geography-version:'||NEW.spatial_id::text),
     'domain-trigger','geography version canonical name',NEW.effective_from_tick
   );
-  IF FOUND AND v_prior.spatial_id IS NOT NULL
+  IF v_prior.spatial_id IS NOT NULL
      AND sw_names.normalize_name(v_prior.name) <> sw_names.normalize_name(NEW.name) THEN
     SELECT reservation_id INTO v_old_id FROM sw_names.name_reservation
       WHERE entity_type='GEOGRAPHY' AND entity_id=NEW.spatial_id
