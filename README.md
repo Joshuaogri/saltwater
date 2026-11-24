@@ -75,8 +75,8 @@ The initial map baseline contains 8 districts, 24 neighbourhoods, 42 named roads
 
 - [Read SW-UNS-001 — Universal Naming Standard](docs/blueprint/decisions/SW-UNS-001-universal-naming-standard.md)
 - Existing adopted names must be preserved and registered before new names are generated, including the eight districts, 24 neighbourhoods and 42 named SW-GEO-V1 roads.
-- Policy adoption is complete; central registry implementation and automated acceptance tests are not yet verified. No Neon production changes were made or authorised.
+- Policy adoption is complete. SW-NAM-001 implementation is approved and in progress; disposable SQL/Python acceptance tests and CI have been added but are not yet verified. No Neon production changes were made or authorised.
 
 ### Universal naming implementation
 
-The adopted core naming policy is ready for implementation through [SW-NAM-001 — Universal Naming Registry, Generator and Enforcement](docs/implementation/approval-packages/SW-NAM-001-universal-naming-registry-generator-and-enforcement.md). The package covers persistent global name reservations, normalization and collision detection, deterministic name generation, registration of existing canon, domain integration and disposable PostgreSQL tests. **Status: PROPOSED — awaiting explicit user approval.** No Neon production writes are authorised.
+The adopted core naming policy is being implemented through [SW-NAM-001 — Universal Naming Registry, Generator and Enforcement](docs/implementation/approval-packages/SW-NAM-001-universal-naming-registry-generator-and-enforcement.md). Committed slices include disposable proposal `0009`, Python normalization/registry/generation, geography and person adapters, SQL/Python/concurrency/rollback/restore tests and disposable PostgreSQL CI. BP-04 and operational entity adapters remain NOT CONNECTED pending authoritative schemas. **Status: APPROVED — implementation in progress; CI verification pending.** No Neon production writes are authorised.
