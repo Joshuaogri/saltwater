@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 EXPECTED = {"districts": 8, "neighbourhoods": 24, "roads": 42, "nodes": 367, "segments": 685, "routes": 5}
-UNRESOLVED_SOURCE_MAPPING_COUNT = 100
 
 
 def _unique(items, key):
@@ -26,6 +25,10 @@ def audit_geography(path: str | Path) -> dict:
     roads = data.get("roads", [])
     network = data.get("network", {})
     nodes, segments, routes = (network.get(k, []) for k in ("nodes", "segments", "routes"))
+    register_path = Path(path).with_name("bp04-03-stage-a-source-spatial-reconciliation-v1.json")
+    register = json.loads(register_path.read_text(encoding="utf-8")) if register_path.exists() else {}
+    mapping_records = register.get("records", [])
+    unresolved_count = sum(1 for row in mapping_records if row.get("mapping_status") == "UNRESOLVED" and row.get("spatial_id") is None)
     node_ids = {n.get("id") for n in nodes}
     segment_ids = {s.get("id") for s in segments}
     district_ids = {d.get("id") for d in districts}
@@ -55,6 +58,9 @@ def audit_geography(path: str | Path) -> dict:
         "route_nodes_resolve": all(set(r.get("node_ids", [])).issubset(node_ids) for r in routes),
         "route_segments_resolve": all(set(r.get("segment_ids", [])).issubset(segment_ids) for r in routes),
         "single_connected_component_claim": network.get("connected_components") == 1 or data.get("validation", {}).get("connected_components") == 1,
+        "reconciliation_register_present": register.get("register_id") == "BP04-03-STAGE-A-RECON-001",
+        "reconciliation_register_has_100_source_records": len(mapping_records) == 100,
+        "all_source_mappings_explicitly_unresolved": unresolved_count == 100 and register.get("summary", {}).get("resolved") == 0,
     }
     blockers = [
         "100 source-to-spatial-ID mappings remain unresolved and require a source-by-source reconciliation register.",
@@ -71,7 +77,7 @@ def audit_geography(path: str | Path) -> dict:
         "checks": checks,
         "passed_checks": sum(checks.values()),
         "failed_checks": [name for name, passed in checks.items() if not passed],
-        "unresolved_source_to_spatial_id_mappings": UNRESOLVED_SOURCE_MAPPING_COUNT,
+        "unresolved_source_to_spatial_id_mappings": unresolved_count,
         "blockers": blockers,
         "operational_seed_eligible": False,
         "geometry_import_performed": False,
