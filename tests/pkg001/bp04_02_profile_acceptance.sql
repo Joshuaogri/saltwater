@@ -16,16 +16,20 @@ BEGIN
  INSERT INTO sw_property.access_point(entity_code,display_name,building_id,created_tick,source_ref,actor_ref,reason)
  VALUES('SWA-BP04-02-TEST-0001','BP04 Profile Test Access',b,0,'bp04-02-test:access','test-runner','synthetic acceptance only') RETURNING access_point_id INTO a;
 
- INSERT INTO sw_property.property_profile VALUES
+ INSERT INTO sw_property.property_profile
+ (property_id,property_class,primary_use,secondary_uses,development_form,site_state,boundary_status,terrain_code,drainage_state,perimeter_type,utility_availability,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason) VALUES
  (p,'mixed_use','residential and retail',ARRAY['retail','residential'],'compound','developed','verified','level','adequate','fence','partial','bp04-02-test:profile','test-runner','documented',0,transaction_timestamp(),'typed profile acceptance');
  INSERT INTO sw_property.building_profile
  (building_id,building_use,building_form,structure_class,construction_system,foundation_type,roof_form,roof_covering,facade_system,storeys_above,storeys_below,height_m,height_datum,structural_capacity_persons,authorised_capacity_persons,construction_year,completion_year,heritage_status,source_ref,actor_ref,confidence_code,effective_from_tick,reason)
  VALUES(b,'mixed-use','tower','high_rise','reinforced_concrete','piles','flat','membrane','curtain_wall',8,1,31.500,'ground datum',300,250,2012,2014,'not_designated','bp04-02-test:profile','test-runner','documented',0,'typed profile acceptance');
- INSERT INTO sw_property.premises_profile VALUES
+ INSERT INTO sw_property.premises_profile
+ (premises_id,premises_type,primary_function,floor_level,orientation,fitout_standard,occupancy_suitability,security_boundary,accessibility_state,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason) VALUES
  (pr,'shop','retail unit','Ground','east','enhanced','suitable','controlled','accessible','bp04-02-test:profile','test-runner','observed',0,transaction_timestamp(),'typed profile acceptance');
- INSERT INTO sw_property.unit_profile VALUES
+ INSERT INTO sw_property.unit_profile
+ (unit_id,unit_class,local_locator,floor_level,room_count,physical_capacity,suitability_state,fitout_state,accessibility_state,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason) VALUES
  (u,'shop','G-01','Ground',2,12,'suitable','standard','accessible','bp04-02-test:profile','test-runner','observed',0,transaction_timestamp(),'typed profile acceptance');
- INSERT INTO sw_property.access_point_profile VALUES
+ INSERT INTO sw_property.access_point_profile
+ (access_point_id,access_type,access_modes,directionality,control_type,availability_state,accessibility_state,emergency_egress,loading_capable,source_ref,actor_ref,confidence_code,effective_from_tick,recorded_at,reason) VALUES
  (a,'pedestrian_entrance',ARRAY['pedestrian','cycle'],'bidirectional','card','available','accessible',false,false,'bp04-02-test:profile','test-runner','verified',0,transaction_timestamp(),'typed profile acceptance');
 
  INSERT INTO sw_property.physical_measurement(entity_type,entity_id,measure_code,numeric_value,unit_code,measurement_basis,precision_code,method_code,effective_from_tick,source_ref,actor_ref,confidence_code,reason)
