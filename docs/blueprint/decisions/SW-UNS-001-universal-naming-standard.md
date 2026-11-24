@@ -14,7 +14,7 @@ Saltwater must have one coherent naming system. Names must be distinctive, natur
 
 This is a core world foundation, not an optional feature. Every division must use the same universal naming authority. A division may define vocabulary and domain-specific naming rules, but it may not create a competing registry, weaken uniqueness, recycle a retired name or bypass the shared controls.
 
-**Controlling rule:** Every named entity has one permanent entity ID and one unique canonical name. Names are labels; permanent IDs are identity. Neither may substitute for the other.
+**Controlling rule:** Every named entity has one permanent entity ID and one unique canonical name, subject to the single, explicit sovereign/city shared-name exception in §3.2. Names are labels; permanent IDs are identity. Neither may substitute for the other.
 
 ## 2. Coverage
 
@@ -44,7 +44,7 @@ The list is deliberately inclusive. A division cannot claim an entity is outside
 
 1. Every entity receives a stable, opaque, permanent entity ID before or atomically with creation.
 2. Every named entity has one canonical name. Unnamed entities may use a controlled type label in internal interfaces, but must not be given a fabricated public name.
-3. Canonical names are unique across the **shared Saltwater canonical-name namespace**, not merely within one table, district, division or entity type. An identical canonical name cannot be assigned to two different entities, even if they are different types.
+3. Canonical names are unique across the **shared Saltwater canonical-name namespace**, not merely within one table, district, division or entity type. An identical canonical name cannot be assigned to two different entities, even if they are different types, except for the single, tightly scoped sovereign/city exception defined in §3.2.
 4. A name remains reserved to its entity throughout its lifecycle and after retirement, closure, demolition, death, dissolution, departure or deletion from active use. It is never recycled for a different entity.
 5. A genuine rename creates a new name record linked to the same entity ID. It does not erase, overwrite or transfer the former name.
 6. Names never act as primary keys, foreign keys or substitutes for entity IDs.
@@ -62,7 +62,24 @@ The list is deliberately inclusive. A division cannot claim an entity is outside
 - Identity is never inferred from a name alone. Two records must not be merged merely because their names match.
 - A legal name change preserves the former name and its effective dates. The former name cannot be reassigned to another person.
 
-### 3.2 Addresses and structured locators
+### 3.2 Sole shared-name exception — Saltwater sovereign territory and playable city
+
+The user has expressly approved one exception: the sovereign territory and the playable city may both retain the exact canonical display name **Saltwater**, while remaining two distinct geographic entities with two distinct permanent spatial IDs.
+
+This exception is deliberately narrow and is not a general relaxation of global uniqueness:
+
+1. It applies only to the one canonical sovereign-root entity (existing kind 1 / entity code `saltwater-state`) and the one canonical playable-city entity (existing kind 2 / entity code `saltwater-city`).
+2. Both entities retain their existing stable IDs, ownership, parent relationship and separate records. They must not be merged or treated as one entity.
+3. The exact normalized canonical name `saltwater` is permitted for this pair only. No third entity, alias, business, person, road, district, neighbourhood, property, operational object or historical name may claim it.
+4. The registry must represent this as an explicit, code-level exception for this exact pair of entity types/IDs, not as a general duplicate-name allowance or a client-side bypass.
+5. Both names remain searchable by stable ID and entity type. A name-only search for `Saltwater` must return both records as an explicit ambiguity/disambiguation result; it must never silently choose one.
+6. Case, punctuation, spacing, Unicode and other normalized variants do not create additional exceptions. The exception covers the one exact canonical normalized key only.
+7. The exception must be auditable and covered by positive tests for the permitted pair and negative tests proving a third entity and all other cross-type duplicates are rejected.
+8. The exception does not extend to aliases, former names, retired names or any other name form.
+
+This is the only shared canonical-name exception unless the user expressly approves another one and the standard is versioned accordingly.
+
+### 3.3 Addresses and structured locators
 
 An address is both a structured locator and a display form. Its uniqueness is enforced by a canonical address key built from the authoritative components (geography ID, road ID, building/plot number and unit where applicable), not by punctuation in a display string alone. Two distinct premises may share a building address only where the explicit multi-unit address model permits it; each unit/access point must remain individually resolvable. BP-02 owns geographic/address identity; BP-04 owns property, building, premises and unit identity.
 
@@ -86,7 +103,7 @@ The central registry must distinguish the following concepts:
 | Pronunciation | Optional human-readable pronunciation aid |
 | Search tokens | Derived, non-authoritative search aids |
 
-The registry must maintain a unique reservation for each canonical normalized name key. Registered aliases and alternate names must also be collision-checked and resolvable without ambiguity. Historical forms remain searchable as historical references but cannot be claimed by another entity.
+The registry must maintain a unique reservation for each canonical normalized name key, with only the exact two-entity Saltwater sovereign/city exception in §3.2. Registered aliases and alternate names must also be collision-checked and resolvable without ambiguity; the exception does not apply to aliases. Historical forms remain searchable as historical references but cannot be claimed by another entity.
 
 A name record must never be detached from its history or reassigned to a new entity.
 
@@ -113,7 +130,7 @@ The comparison key is not the display name. Normalization must not silently rewr
 - **Equivalent Unicode or diacritic collision:** hard reject or block pending authoritative review where the equivalence is uncertain.
 - **Near-duplicate or confusable spelling:** hold for review; do not auto-accept.
 - **Similar pronunciation/transliteration:** hold for review where likely to confuse speech, dispatch, search or records.
-- **Same name in a different entity type:** hard reject under the shared canonical namespace.
+- **Same name in a different entity type:** hard reject under the shared canonical namespace, except the exact sovereign-territory/playable-city pair defined in §3.2.
 - **Same historical name proposed for another entity:** hard reject.
 - **Alias colliding with another active canonical name or alias:** reject or require a different unambiguous form.
 - **Legitimate component reuse:** allowed only where the component is not itself registered as a complete entity name or conflicting standalone alias.
