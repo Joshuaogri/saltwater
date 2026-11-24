@@ -135,6 +135,25 @@ class PostgresRecoveryStore:
         finally:
             conn.close()
 
+    def resolve_quarantined_claim(self, decision: ClaimReconciliation) -> str:
+        decision.validate()
+        if decision.decision == "indeterminate":
+            raise RecoveryError("quarantine resolution requires a conclusive owner decision")
+        conn = self._connect()
+        try:
+            with conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT sw_runtime.resolve_quarantined_event_claim(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                        (decision.event_id, decision.claim_token, decision.decision,
+                         decision.owner_domain, decision.owner_response_ref, decision.outcome_ref,
+                         decision.actor_ref, decision.approval_ref, decision.reason_code,
+                         decision.recovery_key, decision.checkpoint_id),
+                    )
+                    return cur.fetchone()[0]
+        finally:
+            conn.close()
+
     def finish_claim_recovery(self) -> bool:
         conn = self._connect()
         try:
