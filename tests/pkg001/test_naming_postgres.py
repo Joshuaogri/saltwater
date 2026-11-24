@@ -46,7 +46,10 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
         except psycopg.errors.UniqueViolation:
             return ("collision", None)
         except psycopg.Error as exc:
-            if exc.sqlstate == "23505":
+            if exc.sqlstate in {"23505", "P0001"} and (
+                "name is already permanently reserved" in str(exc)
+                or exc.sqlstate == "23505"
+            ):
                 return ("collision", None)
             raise
 
