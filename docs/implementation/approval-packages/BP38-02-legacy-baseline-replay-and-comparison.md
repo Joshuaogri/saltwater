@@ -1,6 +1,6 @@
 # BP38-02 — Independent Legacy Baseline Replay and Comparison
 
-**Status:** Tool implemented on `main`; live reference-vs-Neon comparison NOT RUN.  
+**Status:** Comparator implemented on `main`; independent disposable replay and drift-detection CI PASS (run [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975)); live reference-vs-Neon comparison NOT RUN.  
 **Production authority:** No Neon write or adoption approval is granted by this package.
 
 ## Purpose
@@ -43,3 +43,8 @@ A passing result is evidence for the compared categories only. It is not blanket
 ## Adoption gate
 
 No checksum adoption is included. After the full comparison and supplementary review pass, prepare a separate exact, conditional one-row update for `version=1`, `migration_name='foundation'`, and `checksum_sha256 IS NULL`. Present the exact SHA-256, statement, row-count guard, expected storage effect and rollback considerations for explicit user approval. Migration 0002 remains a distinct subsequent operation requiring separate approval.
+
+
+## CI evidence — 2026-11-24
+
+Workflow run [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975) passed all steps. It created independent PostgreSQL 18 reference and target databases, replayed exact migration 0001, confirmed the comparator accepts matching schema/canonical world data, deliberately introduced a target-only schema change and confirmed that the comparator rejects the drift, then ran the migration-runner and runtime-kernel tests. The CI comparison is disposable-only; it does not connect to Neon and is not evidence that the live Neon baseline matches the replay. See [BP38-02 run 0001](../test-evidence/BP38-02-run-0001.md).
