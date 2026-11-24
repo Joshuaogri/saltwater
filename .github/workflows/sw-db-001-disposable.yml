@@ -145,7 +145,7 @@ jobs:
           before_rows=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_business.business)||':'||(SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_business.business_history)||':'||(SELECT count(*) FROM sw_ops.provisioning_content_checksum)||':'||(SELECT count(*) FROM sw_core.simulation_event);")
           psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
-          after_rows=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_business.business)||':'||(SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_business.business_history)||':'||(SELECT count(*) FROM sw_core.simulation_event);")
+          after_rows=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_business.business)||':'||(SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_business.business_history)||':'||(SELECT count(*) FROM sw_ops.provisioning_content_checksum)||':'||(SELECT count(*) FROM sw_core.simulation_event);")
           echo "idempotent_repeat_database_bytes_before=$before"
           echo "idempotent_repeat_database_bytes_after=$after"
           echo "idempotent_repeat_storage_delta_bytes=$((after-before))"
@@ -161,9 +161,13 @@ jobs:
         run: |
           cid=$(docker ps -q --filter ancestor=postgres:16 | head -n1)
           test -n "$cid"
+          expected_checksums=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT entity_type||':'||record_count||':'||encode(content_sha256,'hex') FROM sw_ops.provisioning_content_checksum ORDER BY entity_type;")
           docker exec "$cid" pg_dump -U "$PGUSER" -d "$PGDATABASE" -Fc -f /tmp/sw-db-001.dump
           docker exec "$cid" createdb -U "$PGUSER" saltwater_restore
           docker exec "$cid" pg_restore -U "$PGUSER" --exit-on-error --no-owner -d saltwater_restore /tmp/sw-db-001.dump
+          actual_checksums=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT entity_type||':'||record_count||':'||encode(content_sha256,'hex') FROM sw_ops.provisioning_content_checksum ORDER BY entity_type;")
+          test "$expected_checksums" = "$actual_checksums"
+          echo "RESTORED_CONTENT_CHECKSUMS_MATCH=$actual_checksums"
           docker exec -i "$cid" psql -U "$PGUSER" -d saltwater_restore -v ON_ERROR_STOP=1 < tests/pkg001/sw_db_001_backup_restore_assert.sql
       - name: Test the shared population ceiling at 9,999 and concurrent final slot
         run: |
