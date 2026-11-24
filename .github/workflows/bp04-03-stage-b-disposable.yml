@@ -93,7 +93,7 @@ jobs:
 
       - name: Generate deterministic candidate manifest
         run: python -m runtime.parcel_candidate_generator
-      - name: Generate width-agnostic road corridor register
+      - name: Generate fictional canonical road reserve corridor register
         run: python -m runtime.road_corridor_audit
       - name: Generate parcel coverage area reconciliation
         run: python -m runtime.parcel_coverage_audit
