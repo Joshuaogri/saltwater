@@ -44,7 +44,7 @@ CREATE UNIQUE INDEX schedule_claim_token_uq
   ON sw_runtime.schedule(claim_token) WHERE claim_token IS NOT NULL;
 
 CREATE FUNCTION sw_runtime.guard_schedule_write() RETURNS trigger
-LANGUAGE plpgsql AS $
+LANGUAGE plpgsql AS $bp37$
 DECLARE
   runtime_row sw_runtime.state%ROWTYPE;
 BEGIN
@@ -84,7 +84,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$bp37$;
 
 CREATE TRIGGER schedule_write_guard
 BEFORE INSERT OR UPDATE ON sw_runtime.schedule
@@ -95,7 +95,7 @@ LANGUAGE plpgsql AS $
 BEGIN
   RAISE EXCEPTION 'schedule records are retained; cancel or expire through lifecycle';
 END
-$;
+$bp37$;
 CREATE TRIGGER schedule_no_delete
 BEFORE DELETE ON sw_runtime.schedule
 FOR EACH ROW EXECUTE FUNCTION sw_runtime.reject_schedule_delete();
