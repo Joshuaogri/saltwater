@@ -8,6 +8,7 @@ from __future__ import annotations
 import shlex
 from dataclasses import dataclass
 from enum import Enum
+from types import MappingProxyType
 from typing import Final
 
 
@@ -61,19 +62,15 @@ class CommandParseError:
     supplied_token: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
 class CommandParseResult:
-    """Small typed result wrapper; exactly one of command/error is populated."""
-    __slots__ = ("command", "error")
+    """Immutable typed result; exactly one of command/error is populated."""
+    command: ParsedPlayerCommand | None = None
+    error: CommandParseError | None = None
 
-    def __init__(
-        self,
-        command: ParsedPlayerCommand | None = None,
-        error: CommandParseError | None = None,
-    ) -> None:
-        if (command is None) == (error is None):
+    def __post_init__(self) -> None:
+        if (self.command is None) == (self.error is None):
             raise ValueError("exactly one of command or error is required")
-        self.command = command
-        self.error = error
 
     @property
     def ok(self) -> bool:
@@ -116,9 +113,9 @@ _DEFINITIONS: Final[tuple[PlayerCommandDefinition, ...]] = (
 )
 
 COMMAND_CATALOGUE: Final[tuple[PlayerCommandDefinition, ...]] = _DEFINITIONS
-COMMAND_BY_TOKEN: Final[dict[str, PlayerCommandDefinition]] = {
+COMMAND_BY_TOKEN: Final = MappingProxyType({
     item.token: item for item in COMMAND_CATALOGUE
-}
+})
 if len(COMMAND_BY_TOKEN) != len(COMMAND_CATALOGUE):
     raise RuntimeError("duplicate player command token in canonical catalogue")
 COMMAND_IDS: Final[frozenset[str]] = frozenset(item.command_id for item in COMMAND_CATALOGUE)
