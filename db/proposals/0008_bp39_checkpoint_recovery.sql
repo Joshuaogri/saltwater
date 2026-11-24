@@ -390,7 +390,7 @@ BEGIN
   business_total:=sw_runtime.count_canonical_businesses();
   digest_value:=md5(concat_ws('|',new_id::text,1,p_source_environment,p_source_project,
     p_source_branch,p_source_database,schema_mark,state_row.state,state_row.player_present,
-    state_row.world_tick,state_row.last_event_id,event_total,event_watermark,
+    state_row.world_tick,event_watermark,event_total,
     work_counts::text,sched_counts::text,people_total,business_total,'repeatable_read',
     p_actor_ref,p_approval_ref));
   INSERT INTO sw_runtime.checkpoint_manifest(
@@ -401,7 +401,7 @@ BEGIN
   ) VALUES (
     new_id,p_source_environment,p_source_project,p_source_branch,p_source_database,
     schema_mark,state_row.state,state_row.player_present,state_row.world_tick,
-    state_row.last_event_id,event_total,work_counts,sched_counts,people_total,
+    event_watermark,event_total,work_counts,sched_counts,people_total,
     business_total,digest_value,p_actor_ref,p_approval_ref
   );
   RETURN new_id;
