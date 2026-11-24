@@ -56,7 +56,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertFalse(identity_map.operational_seed_approved)
         self.assertEqual(
             {row.source_id for row in identity_map.entries},
-            {row.source_id for row in identity_map.entries},
+            {item.source_id for item in self.report.candidates if item.source_id not in {"saltwater-state", "saltwater-city"}},
         )
         self.assertEqual(
             {row.entity_code for row in identity_map.entries},
