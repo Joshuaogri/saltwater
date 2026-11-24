@@ -66,7 +66,7 @@ class PostgresNamingAdapterTests(unittest.TestCase):
     def test_generation_batch_manifest_is_persisted_with_binary_digest(self):
         digest = hashlib.sha256(b"fixture").hexdigest()
         batch = GeneratedNameBatch(
-            domain="person", generator_version=1, config_version="1",
+            domain="person", generator_version=1, normalizer_version=1, config_version="1",
             seed=14, candidates=("Amara Nneka Okafor",), manifest_sha256=digest,
         )
         batch_id = self.registry.record_generation_batch(
