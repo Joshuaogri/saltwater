@@ -40,6 +40,12 @@ Intentionally excluded:
 
 A passing result is evidence for the compared categories only. It is not blanket certification of every PostgreSQL object or permission.
 
+## Manual production verification workflow
+
+A manual-only workflow is provided at [BP38-02 read-only Neon baseline verification](../../../.github/workflows/bp38-02-neon-read-only-verification.yml). It requires the protected repository secret `DATABASE_URL`, starts a disposable PostgreSQL 18 reference service, replays the exact committed 0001 migration there, and compares that reference with Neon. For target connections it sets PostgreSQL `default_transaction_read_only=on`; it runs no migration or production DDL/DML. It also emits a supplementary SELECT-only catalogue report covering database size/version, schema relation ownership/ACL/RLS, sequence configuration/current values, role memberships, extensions, selected database settings, migration ledger and storage-operation history. The report is uploaded as a 14-day workflow artifact. The workflow is `workflow_dispatch` only and has no push trigger.
+
+The workflow has been committed but has not yet been dispatched. A missing `DATABASE_URL`, permission failure, pg_dump failure, mismatch or unexplained supplementary difference must stop adoption. Do not put the connection URL in logs, artifacts, command output or repository files.
+
 ## Adoption gate
 
 No checksum adoption is included. After the full comparison and supplementary review pass, prepare a separate exact, conditional one-row update for `version=1`, `migration_name='foundation'`, and `checksum_sha256 IS NULL`. Present the exact SHA-256, statement, row-count guard, expected storage effect and rollback considerations for explicit user approval. Migration 0002 remains a distinct subsequent operation requiring separate approval.
