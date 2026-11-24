@@ -60,7 +60,7 @@ BEGIN
     RAISE EXCEPTION 'command role lacks controlled naming functions';
   END IF;
 END
-$;
+$$;
 RESET ROLE;
 
 -- Owner-level append-only guards must also reject direct history mutation.
