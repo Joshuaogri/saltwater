@@ -183,6 +183,12 @@ class GeneratorConfig:
     place_roots: tuple[str, ...]
     business_roots: tuple[str, ...]
     business_forms: tuple[str, ...] = ("Works", "House", "Trading", "Services", "Group")
+    building_roots: tuple[str, ...] = ()
+    building_forms: tuple[str, ...] = ("House", "Court", "Tower", "Hall", "Residences", "Mews")
+    organisation_roots: tuple[str, ...] = ()
+    organisation_forms: tuple[str, ...] = ("Association", "Foundation", "Authority", "Trust", "Institute", "Group")
+    operational_roots: tuple[str, ...] = ()
+    operational_forms: tuple[str, ...] = ("Beacon", "Harbour", "Civic", "Rapid", "Delta", "Summit", "North", "South")
     config_version: str = "1"
 
 
@@ -222,6 +228,20 @@ def generate_candidates(domain: str, count: int, *, seed: int, config: Generator
             if not config.business_roots:
                 raise ValueError("business_roots must not be empty")
             candidate = f"{rng.choice(config.business_roots)} {rng.choice(config.business_forms)}"
+        elif domain == "building":
+            roots = config.building_roots or config.place_roots
+            if not roots:
+                raise ValueError("building_roots or place_roots must not be empty")
+            candidate = f"{rng.choice(roots)} {rng.choice(config.building_forms)}"
+        elif domain == "organisation":
+            roots = config.organisation_roots or config.business_roots
+            if not roots:
+                raise ValueError("organisation_roots or business_roots must not be empty")
+            candidate = f"{rng.choice(roots)} {rng.choice(config.organisation_forms)}"
+        elif domain == "operational":
+            if not config.operational_roots:
+                raise ValueError("operational_roots must not be empty")
+            candidate = f"{rng.choice(config.operational_roots)} {rng.choice(config.operational_forms)}"
         else:
             raise ValueError("unsupported naming domain")
         key = normalize_name(candidate)
