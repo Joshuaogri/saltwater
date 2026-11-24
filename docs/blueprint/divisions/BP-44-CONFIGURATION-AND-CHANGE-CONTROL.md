@@ -337,6 +337,10 @@ The following source requirements/tests are mapped to BP-44 by the authoritative
 16. Automated link/register/crosswalk validation and CI quality gates.
 17. Configuration activation atomicity and rollback mechanism.
 
+## SW-NAM-001 — naming policy implementation record
+
+SW-UNS-001 remains the adopted universal policy. Its only approved shared canonical-name exception permits the sovereign territory and playable city to retain the exact name `Saltwater` under separate permanent IDs; all other entity names remain globally unique, and name-only lookup must return both roots as ambiguous. SW-NAM-001 implements normalizer version 1, deterministic generator seed/configuration inputs, explicit adapter coverage and versioned SQL proposal 0009. Any future normalizer change must be collision-audited before activation; no silent canon rewrite or name recycling is allowed. The implementation package is approved and in progress; its disposable CI evidence is pending. No Neon operation is authorised.
+
 ## 21. Completion status
 
 - Specification: DESIGNED_DRAFT; review/approval pending.
