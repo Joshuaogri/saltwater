@@ -134,3 +134,102 @@ def inventory_geography_names(payload: Mapping[str, Any]) -> GeographyNameInvent
         unresolved_spatial_ids=unresolved,
         can_import=can_import,
     )
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialIdentityMapEntry:
+    """Stable source-to-entity-code mapping; spatial_id is assigned only on materialisation."""
+    source_id: str
+    entity_code: str
+    entity_type: str
+    entity_kind: int
+    display_name: str
+    parent_entity_code: str
+    source_ref: str
+    spatial_id: None = None
+
+
+@dataclass(frozen=True, slots=True)
+class SpatialIdentityMap:
+    dataset_id: str
+    source_status: str
+    operational_seed_approved: bool
+    entries: tuple[SpatialIdentityMapEntry, ...]
+
+
+def build_spatial_identity_map(payload: Mapping[str, Any]) -> SpatialIdentityMap:
+    """Create a deterministic source-ID mapping without inventing database IDs.
+
+    The source ID is preserved as the future stable sw_geo.entity.entity_code.
+    PostgreSQL-generated spatial_id values are deliberately left unassigned
+    until a disposable materialisation run records the actual returned IDs.
+    """
+    if payload.get("schema") != "saltwater-geography/1.0":
+        raise ValueError("unsupported geography dataset schema")
+    dataset_id = str(payload.get("dataset_id", "")).strip()
+    if not dataset_id:
+        raise ValueError("geography dataset_id is required")
+
+    rows: list[SpatialIdentityMapEntry] = []
+
+    def add(source_id: Any, entity_type: str, entity_kind: int,
+            display_name: Any, parent_code: str) -> None:
+        code = str(source_id or "").strip()
+        name = str(display_name or "").strip()
+        if not code or not name:
+            raise ValueError("every mapped spatial identity requires a source ID and display name")
+        if code in {"saltwater-state", "saltwater-city"}:
+            raise ValueError("project root IDs are already defined by the foundation")
+        rows.append(SpatialIdentityMapEntry(
+            source_id=code,
+            entity_code=code,
+            entity_type=entity_type,
+            entity_kind=entity_kind,
+            display_name=name,
+            parent_entity_code=parent_code,
+            source_ref=f"{dataset_id}:{entity_type.lower()}:{code}",
+        ))
+
+    for item in payload.get("districts", []):
+        add(item.get("id"), "DISTRICT", 3, item.get("name"), "saltwater-city")
+    for item in payload.get("neighbourhoods", []):
+        district_code = str(item.get("district_id") or "").strip()
+        if not district_code:
+            raise ValueError("neighbourhood requires its source district_id")
+        add(item.get("id"), "NEIGHBOURHOOD", 4, item.get("name"), district_code)
+    for item in payload.get("roads", []):
+        add(item.get("id"), "ROAD", 7, item.get("name"), "saltwater-city")
+    for item in payload.get("network", {}).get("routes", []):
+        add(item.get("id"), "ROUTE", 9, item.get("name"), "saltwater-city")
+
+    feature_kinds = {
+        "harbour_water": ("GEO_ZONE", 5),
+        "constructed_water": ("GEO_ZONE", 5),
+        "terrain_feature": ("GEO_ZONE", 5),
+        "landmark": ("LANDMARK", 10),
+    }
+    for feature in payload.get("features", []):
+        props = feature.get("properties", {})
+        feature_type = props.get("entity_type")
+        if feature_type not in feature_kinds:
+            continue
+        mapped_type, mapped_kind = feature_kinds[feature_type]
+        add(feature.get("id"), mapped_type, mapped_kind, props.get("name"), "saltwater-city")
+
+    rows.sort(key=lambda item: item.source_id)
+    ids = [item.source_id for item in rows]
+    if len(ids) != len(set(ids)):
+        raise ValueError("spatial source IDs must be globally unique")
+    codes = {item.entity_code for item in rows} | {"saltwater-state", "saltwater-city"}
+    if any(item.parent_entity_code not in codes for item in rows):
+        raise ValueError("spatial parent entity code does not resolve")
+    if len({normalize_name(item.display_name) for item in rows}) != len(rows):
+        raise ValueError("spatial map contains a duplicate normalized display name")
+
+    source_status = str(payload.get("status", "unknown"))
+    return SpatialIdentityMap(
+        dataset_id=dataset_id,
+        source_status=source_status,
+        operational_seed_approved=(source_status == "APPROVED_FOR_OPERATIONAL_SEED"),
+        entries=tuple(rows),
+    )
