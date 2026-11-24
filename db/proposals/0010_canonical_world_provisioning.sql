@@ -108,7 +108,7 @@ BEFORE UPDATE ON sw_business.business
 FOR EACH ROW EXECUTE FUNCTION sw_business.guard_business_update();
 
 CREATE FUNCTION sw_business.record_business_history()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $business_history$
 BEGIN
   IF TG_OP='INSERT' THEN
     INSERT INTO sw_business.business_history
@@ -149,7 +149,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END
-$;
+$business_history$;
 CREATE TRIGGER business_history_append
 AFTER INSERT OR UPDATE OF operating_status,site_assignment_status,primary_spatial_id
 ON sw_business.business
