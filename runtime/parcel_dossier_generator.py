@@ -246,6 +246,9 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             "frontage_segment_contact_count": sum(
                 len(frontage["road_segment_ids"]) for row in parcel_rows for frontage in row["frontages"]
             ),
+            "frontage_contact_component_count": sum(
+                frontage["contact_component_count"] for row in parcel_rows for frontage in row["frontages"]
+            ),
             "access_location_candidate_count": access_count,
             "adjacency_relationship_count": len(adjacency_rows),
             "shared_boundary_relationship_count": sum(1 for r in adjacency_rows if r["relationship_code"] == "SHARED_BOUNDARY_CANDIDATE"),
