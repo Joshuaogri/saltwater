@@ -19,9 +19,10 @@ Implement the smallest reliable database-integrity foundation around the existin
 5. One transaction per migration, including its ledger record.
 6. Refuse unknown, missing, reordered, modified or checksum-less applied migrations.
 7. Record a deterministic schema-catalogue fingerprint and detect live drift.
-8. Validate the canonical schema with disposable PostgreSQL integration tests.
-9. Keep migration credentials outside GitHub source and test workflows.
-10. Preserve compact storage; add no duplicate migration/audit tables.
+8. Fingerprint all Saltwater (`sw_*`) schemas, including relations, columns, constraints, indexes, routines, triggers and row-security policies.
+9. Validate the canonical schema with disposable PostgreSQL integration tests.
+10. Keep migration credentials outside GitHub source and test workflows.
+11. Preserve compact storage; add no duplicate migration/audit tables.
 
 ## 3. Existing structures reused
 
@@ -35,14 +36,15 @@ Migration 0002 strengthens `sw_ops.schema_migration` by requiring a valid SHA-25
 
 The live production ledger contains migration 0001 with a NULL checksum. The new runner deliberately refuses to silently bless this row. A future production adoption step must independently verify the existing schema against the approved 0001 baseline, measure the exact database effect, and receive its own explicit production-operation approval.
 
-No Neon production migration, data write, upload, credential change or schema mutation is authorised here.
+No Neon production migration, data write, upload, credential change or schema mutation is authorised here. The former push-triggered production deployment workflow was disabled after its attempted 0002 run failed on the existing NULL checksum; a read-only Neon check confirmed the ledger remains at version 1, the checksum is still NULL, migration 0002 is absent and database size remains 9,306,112 bytes.
 
 ## 5. Files delivered
 
 - `scripts/migrate.py` — ordered migration runner; default read-only, explicit `--apply`.
 - `db/migrations/0002_migration_integrity.sql` — checksum and schema-fingerprint ledger extension.
 - `tests/database/test_migrate.py` — deterministic discovery and transaction-wrapper unit tests.
-- `.github/workflows/database-validation.yml` — disposable PostgreSQL execution, idempotency, checksum-drift and schema-drift checks.
+- `.github/workflows/database-validation.yml` — disposable PostgreSQL execution, idempotency, legacy-checksum refusal, checksum-drift and schema-drift checks.
+- `.github/workflows/neon-production-migrations.yml` — production push-triggered deployment disabled; no Neon connection is made by repository pushes.
 
 ## 6. Acceptance tests
 
@@ -58,10 +60,10 @@ No Neon production migration, data write, upload, credential change or schema mu
 | BP38-01-AT-08 | Re-running applied migrations is idempotent | Disposable PostgreSQL |
 | BP38-01-AT-09 | Source checksum mismatch is rejected | Disposable PostgreSQL |
 | BP38-01-AT-10 | Live schema drift is rejected | Disposable PostgreSQL |
-| BP38-01-AT-11 | Legacy NULL checksums are not silently adopted | Explicit runner refusal |
-| BP38-01-AT-12 | No production Neon write occurs | Production audit / no write action |
+| BP38-01-AT-11 | Legacy NULL checksums are not silently adopted | Disposable PostgreSQL negative test |
+| BP38-01-AT-12 | Schema fingerprint covers every `sw_*` schema and security object | Disposable PostgreSQL drift test |\n| BP38-01-AT-13 | No production Neon write occurs | Production audit / no write action |
 
-## 7. Execution and status
+The disposable proposals 0002 and 0009 no longer insert themselves into the authoritative migration ledger. A proposal fixture is not an applied source migration; only the ordered migration runner may write that ledger. This removes version-number collisions and keeps proposal execution separate from migration history.\n\n## 7. Execution and status
 
 Implementation files are committed directly to `main`. GitHub Actions must complete the disposable PostgreSQL workflow before the slice is marked tested. A successful workflow proves only the disposable environment; it does not approve or apply anything to Neon production.
 
