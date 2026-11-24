@@ -136,12 +136,15 @@ jobs:
       - name: Verify same-manifest provisioning is idempotent
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          before_rows=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_business.business)||':'||(SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_business.business_history)||':'||(SELECT count(*) FROM sw_core.simulation_event);")
           psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          after_rows=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_business.business)||':'||(SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS')||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_business.business_history)||':'||(SELECT count(*) FROM sw_core.simulation_event);")
           echo "idempotent_repeat_database_bytes_before=$before"
           echo "idempotent_repeat_database_bytes_after=$after"
           echo "idempotent_repeat_storage_delta_bytes=$((after-before))"
-          psql -v ON_ERROR_STOP=1 -f tests/pkg001/sw_db_001_acceptance.sql
+          test "$before_rows" = "$after_rows"
+          echo "IDEMPOTENT_ROW_MANIFEST_MATCH=$after_rows"
       - name: Measure population, person, business and reconciliation query latency
         run: |
           psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT living_included,10000-living_included AS headroom FROM sw_people.population_counter WHERE singleton=1;"
