@@ -61,3 +61,32 @@ Updated 10,011-name registry measurements:
 - Schema growth remains 417,792 bytes.
 
 A subsequent workflow revision now prints separate heap, index and TOAST/auxiliary bytes. That storage-only detail is awaiting its own run; it does not affect the passing functional/restore result above.
+
+
+## Final storage-detail verification — run 45411243093
+
+**Result:** PASS  
+**Workflow:** [PKG-001 disposable PostgreSQL validation](https://github.com/Joshuaogri/saltwater/actions/runs/45411243093)  
+**Tested workflow commit:** `9a5e1a09a082e67810fb01177408ca6447a21fef`  
+**Database:** Disposable PostgreSQL 16 only
+
+After the 10,011-name fixture and associated naming history/manifests were populated, PostgreSQL reported:
+
+| Registry relation | Heap bytes | Index bytes | TOAST/auxiliary bytes | Total bytes |
+|---|---:|---:|---:|---:|
+| `name_reservation` | 2,007,040 | 6,488,064 | 40,960 | 8,536,064 |
+| `name_event` | 2,531,328 | 1,122,304 | 40,960 | 3,694,592 |
+| `generation_batch` | 8,192 | 32,768 | 8,192 | 49,152 |
+| **Total** | **4,546,560** | **7,643,136** | **90,112** | **12,279,808** |
+
+The reservation relation measured **8,536,064 bytes / 852.67 bytes per reserved name** across 10,011 names. The naming schema itself increased the empty disposable database from 10,066,967 to 10,484,759 bytes, a **417,792-byte** delta. The populated relation breakdown is separate and includes indexes and TOAST/auxiliary allocation as shown. These are not Neon production measurements.
+
+The same run passed all workflow jobs, including the full 10,000-person fixture, population-cap concurrency boundary, naming acceptance, access controls and disposable backup/restore.
+
+## Approved geography naming corrections — 2026-11-24
+
+The user approved and the repository source now records:
+- `SW-D01-N1`: **Westgate Gardens** (district `SW-D01` remains **Westgate**).
+- `SW-D03-N2`: **Civic Terrace** (landmark `SW-POI-002` remains **Government Square**).
+
+The source IDs and geometry are unchanged. The 100 unresolved source-to-spatial-ID mappings remain; SW-GEO-V1 is not approved for operational seeding and no canon import or Neon write occurred.
