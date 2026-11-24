@@ -515,3 +515,32 @@ No additional district, neighbourhood, city, territory or external playable area
 **Verification status:** `NOT_STARTED`.
 
 No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document.
+
+## 15. Initial detailed map and routable network baseline — SW-GEO-V1
+
+The first coherent, versioned Saltwater map baseline is stored in the repository:
+
+- **Map sheet:** [docs/maps/saltwater-master-map-v1.svg](../../maps/saltwater-master-map-v1.svg)
+- **Machine-readable geography and network:** [data/geography/saltwater-geography-v1.json](../../../data/geography/saltwater-geography-v1.json)
+- **Map register and data contract:** [docs/maps/README.md](../../maps/README.md)
+
+The map uses the adopted `SW-LOCAL-01` fictional metre grid and represents the single 12 km × 9 km city-state, eight districts, 24 neighbourhoods, eastern principal harbour, central-western ridge, Southworks constructed freight basin, civic/transport/port/health landmarks and the named street hierarchy.
+
+### 15.1 Network baseline
+
+The initial road graph contains:
+- 42 named roads, including the two named harbour bridges;
+- 367 junction nodes;
+- 685 routable road/bridge segments;
+- 5 named route definitions: central orbital distributor, civic north-south spine, central east-west boulevard and two emergency-priority corridors;
+- explicit road classes, stable road/node/segment/route IDs, segment endpoint references, geometry, derived length, two-way baseline direction and permitted travel-mode labels;
+- a single connected graph component, with harbour crossings represented as bridges rather than false at-grade intersections.
+
+A deterministic pre-commit structural validation reported: 8 districts, 24 neighbourhoods, all segment endpoints valid, all nodes incident to at least one segment, every segment referenced by its road record, and one connected component. The validation summary is embedded in the dataset. This is structural validation of the generated baseline, not yet the complete BP-02 acceptance suite.
+
+### 15.2 Authority and limits
+
+SW-GEO-V1 is the initial detailed planning-grade geometry baseline and the source of stable spatial IDs for subsequent map-linked work, subject to the project's review/acceptance process. It is not survey-grade. It does not yet contain parcels, individual buildings, addresses, property entrances, full pedestrian-only paths, rail/ferry service schedules, calibrated speeds/ETAs, live traffic, closures, or operational dispatch acceptance evidence. Unknown road surface, speed and restriction attributes remain unspecified rather than invented.
+
+No Neon production schema or data was changed. The JSON dataset is committed source data only; production provisioning remains separately gated. Future geography corrections must create a new version and preserve historical references; do not silently overwrite IDs or historical geometries.
+
