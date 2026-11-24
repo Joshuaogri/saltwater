@@ -230,17 +230,43 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         # points are geometric proposals, not confirmed doors or usable routes.
         parcel_dossier = dossier_by_id[parcel_id]
         frontage_candidates = parcel_dossier["access_candidates"]
-        road_point = None
-        if frontage_candidates:
-            nearest = min(frontage_candidates,
-                          key=lambda a: ((a["candidate_x_m"]-footprint.centroid.x)**2 +
-                                         (a["candidate_y_m"]-footprint.centroid.y)**2,
-                                         a["access_candidate_id"]))
-            road_point = Point(nearest["candidate_x_m"], nearest["candidate_y_m"])
+        frontage_points = [
+            (row, Point(row["candidate_x_m"], row["candidate_y_m"]))
+            for row in frontage_candidates
+        ]
         for access_no, fraction in ((1, .25), (2, .75)):
-            boundary_point = (nearest_points(footprint.boundary, road_point)[0]
-                              if access_no == 1 and road_point is not None
-                              else footprint.boundary.interpolate(footprint.boundary.length * fraction))
+            if access_no == 1 and frontage_points:
+                # Select the frontage with the shortest possible straight-line
+                # gap to the building boundary, rather than using the building
+                # centroid as a proxy for the eventual access-point location.
+                choices = []
+                for frontage_row, frontage_point in frontage_points:
+                    boundary_candidate = nearest_points(footprint.boundary, frontage_point)[0]
+                    gap = boundary_candidate.distance(frontage_point)
+                    choices.append((round(gap, 9), frontage_row["access_candidate_id"],
+                                    boundary_candidate, frontage_point))
+                _, linked_frontage_id, boundary_point, linked_frontage_point = min(
+                    choices, key=lambda item: (item[0], item[1])
+                )
+            else:
+                boundary_point = footprint.boundary.interpolate(
+                    footprint.boundary.length * fraction
+                )
+                if frontage_points:
+                    nearest_row, linked_frontage_point = min(
+                        frontage_points,
+                        key=lambda item: (
+                            round(boundary_point.distance(item[1]), 9),
+                            item[0]["access_candidate_id"],
+                        ),
+                    )
+                    linked_frontage_id = nearest_row["access_candidate_id"]
+                else:
+                    linked_frontage_id = None
+                    linked_frontage_point = None
+
+            link_distance = (boundary_point.distance(linked_frontage_point)
+                             if linked_frontage_point is not None else None)
             access_code = f"SWA-{slug}-B01-A{access_no:02d}"
             access_name = _name("ACCESS_POINT", f"{parcel_id}:A{access_no:02d}", occupied)
             access_points.append({
@@ -253,7 +279,10 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 "loading_capability_state": "not_assessed",
                 "point_m": [round(boundary_point.x, 6), round(boundary_point.y, 6)],
                 "point_status": "UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE",
-                "road_link_candidate_id": nearest["access_candidate_id"] if road_point is not None else None,
+                "road_link_candidate_id": linked_frontage_id,
+                "road_link_candidate_distance_m": round(link_distance, 3) if link_distance is not None else None,
+                "road_link_basis": "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE" if linked_frontage_id else "NO_FRONTAGE_CANDIDATE",
+                "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE" if linked_frontage_id else "UNRESOLVED_NO_FRONTAGE",
                 "source_ref": f"{SOURCE}:{building_code}:access:{access_no}",
                 "actor_ref": ACTOR, "confidence_code": "estimated",
                 "effective_from_tick": 0,

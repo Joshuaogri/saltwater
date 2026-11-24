@@ -100,12 +100,15 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
             link_errors.append(access_id)
         else:
             linked_distance = point.distance(frontage_points[linked_id])
-            if abs(linked_distance - nearest_distance) > 0.00001 or linked_id != nearest_id:
+            if (abs(linked_distance - nearest_distance) > 0.00001 or linked_id != nearest_id
+                    or access.get("road_link_candidate_distance_m") is None
+                    or abs(access["road_link_candidate_distance_m"] - linked_distance) > 0.001):
                 nearest_mismatches.append({
                     "access_candidate_id": access_id,
                     "assigned_frontage_candidate_id": linked_id,
                     "nearest_frontage_candidate_id": nearest_id,
                     "assigned_distance_m": round(linked_distance, 3),
+                    "recorded_distance_m": access.get("road_link_candidate_distance_m"),
                     "nearest_distance_m": round(nearest_distance, 3),
                 })
             position = access_id.rsplit("-", 1)[-1]
@@ -118,6 +121,14 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
         if access.get("availability_state") != "not_assessed" or access.get("accessibility_state") != "not_assessed":
             status_errors.append(access_id)
         if access.get("emergency_egress_state") != "not_assessed" or access.get("loading_capability_state") != "not_assessed":
+            status_errors.append(access_id)
+        if linked_id is None:
+            if (access.get("road_link_basis") != "NO_FRONTAGE_CANDIDATE"
+                    or access.get("road_link_status") != "UNRESOLVED_NO_FRONTAGE"
+                    or access.get("road_link_candidate_distance_m") is not None):
+                status_errors.append(access_id)
+        elif (access.get("road_link_basis") != "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE"
+              or access.get("road_link_status") != "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE"):
             status_errors.append(access_id)
 
     distances = [value for values in distances_by_position.values() for value in values]

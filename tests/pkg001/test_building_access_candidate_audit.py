@@ -36,11 +36,16 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         self.assertEqual(self.report["operational_access_points_created"], 0)
         self.assertEqual(self.report["canonical_addresses_created"], 0)
 
-    def test_each_access_candidate_uses_nearest_frontage(self):
+    def test_each_access_candidate_uses_nearest_frontage_and_records_gap(self):
         self.assertTrue(
             self.report["checks"]["each_building_access_candidate_links_to_its_nearest_geometric_frontage"],
             self.report["exceptions"]["assigned_link_not_nearest"][:10],
         )
+        for access in self.assets["access_points"]:
+            if access["road_link_candidate_id"] is not None:
+                self.assertIsNotNone(access["road_link_candidate_distance_m"])
+                self.assertEqual(access["road_link_basis"], "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE")
+                self.assertEqual(access["road_link_status"], "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE")
 
     def test_a_wrong_parcel_frontage_link_fails(self):
         bad = json.loads(json.dumps(self.assets))
