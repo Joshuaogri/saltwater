@@ -143,8 +143,8 @@ BEGIN
     AND s.retry_after_tick <= runtime_row.world_tick
     AND (s.expires_at_tick IS NULL OR s.expires_at_tick >= runtime_row.world_tick)
   ORDER BY s.due_tick ASC, s.priority DESC, s.schedule_id ASC
-  FOR UPDATE SKIP LOCKED
-  LIMIT 1;
+  LIMIT 1
+  FOR UPDATE SKIP LOCKED;
 
   IF NOT FOUND THEN
     UPDATE sw_runtime.schedule SET status='expired', claim_token=NULL,
