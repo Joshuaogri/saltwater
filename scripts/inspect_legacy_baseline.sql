@@ -88,7 +88,6 @@ SELECT 'schema_migration_ledger' AS section,
          'version', version,
          'migration_name', migration_name,
          'checksum_sha256', checksum_sha256,
-         'schema_fingerprint_sha256', schema_fingerprint_sha256,
          'applied_at', applied_at
        ) AS details
 FROM sw_ops.schema_migration
@@ -97,7 +96,8 @@ ORDER BY version;
 SELECT 'storage_operation_history' AS section,
        jsonb_build_object(
          'operation_id', operation_id,
-         'operation_type', operation_type,
+         'operation_kind', operation_kind,
+         'description', description,
          'status', status,
          'created_at', created_at
        ) AS details
