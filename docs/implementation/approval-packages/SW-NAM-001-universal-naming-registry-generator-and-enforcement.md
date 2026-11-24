@@ -244,4 +244,6 @@ The user approved **SW-NAM-001 — Universal Naming Registry, Generator and Enfo
 
 **Domain integration coverage audit:** [SW-NAM-001 integration coverage audit 0001](../test-evidence/SW-NAM-001-integration-coverage-audit-0001.md) confirms that Geography and Person are the only currently connected authoritative owner types. BP-04 business/property/organisation and independent police/operational entity types remain NOT CONNECTED because their authoritative schemas are absent from the current proposal sequence. The 100 non-root SW-GEO-V1 source IDs still require stable spatial-identity mappings; canon import remains blocked.
 
+**Geography identity mapping follow-up:** deterministic source-ID mapping candidate [saltwater-geography-v1-identity-map.json](../../../data/geography/saltwater-geography-v1-identity-map.json) now covers all 100 non-root map entities, preserving source IDs as future stable `entity_code` values and parent references. Integer `spatial_id` values are deliberately unassigned pending disposable PostgreSQL materialisation and `INSERT ... RETURNING` evidence. The [integration coverage audit](../test-evidence/SW-NAM-001-integration-coverage-audit-0001.md) records connected and NOT CONNECTED domains.
+
 **Neon production changes:** none authorised or performed.
