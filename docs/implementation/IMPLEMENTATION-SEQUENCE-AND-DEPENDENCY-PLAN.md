@@ -188,12 +188,12 @@ This is the first end-to-end proof, not a substitute for the full 44-division si
 
 ## 7. Immediate next work
 
-1. PKG-001 through PKG-005: runtime kernel, canonical population/recruit foundation, game-native player activation, PostgreSQL session verification, durable audit, and authenticated player command execution are implemented and verified. The full disposable PostgreSQL workflow and migration validation pass; Neon production remains unchanged. The next bounded step is PKG-006: define the trusted host-session context and ChatGPT command contract without deploying a transport or exposing credentials.
-2. Human sign-off of narrative fixture 0001; keep manual-review state honest.
-3. Final text-quality/capacity assessment and explicit decision on the 1 GB Neon allowance with 200 MB reserve.
-4. PKG-006 proposes the provider-neutral trusted host context and ChatGPT command contract. A deployed MCP/ChatGPT transport, external identity provider or public endpoint remains a later separately approved package.
-5. Prepare subsequent Stage 1 and Stage 2 implementation packages: entity/event contracts, schema drafts, disposable PostgreSQL migrations, acceptance tests and measured storage estimates.
-6. Present every proposed production Neon operation separately for explicit approval. No production seed or domain migration is included in this plan.
+1. **Gameplay implementation takes priority over further ChatGPT transport work.** PKG-001 through PKG-006 provide a verified platform/player-command foundation. PKG-007 remains proposed and is deferred; it is not the next implementation task.
+2. **BP37-01 — Canonical Clock Core and Schedule Eligibility** is proposed at `docs/implementation/approval-packages/BP37-01-canonical-clock-and-schedule-eligibility.md`. It is the next bounded blueprint implementation increment in Stage 1. It reuses the existing runtime tick and adds deterministic, pause-safe schedule eligibility/dispatch foundations. It does not invent a calendar, timezone, tick duration or domain-specific schedules. Explicit user approval is pending; no BP37-01 code has started.
+3. After BP37-01, continue the remaining Stage 1 blueprint work in dependency order: complete BP-35 event/NPC execution orchestration, BP-39 checkpoint/recovery, BP-40 text gameplay controls, BP-41 reporting/notifications, and BP-43/BP-44 verification/configuration coverage, reconciling already-implemented BP-38/BP-42 foundations rather than duplicating them.
+4. Then begin Stage 2: BP-02 geography, BP-03 population/person simulation, BP-04 built world/businesses and BP-36 relationships. Respect unresolved canon decisions; do not invent exact map geography or population-counting policy.
+5. Human sign-off of narrative fixture 0001 and the final text-quality/capacity decision remain separate gates. Production simulation seeding remains blocked until explicitly approved.
+6. Present every proposed production Neon operation separately with measured baseline, incremental estimate and projected total. No production seed or domain migration is authorised by this plan.
 
 ## 8. Completion-state discipline
 
