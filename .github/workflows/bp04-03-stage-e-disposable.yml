@@ -1,0 +1,147 @@
+name: BP04-03 Stage E Disposable PostgreSQL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/proposals/0011_bp04_property_premises_foundation.sql"
+      - "db/proposals/0012_bp04_physical_asset_detail_profiles.sql"
+      - "db/proposals/0013_bp02_parcel_address_candidate.sql"
+      - "db/proposals/0014_bp04_parcel_dossier_detail.sql"
+      - "db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/physical_asset_inventory_importer.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/parcel_candidate_importer.py"
+      - "runtime/parcel_dossier_importer.py"
+      - "tests/pkg001/test_physical_asset_inventory_generator.py"
+      - "tests/pkg001/test_physical_asset_inventory_importer.py"
+      - "tests/pkg001/bp04_03_stage_e_acceptance.sql"
+      - "tests/pkg001/bp04_01_geography_fixture.sql"
+      - "tests/pkg001/geography_identity_map_acceptance.sql"
+      - "data/geography/saltwater-geography-v1.json"
+      - ".github/workflows/bp04-03-stage-e-disposable.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage-e-disposable-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry and PostgreSQL drivers
+        run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
+      - name: Run Stage E generator and importer regression tests
+        run: |
+          python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_generator.py" -v
+          python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_importer.py" -v
+      - name: Apply approved foundations to disposable PostgreSQL 16
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0005_player_identity_activation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0006_bp37_tick_scheduling.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_canonical_world_provisioning.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0011_bp04_property_premises_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_physical_asset_detail_profiles.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0013_bp02_parcel_address_candidate.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0014_bp04_parcel_dossier_detail.sql
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp04_03_stage_e_schema_growth_bytes=$((after-before))"
+          echo "bp04_03_stage_e_proposal_source_bytes=$(wc -c < db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql)"
+      - name: Run parcel and dossier schema acceptance
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_b_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_d_dossier_acceptance.sql
+      - name: Generate candidate parcel and dossier manifests
+        run: |
+          python -m runtime.parcel_candidate_generator
+          python -m runtime.parcel_dossier_generator
+      - name: Import parcel and dossier candidates into disposable PostgreSQL
+        run: |
+          python -m runtime.parcel_candidate_importer --manifest bp04-03-stage-b-parcel-candidates.json
+          python -m runtime.parcel_dossier_importer --manifest bp04-03-parcel-dossiers.json --candidate-manifest bp04-03-stage-b-parcel-candidates.json
+      - name: Generate detailed Stage E asset and profile manifest
+        run: python -m runtime.physical_asset_inventory_generator
+      - name: Import Stage E physical assets, profiles, details and geometry candidates
+        run: |
+          python -m runtime.physical_asset_inventory_importer \
+            --manifest bp04-03-stage-e-physical-assets.json \
+            --candidate-manifest bp04-03-stage-b-parcel-candidates.json \
+            --dossier-manifest bp04-03-parcel-dossiers.json
+      - name: Verify same-manifest idempotency
+        run: |
+          python -m runtime.physical_asset_inventory_importer \
+            --manifest bp04-03-stage-e-physical-assets.json \
+            --candidate-manifest bp04-03-stage-b-parcel-candidates.json \
+            --dossier-manifest bp04-03-parcel-dossiers.json > /tmp/stage-e-repeat.json
+          cat /tmp/stage-e-repeat.json
+          python - <<'PY'
+          import json
+          result=json.load(open('/tmp/stage-e-repeat.json'))
+          assert result['already_imported'] is True
+          assert result['database_growth_bytes']==0
+          assert all(value==0 for value in result['records_inserted_this_run'].values())
+          print('BP04_03_STAGE_E_REPEAT_IMPORT_IDEMPOTENCY_PASS')
+          PY
+      - name: Run full physical asset database acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_e_acceptance.sql
+      - name: Measure Stage E relation storage and representative lookups
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY total_bytes DESC;"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT property_id FROM sw_property.property_candidate_site WHERE candidate_parcel_id='BPC-WESTGATEGARDENS-001-01';"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT premises_id FROM sw_property.premises WHERE building_id=(SELECT building_id FROM sw_property.building ORDER BY building_id LIMIT 1);"
+          psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT unit_id FROM sw_property.unit_space WHERE premises_id=(SELECT premises_id FROM sw_property.premises ORDER BY premises_id LIMIT 1);"
+      - name: Verify backup and restore preserve the asset inventory
+        run: |
+          pg_dump -Fc -f /tmp/saltwater-stage-e.dump saltwater_test
+          createdb saltwater_restore
+          pg_restore -d saltwater_restore /tmp/saltwater-stage-e.dump
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.property_asset;')" = "420"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.unit_space;')" = "15199"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.asset_geometry_candidate;')" = "1572"
+          test "$(psql -d saltwater_restore -Atc 'SELECT encode(manifest_sha256,\x27hex\x27) FROM sw_property.asset_generation_batch LIMIT 1;')" = "$(psql -Atc 'SELECT encode(manifest_sha256,\x27hex\x27) FROM sw_property.asset_generation_batch LIMIT 1;')"
+          echo "BP04_03_STAGE_E_BACKUP_RESTORE_PASS"
+      - name: Preserve complete Stage E asset manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-stage-e-complete-assets-${{ github.run_id }}
+          path: bp04-03-stage-e-physical-assets.json
+          if-no-files-found: error
+          retention-days: 14
