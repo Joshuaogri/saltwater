@@ -26,6 +26,10 @@ BEGIN
   IF (SELECT count(DISTINCT person_id) FROM sw_test.person_cohort WHERE batch_id=v_batch)<>9500 THEN
     RAISE EXCEPTION 'opening fixture duplicates canonical person identities';
   END IF;
+  IF (SELECT world_tick FROM sw_runtime.state WHERE singleton=1)<>0
+     OR (SELECT player_present FROM sw_runtime.state WHERE singleton=1)<>false THEN
+    RAISE EXCEPTION 'controlled provisioning must not advance world time or mark the player present';
+  END IF;
   IF (SELECT 10000-living_included FROM sw_people.population_counter WHERE singleton=1)<>500 THEN
     RAISE EXCEPTION 'opening shared population headroom is not exactly 500';
   END IF;
