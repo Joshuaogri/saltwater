@@ -359,13 +359,13 @@ The following source requirements/tests are assigned to BP-43 by the authoritati
 
 ## SW-NAM-001 — naming test slice
 
-Added deterministic Python tests for the transactional PostgreSQL adapter contract, NFKC/case-folding, punctuation and road suffix variants, display-spelling preservation, collision classes, near-duplicate review, retired-name protection, rename history, generator reproducibility, immutable generator-manifest persistence/linkage, exactly one active canonical name per entity under concurrent different-name reservations, direct-insert bypass prevention and the exact two-root `Saltwater` exception. Disposable SQL acceptance covers the root pair, third-entity/alias rejection, geography rename history, person full-name enforcement and rename identity continuity. PostgreSQL concurrency tests race same-name and distinct-name reservations, test idempotency and transaction rollback. Backup/restore assertions now include reservation and name-event counts. These tests are committed but are **not yet reported as passing**; GitHub Actions execution and evidence remain pending. All fixtures use disposable PostgreSQL and do not write Neon.
+Added deterministic Python tests for the transactional PostgreSQL adapter contract, NFKC/case-folding, punctuation and road suffix variants, display-spelling preservation, collision classes, near-duplicate review, retired-name protection, rename history, generator reproducibility, immutable generator-manifest persistence/linkage, exactly one active canonical name per entity under concurrent different-name reservations, direct-insert bypass prevention and the exact two-root `Saltwater` exception. Disposable SQL acceptance covers the root pair, third-entity/alias rejection, geography rename history, person full-name enforcement and rename identity continuity. PostgreSQL concurrency tests race same-name and distinct-name reservations, test idempotency and transaction rollback. Backup/restore assertions now include reservation and name-event counts. The SW-NAM-001 27-group bounded acceptance suite passed in run `45409845359`, including concurrency, rollback, 10,000-person capacity, access controls and backup/restore. Final manifest-version/storage-detail rerun `45410340222` is pending. All fixtures use disposable PostgreSQL and do not write Neon.
 
 ## 22. Completion status
 
 - Specification: DESIGNED_DRAFT; review/approval pending.
-- Implementation: NOT_STARTED.
-- Test execution: NOT_STARTED; acceptance criteria are not executed evidence.
-- Verification: NOT_STARTED.
+- Implementation: Bounded SW-NAM-001 naming acceptance suite and CI integration implemented; the wider BP-43 programme remains incomplete.
+- Test execution: SW-NAM-001 bounded tests passed in run `45409845359`; remaining BP-43 acceptance criteria are not executed evidence.
+- Verification: Bounded SW-NAM-001 verification passed; BP-43 overall remains incomplete.
 - Neon writes, migrations, seed/import, bulk operations, uploads or production deployments: none performed or authorised.
 - Next division: BP-44 — Configuration and Change Control.
