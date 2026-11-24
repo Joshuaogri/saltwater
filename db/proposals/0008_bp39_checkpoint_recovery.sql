@@ -110,7 +110,7 @@ BEGIN
      AND EXISTS(SELECT 1 FROM sw_runtime.event_work WHERE status='claimed')
      AND NOT (NEW.state=4 AND NOT NEW.player_present
               AND current_setting('sw_runtime.recovery_authorized',true)='on') THEN
-    RAISE EXCEPTION 'pause waits for active event dispatch; use controlled recovery for abandoned claims';
+    RAISE EXCEPTION 'pause waits for active event dispatch to finish';
   END IF;
   RETURN NEW;
 END
