@@ -130,7 +130,10 @@ CREATE INDEX address_alias_lookup_idx
   ON sw_geo.address_alias(address_spatial_id,valid_from_tick);
 
 CREATE FUNCTION sw_geo.guard_parcel_profile_kind()
-RETURNS trigger LANGUAGE plpgsql AS $$
+RETURNS trigger LANGUAGE plpgsql AS $
+DECLARE
+  v_payload bytea;
+  v_hash bytea;
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.parcel_spatial_id AND kind=6) THEN
     RAISE EXCEPTION 'parcel profile identity must reference geography kind 6';
@@ -138,8 +141,15 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.neighbourhood_spatial_id AND kind=4) THEN
     RAISE EXCEPTION 'parcel neighbourhood must reference geography kind 4';
   END IF;
-  IF NOT EXISTS (SELECT 1 FROM sw_geo.version WHERE spatial_id=NEW.parcel_spatial_id AND version_no=NEW.version_no AND geometry_payload IS NOT NULL AND geometry_format IS NOT NULL AND geometry_sha256 IS NOT NULL) THEN
+  SELECT geometry_payload,geometry_sha256 INTO v_payload,v_hash
+    FROM sw_geo.version
+    WHERE spatial_id=NEW.parcel_spatial_id AND version_no=NEW.version_no
+      AND geometry_format IS NOT NULL;
+  IF NOT FOUND OR v_payload IS NULL OR v_hash IS NULL THEN
     RAISE EXCEPTION 'parcel profile requires a versioned geometry payload and checksum';
+  END IF;
+  IF v_hash IS DISTINCT FROM sw_ops.digest(v_payload,'sha256') THEN
+    RAISE EXCEPTION 'parcel geometry checksum does not match its payload';
   END IF;
   RETURN NEW;
 END
