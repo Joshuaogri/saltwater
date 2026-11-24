@@ -239,5 +239,5 @@ The user approved **SW-NAM-001 — Universal Naming Registry, Generator and Enfo
 **Policy:** ADOPTED — SW-UNS-001.  
 **Implementation package:** APPROVED — implementation in progress (2026-11-24).  
 **GitHub branch:** `main` only.  
-**Disposable PostgreSQL implementation/tests:** IN PROGRESS; core migration, Python services, SQL/Python/concurrency tests, full 10,000-person fixture, access controls and backup/restore passed in run `45409228297`; the added same-entity concurrent canonical-name regression and final storage remeasurement are running in `45409845359`.  
+**Disposable PostgreSQL implementation/tests:** CORE ACCEPTANCE PASS in run `45409845359`; the migration, Python services, same-name and same-entity concurrency, rollback, full 10,000-person fixture, access controls, checkpoint and backup/restore all passed. A final rerun `45410340222` is verifying the latest generator-manifest normalizer-version metadata and detailed heap/index storage report.  
 **Neon production changes:** none authorised or performed.
