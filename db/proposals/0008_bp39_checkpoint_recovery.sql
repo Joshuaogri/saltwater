@@ -52,7 +52,7 @@ CREATE TABLE sw_runtime.event_claim_recovery (
 CREATE INDEX event_claim_recovery_event_idx
   ON sw_runtime.event_claim_recovery(event_id,recovery_id);
 
-CREATE FUNCTION sw_runtime.guard_event_work_write() RETURNS trigger
+CREATE OR REPLACE FUNCTION sw_runtime.guard_event_work_write() RETURNS trigger
 LANGUAGE plpgsql AS $bp39$
 DECLARE runtime_row sw_runtime.state%ROWTYPE;
   recovery_mode boolean := current_setting('sw_runtime.recovery_authorized',true)='on';
@@ -156,7 +156,7 @@ BEGIN
     RAISE EXCEPTION 'claim reconciliation requires frozen recovering runtime';
   END IF;
   IF p_recovery_key IS NULL OR length(p_recovery_key) NOT BETWEEN 1 AND 128
-     OR p_decision NOT IN ('effect_committed','effect_absent','indeterminate')
+     OR p_decision IS NULL OR p_decision NOT IN ('effect_committed','effect_absent','indeterminate')
      OR p_owner_domain IS NULL OR p_owner_domain !~ '^[a-z][a-z0-9_]{1,47}$'
      OR p_owner_response_ref IS NULL OR length(p_owner_response_ref) NOT BETWEEN 1 AND 200
      OR p_actor_ref IS NULL OR length(p_actor_ref) NOT BETWEEN 1 AND 200
