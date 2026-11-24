@@ -62,7 +62,7 @@ class AuthorizedPlayerCommandGateway:
             }
         )
         if not valid_shape:
-            return CommandResult(False, "Access denied.")
+            return CommandResult(False, "Invalid command.")
 
         decision = self.authorization.decide(
             credential,
