@@ -17,6 +17,7 @@ def build_coverage_audit(source: dict) -> dict:
             "neighbourhood_count": len(candidates["coverage_by_neighbourhood"]),
             "source_grid_cell_count": generation["source_grid_cell_count"],
             "candidate_parcel_count": generation["parcel_candidate_count"],
+            "candidate_component_count": generation["candidate_component_count"],
             "water_intersection_cell_count": generation["water_intersection_cell_count"],
             "source_area_m2": generation["source_area_m2"],
             "dissolved_road_reserve_area_m2": generation["road_reserve_area_m2"],
