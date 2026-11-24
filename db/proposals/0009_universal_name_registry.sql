@@ -145,14 +145,14 @@ BEGIN
   RETURNING batch_id INTO v_id;
   RETURN v_id;
 END
-$;
+$$;
 
 CREATE FUNCTION sw_names.reject_generation_batch_mutation()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION 'generation batch manifests are immutable';
 END
-$;
+$$;
 CREATE TRIGGER generation_batch_immutable
 BEFORE UPDATE OR DELETE ON sw_names.generation_batch
 FOR EACH ROW EXECUTE FUNCTION sw_names.reject_generation_batch_mutation();
