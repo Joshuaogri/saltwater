@@ -1,9 +1,9 @@
 # BP04-03 Stage C road centreline and corridor audit — run 0001
 
 **Date:** 2026-11-24  
-**Workflow:** [BP04-03 Stage B Disposable PostgreSQL, road audit extension](https://github.com/Joshuaogri/saltwater/actions/runs/45485282025)  
+**Workflow:** [BP04-03 Stage B Disposable PostgreSQL, road audit extension](https://github.com/Joshuaogri/saltwater/actions/runs/45485428237) (successful artifact-preservation run; initial audit acceptance also passed in [run 45485282025](https://github.com/Joshuaogri/saltwater/actions/runs/45485282025))  
 **Result:** PASS  
-**Commit under test:** `2efc918fc245a524ce19a89b4fd4cdb0006af082`  
+**Commit under test:** `980880fb7f2838e44f462e3afb4043a0554d8db2`  
 **Database:** no additional database writes; the workflow's disposable PostgreSQL checks remain unchanged  
 **Production writes:** none
 
@@ -43,6 +43,10 @@ The deterministic generator emits one record per road and one per segment, retai
 - Candidate register SHA-256: `36fef2acb94d9248d7810d983117e73ee1c5dc8cf8570996a42cfcdd384f805e`.
 
 The output is a width-agnostic source register, not a cadastral road-reserve layer and not operational geography.
+
+## Preserved output artifact
+
+The generated JSON register is retained as a workflow artifact: [road corridor register, run 45485428237](https://github.com/Joshuaogri/saltwater/actions/runs/45485428237/artifacts/14962389020). Compressed artifact size: **15,676 bytes**. Artifact archive SHA-256: `d967ae0f7561c9ab9873af85d2527f1ef14f6ddd5db1129b7afffac13f79b8e9`. Artifact retention expires 2026-12-08.
 
 ## Scope
 
