@@ -2,32 +2,158 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://saltwater.invalid/contracts/player-command-tool.schema.json",
   "title": "Saltwater Player Command Tool",
-  "description": "Model-controlled request shape only. Trusted host context and game-session credentials are injected separately by trusted server code and must never be tool arguments.",
+  "description": "Canonical BP40-02 model-controlled request contract. Trusted host context and game-session credentials are injected separately by trusted server code and are never tool arguments.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["command_text"],
+  "required": [
+    "command_text"
+  ],
   "properties": {
     "command_text": {
       "type": "string",
       "minLength": 1,
       "maxLength": 32,
       "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit|home|workspaces|back|where|workspace (home|operations|cases|people|evidence-scenes|department|legal-custody|resources-finance|reports-notifications|system-status))$",
-      "description": "One supported command or workspace followed by one exact stable workspace ID; no scripts, SQL, shell or hidden-truth trigger."
+      "description": "Exactly one canonical command token, or workspace followed by one exact workspace ID. No quoting, leading/trailing whitespace, scripts, SQL, shell or hidden-truth trigger."
     },
     "request_reference": {
-      "type": ["string", "null"],
+      "type": [
+        "string",
+        "null"
+      ],
       "minLength": 1,
       "maxLength": 128,
-      "description": "Optional opaque correlation reference. Not an identity or authorization input."
+      "description": "Optional opaque correlation reference; not an identity or authorization input."
     }
   },
+  "x-command-catalogue": [
+    [
+      "help",
+      "player.help.v1",
+      "BP-40 Interface",
+      "read_only",
+      "player.command.help",
+      "no arguments"
+    ],
+    [
+      "status",
+      "player.status.v1",
+      "BP-40 Interface",
+      "read_only",
+      "player.command.status",
+      "no arguments"
+    ],
+    [
+      "profile",
+      "player.profile.v1",
+      "BP-40 Interface",
+      "read_only",
+      "player.command.profile",
+      "no arguments"
+    ],
+    [
+      "recruit",
+      "player.recruit.v1",
+      "BP-04 Recruitment",
+      "domain_runtime_mutation",
+      "player.command.recruit",
+      "no arguments"
+    ],
+    [
+      "career",
+      "player.career.v1",
+      "BP-04 Personnel",
+      "read_only",
+      "player.command.career",
+      "no arguments"
+    ],
+    [
+      "start",
+      "player.start.v1",
+      "BP-40 Runtime Lifecycle",
+      "domain_runtime_mutation",
+      "player.command.start",
+      "no arguments"
+    ],
+    [
+      "pause",
+      "player.pause.v1",
+      "BP-40 Runtime Lifecycle",
+      "domain_runtime_mutation",
+      "player.command.pause",
+      "no arguments"
+    ],
+    [
+      "resume",
+      "player.resume.v1",
+      "BP-40 Runtime Lifecycle",
+      "domain_runtime_mutation",
+      "player.command.resume",
+      "no arguments"
+    ],
+    [
+      "quit",
+      "player.quit.v1",
+      "BP-40 Runtime Lifecycle",
+      "domain_runtime_mutation",
+      "player.command.quit",
+      "no arguments"
+    ],
+    [
+      "home",
+      "player.home.v1",
+      "BP-40 Interface",
+      "presentation_state",
+      "player.command.home",
+      "no arguments"
+    ],
+    [
+      "workspaces",
+      "player.workspaces.v1",
+      "BP-40 Interface",
+      "read_only",
+      "player.command.workspaces",
+      "no arguments"
+    ],
+    [
+      "workspace",
+      "player.workspace.v1",
+      "BP-40 Interface",
+      "presentation_state",
+      "player.command.workspace",
+      "one exact workspace ID"
+    ],
+    [
+      "back",
+      "player.back.v1",
+      "BP-40 Interface",
+      "presentation_state",
+      "player.command.back",
+      "no arguments"
+    ],
+    [
+      "where",
+      "player.where.v1",
+      "BP-40 Interface",
+      "read_only",
+      "player.command.where",
+      "no arguments"
+    ]
+  ],
   "x-response": {
     "type": "object",
     "additionalProperties": false,
-    "required": ["ok", "message"],
+    "required": [
+      "ok",
+      "message"
+    ],
     "properties": {
-      "ok": {"type": "boolean"},
-      "message": {"type": "string"}
+      "ok": {
+        "type": "boolean"
+      },
+      "message": {
+        "type": "string"
+      }
     }
   }
 }
