@@ -517,7 +517,23 @@ The following details are not invented by BP-01 and must be resolved in the owni
 
 These are not omissions from the global charter; they are explicit domain-owned details. No unapproved assumptions may be presented as settled canon.
 
-## 21. Completion statement
+## 21. Core universal naming authority — SW-UNS-001
+
+Saltwater has one mandatory Universal Naming Standard: [SW-UNS-001](../decisions/SW-UNS-001-universal-naming-standard.md). It is a core foundation applying to every named entity and all 44 blueprint divisions. It is not optional, a later enhancement or a domain-local preference.
+
+Binding BP-01 rules:
+- Every named entity has a permanent stable entity ID and a unique canonical name.
+- Canonical names are unique in the shared Saltwater namespace across entity types, not merely within a division, table, district or category.
+- A central authoritative registry controls normalization, exact/near-duplicate detection, reservations, aliases, historical names and concurrency-safe creation.
+- Names are never identity keys. Entity IDs remain immutable when names change.
+- Retired, former, deceased, closed, demolished or superseded names remain historically reserved and cannot be recycled for another entity.
+- All generated, imported, NPC-created, player-created and manually entered names use the same reservation path. No division or script may bypass it.
+- Domain divisions own their vocabularies and entity lifecycles but must comply with the central standard. BP-38 owns registry persistence/constraints; BP-43 owns acceptance tests; BP-44 governs controlled vocabulary/configuration changes.
+- Existing canon names are preserved and registered before new names are generated. Existing conflicts are recorded for explicit resolution, never silently overwritten.
+
+This requirement does not alter the fixed BP-01–BP-44 structure. Adoption of the policy does not claim the registry or tests are implemented and does not authorise Neon production writes.
+
+## 22. Completion statement
 
 **Design status:** `DESIGNED_DRAFT`; this is a complete first-pass BP-01 specification for user review, subject to the open decisions and cross-division contracts above.  
 **Implementation status:** `NOT_STARTED` unless independently established by linked code/schema evidence.  
