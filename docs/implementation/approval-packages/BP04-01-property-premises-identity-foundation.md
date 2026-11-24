@@ -1,6 +1,6 @@
 # BP04-01 — Property, Building, Premises, Unit and Access-Point Identity Foundation
 
-**Status:** PROPOSED — awaiting explicit approval  
+**Status:** APPROVED — implementation and disposable verification in progress (2026-11-24)  
 **Date:** 2026-11-24  
 **Repository target:** `main` only  
 **Database test target:** disposable PostgreSQL 16 only  
@@ -107,14 +107,14 @@ Evidence must include the tested commit, workflow IDs, source byte counts, datab
 7. Storage/performance results and reproducible evidence are committed to the repository.
 8. No Neon production operation occurs.
 
-## 7. Approval requested
+## 7. Approval record
 
-Approve **BP04-01 — Property, Building, Premises, Unit and Access-Point Identity Foundation** for:
+The user explicitly approved **BP04-01 — Property, Building, Premises, Unit and Access-Point Identity Foundation** for:
 - implementation directly on GitHub `main`;
 - disposable PostgreSQL 16 schema and acceptance testing;
 - SW-UNS adapter integration;
 - reproducible tests, storage/performance measurements and documentation.
 
-This approval would cover only BP04-01. It would not approve the entire BP-04 design, the open BP-04 distribution decisions, SW-GEO-V1 operational seeding, or any Neon production operation.
+This approval covers only BP04-01. It would not approve the entire BP-04 design, the open BP-04 distribution decisions, SW-GEO-V1 operational seeding, or any Neon production operation.
 
 **Neon production write authority remains NONE.**
