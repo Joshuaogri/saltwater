@@ -391,3 +391,14 @@ This is the first database-first world implementation increment. It audits the e
 The fixture is explicitly synthetic and does not decide unresolved BP-02 geography, BP-03 population-scope semantics or BP-04 business distribution. BP-02/BP-03/BP-04/BP-38 specification approval and existing G1 narrative-quality/G2 capacity gates remain prerequisites for real production seeding. A separate exact-operation approval is required before any Neon production migration or data write.
 
 **Status: PROPOSED — awaiting explicit user approval.** No SW-DB-001 implementation, test result or Neon production write is claimed.
+
+
+## 14. SW-NAM-001 — universal naming registry, generator and enforcement (proposed)
+
+Prepared package: [SW-NAM-001 — Universal Naming Registry, Generator and Enforcement](approval-packages/SW-NAM-001-universal-naming-registry-generator-and-enforcement.md).
+
+This is the implementation package for the adopted core [SW-UNS-001](../blueprint/decisions/SW-UNS-001-universal-naming-standard.md). It adds one shared persistent naming registry and transactional reservation service, deterministic normalization and near-duplicate review, domain adapters, reproducible name generation, canon-name registration, automated Python/SQL/concurrency/bypass/restore tests, disposable PostgreSQL CI and measured storage/performance evidence. It preserves BP-02 geography IDs, BP-03 person IDs and BP-04 ownership of built-world entities; BP-38 owns registry integrity and BP-43 verifies it.
+
+The repository audit found existing geography version names and person name fields in proposal 0002, with domain-specific IDs and profile history. The implementation must integrate these rather than create parallel identity authorities. BP-04 business/property schema integration is limited to the authoritative schema available at implementation time; no unresolved business distribution or property canon may be invented.
+
+**Status: PROPOSED — awaiting explicit user approval.** The package reserves disposable proposal `0009_universal_name_registry.sql`; SW-DB-001's later world-provisioning proposal must be renumbered to the next available sequence after a fresh audit. No registry implementation, test result, canon import or Neon production write is claimed.
