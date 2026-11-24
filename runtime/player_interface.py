@@ -50,6 +50,11 @@ HELP = """Saltwater commands
   pause      Pause the simulation
   resume     Resume active play
   quit       Leave the game (world time stops)
+  home       Show the player home / shift desk
+  workspaces List all workspaces
+  workspace <id>  Select an exact workspace ID
+  back       Return to the previous workspace
+  where      Show current workspace and selected-record state
 """
 
 
@@ -61,6 +66,7 @@ class PlayerCommandInterface:
         self.kernel = kernel
         self.profile = profile
         self.recruitment = recruitment
+        self.workspace_navigation = WorkspaceNavigation()
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
             "status": self._status,
@@ -71,6 +77,10 @@ class PlayerCommandInterface:
             "pause": self._pause,
             "resume": self._resume,
             "quit": self._quit,
+            "home": self._home,
+            "workspaces": self._workspaces,
+            "back": self._back,
+            "where": self._where,
         }
 
     def execute(self, line: str) -> CommandResult:
@@ -80,6 +90,14 @@ class PlayerCommandInterface:
             return CommandResult(False, f"Could not parse command: {exc}")
         if not parts:
             return CommandResult(True, "Enter a command. Type help for the list.")
+        if parts[0].casefold() == "workspace":
+            if len(parts) != 2:
+                return CommandResult(False, "Use workspace <exact-id>. Type workspaces.")
+            try:
+                self.workspace_navigation = self.workspace_navigation.select(parts[1])
+            except ValueError:
+                return CommandResult(False, f"Unknown workspace ID: {parts[1]}")
+            return CommandResult(True, f"Current workspace: {WORKSPACE_BY_ID[self.workspace_navigation.current].label}")
         if len(parts) != 1:
             return CommandResult(False, "This command takes no arguments. Type help.")
         command = parts[0].casefold()
@@ -90,6 +108,20 @@ class PlayerCommandInterface:
             return handler()
         except KernelError as exc:
             return CommandResult(False, str(exc))
+
+    def _home(self) -> CommandResult:
+        return CommandResult(True, render_home(self.profile, self.kernel.status(), self.workspace_navigation))
+
+    def _workspaces(self) -> CommandResult:
+        return CommandResult(True, render_workspace_catalogue(self.workspace_navigation.current))
+
+    def _back(self) -> CommandResult:
+        self.workspace_navigation = self.workspace_navigation.back()
+        return CommandResult(True, f"Current workspace: {WORKSPACE_BY_ID[self.workspace_navigation.current].label}")
+
+    def _where(self) -> CommandResult:
+        current = WORKSPACE_BY_ID[self.workspace_navigation.current]
+        return CommandResult(True, f"Workspace: {current.label} ({current.id})\nSelected record: none\nCapability: {current.availability}")
 
     def _help(self) -> CommandResult:
         return CommandResult(True, HELP.rstrip())
