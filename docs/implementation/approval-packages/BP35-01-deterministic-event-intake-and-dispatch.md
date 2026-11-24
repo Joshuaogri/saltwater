@@ -60,7 +60,8 @@ The proposal must not introduce a new event identity source or permit mutation/d
 ### 3.4 Pause, absence and safety
 
 - No event claim, handler invocation, retry progression or fictional event mutation while paused, stopped, recovering, safe-halted or player-absent.
-- Pause takes effect at a committed execution boundary; no partial domain transaction may be exposed.
+- The database rejects a committed pause/stop/recovery transition while an event-work claim is active. The caller retries the lifecycle transition after the handler finalizes success/failure, so no in-flight domain transaction is cut in half.
+- An abandoned claim deliberately blocks that lifecycle transition until explicit recovery; automatic claim reclaim is deferred to BP-39/follow-on BP-35 work.
 - External ingress while paused may be held as non-simulation metadata only; it cannot enter world execution.
 - Event payloads and error diagnostics must not disclose hidden crime truth, protected information or unauthorised NPC knowledge.
 - No NPC behaviour, crime generation, business simulation, domain workflow, AI narrative execution, public endpoint or ChatGPT transport integration is included.
