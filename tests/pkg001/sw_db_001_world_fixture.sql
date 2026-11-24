@@ -13,11 +13,8 @@ DECLARE
   v_revision text := current_setting('saltwater.source_revision');
   v_batch bigint;
   v_name_batch bigint;
-  v_i integer;
   v_event bigint;
   v_person bigint;
-  v_business record;
-  v_name text;
   v_count integer;
   v_person_digest bytea;
   v_business_digest bytea;
@@ -94,45 +91,63 @@ BEGIN
   WHERE singleton=1 AND state=0 AND bootstrap_open=true
     AND world_tick=0 AND player_present=false;
 
-  FOR v_i IN 1..9500 LOOP
-    IF EXISTS (
-      SELECT 1 FROM sw_test.person_cohort
-      WHERE fixture_person_key='SWDB001-P-'||lpad(v_i::text,5,'0')
-    ) THEN
-      CONTINUE;
-    END IF;
-
+  WITH candidates AS (
+    SELECT g,
+           'SWDB001-P-'||lpad(g::text,5,'0') AS fixture_person_key
+    FROM generate_series(1,9500) g
+    WHERE NOT EXISTS (
+      SELECT 1 FROM sw_test.person_cohort c
+      WHERE c.fixture_person_key='SWDB001-P-'||lpad(g::text,5,'0')
+    )
+  ),
+  person_events AS (
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
-    SELECT event_type_id,transaction_timestamp(),0,
-           'SW-DB-001:person-created:'||v_i
-    FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
-    RETURNING event_id INTO v_event;
-    IF v_event IS NULL THEN RAISE EXCEPTION 'PERSON_CREATED event type missing'; END IF;
-
+    SELECT et.event_type_id,transaction_timestamp(),0,
+           'SW-DB-001:person-created:'||c.g
+    FROM candidates c
+    CROSS JOIN sw_core.event_type et
+    WHERE et.event_code='PERSON_CREATED'
+    RETURNING event_id,source_ref
+  ),
+  new_people AS (
     INSERT INTO sw_people.person
       (given_name,family_name,created_tick,source_ref,last_event_id)
-    VALUES
-      (substr(md5('given:'||v_i::text),1,8),substr(md5('family:'||v_i::text),1,8),0,
-       'SW-DB-001:person:'||v_i,v_event)
-    RETURNING person_id INTO v_person;
-
+    SELECT substr(md5('given:'||split_part(e.source_ref,':',3)),1,8),
+           substr(md5('family:'||split_part(e.source_ref,':',3)),1,8),
+           0,'SW-DB-001:person:'||split_part(e.source_ref,':',3),e.event_id
+    FROM person_events e
+    RETURNING person_id,source_ref
+  ),
+  population_events AS (
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
-    SELECT event_type_id,transaction_timestamp(),0,
-           'SW-DB-001:population-state:'||v_i
-    FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
-    RETURNING event_id INTO v_event;
-    IF v_event IS NULL THEN RAISE EXCEPTION 'POPULATION_STATE_CHANGED event type missing'; END IF;
-
+    SELECT et.event_type_id,transaction_timestamp(),0,
+           'SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
+    FROM new_people p
+    CROSS JOIN sw_core.event_type et
+    WHERE et.event_code='POPULATION_STATE_CHANGED'
+    RETURNING event_id,source_ref
+  ),
+  population_states AS (
     INSERT INTO sw_people.population_state
       (person_id,life_status,scope_status,effective_tick,last_event_id)
-    VALUES (v_person,1,1,0,v_event);
-
+    SELECT p.person_id,1,1,0,e.event_id
+    FROM new_people p
+    JOIN population_events e
+      ON e.source_ref='SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
+    RETURNING person_id
+  ),
+  cohorts AS (
     INSERT INTO sw_test.person_cohort
       (fixture_person_key,batch_id,person_id,cohort)
-    VALUES
-      ('SWDB001-P-'||lpad(v_i::text,5,'0'),v_batch,v_person,
-       CASE WHEN v_i<=9000 THEN 'RESIDENT' ELSE 'POLICE_SUBSET' END);
-  END LOOP;
+    SELECT 'SWDB001-P-'||lpad(split_part(p.source_ref,':',3),5,'0'),
+           v_batch,p.person_id,
+           CASE WHEN split_part(p.source_ref,':',3)::integer<=9000
+                THEN 'RESIDENT' ELSE 'POLICE_SUBSET' END
+    FROM new_people p
+    JOIN population_states ps USING (person_id)
+    RETURNING person_id
+  )
+  SELECT count(*) INTO v_count FROM cohorts;
 
   INSERT INTO sw_business.business
     (business_code,created_batch_id,operating_status,site_assignment_status,
@@ -142,20 +157,16 @@ BEGIN
   FROM generate_series(1,10000) g
   ON CONFLICT (business_code) DO NOTHING;
 
-  FOR v_business IN
-    SELECT business_id,business_code
-    FROM sw_business.business
-    WHERE created_batch_id=v_batch
-    ORDER BY business_code
-  LOOP
-    v_name := substr(md5('business-name:'||v_business.business_code),1,16)||' Trading';
-    PERFORM sw_names.reserve_name(
-      'BUSINESS',v_business.business_id,'canonical',v_name,
-      'SW-DB-001:business-name:'||v_business.business_code,
-      'disposable-ci-generator','unique deterministic test business identity',
-      0,v_name_batch
-    );
-  END LOOP;
+  PERFORM sw_names.reserve_name(
+    'BUSINESS',b.business_id,'canonical',
+    substr(md5('business-name:'||b.business_code),1,16)||' Trading',
+    'SW-DB-001:business-name:'||b.business_code,
+    'disposable-ci-generator','unique deterministic test business identity',
+    0,v_name_batch
+  )
+  FROM sw_business.business b
+  WHERE b.created_batch_id=v_batch
+  ORDER BY b.business_code;
 
   INSERT INTO sw_test.business_profile
     (business_id,test_sector_code,test_legal_form,test_operating_basis,test_staff_band)
