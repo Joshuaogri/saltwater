@@ -129,19 +129,19 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
                 cur.execute(
                     """INSERT INTO sw_geo.version
                        (spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
-                       VALUES (%s,1,0,'Historic Registry Road','sw-nam-history-v1',1)""",
+                       VALUES (%s,1,0,'Foundry Quay Road','sw-nam-history-v1',1)""",
                     (spatial_id,),
                 )
                 cur.execute(
                     """INSERT INTO sw_geo.version
                        (spatial_id,version_no,effective_from_tick,name,source_ref,reason_code)
-                       VALUES (%s,2,1,'Current Registry Road','sw-nam-history-v2',2)""",
+                       VALUES (%s,2,1,'Assembly Garden Walk','sw-nam-history-v2',2)""",
                     (spatial_id,),
                 )
                 cur.execute(
                     """SELECT display_name,entity_id,status FROM sw_names.registry
                        WHERE entity_type='GEOGRAPHY' AND entity_id=%s
-                         AND display_name IN ('Historic Registry Road','Current Registry Road')
+                         AND display_name IN ('Foundry Quay Road','Assembly Garden Walk')
                        ORDER BY display_name""",
                     (spatial_id,),
                 )
@@ -149,8 +149,8 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
                 self.assertEqual(
                     records,
                     [
-                        ("Current Registry Road", spatial_id, "active"),
-                        ("Historic Registry Road", spatial_id, "superseded"),
+                        ("Assembly Garden Walk", spatial_id, "active"),
+                        ("Foundry Quay Road", spatial_id, "superseded"),
                     ],
                 )
         with self.assertRaises(psycopg.Error):
@@ -158,7 +158,7 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
                 with conn.cursor() as cur:
                     cur.execute(
                         """SELECT sw_names.reserve_name(
-                             'GEOGRAPHY',%s,'canonical','Historic Registry Road',
+                             'GEOGRAPHY',%s,'canonical','Foundry Quay Road',
                              'sw-nam-history-reuse','ci-test','historical name cannot be reused',0)""",
                         (self.entity_ids[3],),
                     )
