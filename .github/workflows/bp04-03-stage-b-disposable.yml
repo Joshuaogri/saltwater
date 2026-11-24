@@ -14,6 +14,8 @@ on:
       - "runtime/parcel_coverage_audit.py"
       - "runtime/road_reserve_topology.py"
       - "tests/pkg001/test_road_reserve_topology.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "tests/pkg001/test_parcel_dossier_generator.py"
       - "tests/pkg001/test_parcel_coverage_audit.py"
       - "tests/pkg001/test_road_corridor_audit.py"
       - "data/geography/saltwater-geography-v1.json"
@@ -66,6 +68,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_parcel_coverage_audit.py" -v
       - name: Run BP04-03 dissolved road reserve and boundary topology tests
         run: python -m unittest discover -s tests/pkg001 -p "test_road_reserve_topology.py" -v
+      - name: Run BP04-03 detailed parcel dossier tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_generator.py" -v
       - name: Install PostgreSQL Python driver for importer contract tests
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Run BP04-03 candidate importer validation tests
@@ -119,6 +123,15 @@ jobs:
         with:
           name: bp04-03-road-reserve-topology-${{ github.run_id }}
           path: bp04-03-road-reserve-topology.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Generate detailed parcel dossier and relationship layer
+        run: python -m runtime.parcel_dossier_generator
+      - name: Preserve detailed parcel dossier and relationship layer
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-parcel-dossiers-${{ github.run_id }}
+          path: bp04-03-parcel-dossiers.json
           if-no-files-found: error
           retention-days: 14
       - name: Preserve parcel coverage area audit
