@@ -30,21 +30,30 @@ class RoadCorridorAuditTests(unittest.TestCase):
         )
         self.assertEqual(sum(self.result["class_summary"].values()), 685)
 
-    def test_bridge_length_exceptions_are_preserved(self):
+    def test_bridge_lengths_are_reconciled_to_canonical_polyline_measurement(self):
         exceptions = self.result["length_exceptions"]
-        self.assertEqual({item["segment_id"] for item in exceptions}, {"SWS-0684", "SWS-0685"})
-        for item in exceptions:
-            self.assertEqual(item["declared_length_m"], 2000)
+        self.assertEqual(exceptions, [])
+        bridges = [s for s in self.result["segments"] if s["kind"] == "bridge"]
+        self.assertEqual(len(bridges), 2)
+        for item in bridges:
+            self.assertAlmostEqual(item["declared_length_m"], 2019.804, places=3)
             self.assertAlmostEqual(item["measured_polyline_length_m"], 2019.803903, places=5)
 
-    def test_no_road_reserve_width_or_polygon_is_invented(self):
-        self.assertFalse(self.result["operational_approval"])
-        self.assertEqual(self.result["road_reserve_polygon_generation"], "BLOCKED")
-        self.assertEqual(self.result["summary"]["reserve_polygons_created"], 0)
-        self.assertEqual(self.result["summary"]["reserve_area_assigned_m2"], 0)
-        self.assertEqual(self.result["summary"]["corridor_widths_unresolved"], 685)
-        self.assertTrue(all(s["reserve_width_m"] is None for s in self.result["segments"]))
-        self.assertTrue(all(s["reserve_polygon"] is None for s in self.result["segments"]))
+    def test_fictional_reserve_width_standard_generates_all_corridors(self):
+        self.assertEqual(self.result["road_reserve_polygon_generation"], "SEGMENT_POLYGONS_GENERATED")
+        self.assertEqual(self.result["summary"]["reserve_polygons_created"], 685)
+        self.assertEqual(self.result["summary"]["corridor_widths_unresolved"], 0)
+        self.assertEqual(self.result["road_reserve_width_source"], "SW-RDS-V1")
+        widths = {s["road_class"]: s["reserve_width_m"] for s in self.result["segments"]}
+        self.assertEqual(widths, {
+            "local_street": 18,
+            "district_connector": 24,
+            "primary_arterial": 30,
+            "bridge": 24,
+        })
+        self.assertTrue(all(s["reserve_polygon"] and len(s["reserve_polygon"][0]) >= 5 for s in self.result["segments"]))
+        self.assertTrue(all(s["reserve_geometry_status"] == "GENERATED_FROM_SW_RDS_V1_CENTRELINE_BUFFER" for s in self.result["segments"]))
+        self.assertIn("DISSOLVE", self.result["summary"]["junction_overlap_policy"])
 
     def test_bridge_polyline_geometry_is_retained(self):
         bridges = [s for s in self.result["segments"] if s["kind"] == "bridge"]
