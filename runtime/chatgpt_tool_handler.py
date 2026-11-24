@@ -9,6 +9,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from runtime.player_commands import parse_player_command
 from runtime.player_host_adapter import (
     HostCommandRequest,
     HostCommandResponse,
@@ -16,10 +17,6 @@ from runtime.player_host_adapter import (
     TrustedPlayerHostAdapter,
 )
 
-_ALLOWED_COMMANDS = frozenset({
-    "help", "status", "profile", "recruit", "career",
-    "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
-})
 _ALLOWED_KEYS = frozenset({"command_text", "request_reference"})
 _MAX_COMMAND_LENGTH = 32
 _MAX_REQUEST_REFERENCE = 128
@@ -39,21 +36,13 @@ def _parse_arguments(tool_arguments: Any) -> dict[str, Any] | None:
     if "command_text" not in tool_arguments:
         return None
     command = tool_arguments["command_text"]
-    allowed_workspace_ids = {
-        "home", "operations", "cases", "people", "evidence-scenes",
-        "department", "legal-custody", "resources-finance",
-        "reports-notifications", "system-status",
-    }
-    valid_workspace = False
-    if isinstance(command, str):
-        parts = command.split()
-        valid_workspace = (
-            len(parts) == 2 and parts[0] == "workspace"
-            and parts[1] in allowed_workspace_ids
-        )
     if (not isinstance(command, str) or not command
-            or len(command) > _MAX_COMMAND_LENGTH
-            or not (command in _ALLOWED_COMMANDS or valid_workspace)):
+            or len(command) > _MAX_COMMAND_LENGTH):
+        return None
+    parsed = parse_player_command(
+        command, require_canonical_token=True, require_canonical_spacing=True
+    )
+    if not parsed.ok:
         return None
     reference = tool_arguments.get("request_reference")
     if reference is not None and (
