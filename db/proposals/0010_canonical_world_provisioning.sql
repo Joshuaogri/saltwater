@@ -116,7 +116,8 @@ BEGIN
     v_event := 'registered';
   ELSIF NEW.operating_status IS DISTINCT FROM OLD.operating_status THEN
     v_event := 'status_changed';
-  ELSIF NEW.site_assignment_status IS DISTINCT FROM OLD.site_assignment_status THEN
+  ELSIF NEW.site_assignment_status IS DISTINCT FROM OLD.site_assignment_status
+     OR NEW.primary_spatial_id IS DISTINCT FROM OLD.primary_spatial_id THEN
     v_event := CASE WHEN NEW.site_assignment_status='assigned'
                     THEN 'site_assigned' ELSE 'site_unassigned' END;
   ELSE
