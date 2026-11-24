@@ -131,12 +131,22 @@ jobs:
           PGPASSWORD: test-only-password
         run: |
           createdb -h localhost -U saltwater saltwater_baseline
+          createdb -h localhost -U saltwater saltwater_baseline_target
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_baseline -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_baseline_target -f db/migrations/0001_foundation.sql
       - name: Compare clean replay against read-only reference snapshot
         env:
           BASELINE_REFERENCE_DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_baseline
-          BASELINE_TARGET_DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_baseline
-        run: python scripts/verify_legacy_baseline.py
+          BASELINE_TARGET_DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_baseline_target
+        run: |
+          python scripts/verify_legacy_baseline.py
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_baseline_target -c "ALTER TABLE sw_core.world_config ADD COLUMN bp38_comparison_probe integer"
+          if python scripts/verify_legacy_baseline.py; then
+            echo "ERROR: independent schema difference was not detected"
+            exit 1
+          fi
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_baseline_target -c "ALTER TABLE sw_core.world_config DROP COLUMN bp38_comparison_probe"
+          python scripts/verify_legacy_baseline.py
       - name: Run migration-runner unit tests
         run: python -m unittest discover -s tests/database -v
       - name: Run Python runtime-kernel tests
