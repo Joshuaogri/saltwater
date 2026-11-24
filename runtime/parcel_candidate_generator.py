@@ -1,307 +1,229 @@
-"""Deterministic, non-operational parcel-block candidate generator for BP04-03 Stage B.
-
-The output is a planning candidate only. It never allocates sw_geo IDs or canonical addresses.
-"""
+"""Geometry-derived BP04-03 parcel candidates from fictional roads and water."""
 from __future__ import annotations
+
 import hashlib
 import json
 from pathlib import Path
 
-ROAD_RESERVE_M = 15.0
+from shapely.geometry import Polygon, box, mapping, shape
+from shapely.ops import unary_union
+
 GRID_M = 500.0
 
 LAND_USE = {
-    "Westgate Gardens": "residential",
-    "Foundry Quarter": "mixed_use",
-    "Garden Ward": "residential",
-    "Northbank West": "residential",
-    "Northbank East": "mixed_use",
-    "University Quarter": "education",
-    "Assembly Quarter": "civic",
-    "Civic Terrace": "civic",
-    "Museum Gardens": "open_space",
-    "Port Quarter": "port_maritime",
-    "Customs Ward": "port_maritime",
-    "Marina Point": "waterfront",
-    "Parkside": "open_space",
-    "Reservoir Ward": "utility",
-    "South Gardens": "residential",
-    "Industrial Park": "industrial",
-    "Rail Yards": "freight_logistics",
-    "Canal End": "freight_logistics",
-    "Grand Market": "commercial",
-    "Exchange Ward": "commercial",
-    "Theatre Quarter": "mixed_use",
-    "Old Harbour": "waterfront",
-    "Ropewalk": "mixed_use",
-    "Dockside": "port_maritime",
+    "Westgate Gardens": "residential", "Foundry Quarter": "mixed_use",
+    "Garden Ward": "residential", "Northbank West": "residential",
+    "Northbank East": "mixed_use", "University Quarter": "education",
+    "Assembly Quarter": "civic", "Civic Terrace": "civic",
+    "Museum Gardens": "open_space", "Port Quarter": "port_maritime",
+    "Customs Ward": "port_maritime", "Marina Point": "waterfront",
+    "Parkside": "open_space", "Reservoir Ward": "utility",
+    "South Gardens": "residential", "Industrial Park": "industrial",
+    "Rail Yards": "freight_logistics", "Canal End": "freight_logistics",
+    "Grand Market": "commercial", "Exchange Ward": "commercial",
+    "Theatre Quarter": "mixed_use", "Old Harbour": "waterfront",
+    "Ropewalk": "mixed_use", "Dockside": "port_maritime",
 }
 
 
-def _bounds(poly):
-    ring = poly["coordinates"][0]
-    xs, ys = [p[0] for p in ring[:-1]], [p[1] for p in ring[:-1]]
-    return min(xs), min(ys), max(xs), max(ys)
+def _polygon(value, label):
+    geom = shape(value)
+    if geom.geom_type != "Polygon" or geom.is_empty or not geom.is_valid or geom.area <= 0:
+        raise ValueError(f"{label} must be a valid non-empty Polygon")
+    return geom
 
 
-def _polygon_bbox(feature):
-    geom = feature.get("geometry", {})
-    if geom.get("type") != "Polygon":
-        return None
-    ring = geom.get("coordinates", [[]])[0]
-    if len(ring) < 4:
-        return None
-    xs, ys = [p[0] for p in ring[:-1]], [p[1] for p in ring[:-1]]
-    return min(xs), min(ys), max(xs), max(ys)
+def _polygon_parts(geom):
+    if geom.is_empty:
+        return []
+    if geom.geom_type == "Polygon":
+        return [geom] if geom.area > 0.000001 else []
+    if geom.geom_type == "MultiPolygon":
+        return sorted(
+            [p for p in geom.geoms if p.area > 0.000001],
+            key=lambda p: (round(p.centroid.x, 6), round(p.centroid.y, 6), round(p.area, 6), p.wkb_hex),
+        )
+    if geom.geom_type == "GeometryCollection":
+        parts = []
+        for part in geom.geoms:
+            parts.extend(_polygon_parts(part))
+        return sorted(parts, key=lambda p: (round(p.centroid.x, 6), round(p.centroid.y, 6), round(p.area, 6), p.wkb_hex))
+    return []
 
 
-def _clip_ring_to_rect(ring, rect):
-    """Sutherland-Hodgman clipping of a polygon ring to an axis-aligned rectangle."""
-    x0, y0, x1, y1 = rect
-    points = [tuple(p) for p in ring[:-1]]
-
-    def clip(poly, inside, intersect):
-        if not poly:
-            return []
-        out = []
-        previous = poly[-1]
-        previous_inside = inside(previous)
-        for current in poly:
-            current_inside = inside(current)
-            if current_inside:
-                if not previous_inside:
-                    out.append(intersect(previous, current))
-                out.append(current)
-            elif previous_inside:
-                out.append(intersect(previous, current))
-            previous, previous_inside = current, current_inside
-        return out
-
-    def vertical(boundary, a, b):
-        if b[0] == a[0]:
-            return (boundary, a[1])
-        t = (boundary - a[0]) / (b[0] - a[0])
-        return (boundary, a[1] + t * (b[1] - a[1]))
-
-    def horizontal(boundary, a, b):
-        if b[1] == a[1]:
-            return (a[0], boundary)
-        t = (boundary - a[1]) / (b[1] - a[1])
-        return (a[0] + t * (b[0] - a[0]), boundary)
-
-    points = clip(points, lambda p: p[0] >= x0, lambda a, b: vertical(x0, a, b))
-    points = clip(points, lambda p: p[0] <= x1, lambda a, b: vertical(x1, a, b))
-    points = clip(points, lambda p: p[1] >= y0, lambda a, b: horizontal(y0, a, b))
-    points = clip(points, lambda p: p[1] <= y1, lambda a, b: horizontal(y1, a, b))
-    return points
+def _rings(poly):
+    return [
+        [[round(float(x), 6), round(float(y), 6)] for x, y in list(poly.exterior.coords)],
+        *[
+            [[round(float(x), 6), round(float(y), 6)] for x, y in list(ring.coords)]
+            for ring in poly.interiors
+        ],
+    ]
 
 
-def _ring_area(points):
-    if len(points) < 3:
-        return 0.0
-    return abs(sum(
-        points[i][0] * points[(i + 1) % len(points)][1]
-        - points[(i + 1) % len(points)][0] * points[i][1]
-        for i in range(len(points))
-    )) / 2.0
-
-
-def _polygon_rect_intersection_area(feature, rect):
-    """Exact area for a single simple Polygon outer ring clipped to a rectangle.
-
-    Current SW-GEO-V1 water polygons are single-ring rectangles. Interior holes
-    and MultiPolygon geometry are deliberately rejected rather than guessed.
-    """
-    geom = feature.get("geometry", {})
-    if geom.get("type") != "Polygon":
-        raise ValueError("Only Polygon water geometry is supported by Stage B v2")
-    rings = geom.get("coordinates", [])
-    if len(rings) != 1:
-        raise ValueError("Water polygon holes require an explicit geometry implementation")
-    clipped = _clip_ring_to_rect(rings[0], rect)
-    return _ring_area(clipped)
-
-
-def _overlaps(a, b):
-    return a[0] < b[2] and a[2] > b[0] and a[1] < b[3] and a[3] > b[1]
-
-
-def _edge_frontages(box, segments):
-    x0, y0, x1, y1 = box
-    found = set()
-    for seg in segments:
-        geom = seg.get("geometry", [])
-        if len(geom) < 2:
-            continue
-        (ax, ay), (bx, by) = geom[0], geom[-1]
-        if ay == by:
-            lo, hi = sorted((ax, bx))
-            if ay in (y0, y1) and lo <= x0 and hi >= x1:
-                found.add("south" if ay == y0 else "north")
-        elif ax == bx:
-            lo, hi = sorted((ay, by))
-            if ax in (x0, x1) and lo <= y0 and hi >= y1:
-                found.add("west" if ax == x0 else "east")
-    return sorted(found)
+def _feature_water(source):
+    water = []
+    for feature in source.get("features", []):
+        if feature.get("properties", {}).get("entity_type") in ("harbour_water", "constructed_water"):
+            geom = _polygon(feature["geometry"], f"water feature {feature.get('id')}")
+            water.append((feature.get("id"), geom))
+    return water
 
 
 def build_candidates(source: dict) -> dict:
-    hoods = source["neighbourhoods"]
-    segments = source["network"]["segments"]
-    water = [
-        f for f in source.get("features", [])
-        if f.get("properties", {}).get("entity_type") in ("harbour_water", "constructed_water")
-    ]
-    for feature in water:
-        if _polygon_bbox(feature) is None:
-            raise ValueError(f"Invalid water polygon feature: {feature.get('id')}")
-    parcels, conflicts, coverage = [], [], []
-    for hood in sorted(hoods, key=lambda x: x["id"]):
-        x0, y0, x1, y1 = _bounds(hood["geometry"])
-        if any(v % GRID_M for v in (x0, y0, x1, y1)):
-            raise ValueError(f"Neighbourhood grid bounds are not divisible by {GRID_M}: {hood['id']}")
-        local_count = 0
-        ix = 0
-        y = y0
-        while y < y1:
-            x = x0
-            while x < x1:
-                ix += 1
-                cell = (x, y, x + GRID_M, y + GRID_M)
-                water_intersections = [
-                    (i, _polygon_rect_intersection_area(feature, cell))
-                    for i, feature in enumerate(water)
-                ]
-                water_hits = [(i, area) for i, area in water_intersections if area > 0]
-                if water_hits:
-                    conflicts.append({
-                        "candidate_cell_id": f"WATER-{hood['id']}-{ix:03d}",
-                        "source_neighbourhood_id": hood["id"],
-                        "cell_bbox_m": list(cell),
-                        "conflict": "exact_water_polygon_intersection",
-                        "water_feature_ids": [water[i].get("id") for i, _ in water_hits],
-                        "intersection_area_m2": round(sum(area for _, area in water_hits), 3),
-                        "status": "EXCLUDED_UNRESOLVED",
-                    })
-                else:
-                    inner = (x + ROAD_RESERVE_M, y + ROAD_RESERVE_M,
-                             x + GRID_M - ROAD_RESERVE_M, y + GRID_M - ROAD_RESERVE_M)
-                    frontage = _edge_frontages(cell, segments)
-                    local_count += 1
-                    parcels.append({
-                        "candidate_parcel_id": f"BPC-{hood['id'].replace('-', '')}-{ix:03d}",
+    from runtime.road_corridor_audit import build_road_corridor_audit
+    from runtime.road_reserve_topology import build_road_reserve_topology
+
+    corridors = build_road_corridor_audit(source)
+    topology = build_road_reserve_topology(source, corridors)
+    road_reserve = shape(topology["city_road_reserve_geometry"])
+    if not road_reserve.is_valid or road_reserve.is_empty:
+        raise ValueError("Dissolved fictional road reserve is invalid")
+    water_features = _feature_water(source)
+    water_union = unary_union([g for _, g in water_features]) if water_features else Polygon()
+    if not water_union.is_valid:
+        raise ValueError("Water union is invalid")
+    water_ids = [(fid, geom) for fid, geom in water_features]
+
+    parcels, cell_audit, coverage = [], [], []
+    total_source_area = total_road_area = total_water_area = total_candidate_area = 0.0
+    source_cell_count = 0
+
+    for hood in sorted(source["neighbourhoods"], key=lambda h: h["id"]):
+        hood_geom = _polygon(hood["geometry"], f"neighbourhood {hood['id']}")
+        minx, miny, maxx, maxy = hood_geom.bounds
+        if any(abs(v / GRID_M - round(v / GRID_M)) > 1e-9 for v in (minx, miny, maxx, maxy)):
+            raise ValueError(f"Neighbourhood grid bounds are not aligned to {GRID_M}m: {hood['id']}")
+        hood_road = road_reserve.intersection(hood_geom)
+        hood_water = water_union.intersection(hood_geom).difference(hood_road)
+        developable = hood_geom.difference(unary_union([hood_road, water_union]))
+        if not developable.is_valid:
+            raise ValueError(f"Invalid developable geometry in {hood['id']}")
+
+        hood_parcels = []
+        cell_index = 0
+        y = miny
+        while y < maxy - 1e-8:
+            x = minx
+            while x < maxx - 1e-8:
+                cell_index += 1
+                source_cell_count += 1
+                cell = box(x, y, min(x + GRID_M, maxx), min(y + GRID_M, maxy))
+                cell_land = cell.intersection(hood_geom).difference(unary_union([road_reserve, water_union]))
+                parts = _polygon_parts(cell_land)
+                water_area = cell.intersection(hood_geom).intersection(water_union).area
+                road_area = cell.intersection(hood_geom).intersection(road_reserve).area
+                cell_audit.append({
+                    "source_neighbourhood_id": hood["id"],
+                    "source_cell_index": cell_index,
+                    "source_cell_bounds_m": [x, y, min(x + GRID_M, maxx), min(y + GRID_M, maxy)],
+                    "road_reserve_area_m2": round(road_area, 6),
+                    "water_intersection_area_m2": round(water_area, 6),
+                    "candidate_component_count": len(parts),
+                    "candidate_land_area_m2": round(sum(p.area for p in parts), 6),
+                })
+                for component_no, poly in enumerate(parts, start=1):
+                    parcel_id = f"BPC-{hood['id'].replace('-', '')}-{cell_index:03d}-{component_no:02d}"
+                    frontage = []
+                    boundary = poly.boundary
+                    for segment in corridors["segments"]:
+                        seg_poly = Polygon(segment["reserve_polygon"][0])
+                        shared = boundary.intersection(seg_poly.boundary)
+                        if shared.length > 0.01:
+                            frontage.append(segment["segment_id"])
+                    parcel = {
+                        "candidate_parcel_id": parcel_id,
                         "source_dataset": source["dataset_id"],
                         "source_neighbourhood_id": hood["id"],
                         "source_district_id": hood["district_id"],
                         "land_use_code": LAND_USE[hood["name"]],
                         "development_state": "unknown",
-                        "geometry_format": "local_grid_polygon_v2",
-                        "geometry": [[
-                            [inner[0], inner[1]], [inner[2], inner[1]],
-                            [inner[2], inner[3]], [inner[0], inner[3]],
-                            [inner[0], inner[1]]
-                        ]],
-                        "area_m2": (inner[2] - inner[0]) * (inner[3] - inner[1]),
+                        "geometry_format": "polygon_with_optional_interior_rings",
+                        "geometry": _rings(poly),
+                        "area_m2": round(poly.area, 3),
                         "area_basis": "derived_geometry",
-                        "road_frontage_edges": frontage,
-                        "frontage_status": "SUPPORTED_CANDIDATE" if frontage else "UNRESOLVED",
+                        "road_frontage_segment_ids": sorted(set(frontage)),
+                        "frontage_status": "ROAD_RESERVE_EDGE_CONTACT_CANDIDATE" if frontage else "NO_ROAD_EDGE_CONTACT_IDENTIFIED",
                         "geometry_quality": "candidate_unreviewed",
                         "epistemic_status": "generated_design_value",
                         "candidate_spatial_id": None,
                         "canonical_address_id": None,
-                        "source_ref": f"{source['dataset_id']}:{hood['id']}:500m-cell:{ix:03d}",
-                        "actor_ref": "BP04-03-STAGE-B-GENERATOR-V2",
+                        "source_ref": f"{source['dataset_id']}:{hood['id']}:500m-cell:{cell_index:03d}:component:{component_no:02d}",
+                        "actor_ref": "BP04-03-STAGE-B-GENERATOR-V3",
                         "confidence_code": "estimated",
-                        "reason": "Deterministic 500m planning-grid cell inset by a 15m candidate road-reserve allowance; not surveyed or operationally approved.",
-                    })
+                        "reason": "Deterministic polygon component generated by intersecting the source neighbourhood and 500m lineage cell, then subtracting SW-RDS-V1 dissolved road reserve and mapped water; planning candidate only.",
+                    }
+                    parcels.append(parcel)
+                    hood_parcels.append(parcel)
+
                 x += GRID_M
             y += GRID_M
-        coverage.append({
-            "source_neighbourhood_id": hood["id"],
-            "candidate_parcel_count": local_count,
-            "excluded_water_conflict_cells": sum(1 for c in conflicts if c["source_neighbourhood_id"] == hood["id"]),
-            "coverage_status": "CANDIDATE_ONLY",
-        })
-    # Deterministic topology checks: candidate interiors must remain inside
-    # their source neighbourhood and may not overlap another candidate interior.
-    parcel_boxes = []
-    for parcel in parcels:
-        ring = parcel["geometry"][0]
-        xs = [p[0] for p in ring[:-1]]
-        ys = [p[1] for p in ring[:-1]]
-        parcel_boxes.append((
-            parcel["candidate_parcel_id"],
-            parcel["source_neighbourhood_id"],
-            (min(xs), min(ys), max(xs), max(ys)),
-        ))
-    neighbourhood_bounds = {
-        hood["id"]: _bounds(hood["geometry"]) for hood in hoods
-    }
-    topology_violations = []
-    for parcel_id, hood_id, box in parcel_boxes:
-        hb = neighbourhood_bounds[hood_id]
-        if box[0] < hb[0] or box[1] < hb[1] or box[2] > hb[2] or box[3] > hb[3]:
-            topology_violations.append({
-                "type": "candidate_outside_neighbourhood",
-                "candidate_parcel_id": parcel_id,
-                "source_neighbourhood_id": hood_id,
-            })
-    for i, (left_id, left_hood, left_box) in enumerate(parcel_boxes):
-        for right_id, right_hood, right_box in parcel_boxes[i + 1:]:
-            if left_hood == right_hood and _overlaps(left_box, right_box):
-                topology_violations.append({
-                    "type": "candidate_interior_overlap",
-                    "candidate_parcel_ids": [left_id, right_id],
-                    "source_neighbourhood_id": left_hood,
-                })
-    if topology_violations:
-        raise ValueError(f"Candidate topology validation failed: {topology_violations[:5]}")
 
-    source_grid_cells = sum(
-        int((_bounds(h["geometry"])[2] - _bounds(h["geometry"])[0]) / GRID_M)
-        * int((_bounds(h["geometry"])[3] - _bounds(h["geometry"])[1]) / GRID_M)
-        for h in hoods
-    )
+        parcel_union = unary_union([Polygon(p["geometry"][0], p["geometry"][1:]) for p in hood_parcels]) if hood_parcels else Polygon()
+        overlap = sum(Polygon(p["geometry"][0], p["geometry"][1:]).area for p in hood_parcels) - parcel_union.area
+        delta = hood_geom.area - hood_road.area - hood_water.area - parcel_union.area
+        if abs(overlap) > 0.001 or abs(delta) > 0.01:
+            raise ValueError(f"Parcel coverage does not reconcile in {hood['id']}: overlap={overlap}, delta={delta}")
+        coverage.append({
+            "neighbourhood_id": hood["id"],
+            "neighbourhood_name": hood["name"],
+            "source_area_m2": round(hood_geom.area, 3),
+            "road_reserve_area_m2": round(hood_road.area, 3),
+            "water_area_outside_road_reserve_m2": round(hood_water.area, 3),
+            "candidate_land_area_m2": round(parcel_union.area, 3),
+            "candidate_parcel_count": len(hood_parcels),
+            "area_balance_delta_m2": round(delta, 6),
+            "topology_status": "PASS",
+        })
+        total_source_area += hood_geom.area
+        total_road_area += hood_road.area
+        total_water_area += hood_water.area
+        total_candidate_area += parcel_union.area
+
+    ids = [p["candidate_parcel_id"] for p in parcels]
+    if len(ids) != len(set(ids)):
+        raise ValueError("Deterministic parcel candidate IDs are not unique")
     body = {
-        "schema": "saltwater-bp04-03-parcel-candidates/1.0",
-        "candidate_set_id": "BP04-03-STAGE-B-PARCEL-CANDIDATES-001",
+        "schema": "saltwater-bp04-03-parcel-candidates/2.0",
+        "candidate_set_id": "BP04-03-STAGE-B-PARCEL-CANDIDATES-002",
         "source_dataset": source["dataset_id"],
         "source_status": source["status"],
         "operational_approval": False,
         "generation": {
-            "generator": "BP04-03-STAGE-B-GENERATOR-V2",
+            "generator": "BP04-03-STAGE-B-GENERATOR-V3",
             "grid_cell_m": GRID_M,
-            "road_reserve_inset_m": ROAD_RESERVE_M,
-            "geometry_crs": source["coordinate_reference"]["id"],
-            "geometry_units": "metres",
+            "road_reserve_design_standard": "SW-RDS-V1",
+            "road_reserve_geometry_source": "DISSOLVED_685_SEGMENT_CORRIDORS",
             "parcel_candidate_count": len(parcels),
-            "excluded_water_conflict_count": len(conflicts),
-            "source_grid_cell_count": source_grid_cells,
-            "topology": {
-                "candidate_interiors_within_neighbourhoods": True,
-                "candidate_interior_overlap_count": 0,
-                "candidate_outside_neighbourhood_count": 0,
-                "validation": "PASS",
-                "unallocated_area_note": "The difference between neighbourhood envelopes and candidate parcel interiors includes provisional 15m grid insets and entire cells excluded where water intersects; it is not classified as road, public space or developable land.",
-            },
+            "source_grid_cell_count": source_cell_count,
+            "water_feature_count": len(water_features),
+            "water_intersection_cell_count": sum(1 for c in cell_audit if c["water_intersection_area_m2"] > 0),
+            "candidate_component_count": len(parcels),
+            "source_area_m2": round(total_source_area, 3),
+            "road_reserve_area_m2": round(total_road_area, 3),
+            "water_area_outside_road_reserve_m2": round(total_water_area, 3),
+            "candidate_land_area_m2": round(total_candidate_area, 3),
+            "area_balance_delta_m2": round(total_source_area-total_road_area-total_water_area-total_candidate_area, 6),
+            "topology_validation": "PASS",
             "unresolved_source_spatial_mappings": 100,
             "spatial_ids_assigned": 0,
             "canonical_addresses_created": 0,
         },
         "coverage_by_neighbourhood": coverage,
+        "source_cell_audit": cell_audit,
         "parcels": parcels,
-        "excluded_cells": conflicts,
+        "excluded_cells": [],
         "address_generation": {
-            "status": "BLOCKED_PENDING_BP02_SOURCE_MAPPING_AND_FRONTAGE_REVIEW",
+            "status": "BLOCKED_PENDING_BP02_SOURCE_MAPPING_AND_ADDRESS_DESIGN",
             "records_created": 0,
-            "reason": "No candidate is assigned a canonical road or address ID. No street number or operational locator is inferred.",
+            "reason": "This candidate generation does not allocate operational spatial IDs, street numbers or canonical addresses.",
         },
         "limitations": [
-            "Planning-grade grid-derived candidates only; not final cadastral parcels.",
-            "Cells with positive-area intersection against exact water polygon rings are excluded and explicitly listed for resolution.",
-            "A 15m inset is a generated road-reserve allowance, not an approved right-of-way width.",
-            "Candidate frontage is a geometric edge match only; access, legal frontage and route connectivity remain unverified. The 15m inset is still a provisional grid assumption, not a surveyed road-reserve polygon.",
-            "No parcel is approved, canonical or eligible for production import.",
+            "Fictional game-world design geometry only; not a real survey or cadastral register.",
+            "Parcel candidate polygons are cell-lineage components after subtracting road-reserve and water geometry.",
+            "Road frontage is a geometric boundary-contact candidate, not legal frontage or proof of a usable entrance.",
+            "The 500m source cells preserve deterministic lineage but do not assert final cadastral boundaries.",
+            "No ownership, tenancy, occupancy, business operator, property/building count or canonical address is inferred.",
         ],
     }
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
@@ -312,19 +234,20 @@ def build_candidates(source: dict) -> dict:
 def main():
     root = Path(__file__).resolve().parents[1]
     source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-    output = build_candidates(source)
-    target = Path("bp04-03-stage-b-parcel-candidates.json")
-    target.write_text(json.dumps(output, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8")
+    result = build_candidates(source)
+    Path("bp04-03-stage-b-parcel-candidates.json").write_text(
+        json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n", encoding="utf-8"
+    )
     print(json.dumps({
-        "candidate_parcels": output["generation"]["parcel_candidate_count"],
-        "water_conflict_cells": output["generation"]["excluded_water_conflict_count"],
-        "neighbourhoods_covered": len(output["coverage_by_neighbourhood"]),
-        "frontage_supported": sum(1 for p in output["parcels"] if p["frontage_status"] == "SUPPORTED_CANDIDATE"),
-        "frontage_unresolved": sum(1 for p in output["parcels"] if p["frontage_status"] == "UNRESOLVED"),
-        "manifest_sha256": output["manifest_sha256"],
-        "operational_approval": output["operational_approval"],
-        "spatial_ids_assigned": output["generation"]["spatial_ids_assigned"],
-        "canonical_addresses_created": output["generation"]["canonical_addresses_created"],
+        "candidate_parcels": result["generation"]["parcel_candidate_count"],
+        "source_cells": result["generation"]["source_grid_cell_count"],
+        "water_intersection_cells": result["generation"]["water_intersection_cell_count"],
+        "road_reserve_area_m2": result["generation"]["road_reserve_area_m2"],
+        "candidate_land_area_m2": result["generation"]["candidate_land_area_m2"],
+        "area_balance_delta_m2": result["generation"]["area_balance_delta_m2"],
+        "frontage_candidates": sum(1 for p in result["parcels"] if p["road_frontage_segment_ids"]),
+        "manifest_sha256": result["manifest_sha256"],
+        "operational_approval": result["operational_approval"],
     }, indent=2, sort_keys=True))
 
 
