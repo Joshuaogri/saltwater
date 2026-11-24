@@ -68,37 +68,16 @@ def unwrap_transaction(sql: str) -> str:
 
 
 def ledger_rows(conn) -> list[tuple[int, str, str | None, str | None]]:
+    has_fingerprint = has_fingerprint_column(conn)
+    columns = "version, migration_name, checksum_sha256"
+    if has_fingerprint:
+        columns += ", schema_fingerprint_sha256"
     with conn.cursor() as cur:
-        cur.execute("""
-            SELECT version, migration_name, checksum_sha256,
-                   CASE WHEN EXISTS (
-                       SELECT 1 FROM information_schema.columns
-                       WHERE table_schema='sw_ops' AND table_name='schema_migration'
-                         AND column_name='schema_fingerprint_sha256'
-                   ) THEN NULL ELSE NULL END
-            FROM sw_ops.schema_migration
-            ORDER BY version
-        """)
+        cur.execute(f"SELECT {columns} FROM sw_ops.schema_migration ORDER BY version")
         rows = cur.fetchall()
-        # Keep compatibility with the original three-column ledger until 0002.
-        with conn.cursor() as check:
-            check.execute("""
-                SELECT EXISTS (
-                    SELECT 1 FROM information_schema.columns
-                    WHERE table_schema='sw_ops' AND table_name='schema_migration'
-                      AND column_name='schema_fingerprint_sha256'
-                )
-            """)
-            has_fingerprint = check.fetchone()[0]
-        if has_fingerprint:
-            with conn.cursor() as cur2:
-                cur2.execute("""
-                    SELECT version, migration_name, checksum_sha256,
-                           schema_fingerprint_sha256
-                    FROM sw_ops.schema_migration ORDER BY version
-                """)
-                return cur2.fetchall()
-        return [(v, n, c, None) for v, n, c, _ in rows]
+    if has_fingerprint:
+        return rows
+    return [(version, name, checksum, None) for version, name, checksum in rows]
 
 
 def schema_fingerprint(conn) -> str:
