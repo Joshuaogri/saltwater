@@ -6,6 +6,7 @@ DECLARE
   v_person integer;
   v_event bigint;
   v_business bigint;
+  v_temp_business bigint;
   v_name text;
   v_before bigint;
 BEGIN
@@ -114,8 +115,8 @@ BEGIN
     INSERT INTO sw_business.business
       (business_code,created_batch_id,created_tick,source_ref)
     VALUES ('SWB-FX-ROLLBACK-01',v_batch,0,'SW-DB-001:partial-batch-test')
-    RETURNING business_id INTO v_business;
-    PERFORM sw_names.reserve_name('BUSINESS',v_business,'canonical',v_name,
+    RETURNING business_id INTO v_temp_business;
+    PERFORM sw_names.reserve_name('BUSINESS',v_temp_business,'canonical',v_name,
       'SW-DB-001:duplicate-name','acceptance-test',
       'must reject duplicate global business name',0,NULL);
     RAISE EXCEPTION 'duplicate business name unexpectedly accepted';
