@@ -7,6 +7,10 @@ on:
       - "db/proposals/0013_bp02_parcel_address_candidate.sql"
       - "tests/pkg001/bp04_03_stage_b_acceptance.sql"
       - "tests/pkg001/test_bp04_03_stage_b_contract.py"
+      - "runtime/parcel_candidate_importer.py"
+      - "tests/pkg001/test_parcel_candidate_importer.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "data/geography/saltwater-geography-v1.json"
       - "tests/pkg001/geography_identity_map_acceptance.sql"
       - "tests/pkg001/bp04_01_geography_fixture.sql"
       - ".github/workflows/bp04-03-stage-b-disposable.yml"
@@ -74,3 +78,28 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_geo' ORDER BY 3 DESC;"
       - name: Run BP04-03 Stage B parcel/address acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_b_acceptance.sql
+
+      - name: Generate deterministic candidate manifest
+        run: python -m runtime.parcel_candidate_generator
+      - name: Install PostgreSQL Python driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Validate and import candidate manifest into disposable PostgreSQL
+        run: |
+          python -m runtime.parcel_candidate_importer --manifest bp04-03-stage-b-parcel-candidates.json > /tmp/bp04-03-import-first.json
+          cat /tmp/bp04-03-import-first.json
+      - name: Verify idempotent repeat import
+        run: |
+          python -m runtime.parcel_candidate_importer --manifest bp04-03-stage-b-parcel-candidates.json > /tmp/bp04-03-import-repeat.json
+          cat /tmp/bp04-03-import-repeat.json
+          python - <<'PY'
+          import json
+          first=json.load(open('/tmp/bp04-03-import-first.json'))
+          second=json.load(open('/tmp/bp04-03-import-repeat.json'))
+          assert first['candidate_profiles_present']==396
+          assert second['candidate_profiles_present']==396
+          assert second['candidate_entities_inserted_this_run']==0
+          assert second['geometry_versions_inserted_this_run']==0
+          assert second['parcel_profiles_inserted_this_run']==0
+          assert second['canonical_addresses_created']==0
+          print('BP04_03_REPEAT_IMPORT_IDEMPOTENCY_PASS')
+          PY
