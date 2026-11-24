@@ -124,10 +124,16 @@ BEGIN
 END
 $bp35$;
 
-SELECT pg_relation_size('sw_runtime.event_work') AS event_work_heap_bytes,
-       pg_indexes_size('sw_runtime.event_work') AS event_work_index_bytes,
-       pg_total_relation_size('sw_runtime.event_work') AS event_work_total_bytes,
-       (SELECT count(*) FROM sw_runtime.event_work) AS fixture_work_rows,
+SELECT c.relname,
+       pg_relation_size(c.oid) AS heap_bytes,
+       pg_indexes_size(c.oid) AS index_bytes,
+       pg_total_relation_size(c.oid) AS total_bytes
+FROM pg_class c
+JOIN pg_namespace n ON n.oid=c.relnamespace
+WHERE n.nspname='sw_runtime'
+  AND c.relname IN ('event_work','event_work_attempt','event_work_prerequisite')
+ORDER BY c.relname;
+SELECT (SELECT count(*) FROM sw_runtime.event_work) AS fixture_work_rows,
        (SELECT count(*) FROM sw_runtime.event_work_attempt) AS fixture_attempt_rows,
        (SELECT count(*) FROM sw_runtime.event_work_prerequisite) AS fixture_dependency_rows;
 
