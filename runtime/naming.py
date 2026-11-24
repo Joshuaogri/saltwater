@@ -226,6 +226,7 @@ class GeneratorConfig:
 class GeneratedNameBatch:
     domain: str
     generator_version: int
+    normalizer_version: int
     config_version: str
     seed: int
     candidates: tuple[str, ...]
@@ -292,6 +293,7 @@ def generate_batch(domain: str, count: int, *, seed: int, config: GeneratorConfi
     manifest = {
         "domain": domain.strip().casefold(),
         "generator_version": GENERATOR_VERSION,
+        "normalizer_version": NORMALIZER_VERSION,
         "config_version": config.config_version,
         "seed": seed,
         "candidates": candidates,
@@ -302,6 +304,7 @@ def generate_batch(domain: str, count: int, *, seed: int, config: GeneratorConfi
     return GeneratedNameBatch(
         domain=manifest["domain"],
         generator_version=GENERATOR_VERSION,
+        normalizer_version=NORMALIZER_VERSION,
         config_version=config.config_version,
         seed=seed,
         candidates=candidates,
