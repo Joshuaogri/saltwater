@@ -125,7 +125,7 @@ BEGIN
 
   UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
   UPDATE sw_runtime.state SET world_tick=world_tick+1 WHERE singleton=1;
-  report:=sw_runtime.validate_checkpoint_manifest(checkpoint_id);
+  report:=sw_runtime.validate_checkpoint_manifest(v_checkpoint_id);
   IF report->'gates'->'runtime_and_tick'->>'status'<>'fail'
      OR COALESCE((report->>'valid')::boolean,true) THEN
     RAISE EXCEPTION 'mismatched restored tick was not rejected: %',report;
