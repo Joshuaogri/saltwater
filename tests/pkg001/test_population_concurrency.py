@@ -38,7 +38,7 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                         created_event = cur.fetchone()[0]
                         cur.execute(
                             "INSERT INTO sw_people.person(given_name,family_name,created_tick,last_event_id) "
-                            "VALUES ('Concurrent','Attempt-'||%s,%s,%s) RETURNING person_id",
+                            "VALUES ('Concurrent','Attempt-'||substr(md5(%s::text),1,12),%s,%s) RETURNING person_id",
                             (number, current_tick, created_event),
                         )
                         person_id = cur.fetchone()[0]
