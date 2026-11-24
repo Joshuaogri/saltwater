@@ -84,11 +84,16 @@ def schema_fingerprint(conn) -> str:
     """Hash stable schema metadata, excluding OIDs, owners and physical statistics."""
     catalogue = []
     queries = [
+        ("schemas", """
+            SELECT nspname FROM pg_namespace
+            WHERE left(nspname,3)='sw_'
+            ORDER BY nspname
+        """),
         ( "relations", """
             SELECT n.nspname, c.relname, c.relkind,
                    COALESCE(pg_get_viewdef(c.oid, true), '')
             FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE n.nspname IN ('sw_core','sw_ops')
+            WHERE left(n.nspname,3)='sw_'
               AND c.relkind IN ('r','p','v','m','S')
             ORDER BY n.nspname,c.relname
         """),
@@ -101,7 +106,7 @@ def schema_fingerprint(conn) -> str:
             JOIN pg_class c ON c.oid=a.attrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
             LEFT JOIN pg_attrdef d ON d.adrelid=c.oid AND d.adnum=a.attnum
-            WHERE n.nspname IN ('sw_core','sw_ops')
+            WHERE left(n.nspname,3)='sw_'
               AND a.attnum>0 AND NOT a.attisdropped
             ORDER BY n.nspname,c.relname,a.attnum
         """),
@@ -111,14 +116,35 @@ def schema_fingerprint(conn) -> str:
             FROM pg_constraint con
             JOIN pg_class c ON c.oid=con.conrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE n.nspname IN ('sw_core','sw_ops')
+            WHERE left(n.nspname,3)='sw_'
             ORDER BY n.nspname,c.relname,con.conname
         """),
         ( "indexes", """
             SELECT schemaname,tablename,indexname,indexdef
             FROM pg_indexes
-            WHERE schemaname IN ('sw_core','sw_ops')
+            WHERE left(schemaname,3)='sw_'
             ORDER BY schemaname,tablename,indexname
+        """),
+        ( "routines", """
+            SELECT n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),
+                   p.prokind,pg_get_functiondef(p.oid)
+            FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
+            WHERE left(n.nspname,3)='sw_' AND p.prokind IN ('f','p')
+            ORDER BY n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)
+        """),
+        ( "triggers", """
+            SELECT n.nspname,c.relname,t.tgname,pg_get_triggerdef(t.oid,true)
+            FROM pg_trigger t
+            JOIN pg_class c ON c.oid=t.tgrelid
+            JOIN pg_namespace n ON n.oid=c.relnamespace
+            WHERE left(n.nspname,3)='sw_' AND NOT t.tgisinternal
+            ORDER BY n.nspname,c.relname,t.tgname
+        """),
+        ( "policies", """
+            SELECT schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check
+            FROM pg_policies
+            WHERE left(schemaname,3)='sw_'
+            ORDER BY schemaname,tablename,policyname
         """),
     ]
     with conn.cursor() as cur:
