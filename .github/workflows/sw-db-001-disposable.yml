@@ -138,8 +138,6 @@ jobs:
           echo "bp04_01_schema_incremental_bytes=$((after-before))"
           echo "bp04_01_proposal_source_bytes=$(wc -c < db/proposals/0011_bp04_property_premises_foundation.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_property','sw_names') ORDER BY 5 DESC;"
-      - name: Create test-only BP04-01 parcel and address references
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
       - name: Provision deterministic opening population and business fixture
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
@@ -169,6 +167,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS businesses, count(DISTINCT r.normalized_key) AS distinct_registered_names FROM sw_business.business b JOIN sw_names.name_reservation r ON r.entity_type='BUSINESS' AND r.entity_id=b.business_id;"
       - name: Run SW-DB-001 opening, lifecycle, identity and rollback acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/sw_db_001_acceptance.sql
+      - name: Create test-only BP04-01 parcel and address references
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
       - name: Run BP04-01 property and premises identity acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_acceptance.sql
       - name: Verify same-manifest provisioning is idempotent
