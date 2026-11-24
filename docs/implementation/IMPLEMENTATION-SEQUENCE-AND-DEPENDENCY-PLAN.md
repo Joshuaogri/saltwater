@@ -371,3 +371,12 @@ Tests are added for catalogue stability, exact-ID rejection, bounded/back naviga
 
 
 **BP40-01 verification:** Implementation is committed on `main` at `4d271fc6fe01b79348e85c82089b0f9f1f81e036`. The dedicated six-test workspace suite and all existing Python regression suites passed. Full disposable PostgreSQL regression [45389064114](https://github.com/Joshuaogri/saltwater/actions/runs/45389064114) passed, including population-cap/concurrency, database access boundary and backup/restore. Database migration validation [45389064115](https://github.com/Joshuaogri/saltwater/actions/runs/45389064115) passed. No database proposal, migration or production Neon operation was part of this increment.
+
+
+## 12. BP40-02 — stable player command catalogue and typed input parser (proposed)
+
+Prepared package: [BP40-02 — Stable Player Command Catalogue and Typed Input Parser](approval-packages/BP40-02-stable-command-catalogue-and-typed-parser.md).
+
+This is the next bounded interface increment after verified BP40-01. It consolidates the existing command grammar, ownership, classifications and permission action into one immutable registry/parser shared by the player router, authorization gateway and trusted host/tool boundaries. It introduces no new domain commands or permissions and preserves the exact ten workspace IDs, hidden-truth gate and no-offline-time rule.
+
+**Status: PROPOSED — awaiting explicit user approval.** No BP40-02 implementation or test result is claimed. BP-40 remains `DESIGNED_DRAFT`.
