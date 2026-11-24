@@ -1,0 +1,109 @@
+\set ON_ERROR_STOP on
+BEGIN;
+
+DO $$
+DECLARE
+  n bigint;
+BEGIN
+  SELECT count(*) INTO n FROM sw_property.property_asset;
+  IF n<>420 THEN RAISE EXCEPTION 'Expected 420 property identities, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.building;
+  IF n<>384 THEN RAISE EXCEPTION 'Expected 384 building identities, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.premises;
+  IF n<>1327 THEN RAISE EXCEPTION 'Expected 1327 premises identities, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.unit_space;
+  IF n<>15199 THEN RAISE EXCEPTION 'Expected 15199 unit identities, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.access_point;
+  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 access-point candidate identities, got %',n; END IF;
+
+  SELECT count(*) INTO n FROM sw_property.property_candidate_site;
+  IF n<>420 THEN RAISE EXCEPTION 'Property candidate-site lineage count mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate;
+  IF n<>1572 THEN RAISE EXCEPTION 'Asset geometry candidate count mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_generation_batch;
+  IF n<>1 THEN RAISE EXCEPTION 'Expected one immutable generation batch, got %',n; END IF;
+
+  SELECT count(*) INTO n FROM sw_property.property_profile;
+  IF n<>420 THEN RAISE EXCEPTION 'Property profile coverage mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.building_profile;
+  IF n<>384 THEN RAISE EXCEPTION 'Building profile coverage mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.premises_profile;
+  IF n<>1327 THEN RAISE EXCEPTION 'Premises profile coverage mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.unit_profile;
+  IF n<>15199 THEN RAISE EXCEPTION 'Unit profile coverage mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.access_point_profile;
+  IF n<>768 THEN RAISE EXCEPTION 'Access-point profile coverage mismatch: %',n; END IF;
+
+  SELECT count(*) INTO n FROM sw_property.physical_measurement;
+  IF n=0 THEN RAISE EXCEPTION 'Physical measurements were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.building_level;
+  IF n=0 THEN RAISE EXCEPTION 'Building floor/level schedules were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.building_component;
+  IF n=0 THEN RAISE EXCEPTION 'Building components were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.premises_room;
+  IF n=0 THEN RAISE EXCEPTION 'Premises room schedules were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.utility_system;
+  IF n=0 THEN RAISE EXCEPTION 'Utility system inventory was not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.physical_feature;
+  IF n=0 THEN RAISE EXCEPTION 'Physical feature inventory was not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.condition_assessment;
+  IF n=0 THEN RAISE EXCEPTION 'Condition assessment records were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_assertion;
+  IF n=0 THEN RAISE EXCEPTION 'Knowledge-state assertions were not imported'; END IF;
+  SELECT count(*) INTO n FROM sw_property.physical_defect;
+  IF n<>0 THEN RAISE EXCEPTION 'No defects were evidenced; generated defect rows are prohibited (found %)',n; END IF;
+
+  SELECT count(*) INTO n FROM sw_property.property_asset
+   WHERE location_status<>'unresolved' OR parcel_spatial_id IS NOT NULL OR address_spatial_id IS NOT NULL;
+  IF n<>0 THEN RAISE EXCEPTION 'Candidate properties were incorrectly assigned operational geography'; END IF;
+  SELECT count(*) INTO n FROM sw_property.access_point_profile
+   WHERE emergency_egress_state<>'not_assessed' OR emergency_egress IS NOT NULL
+      OR loading_capability_state<>'not_assessed' OR loading_capable IS NOT NULL;
+  IF n<>0 THEN RAISE EXCEPTION 'Access-point unknown/not-assessed states were not preserved'; END IF;
+  SELECT count(*) INTO n FROM sw_property.building_component
+   WHERE material_code<>'unknown' OR condition_code<>'not_assessed';
+  IF n<>0 THEN RAISE EXCEPTION 'Unobserved construction materials or conditions were fabricated'; END IF;
+  SELECT count(*) INTO n FROM sw_property.condition_assessment
+   WHERE condition_code<>'not_assessed';
+  IF n<>0 THEN RAISE EXCEPTION 'Unperformed physical condition assessments were fabricated'; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_assertion
+   WHERE knowledge_state<>'not_assessed';
+  IF n<>0 THEN RAISE EXCEPTION 'Generated knowledge-state assertions are inconsistent'; END IF;
+
+  SELECT count(*) INTO n FROM sw_property.property_building;
+  IF n<>384 THEN RAISE EXCEPTION 'Property-building relationships mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.building_premises;
+  IF n<>1327 THEN RAISE EXCEPTION 'Building-premises relationships mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.premises_unit;
+  IF n<>15199 THEN RAISE EXCEPTION 'Premises-unit relationships mismatch: %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate g
+   WHERE g.geometry_type='Polygon' AND g.geometry_payload->>'type'='Polygon';
+  IF n<>804 THEN RAISE EXCEPTION 'Expected 804 property/building polygon geometries, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate g
+   WHERE g.geometry_type='Point' AND g.geometry_payload->>'type'='Point';
+  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 access-location points, got %',n; END IF;
+END
+$$;
+
+-- Append-only protection must reject both mutation and deletion.
+DO $$
+DECLARE rejected boolean := false;
+BEGIN
+  BEGIN
+    UPDATE sw_property.asset_geometry_candidate
+       SET reason='mutation attempt'
+     WHERE geometry_candidate_id=(SELECT min(geometry_candidate_id) FROM sw_property.asset_geometry_candidate);
+  EXCEPTION WHEN OTHERS THEN rejected:=true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Asset geometry mutation was not rejected'; END IF;
+  rejected:=false;
+  BEGIN
+    DELETE FROM sw_property.asset_generation_batch
+     WHERE batch_id=(SELECT min(batch_id) FROM sw_property.asset_generation_batch);
+  EXCEPTION WHEN OTHERS THEN rejected:=true;
+  END;
+  IF NOT rejected THEN RAISE EXCEPTION 'Asset generation batch deletion was not rejected'; END IF;
+END
+$$;
+
+ROLLBACK;
