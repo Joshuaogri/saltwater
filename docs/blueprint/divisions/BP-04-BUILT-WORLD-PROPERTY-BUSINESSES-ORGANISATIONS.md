@@ -819,6 +819,10 @@ The following require canon/design resolution before BP-04 is marked `DESIGNED`:
 
 These open decisions do not weaken the 10,000 minimum, one-city-only rule, population cap, stable identity, historical continuity or ownership boundaries.
 
+## SW-NAM-001 — built-world naming adapter status
+
+The shared registry defines the typed adapter contract for business, organisation, property, building, premises and trading names. **BP-04 remains NOT CONNECTED**: the current authoritative schema proposal does not yet contain the complete BP-04 entity model needed to validate these stable IDs. No placeholder business/property identity tables or fabricated business distribution are introduced by SW-NAM-001. When BP-04's authoritative schema is implemented, its writes must reserve names through the same global registry and cannot bypass collision controls. The two-root `Saltwater` exception does not apply to any BP-04 entity.
+
 ## 24. Completion statement
 
 **Design status:** `DESIGNED_DRAFT`; full domain architecture, entity ownership, lifecycle, interfaces, exceptions, storage constraints and acceptance suite drafted. Open canon choices remain.  
