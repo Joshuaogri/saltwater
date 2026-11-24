@@ -86,7 +86,7 @@ CREATE TABLE sw_geo.parcel_lineage (
   predecessor_parcel_spatial_id integer NOT NULL REFERENCES sw_geo.entity(spatial_id),
   successor_parcel_spatial_id integer NOT NULL REFERENCES sw_geo.entity(spatial_id),
   relationship_code text NOT NULL CHECK (relationship_code IN
-    ('split_into','merged_into','boundary_replaced','retired_without_successor')),
+    ('split_into','merged_into','boundary_replaced','retired')),
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0),
   source_ref text NOT NULL CHECK (length(btrim(source_ref)) BETWEEN 1 AND 200),
   actor_ref text NOT NULL CHECK (length(btrim(actor_ref)) BETWEEN 1 AND 120),
@@ -98,6 +98,20 @@ CREATE INDEX parcel_lineage_predecessor_idx
   ON sw_geo.parcel_lineage(predecessor_parcel_spatial_id,lineage_id);
 CREATE INDEX parcel_lineage_successor_idx
   ON sw_geo.parcel_lineage(successor_parcel_spatial_id,lineage_id);
+
+CREATE FUNCTION sw_geo.guard_parcel_lineage_kind()
+RETURNS trigger LANGUAGE plpgsql AS $
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.predecessor_parcel_spatial_id AND kind=6)
+     OR NOT EXISTS (SELECT 1 FROM sw_geo.entity WHERE spatial_id=NEW.successor_parcel_spatial_id AND kind=6) THEN
+    RAISE EXCEPTION 'parcel lineage endpoints must both identify parcel kind 6';
+  END IF;
+  RETURN NEW;
+END
+$;
+CREATE TRIGGER parcel_lineage_kind_guard
+BEFORE INSERT ON sw_geo.parcel_lineage
+FOR EACH ROW EXECUTE FUNCTION sw_geo.guard_parcel_lineage_kind();
 
 CREATE TABLE sw_geo.address_alias (
   address_alias_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
