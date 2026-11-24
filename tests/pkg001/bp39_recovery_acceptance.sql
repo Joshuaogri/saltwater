@@ -9,7 +9,7 @@ DECLARE
   v_event_id bigint;
   claimed record;
   result_status text;
-  checkpoint_id uuid;
+  v_checkpoint_id uuid;
   report jsonb;
   unresolved_id bigint;
   unresolved_claim record;
@@ -100,18 +100,18 @@ BEGIN
     RAISE EXCEPTION 'resolved recovery did not finish';
   END IF;
 
-  checkpoint_id:=sw_runtime.capture_checkpoint_manifest(
+  v_checkpoint_id:=sw_runtime.capture_checkpoint_manifest(
     'disposable-ci','saltwater','main','saltwater_test',
     'test:operator','approval:BP39-01'
   );
   SELECT pg_column_size(m) INTO checkpoint_row_bytes
-    FROM sw_runtime.checkpoint_manifest m WHERE m.checkpoint_id=checkpoint_id;
+    FROM sw_runtime.checkpoint_manifest m WHERE m.checkpoint_id=v_checkpoint_id;
   SELECT pg_column_size(r) INTO recovery_row_bytes
     FROM sw_runtime.event_claim_recovery r
     WHERE r.event_id=unresolved_id ORDER BY r.recovery_id DESC LIMIT 1;
   RAISE NOTICE 'BP39_CHECKPOINT_ROW_BYTES=%',checkpoint_row_bytes;
   RAISE NOTICE 'BP39_RECOVERY_ROW_BYTES=%',recovery_row_bytes;
-  report:=sw_runtime.validate_checkpoint_manifest(checkpoint_id);
+  report:=sw_runtime.validate_checkpoint_manifest(v_checkpoint_id);
   IF report->'gates'->'schema_watermark'->>'status'<>'pass'
      OR report->'gates'->'runtime_and_tick'->>'status'<>'pass'
      OR report->'gates'->'event_work'->>'status'<>'pass'
