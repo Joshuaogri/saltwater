@@ -13,12 +13,12 @@ ALTER TABLE sw_property.access_point_profile
   ALTER COLUMN loading_capable DROP NOT NULL;
 
 ALTER TABLE sw_property.access_point_profile
-  DISABLE TRIGGER access_point_profile_append_only;
+  DISABLE TRIGGER USER;
 UPDATE sw_property.access_point_profile
 SET emergency_egress_state = CASE WHEN emergency_egress IS TRUE THEN 'known_true' ELSE 'known_false' END,
     loading_capability_state = CASE WHEN loading_capable IS TRUE THEN 'known_true' ELSE 'known_false' END;
 ALTER TABLE sw_property.access_point_profile
-  ENABLE TRIGGER access_point_profile_append_only;
+  ENABLE TRIGGER USER;
 
 ALTER TABLE sw_property.access_point_profile
   ALTER COLUMN emergency_egress_state SET DEFAULT 'not_assessed',
