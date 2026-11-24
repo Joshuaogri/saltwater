@@ -1,6 +1,6 @@
 # BP04-02 — Deep Physical Asset and Space Profiles
 
-**Status:** PROPOSED — awaiting explicit approval  
+**Status:** APPROVED — implemented and verified in disposable PostgreSQL 16  
 **Target:** GitHub `main` only; disposable PostgreSQL 16 implementation and acceptance  
 **Candidate migration:** `0012_bp04_physical_asset_detail_profiles.sql`  
 **Depends on:** BP04-01 identity foundation; BP-02 canonical parcel/address/road/access geography; SW-UNS-001  
@@ -200,4 +200,4 @@ Acceptance must demonstrate:
 - Then, after explicit BP04-02 approval, implement proposal 0012 on GitHub `main`, run disposable PostgreSQL 16 acceptance and regression, record exact storage/performance figures, and update README/implementation sequence.
 - Only after the model is verified should a separate package design the real Saltwater property inventory and its geography-linked population workflow.
 
-**Decision requested:** approve BP04-02 for GitHub `main` implementation and disposable PostgreSQL 16 testing only. Neon production remains untouched.
+**Decision record:** The user explicitly approved BP04-02 for GitHub `main` implementation and disposable PostgreSQL 16 testing. Implementation and full acceptance passed in [run 45478587738](https://github.com/Joshuaogri/saltwater/actions/runs/45478587738). Neon production remains untouched.
