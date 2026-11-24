@@ -373,13 +373,15 @@ Tests are added for catalogue stability, exact-ID rejection, bounded/back naviga
 **BP40-01 verification:** Implementation is committed on `main` at `4d271fc6fe01b79348e85c82089b0f9f1f81e036`. The dedicated six-test workspace suite and all existing Python regression suites passed. Full disposable PostgreSQL regression [45389064114](https://github.com/Joshuaogri/saltwater/actions/runs/45389064114) passed, including population-cap/concurrency, database access boundary and backup/restore. Database migration validation [45389064115](https://github.com/Joshuaogri/saltwater/actions/runs/45389064115) passed. No database proposal, migration or production Neon operation was part of this increment.
 
 
-## 12. BP40-02 — stable player command catalogue and typed input parser (proposed)
+## 12. BP40-02 — stable player command catalogue and typed input parser (approved; implementation committed)
 
 Prepared package: [BP40-02 — Stable Player Command Catalogue and Typed Input Parser](approval-packages/BP40-02-stable-command-catalogue-and-typed-parser.md).
 
-This is the next bounded interface increment after verified BP40-01. It consolidates the existing command grammar, ownership, classifications and permission action into one immutable registry/parser shared by the player router, authorization gateway and trusted host/tool boundaries. It introduces no new domain commands or permissions and preserves the exact ten workspace IDs, hidden-truth gate and no-offline-time rule.
+The user explicitly approved BP40-02 on 2026-11-24. The bounded implementation adds `runtime/player_commands.py` as the sole immutable registry and pure typed parser. It records stable command IDs, owners, exact argument grammar, read-only/presentation-state/domain-runtime-mutation classification, existing `player.command.<token>` permission actions, confirmation metadata and the no-time-advance property. The current fourteen command forms are preserved, including the single-argument exact-ID `workspace <id>` command. Help text and the machine-readable tool schema are derived from the same catalogue contract.
 
-**Status: PROPOSED — awaiting explicit user approval.** No BP40-02 implementation or test result is claimed. BP-40 remains `DESIGNED_DRAFT`.
+`PlayerCommandInterface`, `AuthorizedPlayerCommandGateway`, `TrustedPlayerHostAdapter` and `runtime/chatgpt_tool_handler.py` now consume the shared parser. The gateway authorizes the canonical action before dispatch; host/tool syntax validation happens before credential resolution. Typed errors distinguish empty input, malformed syntax, unknown command, missing argument, invalid argument count and invalid workspace value. The exact ten workspace IDs, permission grants, recruit/lifecycle rules, hidden-truth gate and player-absence time freeze are unchanged. No new police-domain command, permission, schema, migration, seed or Neon operation is included.
+
+**Implementation committed directly to `main`; regression verification pending.** BP-40 remains `DESIGNED_DRAFT`; only BP40-01 and BP40-02 bounded slices are in scope. Evidence will be recorded in [BP40-02 run 0001](../test-evidence/BP40-02-run-0001.md).
 
 
 ## 13. SW-DB-001 — canonical Saltwater world provisioning and capacity proof (proposed)
