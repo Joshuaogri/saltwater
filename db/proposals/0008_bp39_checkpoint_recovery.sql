@@ -321,6 +321,7 @@ BEGIN
   END IF;
   PERFORM set_config('sw_runtime.recovery_authorized','on',true);
   UPDATE sw_runtime.state SET state=1,player_present=false WHERE singleton=1;
+  PERFORM set_config('sw_runtime.recovery_authorized','off',true);
   RETURN true;
 END
 $bp39$;
