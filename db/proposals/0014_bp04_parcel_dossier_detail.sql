@@ -52,6 +52,7 @@ CREATE TABLE sw_geo.parcel_frontage_candidate (
   road_name text NOT NULL CHECK (length(btrim(road_name)) BETWEEN 1 AND 160),
   road_class text NOT NULL CHECK (road_class IN ('local_street','district_connector','primary_arterial','bridge')),
   contact_length_m numeric(14,3) NOT NULL CHECK (contact_length_m > 0),
+  contact_component_count integer NOT NULL CHECK (contact_component_count > 0),
   candidate_point_x_m numeric(14,6) NOT NULL,
   candidate_point_y_m numeric(14,6) NOT NULL,
   review_status text NOT NULL CHECK (review_status='UNREVIEWED_GEOMETRIC_CONTACT'),
