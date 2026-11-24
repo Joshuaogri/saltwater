@@ -98,10 +98,17 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
 
         unique_frontage_length = boundary.intersection(road_reserve.boundary).length
         water_contact = boundary.intersection(water_union.boundary).length if water_union else 0.0
-        adjacent_water_ids = sorted(
-            fid for fid, water in water_geometries
-            if boundary.intersection(water.boundary).length > 0.01
-        )
+        water_adjacencies = []
+        for feature_id, water in water_geometries:
+            contact_length = boundary.intersection(water.boundary).length
+            if contact_length > 0.01:
+                water_adjacencies.append({
+                    "water_feature_id": feature_id,
+                    "contact_length_m": round(contact_length, 3),
+                    "source_ref": f"{source['dataset_id']}:{feature_id}",
+                    "confidence_code": "estimated",
+                })
+        adjacent_water_ids = sorted(row["water_feature_id"] for row in water_adjacencies)
         centroid = geom.centroid
         label_point = geom.representative_point()
         area = geom.area
@@ -139,6 +146,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             "dossier": dossier,
             "frontages": sorted(frontage_rows, key=lambda x: x["road_segment_id"]),
             "access_candidates": sorted(access_rows, key=lambda x: x["access_candidate_id"]),
+            "water_adjacencies": sorted(water_adjacencies, key=lambda x: x["water_feature_id"]),
         })
         parcel_geometries.append(geom)
 
@@ -199,6 +207,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             "shared_boundary_relationship_count": sum(1 for r in adjacency_rows if r["relationship_code"] == "SHARED_BOUNDARY_CANDIDATE"),
             "corner_touch_relationship_count": sum(1 for r in adjacency_rows if r["relationship_code"] == "CORNER_TOUCH_CANDIDATE"),
             "water_adjacent_parcel_count": sum(bool(row["dossier"]["adjacent_water_feature_ids"]) for row in parcel_rows),
+            "water_adjacency_relationship_count": sum(len(row["water_adjacencies"]) for row in parcel_rows),
             "total_candidate_parcel_area_m2": round(total_area, 3),
             "canonical_addresses_created": 0,
             "operational_access_points_created": 0,
