@@ -19,9 +19,10 @@ class GeographyReadinessTests(unittest.TestCase):
         self.assertEqual(report["failed_checks"], [])
         self.assertEqual(report["passed_checks"], len(report["checks"]))
 
-    def test_unresolved_mapping_and_operational_gate_remain_explicit(self):
+    def test_all_source_identity_mappings_resolved_and_operational_gate_remains_explicit(self):
         report = audit_geography(SOURCE)
-        self.assertEqual(report["unresolved_source_to_spatial_id_mappings"], 100)
+        self.assertEqual(report["unresolved_source_to_spatial_id_mappings"], 0)
+        self.assertEqual(report["resolved_source_to_entity_code_mappings"], 100)
         self.assertFalse(report["operational_seed_eligible"])
         self.assertFalse(report["geometry_import_performed"])
         self.assertFalse(report["database_write_performed"])
