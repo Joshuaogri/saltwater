@@ -7,6 +7,7 @@ on:
       - "db/proposals/0010_canonical_world_provisioning.sql"
       - "tests/pkg001/sw_db_001_*.sql"
       - "tests/pkg001/test_population_concurrency.py"
+      - "tests/pkg001/population_cap_fixture.sql"
       - "scripts/verify_sw_db_001_contract.py"
       - "tests/pkg001/test_sw_db_001_contract.py"
       - ".github/workflows/sw-db-001-disposable.yml"
@@ -185,7 +186,7 @@ jobs:
         run: |
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_cap_fixture.sql
           python -m unittest discover -s tests/pkg001 -p "test_population_concurrency.py" -v
-          psql -v ON_ERROR_STOP=1 -c "SELECT living_included=10000 AS exactly_at_cap,world_tick=0 AS no_clock_advance FROM sw_people.population_counter CROSS JOIN sw_runtime.state WHERE population_counter.singleton=1 AND state.singleton=1;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT living_included=10000 AS exactly_at_cap,world_tick=0 AS no_clock_advance,bootstrap_open=false AS bootstrap_closed,player_present=true AS player_active FROM sw_people.population_counter CROSS JOIN sw_runtime.state WHERE population_counter.singleton=1 AND state.singleton=1;"
       - name: Final SW-DB-001 reconciliation
         run: |
           psql -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM sw_people.person) AS people, (SELECT living_included FROM sw_people.population_counter WHERE singleton=1) AS counted_population, (SELECT count(*) FROM sw_business.business) AS businesses, (SELECT count(*) FROM sw_names.name_reservation WHERE entity_type='BUSINESS') AS business_names, (SELECT world_tick FROM sw_runtime.state WHERE singleton=1) AS world_tick;"
