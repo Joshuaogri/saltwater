@@ -249,7 +249,7 @@ BEGIN
      OR (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='UNIT'
       AND entity_id=unit_one AND event_code='created')<>1
      OR (SELECT count(*) FROM sw_property.entity_history WHERE entity_type='ACCESS_POINT'
-      AND entity_id IN (ap_one,ap_unnamed,ap_unit) AND event_code='created')<>2 THEN
+      AND entity_id IN (ap_one,ap_unnamed,ap_unit) AND event_code='created')<>3 THEN
     RAISE EXCEPTION 'physical identity creation history incomplete';
   END IF;
 
