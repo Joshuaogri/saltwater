@@ -11,6 +11,7 @@ DECLARE
   roots bigint;
   name_count bigint;
   name_event_count bigint;
+  generation_batch_count bigint;
 BEGIN
   SELECT count(*) INTO n_people FROM sw_people.person;
   SELECT count(*) INTO n_population FROM sw_people.population_state;
@@ -20,6 +21,7 @@ BEGIN
   SELECT count(*) INTO roots FROM sw_geo.entity WHERE kind IN (1,2);
   SELECT count(*) INTO name_count FROM sw_names.name_reservation;
   SELECT count(*) INTO name_event_count FROM sw_names.name_event;
+  SELECT count(*) INTO generation_batch_count FROM sw_names.generation_batch;
   IF n_people <> 10000 OR n_population <> 10000 OR population_count <> 10000 THEN
     RAISE EXCEPTION 'restored population mismatch: people %, states %, counter %', n_people,n_population,population_count;
   END IF;
@@ -32,8 +34,8 @@ BEGIN
   IF roots <> 2 THEN
     RAISE EXCEPTION 'restored canonical geography roots mismatch: %',roots;
   END IF;
-  IF name_count < 10006 OR name_event_count < 20012 THEN
-    RAISE EXCEPTION 'restored naming registry/history incomplete: reservations %, events %',name_count,name_event_count;
+  IF name_count < 10007 OR name_event_count < 20014 OR generation_batch_count < 1 THEN
+    RAISE EXCEPTION 'restored naming registry/history/manifests incomplete: reservations %, events %, batches %',name_count,name_event_count,generation_batch_count;
   END IF;
   IF (SELECT count(*) FROM sw_names.registry WHERE normalized_key='saltwater' AND status='active') <> 2 THEN
     RAISE EXCEPTION 'restored Saltwater root-name exception is missing or ambiguous';
@@ -44,7 +46,7 @@ BEGIN
   IF (SELECT count(*) FROM sw_people.profile_history) <> 10000 THEN
     RAISE EXCEPTION 'restored profile history row count mismatch';
   END IF;
-  RAISE NOTICE 'RESTORE_PASS people=% states=% population=% events=% max_event=% tick=% roots=% names=% name_events=%',
-    n_people,n_population,population_count,n_events,max_event,tick,roots,name_count,name_event_count;
+  RAISE NOTICE 'RESTORE_PASS people=% states=% population=% events=% max_event=% tick=% roots=% names=% name_events=% generator_batches=%',
+    n_people,n_population,population_count,n_events,max_event,tick,roots,name_count,name_event_count,generation_batch_count;
 END
 $$;
