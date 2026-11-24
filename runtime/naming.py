@@ -103,6 +103,28 @@ class NameRegistry:
                 found.add(record.display_name)
         return tuple(sorted(found, key=str.casefold))
 
+    def _reactivate(self, record: NameRecord, owner: tuple[str, str]) -> NameRecord:
+        if record.name_form == "canonical":
+            for index, other in enumerate(self.records):
+                if (
+                    self._owner(other.entity_type, other.entity_id) == owner
+                    and other.name_form == "canonical"
+                    and other.status == "active"
+                    and other.normalized_key != record.normalized_key
+                ):
+                    self.records[index] = NameRecord(
+                        other.entity_type, other.entity_id, other.display_name,
+                        other.normalized_key, other.name_form, "superseded",
+                        other.normalizer_version,
+                    )
+        restored = NameRecord(
+            record.entity_type, record.entity_id, record.display_name,
+            record.normalized_key, record.name_form, "active",
+            record.normalizer_version,
+        )
+        self.records[self.records.index(record)] = restored
+        return restored
+
     def reserve(
         self, entity_type: str, entity_id: str, display_name: str,
         *, name_form: str = "canonical", review_near_duplicates: bool = True,
@@ -126,12 +148,12 @@ class NameRegistry:
                     if existing_owner not in self._SALTWATER_ROOTS:
                         raise NameCollision("Saltwater is reserved by a non-root entity")
                     if existing_owner == owner and existing.name_form == form:
-                        return existing
+                        return existing if existing.status == "active" else self._reactivate(existing, owner)
         else:
             for existing in self.records:
                 if existing.normalized_key == key:
                     if self._owner(existing.entity_type, existing.entity_id) == owner and existing.name_form == form:
-                        return existing
+                        return existing if existing.status == "active" else self._reactivate(existing, owner)
                     raise NameCollision(f"name already reserved: {display_name}")
 
         if review_near_duplicates:
