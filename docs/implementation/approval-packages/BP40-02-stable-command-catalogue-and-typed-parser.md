@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Division:** BP-40 — Interface (fixed BP-01–BP-44 structure)  
 **Package:** BP40-02  
-**Status:** PROPOSED — awaiting explicit user approval  
+**Status:** APPROVED — implementation committed; regression verification pending  
 **Prepared:** 2026-11-24  
 **Target branch:** `main` only  
 **Neon production authority:** NONE
@@ -119,4 +119,4 @@ Approval does not authorise Neon production operations, new credentials or permi
 
 ## 8. Status
 
-**PROPOSED — awaiting explicit user approval.** No BP40-02 implementation or test result is claimed. BP-40 remains `DESIGNED_DRAFT`.
+**APPROVED — implementation committed; regression verification pending.** The canonical catalogue/parser and boundary refactors are committed on `main`. Full Python and disposable PostgreSQL regression results will be recorded in the implementation evidence. BP-40 remains `DESIGNED_DRAFT`; no Neon production operation occurred.
