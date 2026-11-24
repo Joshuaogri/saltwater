@@ -31,12 +31,15 @@ class GeographyNameInventoryTests(unittest.TestCase):
         roots = [x for x in self.report.candidates if x.display_name == "Saltwater"]
         self.assertEqual({x.source_id for x in roots}, {"saltwater-state", "saltwater-city"})
 
-    def test_existing_map_name_collisions_are_reported_not_silently_renamed(self):
+    def test_user_approved_neighbourhood_renames_resolve_global_name_collisions(self):
         conflicts = {item.normalized_key: item for item in self.report.conflicts}
-        self.assertIn("westgate", conflicts)
-        self.assertEqual(len(conflicts["westgate"].candidates), 2)
-        self.assertIn("government square", conflicts)
-        self.assertEqual(len(conflicts["government square"].candidates), 2)
+        self.assertNotIn("westgate", conflicts)
+        self.assertNotIn("government square", conflicts)
+        names_by_id = {item.source_id: item.display_name for item in self.report.candidates}
+        self.assertEqual(names_by_id["SW-D01"], "Westgate")
+        self.assertEqual(names_by_id["SW-D01-N1"], "Westgate Gardens")
+        self.assertEqual(names_by_id["SW-D03-N2"], "Civic Terrace")
+        self.assertEqual(names_by_id["SW-POI-002"], "Government Square")
 
     def test_import_is_blocked_until_map_baseline_and_spatial_ids_are_resolved(self):
         self.assertFalse(self.report.can_import)
