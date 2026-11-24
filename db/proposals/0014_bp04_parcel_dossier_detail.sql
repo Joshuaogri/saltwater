@@ -66,7 +66,7 @@ CREATE TABLE sw_geo.parcel_frontage_candidate (
     REFERENCES sw_geo.parcel_dossier(parcel_spatial_id,version_no)
 );
 CREATE INDEX parcel_frontage_road_idx
-  ON sw_geo.parcel_frontage_candidate(road_id,road_segment_id);
+  ON sw_geo.parcel_frontage_candidate(road_id,frontage_candidate_id);
 
 CREATE TABLE sw_geo.parcel_access_location_candidate (
   access_candidate_id text PRIMARY KEY CHECK (length(btrim(access_candidate_id)) BETWEEN 1 AND 160),
