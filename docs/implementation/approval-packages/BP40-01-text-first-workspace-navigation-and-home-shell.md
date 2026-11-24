@@ -116,9 +116,9 @@ These are the only criteria this package claims to target. The full BP-40 accept
 - No alteration to Saltwater canon, fixed division structure, hidden-truth/bingo gate or player-agency rules.
 - No claim that BP-40 or any other division is fully implemented.
 
-## 7. Approval requested
+## 7. Approval record
 
-Approve **BP40-01 — Text-First Workspace Navigation and Home Shell** for:
+The user explicitly approved **BP40-01 — Text-First Workspace Navigation and Home Shell** on 2026-11-24 for:
 1. Repository implementation directly on `main`.
 2. Python unit/contract tests and existing disposable PostgreSQL regression CI.
 3. Documentation and reproducible test evidence for this bounded slice.
@@ -127,4 +127,6 @@ Approval does not authorise any Neon production operation, new credential or per
 
 ## 8. Status
 
-**PROPOSED — awaiting explicit user approval.** No BP40-01 implementation or test result is claimed by this package. BP-40 remains `DESIGNED_DRAFT`.
+**IMPLEMENTED AND VERIFIED — bounded slice complete.**
+
+Implementation is committed on `main` at `4d271fc6fe01b79348e85c82089b0f9f1f81e036`. Python regression and the full disposable PostgreSQL workflow passed in [run 45389064114](https://github.com/Joshuaogri/saltwater/actions/runs/45389064114); database migration validation passed in [run 45389064115](https://github.com/Joshuaogri/saltwater/actions/runs/45389064115). All six dedicated workspace tests passed. No SQL/schema change was made and Neon production remained untouched. BP-40 remains `DESIGNED_DRAFT`; only BP40-01 is complete. Reproducible evidence: [BP40-01 run 0001](../test-evidence/BP40-01-run-0001.md).
