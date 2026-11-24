@@ -46,9 +46,9 @@ BEGIN
       ON new_name.entity_type=old_name.entity_type
      AND new_name.entity_id=old_name.entity_id
     WHERE old_name.entity_type='GEOGRAPHY'
-      AND old_name.display_name='Historic Registry Road'
+      AND old_name.display_name='Foundry Quay Road'
       AND old_name.status='superseded'
-      AND new_name.display_name='Current Registry Road'
+      AND new_name.display_name='Assembly Garden Walk'
       AND new_name.status='active'
   ) THEN
     RAISE EXCEPTION 'restored geographic name history did not preserve rename identity';
