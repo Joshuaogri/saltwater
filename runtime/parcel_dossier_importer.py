@@ -158,9 +158,9 @@ def import_dossiers(conn, data, manifest_sha, candidates):
                     cur.execute(
                         """INSERT INTO sw_geo.parcel_frontage_candidate
                         (parcel_spatial_id,version_no,frontage_candidate_id,road_segment_ids,road_id,road_name,road_class,
-                         contact_length_m,candidate_point_x_m,candidate_point_y_m,review_status,
+                         contact_length_m,contact_component_count,candidate_point_x_m,candidate_point_y_m,review_status,
                          source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
-                        VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,%s,'UNREVIEWED_GEOMETRIC_CONTACT',%s,%s,
+                        VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,'UNREVIEWED_GEOMETRIC_CONTACT',%s,%s,
                                 'BP04-03-PARCEL-DOSSIER-IMPORTER','estimated',
                                 'Derived continuous road-reserve boundary contact; not approved legal frontage.')
                         ON CONFLICT DO NOTHING""",
