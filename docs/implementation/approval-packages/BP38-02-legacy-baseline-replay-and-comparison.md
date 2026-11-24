@@ -1,6 +1,6 @@
 # BP38-02 — Independent Legacy Baseline Replay and Comparison
 
-**Status:** Comparator implemented on `main`; independent disposable replay and drift-detection CI PASS (run [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975)); live reference-vs-Neon comparison NOT RUN.  
+**Status:** Comparator implemented on `main`; independent disposable replay, drift detection and guarded checksum-adoption CI PASS (runs [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975) and [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/45435673095)); live reference-vs-Neon comparison NOT RUN.  
 **Production authority:** No Neon write or adoption approval is granted by this package.
 
 ## Purpose
@@ -60,3 +60,8 @@ No checksum adoption is included. After the full comparison and supplementary re
 ## CI evidence — 2026-11-24
 
 Workflow run [45434212975](https://github.com/Joshuaogri/saltwater/actions/runs/45434212975) passed all steps. It created independent PostgreSQL 18 reference and target databases, replayed exact migration 0001, confirmed the comparator accepts matching schema/canonical world data, deliberately introduced a target-only schema change and confirmed that the comparator rejects the drift, then ran the migration-runner and runtime-kernel tests. The CI comparison is disposable-only; it does not connect to Neon and is not evidence that the live Neon baseline matches the replay. See [BP38-02 run 0001](../test-evidence/BP38-02-run-0001.md).
+
+
+## CI evidence — run 0002
+
+Workflow run [45435673095](https://github.com/Joshuaogri/saltwater/actions/runs/45435673095) completed successfully. In addition to the independent PostgreSQL 18 replay/comparison and migration/runtime regression checks, it exercised the guarded legacy checksum-adoption proposal in disposable PostgreSQL only, including the one-row precondition and fail-closed repeat execution. All job steps, including container cleanup, completed. This is not live Neon comparison evidence and did not modify Neon. See [BP38-02 run 0002](../test-evidence/BP38-02-run-0002.md).
