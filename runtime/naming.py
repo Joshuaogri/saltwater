@@ -162,14 +162,7 @@ class NameRegistry:
                   and r.name_form == "canonical" and r.status == "active"]
         if len(active) > 1:
             raise NamingError("entity has multiple active canonical names")
-        new_record = self.reserve(entity_type, entity_id, new_name, review_near_duplicates=False)
-        if active and active[0].normalized_key != new_record.normalized_key:
-            old = active[0]
-            self.records[self.records.index(old)] = NameRecord(
-                old.entity_type, old.entity_id, old.display_name, old.normalized_key,
-                old.name_form, "superseded", old.normalizer_version,
-            )
-        return new_record
+        return self.reserve(entity_type, entity_id, new_name, review_near_duplicates=False)
 
     def retire(self, entity_type: str, entity_id: str, display_name: str) -> None:
         owner = self._owner(entity_type, entity_id)
