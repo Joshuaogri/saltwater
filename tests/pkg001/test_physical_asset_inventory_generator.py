@@ -4,6 +4,8 @@ from pathlib import Path
 
 from shapely.geometry import Point, Polygon
 
+from runtime.parcel_candidate_generator import build_candidates
+from runtime.parcel_dossier_generator import build_parcel_dossiers
 from runtime.physical_asset_inventory_generator import build_asset_inventory
 
 
@@ -13,15 +15,15 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[2]
         source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
         cls.source = source
-        cls.manifest = build_asset_inventory(source)
+        cls.candidates = build_candidates(source)
+        cls.dossiers = build_parcel_dossiers(source, cls.candidates)
+        cls.manifest = build_asset_inventory(source, cls.candidates, cls.dossiers)
 
     def test_all_parcel_candidates_have_a_property_site(self):
         self.assertEqual(self.manifest["generation"]["property_count"], 420)
         self.assertEqual(
             {p["source_candidate_parcel_id"] for p in self.manifest["properties"]},
-            {p["candidate_parcel_id"] for p in __import__(
-                "runtime.parcel_candidate_generator", fromlist=["build_candidates"]
-            ).build_candidates(self.source)["parcels"]},
+            {p["candidate_parcel_id"] for p in self.candidates["parcels"]},
         )
 
     def test_nested_physical_asset_types_are_populated(self):
@@ -79,7 +81,7 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
             self.assertEqual(len(values), len(set(values)))
 
     def test_manifest_is_deterministic_and_non_operational(self):
-        second = build_asset_inventory(self.source)
+        second = build_asset_inventory(self.source, self.candidates, self.dossiers)
         self.assertEqual(self.manifest["manifest_sha256"], second["manifest_sha256"])
         self.assertFalse(self.manifest["operational_approval"])
         generation = self.manifest["generation"]
