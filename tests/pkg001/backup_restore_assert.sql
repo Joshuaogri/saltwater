@@ -40,6 +40,25 @@ BEGIN
   IF (SELECT count(*) FROM sw_names.registry WHERE normalized_key='saltwater' AND status='active') <> 2 THEN
     RAISE EXCEPTION 'restored Saltwater root-name exception is missing or ambiguous';
   END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM sw_names.registry old_name
+    JOIN sw_names.registry new_name
+      ON new_name.entity_type=old_name.entity_type
+     AND new_name.entity_id=old_name.entity_id
+    WHERE old_name.entity_type='GEOGRAPHY'
+      AND old_name.display_name='Historic Registry Road'
+      AND old_name.status='superseded'
+      AND new_name.display_name='Current Registry Road'
+      AND new_name.status='active'
+  ) THEN
+    RAISE EXCEPTION 'restored geographic name history did not preserve rename identity';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM sw_names.name_reservation r
+    JOIN sw_names.generation_batch b USING(generation_batch_id)
+  ) THEN
+    RAISE EXCEPTION 'restored generator manifest is not linked to a reserved name';
+  END IF;
   IF (SELECT count(*) FROM sw_people.population_history) <> 10000 THEN
     RAISE EXCEPTION 'restored population history row count mismatch';
   END IF;
