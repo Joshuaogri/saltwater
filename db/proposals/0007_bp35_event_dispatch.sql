@@ -103,6 +103,23 @@ CREATE TRIGGER event_work_write_guard
 BEFORE INSERT OR UPDATE ON sw_runtime.event_work
 FOR EACH ROW EXECUTE FUNCTION sw_runtime.guard_event_work_write();
 
+-- A committed pause/stop/recovery transition waits for every in-flight
+-- owner handler to finish or fail its atomic domain boundary. A crashed claim
+-- deliberately blocks the transition until explicit recovery is implemented.
+CREATE FUNCTION sw_runtime.guard_event_work_pause() RETURNS trigger
+LANGUAGE plpgsql AS $bp35$
+BEGIN
+  IF OLD.state=2 AND (NEW.state<>2 OR NOT NEW.player_present)
+     AND EXISTS(SELECT 1 FROM sw_runtime.event_work WHERE status='claimed') THEN
+    RAISE EXCEPTION 'pause waits for active event dispatch to finish';
+  END IF;
+  RETURN NEW;
+END
+$bp35$;
+CREATE TRIGGER event_work_pause_guard
+BEFORE UPDATE OF state,player_present ON sw_runtime.state
+FOR EACH ROW EXECUTE FUNCTION sw_runtime.guard_event_work_pause();
+
 CREATE FUNCTION sw_runtime.reject_event_work_delete() RETURNS trigger
 LANGUAGE plpgsql AS $bp35$
 BEGIN RAISE EXCEPTION 'event work is retained; deletion is prohibited'; END
