@@ -27,6 +27,12 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 - Do not upload simulation seed data until the schema, validation and storage baseline are ready.
 - Never commit credentials. The Neon connection string belongs in a protected secret named `DATABASE_URL`.
 
+## Current database-integrity implementation
+
+BP38-01 is approved and under implementation on `main`. The repository now contains a checksum-verifying PostgreSQL migration runner, migration 0002 for ledger integrity/schema fingerprinting, unit tests, and disposable-PostgreSQL CI checks. The runner is read-only by default; migration application requires explicit `--apply`. It refuses to silently adopt the legacy production migration row whose checksum is NULL. No BP38-01 change has been applied to Neon production.
+
+Package: [BP38-01 — Database Integrity and Migration Foundation](docs/implementation/approval-packages/BP38-01-database-integrity-and-migration-foundation.md)
+
 ## Repository layout
 
 - `db/migrations/`: ordered PostgreSQL migrations.
