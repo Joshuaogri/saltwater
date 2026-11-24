@@ -1,57 +1,60 @@
-# BP04-03 Stage C road centreline and corridor audit — run 0001
+# BP04-03 Stage C road-centreline and fictional road-reserve resolution — run 0002
 
 **Date:** 2026-11-24  
-**Workflow:** [BP04-03 Stage B Disposable PostgreSQL, road audit extension](https://github.com/Joshuaogri/saltwater/actions/runs/45485428237) (successful artifact-preservation run; initial audit acceptance also passed in [run 45485282025](https://github.com/Joshuaogri/saltwater/actions/runs/45485282025))  
-**Result:** PASS  
-**Commit under test:** `980880fb7f2838e44f462e3afb4043a0554d8db2`  
-**Database:** no additional database writes; the workflow's disposable PostgreSQL checks remain unchanged  
-**Production writes:** none
+**Workflow:** [BP04-03 Stage B Disposable PostgreSQL](https://github.com/Joshuaogri/saltwater/actions/runs/45487528624)  
+**Result:** <badge>PASS</badge>  
+**Commit under test:** `62203033e7e0bcc45ddaf8a2d7a24e4d66f94dc8`  
+**Production writes:** none; all database acceptance and candidate ingestion ran on disposable PostgreSQL 16
 
-## Network inventory and topology
+## Resolved bridge lengths
 
-- 42 named roads.
-- 685 road/bridge segments.
-- 367 junction nodes.
-- Segment classes reconcile to 482 local streets, 117 primary arterials, 84 district connectors and 2 bridges.
-- The node graph has one connected component.
-- All 367 declared node degrees match calculated endpoint degrees.
-- Every segment is assigned to exactly one matching named road.
-- Every segment's stored polyline begins and ends at the declared endpoint-node coordinates.
-- No duplicate road or segment identifiers.
-- Five Python road-corridor audit tests passed. Existing Stage B contract, importer and SQL acceptance tests also passed in the same workflow.
+The two bridge centre-lines were measured directly from their stored polyline vertices. The canonical source lengths are now set to the geometry-derived value rounded to the dataset's metre precision:
 
-## Source-data exceptions
+| Segment | Bridge | Previous declared length | Geometry-derived length | Canonical length |
+|---|---|---:|---:|---:|
+| `SWS-0684` | Harbour Bridge | 2,000m | 2,019.803903m | 2,019.804m |
+| `SWS-0685` | Customs Bridge | 2,000m | 2,019.803903m | 2,019.804m |
 
-Two bridge segment lengths do not reconcile:
+The audit now reports **zero length reconciliation exceptions**. The source discrepancy is fixed rather than carried as an unresolved issue.
 
-| Segment | Declared length | Measured stored polyline | Difference |
-|---|---:|---:|---:|
-| `SWS-0684` Harbour Bridge | 2,000m | 2,019.804m | +19.804m |
-| `SWS-0685` Customs Bridge | 2,000m | 2,019.804m | +19.804m |
+## Adopted fictional road-reserve design standard
 
-The source declarations and geometry are preserved. No source data was silently rewritten.
+A canonical in-world design standard, `SW-RDS-V1`, is now part of the SW-GEO-V1 dataset. It defines total corridor width centred on the road centre-line:
 
-## Road corridor register
+| Road class | Fictional right-of-way width |
+|---|---:|
+| Local street | 18m |
+| District connector | 24m |
+| Primary arterial | 30m |
+| Bridge | 24m |
 
-The deterministic generator emits one record per road and one per segment, retaining source identifiers, names, classes, direction, permitted modes, access, surface, endpoint references, centreline geometry, declared length and measured polyline length.
+These are game-world design dimensions, not claims about real-world standards or measurements. The standard is effective for the SW-GEO-V1 fictional city map.
 
-- All 685 road widths remain null/unresolved.
-- All reserve polygons remain null.
-- Reserve area assigned: 0 m².
-- Road-reserve polygon generation: BLOCKED.
-- The source has no surveyed road-edge geometry or right-of-way width; no width, offset, area deduction or frontage right is inferred.
-- Candidate register SHA-256: `36fef2acb94d9248d7810d983117e73ee1c5dc8cf8570996a42cfcdd384f805e`.
+## Generated road-reserve geometry
 
-The output is a width-agnostic source register, not a cadastral road-reserve layer and not operational geography.
+The deterministic corridor generator applies the class width to each source centre-line and generates a segment-level polygon using mitered offsets. All **685 of 685** road/bridge segments now have a generated corridor polygon and a defined width.
 
-## Preserved output artifact
+- 42 named roads; 685 segments; 367 nodes.
+- One connected road-network component.
+- Zero node-degree, road-membership or endpoint-geometry mismatches.
+- Zero bridge length exceptions.
+- Zero unresolved corridor widths.
+- 685 segment corridor polygons generated.
+- Design standard: `SW-RDS-V1`.
+- Road register SHA-256: `c357ce13d117971cde4bb3d1d134dfb37293c63e7319715ca2dd0b57e28da727`.
 
-The generated JSON register is retained as a workflow artifact: [road corridor register, run 45485428237](https://github.com/Joshuaogri/saltwater/actions/runs/45485428237/artifacts/14962389020). Compressed artifact size: **15,676 bytes**. Artifact archive SHA-256: `d967ae0f7561c9ab9873af85d2527f1ef14f6ddd5db1129b7afffac13f79b8e9`. Artifact retention expires 2026-12-08.
+Segment polygons overlap at shared junctions by design. They must be dissolved into a network-level road-reserve geometry before computing unique reserve area or using the road edges for parcel frontage. No reserve area is summed from overlapping segment polygons in this increment.
 
-## Scope
+## Verification
 
-No parcel candidate geometry was altered. No operational addresses, property records, ownership, occupancy, businesses, road widths, reserve polygons or land-use deductions were created. No BP-02 operational geography approval was inferred. No Neon connection, write, upload or production activation occurred.
+The full dedicated workflow [45487528624](https://github.com/Joshuaogri/saltwater/actions/runs/45487528624) completed successfully. Its Python suites passed (4 + 5 + 5 + 5 tests); disposable PostgreSQL candidate ingestion and repeat-import idempotency also passed. The repeat import inserted zero candidate entities, geometry versions and parcel profiles and produced 0 bytes of database growth.
 
-## Next
+Preserved outputs:
+- Road corridor register: [artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45487528624/artifacts/14962764058), **23,915 compressed bytes**, archive SHA-256 `35da68f7689bd3e45f47c7a19169bfdcff16d2f95e52ac9cbe5d329f69cc3e7d`.
+- Parcel coverage audit: [artifact](https://github.com/Joshuaogri/saltwater/actions/runs/45487528624/artifacts/14963254002), **1,713 compressed bytes**, archive SHA-256 `45630e95c4556e2637302e1534f98874c46817cd0bed7bde617247aaed77d140`.
 
-Reconcile the two bridge length exceptions against the intended route geometry, then obtain/define source-supported road-edge and right-of-way geometry before deriving reserve polygons. Continue parcel coverage/gap/overlap analysis only against those explicit source boundaries; keep unknown road-reserve land unclassified.
+## Remaining implementation work
+
+The bridge-length and road-width decisions are no longer blockers. The next implementation step is to dissolve the 685 segment corridors into a non-overlapping network-level road-reserve geometry, intersect it with the 24 neighbourhood polygons, and reconcile boundary coverage/gaps/overlaps. Then regenerate parcel candidates against those actual fictional road edges instead of the provisional 15m inset. Neighbourhood boundary rules and the city boundary will be encoded in the fictional geography data and tested deterministically.
+
+No operational addresses, property records, ownership, occupancy or city-wide built-asset inventory were created in this run. No Neon production connection, upload, migration, seed or activation occurred.
