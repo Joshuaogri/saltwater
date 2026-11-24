@@ -240,19 +240,74 @@ END
 $$;
 
 CREATE FUNCTION sw_property.record_entity_status_history()
-RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE v_id bigint;
+RETURNS trigger LANGUAGE plpgsql AS $
+DECLARE
+  v_id bigint;
+  v_tick bigint;
+  v_source text;
+  v_actor text;
+  v_reason text;
 BEGIN
   IF NEW.lifecycle_status IS DISTINCT FROM OLD.lifecycle_status THEN
     v_id := (to_jsonb(NEW)->>TG_ARGV[1])::bigint;
+    v_tick := NULLIF(current_setting('sw_property.change_tick',true),'')::bigint;
+    v_source := NULLIF(current_setting('sw_property.change_source',true),'');
+    v_actor := NULLIF(current_setting('sw_property.change_actor',true),'');
+    v_reason := NULLIF(current_setting('sw_property.change_reason',true),'');
+    IF v_tick IS NULL OR v_source IS NULL OR v_actor IS NULL OR v_reason IS NULL THEN
+      RAISE EXCEPTION 'lifecycle changes require effective tick and source, actor and reason provenance';
+    END IF;
     INSERT INTO sw_property.entity_history
       (entity_type,entity_id,event_code,old_status,new_status,effective_tick,source_ref,actor_ref,reason)
     VALUES (TG_ARGV[0],v_id,'status_changed',OLD.lifecycle_status,NEW.lifecycle_status,
-      NEW.created_tick,NEW.source_ref,NEW.actor_ref,'lifecycle status changed');
+      v_tick,v_source,v_actor,v_reason);
   END IF;
   RETURN NEW;
 END
-$$;
+$;
+
+CREATE FUNCTION sw_property.change_lifecycle(
+  p_entity_type text,p_entity_id bigint,p_new_status text,p_effective_tick bigint,
+  p_source_ref text,p_actor_ref text,p_reason text
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=pg_catalog,sw_property AS $
+DECLARE
+  v_table text;
+  v_id_column text;
+  v_rows integer;
+  v_old_tick text := current_setting('sw_property.change_tick',true);
+  v_old_source text := current_setting('sw_property.change_source',true);
+  v_old_actor text := current_setting('sw_property.change_actor',true);
+  v_old_reason text := current_setting('sw_property.change_reason',true);
+BEGIN
+  IF p_entity_id IS NULL OR p_entity_id<=0 OR p_effective_tick IS NULL OR p_effective_tick<0
+    OR p_source_ref IS NULL OR btrim(p_source_ref)=''
+    OR p_actor_ref IS NULL OR btrim(p_actor_ref)=''
+    OR p_reason IS NULL OR btrim(p_reason)='' THEN
+    RAISE EXCEPTION 'lifecycle identity and provenance are required';
+  END IF;
+  CASE upper(p_entity_type)
+    WHEN 'PROPERTY' THEN v_table:='property_asset'; v_id_column:='property_id';
+    WHEN 'BUILDING' THEN v_table:='building'; v_id_column:='building_id';
+    WHEN 'PREMISES' THEN v_table:='premises'; v_id_column:='premises_id';
+    WHEN 'UNIT' THEN v_table:='unit_space'; v_id_column:='unit_id';
+    WHEN 'ACCESS_POINT' THEN v_table:='access_point'; v_id_column:='access_point_id';
+    ELSE RAISE EXCEPTION 'unsupported BP-04 lifecycle entity type';
+  END CASE;
+  PERFORM set_config('sw_property.change_tick',p_effective_tick::text,true);
+  PERFORM set_config('sw_property.change_source',p_source_ref,true);
+  PERFORM set_config('sw_property.change_actor',p_actor_ref,true);
+  PERFORM set_config('sw_property.change_reason',p_reason,true);
+  EXECUTE format('UPDATE sw_property.%I SET lifecycle_status=$1 WHERE %I=$2',v_table,v_id_column)
+    USING p_new_status,p_entity_id;
+  GET DIAGNOSTICS v_rows=ROW_COUNT;
+  PERFORM set_config('sw_property.change_tick',COALESCE(v_old_tick,''),true);
+  PERFORM set_config('sw_property.change_source',COALESCE(v_old_source,''),true);
+  PERFORM set_config('sw_property.change_actor',COALESCE(v_old_actor,''),true);
+  PERFORM set_config('sw_property.change_reason',COALESCE(v_old_reason,''),true);
+  IF v_rows<>1 THEN RAISE EXCEPTION 'BP-04 lifecycle identity not found'; END IF;
+END
+$;
 
 CREATE FUNCTION sw_property.reject_entity_delete()
 RETURNS trigger LANGUAGE plpgsql AS $$
@@ -518,8 +573,12 @@ END
 $$;
 
 -- Trigger adapter is generic; all named BP-04 identities reserve through SW-UNS.
-REVOKE ALL ON ALL TABLES IN SCHEMA sw_property FROM PUBLIC;
-REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_property FROM PUBLIC;
+GRANT USAGE ON SCHEMA sw_property TO sw_game_readonly,sw_game_command;
+REVOKE ALL ON ALL TABLES IN SCHEMA sw_property FROM PUBLIC,sw_game_command,sw_game_readonly;
+GRANT SELECT ON ALL TABLES IN SCHEMA sw_property TO sw_game_readonly;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA sw_property FROM PUBLIC,sw_game_command,sw_game_readonly;
+REVOKE ALL ON FUNCTION sw_property.change_lifecycle(text,bigint,text,bigint,text,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION sw_property.change_lifecycle(text,bigint,text,bigint,text,text,text) TO sw_game_command;
 INSERT INTO sw_ops.storage_operation(operation_kind,description,status,measurement_notes)
 VALUES('migration','0011 BP04-01 property and premises identity foundation','succeeded',
   'Disposable PostgreSQL 16 only. No operational geography, property fixture, Neon production connection or production write.');
