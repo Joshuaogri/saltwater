@@ -6,7 +6,6 @@ is a persistent game save.
 """
 from __future__ import annotations
 
-import shlex
 from dataclasses import dataclass
 from typing import Callable
 from uuid import UUID
@@ -14,6 +13,7 @@ from uuid import UUID
 from runtime.kernel import KernelError, Lifecycle, RuntimeKernel
 from runtime.recruitment import PostgresRecruitmentService, RecruitmentError
 from runtime.player_workspace import (WorkspaceNavigation, WORKSPACE_BY_ID, render_home, render_workspace_catalogue)
+from runtime.player_commands import parse_player_command, render_command_help
 
 
 @dataclass(frozen=True, slots=True)
@@ -40,22 +40,7 @@ class CommandResult:
     quit_requested: bool = False
 
 
-HELP = """Saltwater commands
-  help       Show available commands
-  status     Show runtime and simulation clock
-  profile    Show the active player profile
-  recruit    Request entry as a recruit (pending until authorised)
-  career     Inspect recruit intake and career status
-  start      Enter active play
-  pause      Pause the simulation
-  resume     Resume active play
-  quit       Leave the game (world time stops)
-  home       Show the player home / shift desk
-  workspaces List all workspaces
-  workspace <id>  Select an exact workspace ID
-  back       Return to the previous workspace
-  where      Show current workspace and selected-record state
-"""
+HELP = render_command_help()
 
 
 class PlayerCommandInterface:
@@ -84,26 +69,19 @@ class PlayerCommandInterface:
         }
 
     def execute(self, line: str) -> CommandResult:
-        try:
-            parts = shlex.split(line)
-        except ValueError as exc:
-            return CommandResult(False, f"Could not parse command: {exc}")
-        if not parts:
-            return CommandResult(True, "Enter a command. Type help for the list.")
-        if parts[0].casefold() == "workspace":
-            if len(parts) != 2:
-                return CommandResult(False, "Use workspace <exact-id>. Type workspaces.")
-            try:
-                self.workspace_navigation = self.workspace_navigation.select(parts[1])
-            except ValueError:
-                return CommandResult(False, f"Unknown workspace ID: {parts[1]}")
+        parsed = parse_player_command(line)
+        if not parsed.ok:
+            error = parsed.error
+            if error.code.value == "empty_input":
+                return CommandResult(True, error.message)
+            return CommandResult(False, error.message)
+        command = parsed.command
+        if command.token == "workspace":
+            self.workspace_navigation = self.workspace_navigation.select(command.arguments[0])
             return CommandResult(True, f"Current workspace: {WORKSPACE_BY_ID[self.workspace_navigation.current].label}")
-        if len(parts) != 1:
-            return CommandResult(False, "This command takes no arguments. Type help.")
-        command = parts[0].casefold()
-        handler = self._commands.get(command)
+        handler = self._commands.get(command.token)
         if handler is None:
-            return CommandResult(False, f"Unknown command: {parts[0]}. Type help.")
+            return CommandResult(False, "Command unavailable.")
         try:
             return handler()
         except KernelError as exc:
