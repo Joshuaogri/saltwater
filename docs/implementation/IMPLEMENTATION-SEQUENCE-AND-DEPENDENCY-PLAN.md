@@ -313,9 +313,24 @@ Added `docs/integration/CHATGPT-PLAYER-RUNTIME-CONTRACT.md`, machine-readable `d
 
 PKG-007 is proposed in `docs/implementation/approval-packages/PKG-007-chatgpt-tool-handler-and-trusted-context-injection.md`. It depends on verified PKG-005 authenticated command execution and PKG-006 trusted host adapter. The package adds a narrow server-side tool handler that accepts only the PKG-006 model-visible request object and receives `TrustedHostContext` separately as a host-injected argument. It delegates to the existing adapter and returns only the documented `ok`/`message` response. Unknown fields, malformed inputs, unsupported commands and missing/expired context fail closed.
 
-This is a repository-only callable handler and contract-test increment. It does not deploy an HTTP route, public endpoint, ChatGPT app/plugin, external identity provider, production secret store or persistent host-session mapping. No schema or Neon production operation is included. **Awaiting explicit user approval; no PKG-007 implementation has begun.**
+This is a repository-only callable handler and contract-test increment. It does not deploy an HTTP route, public endpoint, ChatGPT app/plugin, external identity provider, production secret store or persistent host-session mapping. No schema or Neon production operation is included. **PKG-007 complete:** `runtime/chatgpt_tool_handler.py` and contract tests are implemented and verified; see section 8.
 
 
 ## 8. PKG-007 implementation record
 
 PKG-007 was authorised by the user's instruction to finish the package. The strict model-argument handler is implemented at `runtime/chatgpt_tool_handler.py`; contract tests are at `tests/pkg001/test_chatgpt_tool_handler.py`; the existing Python CI workflow now runs that suite. The handler accepts only the exact command allowlist and optional bounded request reference, receives trusted host context separately, rejects malformed/unknown fields before adapter invocation, delegates to PKG-006, and emits only the documented response keys. Python contract tests and the full disposable PostgreSQL workflow passed (run 45308750086); migration validation passed (run 45308723918). PKG-007 is complete within its repository-only boundary. No endpoint, deployed ChatGPT integration, plugin, Neon production change, schema migration, session or permission grant was created.
+
+
+## 9. BP37-01 — canonical clock core and schedule eligibility (complete)
+
+The user approved BP37-01 on 2026-11-24. The bounded implementation is committed directly to `main`:
+- `runtime/scheduling.py`: canonical persisted-tick-based scheduler interface, deterministic due ordering, idempotent registration, one-off/interval schedules, expiry, retryable failure, owner-domain handler dispatch and lifecycle gates.
+- `db/proposals/0006_bp37_tick_scheduling.sql`: disposable-only schedule registry and guarded transactional create/claim/finalize functions. No production migration was applied.
+- `tests/pkg001/test_scheduling.py` and `tests/pkg001/scheduling_acceptance.sql`: unit, concurrency/idempotency, lifecycle, failure/retry, recurrence/expiry and PostgreSQL acceptance/storage tests.
+- Existing CI workflow applies proposal 0006 only to disposable PostgreSQL, executes the new suites, and reports schema/row/index measurements.
+
+**Verification:** [full Python + disposable PostgreSQL regression workflow 45310150181](https://github.com/Joshuaogri/saltwater/actions/runs/45310150181) passed, including all prior PKG-001–PKG-007 regressions, 10,000-person concurrency/cap checks, database security and backup/restore. [Database migration validation 45310150194](https://github.com/Joshuaogri/saltwater/actions/runs/45310150194) passed. Disposable storage: 131,072 bytes schema growth; 49,152 bytes empty schedule relation plus indexes; 1,001 rows measured 466,944 bytes total, approximately 466.48 bytes per schedule including indexes. Fixture rolled back. Neon production unchanged.
+
+**BP-37 remains partially implemented:** calendar/epoch/timezone, civil-time, richer recurrence and exception/versioning, cancellation/suspension, occurrence history, abandoned-claim recovery and domain-specific schedules remain outstanding. Abandoned claims are not auto-reclaimed in this increment; stable handler idempotency keys preserve safe retry boundaries.
+
+**Next implementation priority:** continue actual gameplay blueprint work, not ChatGPT transport. Proceed to the next dependency-ready BP-35/BP-39/BP-40/BP-41 gameplay-runtime increment, then the geography/population/built-world layers.
