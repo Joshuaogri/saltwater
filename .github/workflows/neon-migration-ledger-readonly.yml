@@ -1,0 +1,46 @@
+name: Saltwater Neon migration ledger read-only verification
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/**"
+      - "scripts/migrate.py"
+      - ".github/workflows/neon-migration-ledger-readonly.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production-ledger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install migration runner dependency
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Verify production migration checksums and live schema fingerprint (read-only)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGOPTIONS: "-c default_transaction_read_only=on"
+        run: |
+          set -euo pipefail
+          if [ -z "${DATABASE_URL:-}" ]; then
+            echo "::error::DATABASE_URL secret is missing or empty."
+            exit 1
+          fi
+          python scripts/migrate.py
+      - name: Record non-secret production ledger and storage measurements
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGOPTIONS: "-c default_transaction_read_only=on"
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc "
+            SELECT 'database_bytes=' || pg_database_size(current_database());
+            SELECT 'ledger=' || string_agg(version || ':' || migration_name || ':' || rtrim(checksum_sha256) || ':' || COALESCE(rtrim(schema_fingerprint_sha256), 'NULL'), ',' ORDER BY version)
+            FROM sw_ops.schema_migration;
+          "
