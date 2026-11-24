@@ -264,6 +264,202 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "footprint_inside_property": bool(site.covers(footprint)),
         })
 
+    # Full BP04-02 profile and typed child-record layer. Design-derived values
+    # are explicitly labelled; unavailable physical facts are not fabricated.
+    property_profiles, building_profiles, premises_profiles = [], [], []
+    unit_profiles, access_point_profiles = [], []
+    measurements, building_levels, building_components = [], [], []
+    premises_rooms, utility_systems, physical_features = [], [], []
+    condition_assessments, physical_defects, asset_assertions = [], [], []
+
+    def provenance(ref, reason):
+        return {"source_ref": ref, "actor_ref": ACTOR,
+                "confidence_code": "estimated", "effective_from_tick": 0,
+                "reason": reason}
+
+    def measure(entity_type, entity_id, code, value, unit, basis, ref):
+        measurements.append({
+            "entity_type": entity_type, "entity_id": entity_id,
+            "measure_code": code, "numeric_value": round(float(value), 4),
+            "unit_code": unit, "measurement_basis": basis,
+            "precision_code": "estimated", "method_code": "estimate",
+            **provenance(ref, "Deterministic generated design allocation; not a survey or instrument observation."),
+        })
+
+    def utility(entity_type, entity_id, utility_type, ref):
+        utility_systems.append({
+            "entity_type": entity_type, "entity_id": entity_id,
+            "utility_type": utility_type, "availability_state": "not_assessed",
+            "capacity_value": None, "capacity_unit": None, "service_point_ref": None,
+            "source_ref": ref, "actor_ref": ACTOR, "effective_from_tick": 0,
+            "confidence_code": "unknown",
+            "reason": "No service connection, capacity or service-point inspection has been performed.",
+        })
+
+    def feature(entity_type, entity_id, feature_type, ref):
+        physical_features.append({
+            "entity_type": entity_type, "entity_id": entity_id,
+            "feature_type": feature_type, "feature_label": None,
+            "feature_state": "not_assessed", "source_ref": ref,
+            "actor_ref": ACTOR, "effective_from_tick": 0,
+            "confidence_code": "unknown",
+            "reason": "Feature presence has not been physically assessed.",
+        })
+
+    def condition(entity_type, entity_id, element, ref):
+        condition_assessments.append({
+            "entity_type": entity_type, "entity_id": entity_id,
+            "element_code": element, "condition_code": "not_assessed",
+            "assessed_tick": 0, "assessor_ref": ACTOR, "source_ref": ref,
+            "confidence_code": "unknown",
+            "findings": "No physical inspection has been performed; generated design geometry is not evidence of condition.",
+            "recommended_action": "Inspect and record a sourced assessment before operational use.",
+        })
+
+    def assertion(entity_type, entity_id, attribute, state, ref):
+        asset_assertions.append({
+            "entity_type": entity_type, "entity_id": entity_id,
+            "attribute_code": attribute, "value_text": None,
+            "knowledge_state": state, "effective_from_tick": 0,
+            "source_ref": ref, "actor_ref": ACTOR,
+            "confidence_code": "unknown",
+            "reason": "No evidence has been supplied or assessment performed for this attribute.",
+        })
+
+    for p in properties:
+        pid, ref = p["candidate_property_id"], p["source_ref"]
+        property_profiles.append({
+            "candidate_property_id": pid, "property_class": p["property_class"],
+            "primary_use": p["primary_use"], "secondary_uses": [],
+            "development_form": "other", "site_state": "unknown",
+            "boundary_status": "unverified", "terrain_code": "unknown",
+            "drainage_state": "not_assessed", "perimeter_type": "not_assessed",
+            "utility_availability": "not_assessed", **provenance(ref, "Use class is generated from neighbourhood design; physical site condition is not assessed."),
+        })
+        measure("PROPERTY", pid, "site_area", p["site_area_m2"], "m2", "design", ref)
+        for utility_type in ("electricity", "water", "wastewater", "telecommunications"):
+            utility("PROPERTY", pid, utility_type, ref)
+        for feature_type in ("yard", "parking", "security_perimeter"):
+            feature("PROPERTY", pid, feature_type, ref)
+        for element in ("site", "overall"):
+            condition("PROPERTY", pid, element, ref)
+        for attribute, state in (("boundary_survey", "not_assessed"),
+                                 ("material_inventory", "not_assessed"),
+                                 ("defect_inventory", "not_assessed")):
+            assertion("PROPERTY", pid, attribute, state, ref)
+
+    for b in buildings:
+        bid, ref = b["candidate_building_id"], b["source_ref"]
+        building_profiles.append({
+            "candidate_building_id": bid, "building_use": b["building_use"],
+            "building_form": b["building_form"], "structure_class": "unknown",
+            "construction_system": "unknown", "foundation_type": "not_assessed",
+            "roof_form": "unknown", "roof_covering": "unknown", "facade_system": "unknown",
+            "storeys_above": b["storeys_above"], "storeys_below": b["storeys_below"],
+            "height_m": b["height_m"], "height_datum": "generated_floor_height_assumption",
+            "structural_capacity_persons": None, "authorised_capacity_persons": None,
+            "construction_year": None, "completion_year": None,
+            "heritage_status": "not_assessed",
+            **provenance(ref, "Storeys and height are generated design assumptions; construction and capacity are unknown."),
+        })
+        measure("BUILDING", bid, "footprint_area", b["footprint_area_m2"], "m2", "design", ref)
+        measure("BUILDING", bid, "gross_floor_area", b["gross_floor_area_m2"], "m2", "design", ref)
+        measure("BUILDING", bid, "height", b["height_m"], "m", "design", ref)
+        for floor in range(b["storeys_above"]):
+            level_code = "G" if floor == 0 else f"L{floor}"
+            building_levels.append({
+                "candidate_building_id": bid, "level_code": level_code,
+                "level_name": "Ground" if floor == 0 else f"Level {floor}",
+                "level_order": floor, "level_type": "ground" if floor == 0 else "upper",
+                "source_ref": ref, "actor_ref": ACTOR, "effective_from_tick": 0,
+                "reason": "Floor schedule generated from the fictional building design profile.",
+            })
+        for component_type in ("foundation", "frame", "floor", "wall", "roof",
+                               "facade", "glazing", "stair", "electrical",
+                               "water", "fire_alarm", "security"):
+            building_components.append({
+                "candidate_building_id": bid, "level_code": None,
+                "component_type": component_type, "material_code": "unknown",
+                "condition_code": "not_assessed", "source_ref": ref,
+                "actor_ref": ACTOR, "effective_from_tick": 0,
+                "reason": "Component inventory and material inspection have not been performed.",
+            })
+        for utility_type in ("electricity", "water", "wastewater", "telecommunications", "hvac"):
+            utility("BUILDING", bid, utility_type, ref)
+        for feature_type in ("lobby", "corridor", "stairwell", "fire_escape"):
+            feature("BUILDING", bid, feature_type, ref)
+        for element in ("structure", "roof", "fire_safety", "accessibility"):
+            condition("BUILDING", bid, element, ref)
+        for attribute in ("construction_materials", "utility_connections", "structural_capacity", "defect_inventory"):
+            assertion("BUILDING", bid, attribute, "not_assessed", ref)
+
+    for p in premises:
+        pid, ref = p["candidate_premises_id"], p["source_ref"]
+        premises_profiles.append({
+            "candidate_premises_id": pid, "premises_type": p["premises_type"],
+            "primary_function": p["primary_function"], "floor_level": p["floor_code"],
+            "orientation": "unknown", "fitout_standard": "not_assessed",
+            "occupancy_suitability": "not_assessed", "security_boundary": "not_assessed",
+            "accessibility_state": "not_assessed",
+            **provenance(ref, "Premises function and floor association are generated; fit-out and suitability are not inspected."),
+        })
+        measure("PREMISES", pid, "net_floor_area", p["floor_area_m2"], "m2", "design", ref)
+        measure("PREMISES", pid, "usable_area", p["floor_area_m2"] * 0.88, "m2", "design", ref)
+        room_types = ("primary_space", "circulation_space", "service_space")
+        for index, room_type in enumerate(room_types, start=1):
+            premises_rooms.append({
+                "candidate_premises_id": pid, "room_code": f"R{index:02d}",
+                "room_type": room_type, "floor_level": p["floor_code"],
+                "area_m2": round(p["floor_area_m2"] * (0.65 if index == 1 else 0.175), 3),
+                "accessibility_state": "not_assessed", "source_ref": ref,
+                "actor_ref": ACTOR, "effective_from_tick": 0,
+                "reason": "Illustrative internal space allocation; no measured floor plan exists.",
+            })
+        for utility_type in ("electricity", "water", "telecommunications"):
+            utility("PREMISES", pid, utility_type, ref)
+        for feature_type in ("corridor", "toilet"):
+            feature("PREMISES", pid, feature_type, ref)
+        for element in ("overall", "accessibility"):
+            condition("PREMISES", pid, element, ref)
+        for attribute in ("fitout_inventory", "utility_service", "occupancy_suitability"):
+            assertion("PREMISES", pid, attribute, "not_assessed", ref)
+
+    for u in units:
+        uid, ref = u["candidate_unit_id"], u["source_ref"]
+        unit_profiles.append({
+            "candidate_unit_id": uid, "unit_class": u["unit_class"],
+            "local_locator": None, "floor_level": u["floor_level"],
+            "room_count": u["room_count"], "physical_capacity": None,
+            "suitability_state": "not_assessed", "fitout_state": "not_assessed",
+            "accessibility_state": "not_assessed",
+            **provenance(ref, "Unit area and classification are generated design allocations; capacity and suitability are not assessed."),
+        })
+        measure("UNIT", uid, "net_floor_area", u["floor_area_m2"], "m2", "design", ref)
+        measure("UNIT", uid, "usable_area", u["floor_area_m2"] * 0.88, "m2", "design", ref)
+        for utility_type in ("electricity", "water"):
+            utility("UNIT", uid, utility_type, ref)
+        feature("UNIT", uid, "other", ref)
+        condition("UNIT", uid, "overall", ref)
+        for attribute in ("occupancy_capacity", "accessibility", "defect_inventory"):
+            assertion("UNIT", uid, attribute, "not_assessed", ref)
+
+    for a in access_points:
+        aid, ref = a["candidate_access_point_id"], a["source_ref"]
+        access_point_profiles.append({
+            "candidate_access_point_id": aid, "access_type": "unknown",
+            "access_modes": [], "directionality": "unknown", "control_type": "unknown",
+            "availability_state": "not_assessed", "accessibility_state": "not_assessed",
+            "emergency_egress": None, "emergency_egress_state": "not_assessed",
+            "loading_capable": None, "loading_capability_state": "not_assessed",
+            **provenance(ref, "Boundary location is geometric only; no door, gate, access mode or egress inspection has occurred."),
+        })
+        for feature_type in ("security_perimeter",):
+            feature("ACCESS_POINT", aid, feature_type, ref)
+        for element in ("door", "gate", "accessibility"):
+            condition("ACCESS_POINT", aid, element, ref)
+        for attribute in ("access_mode", "emergency_egress", "loading_capability", "public_access"):
+            assertion("ACCESS_POINT", aid, attribute, "not_assessed", ref)
+
     body = {
         "schema": "saltwater-bp04-03-stage-e-physical-asset-candidates/1.0",
         "inventory_set_id": "BP04-03-STAGE-E-ASSET-INVENTORY-001",
