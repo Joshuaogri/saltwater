@@ -10,5 +10,5 @@
   "businesses": 10000,
   "geography": "roots-only-no-site-assignments",
   "business_distribution": "test-only-sidecar",
-  "name_algorithm": "md5-derived-eight-syllable-pseudowords"
+  "name_algorithm": "md5-derived-twelve-syllable-pseudowords"
 }
