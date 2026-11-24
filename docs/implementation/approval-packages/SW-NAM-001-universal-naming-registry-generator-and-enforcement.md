@@ -239,5 +239,7 @@ The user approved **SW-NAM-001 — Universal Naming Registry, Generator and Enfo
 **Policy:** ADOPTED — SW-UNS-001.  
 **Implementation package:** APPROVED — implementation in progress (2026-11-24).  
 **GitHub branch:** `main` only.  
-**Disposable PostgreSQL implementation/tests:** CORE ACCEPTANCE PASS in run `45409845359`; the migration, Python services, same-name and same-entity concurrency, rollback, full 10,000-person fixture, access controls, checkpoint and backup/restore all passed. Follow-up run `45410340222` also passed, verifying the final generator-manifest normalizer-version metadata. A final storage-only reporting rerun `45411243093` is pending to capture separate heap/index/TOAST bytes.  
+**Disposable PostgreSQL implementation/tests:** CORE ACCEPTANCE PASS in run `45409845359`; the migration, Python services, same-name and same-entity concurrency, rollback, full 10,000-person fixture, access controls, checkpoint and backup/restore all passed. Follow-up run `45410340222` also passed, verifying the final generator-manifest normalizer-version metadata. Final storage-detail run `45411243093` passed; populated-registry heap/index/TOAST bytes are recorded in the test evidence.  
+**Approved geography name corrections (2026-11-24):** `SW-D01-N1` renamed to `Westgate Gardens` (district `SW-D01` remains `Westgate`); `SW-D03-N2` renamed to `Civic Terrace` (landmark `SW-POI-002` remains `Government Square`). IDs are preserved. Source JSON/SVG corrections are committed; this does not approve operational seeding.
+
 **Neon production changes:** none authorised or performed.
