@@ -2,7 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.naming_inventory import inventory_geography_names
+from runtime.naming_inventory import build_spatial_identity_map, inventory_geography_names
 
 
 class GeographyNameInventoryTests(unittest.TestCase):
@@ -45,6 +45,56 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertFalse(self.report.can_import)
         self.assertEqual(self.report.source_status, "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED")
         self.assertEqual(len(self.report.unresolved_spatial_ids), 100)
+
+
+    def test_stable_spatial_identity_map_covers_all_unresolved_source_ids(self):
+        payload = json.loads(
+            Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        )
+        identity_map = build_spatial_identity_map(payload)
+        self.assertEqual(len(identity_map.entries), 100)
+        self.assertFalse(identity_map.operational_seed_approved)
+        self.assertEqual(
+            {row.source_id for row in identity_map.entries},
+            set(self.report.unresolved_spatial_ids),
+        )
+        self.assertEqual(
+            {row.entity_code for row in identity_map.entries},
+            {row.source_id for row in identity_map.entries},
+        )
+        self.assertTrue(all(row.spatial_id is None for row in identity_map.entries))
+        parent_codes = {row.entity_code for row in identity_map.entries} | {
+            "saltwater-state", "saltwater-city"
+        }
+        self.assertTrue(all(row.parent_entity_code in parent_codes for row in identity_map.entries))
+
+    def test_stable_spatial_identity_map_has_expected_domain_kinds(self):
+        payload = json.loads(
+            Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        )
+        identity_map = build_spatial_identity_map(payload)
+        counts = {}
+        for row in identity_map.entries:
+            counts[row.entity_type] = counts.get(row.entity_type, 0) + 1
+        self.assertEqual(counts, {
+            "DISTRICT": 8,
+            "NEIGHBOURHOOD": 24,
+            "ROAD": 42,
+            "ROUTE": 5,
+            "GEO_ZONE": 3,
+            "LANDMARK": 18,
+        })
+
+    def test_stable_spatial_identity_map_is_deterministic_and_preserves_neighbourhood_parent(self):
+        payload = json.loads(
+            Path("data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        )
+        first = build_spatial_identity_map(payload)
+        second = build_spatial_identity_map(payload)
+        self.assertEqual(first, second)
+        by_id = {row.source_id: row for row in first.entries}
+        self.assertEqual(by_id["SW-D01-N1"].parent_entity_code, "SW-D01")
+        self.assertEqual(by_id["SW-D03-N2"].parent_entity_code, "SW-D03")
 
 
 if __name__ == "__main__":
