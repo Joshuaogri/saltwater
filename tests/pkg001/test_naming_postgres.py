@@ -25,7 +25,7 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
         cls.entity_ids = []
         with connect() as conn:
             with conn.cursor() as cur:
-                for _ in range(4):
+                for _ in range(5):
                     cur.execute(
                         "INSERT INTO sw_geo.entity(entity_code,kind) VALUES (%s,7) RETURNING spatial_id",
                         (f"sw-nam-concurrency-{uuid4()}",),
@@ -53,6 +53,40 @@ class NamingPostgresConcurrencyTests(unittest.TestCase):
             ):
                 return ("collision", None)
             raise
+
+    def test_concurrent_different_canonical_names_for_one_entity_leave_one_active(self):
+        entity_id = self.entity_ids[4]
+        barrier = threading.Barrier(2)
+        names = ("Quayside Foundry Road", "Civic Orchard Avenue")
+
+        def reserve(name):
+            barrier.wait(timeout=15)
+            with connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT sw_names.reserve_name(
+                             'GEOGRAPHY',%s,'canonical',%s,
+                             'sw-nam-same-entity-race','ci-test','same-entity concurrency test',0)""",
+                        (entity_id, name),
+                    )
+                    return cur.fetchone()[0]
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            results = list(pool.map(reserve, names))
+        self.assertEqual(len(results), 2)
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT count(*) FILTER (WHERE status='active'),
+                              count(*) FILTER (WHERE status='superseded')
+                       FROM sw_names.registry
+                       WHERE entity_type='GEOGRAPHY' AND entity_id=%s
+                         AND display_name = ANY(%s)""",
+                    (entity_id, list(names)),
+                )
+                active, superseded = cur.fetchone()
+        self.assertEqual(active, 1)
+        self.assertEqual(superseded, 1)
 
     def test_two_concurrent_reservations_for_same_name_have_one_winner(self):
         barrier = threading.Barrier(2)
