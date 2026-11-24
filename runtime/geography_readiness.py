@@ -1,7 +1,7 @@
 """Read-only SW-GEO-V1 readiness audit; never approves or imports operational geography."""
 from __future__ import annotations
 import json
-from pathlib import Path
+from pathlib import Path\nfrom runtime.geography_identity_reconciliation import validate_identity_map
 
 EXPECTED = {"districts": 8, "neighbourhoods": 24, "roads": 42, "nodes": 367, "segments": 685, "routes": 5}
 
@@ -60,10 +60,10 @@ def audit_geography(path: str | Path) -> dict:
         "single_connected_component_claim": network.get("connected_components") == 1 or data.get("validation", {}).get("connected_components") == 1,
         "reconciliation_register_present": register.get("register_id") == "BP04-03-STAGE-A-RECON-001",
         "reconciliation_register_has_100_source_records": len(mapping_records) == 100,
-        "all_source_mappings_explicitly_unresolved": unresolved_count == 100 and register.get("summary", {}).get("resolved") == 0,
+        "all_100_source_identities_resolved": identity_result["resolved"] == 100 and unresolved_count == 0 and register.get("summary", {}).get("resolved") == 100,
     }
     blockers = [
-        "100 source-to-spatial-ID mappings remain unresolved and require a source-by-source reconciliation register.",
+        "Database spatial_id surrogates are generated per database and must be looked up by stable entity_code; they are not portable source identifiers.",
         "Parcel fabric and canonical numbered addresses do not exist in SW-GEO-V1.",
         "Building footprints and entrances do not exist in SW-GEO-V1.",
         "SW-GEO-V1 is planning-grade and has not been approved for operational seeding.",
@@ -77,7 +77,7 @@ def audit_geography(path: str | Path) -> dict:
         "checks": checks,
         "passed_checks": sum(checks.values()),
         "failed_checks": [name for name, passed in checks.items() if not passed],
-        "unresolved_source_to_spatial_id_mappings": unresolved_count,
+        "unresolved_source_to_spatial_id_mappings": unresolved_count,\n        "resolved_source_to_entity_code_mappings": identity_result["resolved"],\n        "database_spatial_id_policy": "Generated per database; resolve by entity_code at materialisation.",
         "blockers": blockers,
         "operational_seed_eligible": False,
         "geometry_import_performed": False,
