@@ -133,6 +133,15 @@ class TickSchedulerTests(unittest.TestCase):
         with self.assertRaises(SchedulingError):
             self.scheduler.register(ScheduleDefinition("police", "changed", 0, "same-key"))
 
+    def test_recurring_schedule_expires_when_next_due_exceeds_expiry(self):
+        self.start()
+        sid = self.scheduler.register(ScheduleDefinition(
+            "police", "short-lived", 0, "short-lived",
+            interval_ticks=2, expires_at_tick=1,
+        ))
+        self.assertTrue(self.scheduler.dispatch_one())
+        self.assertEqual(self.store.inspect(sid)["status"], "expired")
+
     def test_expired_schedule_is_never_dispatched(self):
         self.start()
         sid = self.scheduler.register(ScheduleDefinition(
