@@ -112,12 +112,13 @@ jobs:
           SELECT 1 / 0;
           COMMIT;
           SQL
-          if python scripts/migrate.py --apply --migrations /tmp/saltwater-migrations-failure; then
+          if python scripts/migrate.py --apply --migrations /tmp/saltwater-migrations-failure > /tmp/bp38-failed-migration.log 2>&1; then
             echo "ERROR: intentionally failing migration unexpectedly succeeded"
             exit 1
           fi
-          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \
-            -c "SELECT 1 WHERE to_regclass('sw_core.bp38_atomicity_probe') IS NULL AND NOT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 3)"
+          grep -q "division by zero" /tmp/bp38-failed-migration.log
+          rollback_check="$(psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -Atc "SELECT CASE WHEN to_regclass('sw_core.bp38_atomicity_probe') IS NULL AND NOT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 3) THEN 'PASS' ELSE 'FAIL' END")"
+          test "$rollback_check" = "PASS"
       - name: Apply PKG-001 proposal to disposable PostgreSQL only
         env:
           PGPASSWORD: test-only-password
