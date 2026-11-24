@@ -7,7 +7,7 @@
 **Date:** 2026-11-22  
 **Owner:** BP-02  
 **Dependencies:** BP-01, BP-03, BP-04, BP-10–BP-12, BP-17, BP-20, BP-22, BP-35, BP-37, BP-38, BP-40, BP-43, BP-44  
-**Authority:** User-owned canon; no exact city map, district count, coastline, river, terrain or road inventory is assumed by this draft.
+**Authority:** User-owned canon. Foundational geography is resolved by [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md); the detailed versioned map dataset remains to be built and validated.
 
 ---
 
@@ -36,8 +36,8 @@ These systems consume BP-02's geography and may own domain-specific links to it.
 2. No second city, external territory, expansion region or additional playable jurisdiction may be created.
 3. All playable land, water, roads, parcels and operational locations must resolve inside the single canonical Saltwater boundary.
 4. External locations are references only. They may be stored as off-map context for origin, destination, trade, travel, supply, migration or case history, but cannot become playable districts, local population areas or a second simulation map.
-5. Exact city dimensions, shape, coastline, islands, waterways, terrain, districts, neighbourhoods, road names/counts, parcel counts and map origin have not been established in the adopted canon. This specification does not invent them.
-6. The city may contain varied land uses and physical geography, but each feature must be user-approved or introduced through an approved versioned geography decision.
+5. The adopted baseline is one contiguous coastal island city-state with a 12 km × 9 km fictional local-grid extent, a principal eastern sheltered harbour, a low central-western ridge and no assumed natural river or detached playable island.
+6. The adopted administrative structure is eight districts and 24 named neighbourhoods, as listed in SW-CANON-001. Exact boundary polygons and the road/parcel/address/facility inventory must be built as one validated, versioned dataset; no decorative or disconnected map may substitute for it.
 7. A map illustration is not an authoritative boundary. Canonical geometry and stable IDs govern.
 8. Spatial changes must preserve prior versions and references; no silent coordinate or boundary replacement.
 9. BP-02's map and location system must support all required police and city workflows even when no graphical map is available.
@@ -157,7 +157,7 @@ BP-38 defines physical schema and constraints; BP-44 governs approved geography 
 
 ## 6. Administrative areas, localities and land use
 
-BP-02 must support administrative divisions and neighbourhood/locality records without fixing their count or names before user-approved geography design.
+BP-02 uses the eight adopted districts and 24 adopted neighbourhoods/localities listed in SW-CANON-001. Their validated polygons must partition the single city-state without gaps or overlaps. Additional functional/land-use overlays may cross administrative boundaries but do not create additional districts or neighbourhoods.
 
 Each area record should include:
 - stable ID and optional short code;
@@ -181,7 +181,7 @@ Area relationships must support:
 
 Land-use classification may include residential, commercial, industrial, civic, institutional, transport, port, utility, open space, mixed-use, protected/environmental and other approved categories. Categories are configurable through controlled versions; classification does not itself create a building, business or resident.
 
-No area may be invented merely to satisfy an arbitrary count. The final city layout and number of districts/neighbourhoods are user-approved canon decisions.
+No additional administrative district or neighbourhood may be generated outside the adopted eight/24 structure without a formal canon change. Functional overlays do not alter that count.
 
 ## 7. Parcels, addresses and property interface
 
@@ -490,20 +490,22 @@ Required test classes: geometry validity, boundary, graph topology, routing, acc
 
 The complete source-to-target mapping is maintained in `SALTWATER-52-TO-44-CROSSWALK.md`.
 
-## 18. Open canon decisions
+## 18. Canon decisions and remaining implementation work
 
-The following are required before BP-02 can be considered fully design-complete:
-1. Exact city-state/city boundary geometry and whether it is contiguous or includes separated land areas.
-2. Coordinate origin, axes, extent, units and precision.
-3. City districts, neighbourhoods/localities and their names/counts.
-4. Natural geography: coastline, waterways, terrain, elevation and other defining features, if any.
-5. Road/path network, transport modes, junctions, crossings and access restrictions.
-6. Addressing convention, street naming and parcel identifier convention.
-7. Land-use categories and planning/administrative area model.
-8. Initial landmark and major facility register.
-9. Whether any off-map travel is represented as abstract reference only or with limited route context.
+The foundational canon decisions are closed by [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md):
 
-No values are silently invented here. The data structures, invariants, ownership boundaries, interfaces, failure handling and test contracts are specified; final map facts require explicit canon decisions.
+1. Territory: one contiguous island city-state; no detached playable land or second settlement.
+2. Map extent/CRS: 12 km × 9 km; fictional local CRS `SW-LOCAL-01`, metre units, south-west origin, X east/Y north, whole-metre initial precision.
+3. Physical geography: eastern sheltered harbour, low central-western ridge, no assumed natural river; constructed canal/freight basin in Southworks.
+4. Administrative geography: eight named districts and 24 named neighbourhoods, three per district.
+5. Functional geography: civic, maritime/port, market/exchange, education, western mixed-use, industrial/freight and green/open-space roles assigned to the named districts.
+6. Movement: connected primary orbital distributor, radial district connectors and local-street grid; maritime external access; no off-map road graph.
+7. Addressing: district, neighbourhood, named road, building number and optional unit; consistent road-origin and odd/even side rules; opaque stable parcel/address IDs.
+8. Land-use classes and their distinction from property/business/person records.
+
+These are adopted canon, not a claim that map data already exists. The following remain implementation deliverables, not open canon decisions: validated island/district/neighbourhood polygons; exact road names/nodes/segments and access restrictions; parcels and addresses; natural/constructed feature geometry; landmark/facility register; topology/connectivity/routing tests; provenance and versioned map release. The map must be operationally connected and routable for dispatch/patrol, not merely illustrative.
+
+No additional district, neighbourhood, city, territory or external playable area may be generated without a formal canon change.
 
 ## 19. Completion statement
 
