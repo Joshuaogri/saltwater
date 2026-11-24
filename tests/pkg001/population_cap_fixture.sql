@@ -25,12 +25,12 @@ BEGIN
     RAISE EXCEPTION 'fixture population already exceeds 9,999';
   END IF;
   FOR i IN current_count+1..9999 LOOP
-    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
+    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
       SELECT event_type_id,now(),current_tick,'SW-DB-001:cap-person-created:'||i FROM sw_core.event_type WHERE event_code='PERSON_CREATED'
       RETURNING event_id INTO ev;
     INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id)
       VALUES ('Synthetic','Fixture-'||substr(md5(i::text),1,12),current_tick,'SW-DB-001:cap-person:'||i,ev) RETURNING person_id INTO pid;
-    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
+    INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
       SELECT event_type_id,now(),current_tick,'SW-DB-001:cap-population-state:'||i FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
       RETURNING event_id INTO ev;
     INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id)
