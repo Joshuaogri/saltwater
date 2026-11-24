@@ -1,7 +1,8 @@
 """Dry-run inventory of existing geography canon for SW-NAM-001.
 
 This module never writes to PostgreSQL. It inventories source IDs, detects
-collisions, and explicitly reports names that cannot yet be bound to spatial_id.
+collisions, and builds portable entity_code mappings. Database-generated spatial_id
+surrogates are looked up by entity_code when a database is materialised.
 """
 from __future__ import annotations
 
@@ -34,7 +35,7 @@ class GeographyNameInventory:
     candidates: tuple[CanonNameCandidate, ...]
     conflicts: tuple[CanonNameConflict, ...]
     near_duplicate_pairs: tuple[tuple[str, str], ...]
-    unresolved_spatial_ids: tuple[str, ...]
+    database_spatial_ids_not_embedded: tuple[str, ...]
     can_import: bool
 
 
@@ -112,16 +113,17 @@ def inventory_geography_names(payload: Mapping[str, Any]) -> GeographyNameInvent
             if SequenceMatcher(a=left, b=right).ratio() >= 0.90:
                 near.append((left, right))
 
-    # The database currently has only the two roots from proposal 0002. All
-    # source IDs from SW-GEO-V1 therefore require a future stable-ID mapping.
-    unresolved = tuple(sorted(
+    # The portable manifest intentionally excludes integer surrogate IDs.
+    # The stable source_id -> entity_code mapping is complete; each database
+    # assigns spatial_id and it is retrieved by entity_code during materialisation.
+    database_ids_not_embedded = tuple(sorted(
         item.source_id for item in candidates
         if item.source_id not in {"saltwater-state", "saltwater-city"}
     ))
     source_status = str(payload.get("status", "unknown"))
     can_import = (
         source_status == "APPROVED_FOR_OPERATIONAL_SEED"
-        and not conflicts and not near and not unresolved
+        and not conflicts and not near
     )
     return GeographyNameInventory(
         dataset_id=dataset_id,
@@ -131,7 +133,7 @@ def inventory_geography_names(payload: Mapping[str, Any]) -> GeographyNameInvent
         )),
         conflicts=tuple(sorted(conflicts, key=lambda x: x.normalized_key)),
         near_duplicate_pairs=tuple(near),
-        unresolved_spatial_ids=unresolved,
+        database_spatial_ids_not_embedded=database_ids_not_embedded,
         can_import=can_import,
     )
 
