@@ -61,7 +61,7 @@ BEGIN
   END IF;
 
   v_name_batch := sw_names.record_generation_batch(
-    'BUSINESS',1,1,'saltwater-opening-fixture-v1',20261124,
+    'BUSINESS',1::smallint,1::smallint,'saltwater-opening-fixture-v1',20261124,
     v_manifest,10000,'SW-DB-001:opening-fixture-v1',
     'disposable-ci-generator','business name fixture only; no production canon'
   );
