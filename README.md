@@ -144,3 +144,8 @@ PostgreSQL `spatial_id` is a GENERATED ALWAYS AS IDENTITY surrogate, so its inte
 
 
 **Disposable database materialisation proof:** the existing PKG-001 geography identity SQL fixture has now materialised all 100 `sw_geo.entity` rows and their database-generated `spatial_id` values, with all 100 version/parent/name relationships and naming-registry activations accepted. The materialisation step passed in [workflow run 45508321133](https://github.com/Joshuaogri/saltwater/actions/runs/45508321133). These integers belong to that disposable database only; production IDs remain unassigned and will be generated/looked up by `entity_code` when the operational geography version is activated.
+
+
+### SW-GEO-V1 geometric QA extension (read-only)
+
+A dedicated standard-library geometry and routing audit is added at `runtime/geography_geometry_audit.py`, with regression coverage in `tests/pkg001/test_geography_geometry_audit.py`. It checks polygon ring validity/self-intersection, point containment, neighbourhood-to-district containment, neighbourhood interior overlap and area balance, segment geometry against node coordinates and declared lengths, city-boundary containment, graph degree/connectivity, and route segment sequencing. The existing BP04-03 geography-readiness workflow runs this audit on relevant `main` changes. The audit is deliberately read-only and always reports operational seed eligibility as false; it does not approve SW-GEO-V1, validate cadastral parcels, establish legal frontage/access, or authorize Neon writes. Detailed acceptance is recorded after the workflow completes.

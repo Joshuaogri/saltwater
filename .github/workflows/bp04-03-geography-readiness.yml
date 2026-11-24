@@ -8,8 +8,10 @@ on:
       - "data/geography/saltwater-geography-v1-identity-map.json"
       - "data/geography/bp04-03-stage-a-source-spatial-reconciliation-v1.json"
       - "runtime/geography_readiness.py"
+      - "runtime/geography_geometry_audit.py"
       - "runtime/geography_identity_reconciliation.py"
       - "tests/pkg001/test_geography_readiness.py"
+      - "tests/pkg001/test_geography_geometry_audit.py"
       - "tests/pkg001/test_geography_identity_reconciliation.py"
       - ".github/workflows/bp04-03-geography-readiness.yml"
   workflow_dispatch:
@@ -25,11 +27,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run existing BP04-03 Stage A geography readiness regression
+      - name: Run BP04-03 Stage A geography readiness regression
         run: python -m unittest discover -s tests/pkg001 -p "test_geography_readiness.py" -v
+      - name: Run full geometric and routing QA regression
+        run: python -m unittest discover -s tests/pkg001 -p "test_geography_geometry_audit.py" -v
       - name: Verify all 100 source identities map exactly once
         run: python -m unittest discover -s tests/pkg001 -p "test_geography_identity_reconciliation.py" -v
       - name: Emit source-to-identity reconciliation report
         run: python -m runtime.geography_identity_reconciliation
-      - name: Emit read-only geography readiness report
+      - name: Emit read-only structural geography readiness report
         run: python -m runtime.geography_readiness
+      - name: Emit read-only geometric QA report
+        run: python -m runtime.geography_geometry_audit
