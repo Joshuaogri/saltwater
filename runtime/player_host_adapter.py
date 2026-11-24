@@ -15,7 +15,7 @@ from runtime.player_command_runtime import PostgresPlayerCommandRuntime
 
 _ALLOWED_COMMANDS = frozenset({
     "help", "status", "profile", "recruit", "career",
-    "start", "pause", "resume", "quit",
+    "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
 })
 _MAX_REQUEST_REFERENCE = 128
 
@@ -105,7 +105,17 @@ class TrustedPlayerHostAdapter:
             parts = shlex.split(request.command_text)
         except (TypeError, ValueError):
             return HostCommandResponse(False, "Invalid command.")
-        if len(parts) != 1 or parts[0].casefold() not in _ALLOWED_COMMANDS:
+        if not parts:
+            return HostCommandResponse(False, "Invalid command.")
+        command = parts[0].casefold()
+        valid_shape = (len(parts) == 1 and command in _ALLOWED_COMMANDS) or (
+            command == "workspace" and len(parts) == 2 and parts[1] in {
+                "home", "operations", "cases", "people", "evidence-scenes",
+                "department", "legal-custody", "resources-finance",
+                "reports-notifications", "system-status",
+            }
+        )
+        if not valid_shape:
             return HostCommandResponse(False, "Invalid command.")
 
         try:
