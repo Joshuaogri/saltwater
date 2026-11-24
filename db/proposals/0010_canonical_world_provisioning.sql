@@ -108,37 +108,48 @@ BEFORE UPDATE ON sw_business.business
 FOR EACH ROW EXECUTE FUNCTION sw_business.guard_business_update();
 
 CREATE FUNCTION sw_business.record_business_history()
-RETURNS trigger LANGUAGE plpgsql AS $$
-DECLARE
-  v_event text;
+RETURNS trigger LANGUAGE plpgsql AS $
 BEGIN
   IF TG_OP='INSERT' THEN
-    v_event := 'registered';
-  ELSIF NEW.operating_status IS DISTINCT FROM OLD.operating_status THEN
-    v_event := 'status_changed';
-  ELSIF NEW.site_assignment_status IS DISTINCT FROM OLD.site_assignment_status
-     OR NEW.primary_spatial_id IS DISTINCT FROM OLD.primary_spatial_id THEN
-    v_event := CASE WHEN NEW.site_assignment_status='assigned'
-                    THEN 'site_assigned' ELSE 'site_unassigned' END;
-  ELSE
+    INSERT INTO sw_business.business_history
+      (business_id,event_code,old_operating_status,new_operating_status,
+       old_site_assignment_status,new_site_assignment_status,effective_tick,
+       source_ref,actor_ref,reason)
+    VALUES
+      (NEW.business_id,'registered',NULL,NEW.operating_status,NULL,
+       NEW.site_assignment_status,NEW.created_tick,NEW.source_ref,
+       'domain-trigger','business identity registered');
     RETURN NEW;
   END IF;
-  INSERT INTO sw_business.business_history
-    (business_id,event_code,old_operating_status,new_operating_status,
-     old_site_assignment_status,new_site_assignment_status,effective_tick,
-     source_ref,actor_ref,reason)
-  VALUES
-    (NEW.business_id,v_event,
-     CASE WHEN TG_OP='INSERT' THEN NULL ELSE OLD.operating_status END,
-     NEW.operating_status,
-     CASE WHEN TG_OP='INSERT' THEN NULL ELSE OLD.site_assignment_status END,
-     NEW.site_assignment_status,NEW.created_tick,NEW.source_ref,'domain-trigger',
-     CASE WHEN TG_OP='INSERT' THEN 'business identity registered'
-          WHEN v_event='status_changed' THEN 'business operating status changed'
-          ELSE 'business site assignment changed' END);
+
+  IF NEW.operating_status IS DISTINCT FROM OLD.operating_status THEN
+    INSERT INTO sw_business.business_history
+      (business_id,event_code,old_operating_status,new_operating_status,
+       old_site_assignment_status,new_site_assignment_status,effective_tick,
+       source_ref,actor_ref,reason)
+    VALUES
+      (NEW.business_id,'status_changed',OLD.operating_status,NEW.operating_status,
+       OLD.site_assignment_status,NEW.site_assignment_status,NEW.created_tick,
+       NEW.source_ref,'domain-trigger','business operating status changed');
+  END IF;
+
+  IF NEW.site_assignment_status IS DISTINCT FROM OLD.site_assignment_status
+     OR NEW.primary_spatial_id IS DISTINCT FROM OLD.primary_spatial_id THEN
+    INSERT INTO sw_business.business_history
+      (business_id,event_code,old_operating_status,new_operating_status,
+       old_site_assignment_status,new_site_assignment_status,effective_tick,
+       source_ref,actor_ref,reason)
+    VALUES
+      (NEW.business_id,
+       CASE WHEN NEW.site_assignment_status='assigned'
+            THEN 'site_assigned' ELSE 'site_unassigned' END,
+       OLD.operating_status,NEW.operating_status,OLD.site_assignment_status,
+       NEW.site_assignment_status,NEW.created_tick,NEW.source_ref,
+       'domain-trigger','business site assignment changed');
+  END IF;
   RETURN NEW;
 END
-$$;
+$;
 CREATE TRIGGER business_history_append
 AFTER INSERT OR UPDATE OF operating_status,site_assignment_status,primary_spatial_id
 ON sw_business.business
