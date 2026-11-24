@@ -37,6 +37,8 @@ def verify() -> None:
         raise SystemExit("opening cohort manifest must remain 9,000 + 500")
     if manifest.get("living_people") != 9500 or manifest.get("businesses", 0) < 10000:
         raise SystemExit("opening fixture must be 9,500 people and at least 10,000 businesses")
+    if manifest.get("generator_version") != 2 or manifest.get("name_algorithm") != "md5-derived-twelve-syllable-pseudowords":
+        raise SystemExit("fixture generator version/name algorithm is not the adopted deterministic version")
 
     sql = PROPOSAL.read_text(encoding="utf-8")
     fixture = FIXTURE.read_text(encoding="utf-8")
