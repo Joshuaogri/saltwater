@@ -442,7 +442,7 @@ BP04-01 does not populate the actual Saltwater property inventory or determine c
 
 **Status: APPROVED — implementation and disposable acceptance passed.** Neon production remains untouched.
 
-## 18. BP04-02 — deep physical asset and space profiles (approved; disposable verification underway)
+## 18. BP04-02 — deep physical asset and space profiles (verified in disposable PostgreSQL)
 
 Package: [BP04-02 — Deep Physical Asset and Space Profiles](approval-packages/BP04-02-deep-physical-asset-and-space-profiles.md).
 
@@ -462,7 +462,7 @@ All material detail is source/actor attributed and confidence-coded. No fabricat
 
 Disposable acceptance: `tests/pkg001/bp04_02_profile_acceptance.sql`; static contract regression: `tests/pkg001/test_bp04_02_contract.py`; workflow: `.github/workflows/sw-db-001-disposable.yml`. The workflow measures migration-only schema growth separately from any future fixture growth and executes BP04-02 acceptance against disposable PostgreSQL 16.
 
-**Status: APPROVED — implementation committed; first full disposable PostgreSQL verification pending.** Do not mark BP04-02 verified until the full workflow passes and its evidence is recorded.
+**Status: APPROVED — implementation and full disposable acceptance VERIFIED.** Full Python regression and disposable PostgreSQL 16 jobs passed in [run 45478587738](https://github.com/Joshuaogri/saltwater/actions/runs/45478587738). The run completed the proposal sequence through 0012; schema-growth measurement; full deterministic fixture and storage measurement; SW-DB-001 lifecycle/identity/rollback acceptance; BP04-01 identity acceptance; BP04-02 deep-profile acceptance; idempotent repeat; query-latency measurement; backup/restore; concurrent final-slot population-cap test; and final reconciliation. No production database was contacted. See [BP04-02 run 0001 evidence](test-evidence/BP04-02-run-0001.md).
 
 ## 19. BP04-03 — actual city physical inventory and geography-linked population (future package)
 
