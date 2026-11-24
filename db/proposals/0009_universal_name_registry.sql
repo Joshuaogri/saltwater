@@ -187,6 +187,15 @@ BEGIN
     RAISE EXCEPTION 'near-duplicate name requires review before reservation';
   END IF;
 
+  IF NEW.name_form='canonical' AND EXISTS (
+    SELECT 1 FROM sw_names.name_reservation r
+    WHERE r.entity_type=NEW.entity_type AND r.entity_id=NEW.entity_id
+      AND r.name_form='canonical'
+      AND sw_names.latest_status(r.reservation_id)='active'
+  ) THEN
+    RAISE EXCEPTION 'a second active canonical name is forbidden; use the transactional reservation function';
+  END IF;
+
   IF NEW.entity_type='GEOGRAPHY' THEN
     SELECT entity_code,kind INTO v_code,v_kind
       FROM sw_geo.entity WHERE spatial_id=NEW.entity_id;
@@ -308,6 +317,16 @@ BEGIN
     IF v_existing.entity_type=p_entity_type AND v_existing.entity_id=p_entity_id
        AND v_existing.name_form=p_name_form THEN
       IF sw_names.latest_status(v_existing.reservation_id) <> 'active' THEN
+        IF p_name_form='canonical' THEN
+          INSERT INTO sw_names.name_event
+            (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
+          SELECT r.reservation_id,'superseded',p_effective_tick,p_source_ref,p_actor_ref,
+                 'another canonical name for this entity was restored'
+          FROM sw_names.name_reservation r
+          WHERE r.entity_type=p_entity_type AND r.entity_id=p_entity_id
+            AND r.name_form='canonical' AND r.reservation_id<>v_existing.reservation_id
+            AND sw_names.latest_status(r.reservation_id)='active';
+        END IF;
         INSERT INTO sw_names.name_event
           (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
         VALUES (v_existing.reservation_id,'reactivated',p_effective_tick,
@@ -316,6 +335,17 @@ BEGIN
       RETURN v_existing.reservation_id;
     END IF;
     RAISE EXCEPTION 'name is already permanently reserved: %',p_display_name;
+  END IF;
+
+  IF p_name_form='canonical' THEN
+    INSERT INTO sw_names.name_event
+      (reservation_id,event_code,effective_tick,source_ref,actor_ref,reason)
+    SELECT r.reservation_id,'superseded',p_effective_tick,p_source_ref,p_actor_ref,
+           'entity received a new canonical name'
+    FROM sw_names.name_reservation r
+    WHERE r.entity_type=p_entity_type AND r.entity_id=p_entity_id
+      AND r.name_form='canonical'
+      AND sw_names.latest_status(r.reservation_id)='active';
   END IF;
 
   INSERT INTO sw_names.name_reservation
