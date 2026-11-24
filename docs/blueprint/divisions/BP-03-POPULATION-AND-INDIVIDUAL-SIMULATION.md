@@ -618,6 +618,10 @@ Remaining work is specification/implementation detail rather than unresolved pop
 
 These tasks do not alter the binding population scope, one-person-one-ID rule, 10,000 hard cap or permanent-promotion rule.
 
+## SW-NAM-001 — canonical person naming integration
+
+The first naming implementation slice attaches a `PERSON` canonical full-name reservation to the existing `sw_people.person` identity. The full display name is composed from given, optional middle and family names; given and family names are required before person creation. Person IDs remain unchanged across rename, former names remain reserved and searchable, and aliases use separate registry entries. Recruit appointment now requires a complete given/family name pair. Existing person lifecycle, population counting and player identity rules remain authoritative. This is a bounded naming adapter, not population generation or full BP-03 implementation; disposable PostgreSQL CI is pending and no Neon write is authorised.
+
 ## 21. Completion statement
 
 **Design status:** `DESIGNED_DRAFT`; population scope and opening arithmetic are adopted by SW-CANON-001. Individual identity generation, processing budgets, event-ledger mechanics and full acceptance testing remain.  
