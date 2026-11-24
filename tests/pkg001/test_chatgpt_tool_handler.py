@@ -58,6 +58,13 @@ class ChatGPTToolHandlerTests(unittest.TestCase):
             self.assertFalse(self.call_handler({"command_text": command})["ok"])
         self.adapter.execute.assert_not_called()
 
+    def test_exact_workspace_navigation_arguments_are_allowed(self):
+        result = self.call_handler({"command_text": "workspace reports-notifications"})
+        self.assertTrue(result["ok"])
+        self.adapter.execute.assert_called_once()
+        for command in ("workspace", "workspace cases extra", "workspace Cases", "workspace unknown", "workspace;quit"):
+            self.assertFalse(self.call_handler({"command_text": command})["ok"])
+
     def test_request_reference_boundaries_and_type(self):
         self.assertTrue(self.call_handler({
             "command_text": "help", "request_reference": "x" * 128

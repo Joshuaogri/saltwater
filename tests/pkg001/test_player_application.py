@@ -148,6 +148,35 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             bind_authorized_player_commands(object(), Mock(), uuid4())
 
+    def test_workspace_gateway_authorizes_before_dispatch(self):
+        principal_id = uuid4()
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        commands.execute.return_value = CommandResult(True, "Current workspace: Cases")
+        authorization = Mock(spec=AuthorizationService)
+        authorization.decide.return_value = SimpleNamespace(allowed=True, principal_id=principal_id)
+        application = PostgresPlayerApplication(kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands)
+        gateway = bind_authorized_player_commands(application, authorization, principal_id)
+        result = gateway.execute("opaque-token", "workspace cases")
+        self.assertTrue(result.ok)
+        authorization.decide.assert_called_once_with(
+            "opaque-token", action="player.command.workspace",
+            resource=f"player:{commands.profile.player_id}", purpose="gameplay",
+            expected_principal_id=principal_id,
+        )
+        commands.execute.assert_called_once_with("workspace cases")
+
+    def test_workspace_gateway_rejects_invalid_ids_before_authorization(self):
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        authorization = Mock(spec=AuthorizationService)
+        application = PostgresPlayerApplication(kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands)
+        gateway = bind_authorized_player_commands(application, authorization, uuid4())
+        for line in ("workspace", "workspace cases extra", "workspace Cases", "workspace unknown", "workspace;quit"):
+            self.assertFalse(gateway.execute("token", line).ok)
+        authorization.decide.assert_not_called()
+        commands.execute.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

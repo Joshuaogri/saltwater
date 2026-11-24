@@ -69,6 +69,13 @@ class TrustedPlayerHostAdapterTests(unittest.TestCase):
         self.assertEqual(self.provider.contexts, [])
         self.runtime.execute.assert_not_called()
 
+    def test_workspace_navigation_command_is_forwarded_but_other_arguments_fail(self):
+        response = self.adapter.execute(self.context, HostCommandRequest("workspace evidence-scenes"))
+        self.assertTrue(response.ok)
+        self.runtime.execute.assert_called_once_with("opaque-game-session", "workspace evidence-scenes")
+        for command in ("workspace", "workspace cases extra", "workspace Cases", "workspace unknown", "workspace;quit"):
+            self.assertFalse(self.adapter.execute(self.context, HostCommandRequest(command)).ok)
+
     def test_raw_credential_never_appears_in_response(self):
         self.runtime.execute.return_value = type(
             "Result", (), {
