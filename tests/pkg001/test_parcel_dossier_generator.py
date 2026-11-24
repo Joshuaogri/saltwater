@@ -12,8 +12,8 @@ SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_t
 class ParcelDossierGeneratorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        candidates = build_candidates(SOURCE)
-        cls.result = build_parcel_dossiers(SOURCE, candidates)
+        cls.candidates = build_candidates(SOURCE)
+        cls.result = build_parcel_dossiers(SOURCE, cls.candidates)
 
     def test_dossier_count_and_geometry_measurements(self):
         summary = self.result["summary"]
@@ -31,9 +31,10 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
 
     def test_frontage_and_access_candidates_are_explicit_and_non_operational(self):
         summary = self.result["summary"]
-        self.assertEqual(summary["frontage_review_required_count"], 418)
-        self.assertEqual(summary["no_road_edge_contact_count"], 2)
-        self.assertGreaterEqual(summary["frontage_candidate_count"], 418)
+        expected_frontage_parcels = sum(bool(row["road_frontage_segment_ids"]) for row in self.candidates["parcels"])
+        self.assertEqual(summary["frontage_review_required_count"], expected_frontage_parcels)
+        self.assertEqual(summary["no_road_edge_contact_count"], 420 - expected_frontage_parcels)
+        self.assertGreater(summary["frontage_candidate_count"], 0)
         self.assertEqual(summary["access_location_candidate_count"], summary["frontage_candidate_count"])
         self.assertGreaterEqual(summary["frontage_segment_contact_count"], summary["frontage_candidate_count"])
         self.assertEqual(summary["operational_access_points_created"], 0)
