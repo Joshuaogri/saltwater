@@ -6,7 +6,6 @@ expose this object only inside a trusted server-side process.
 """
 from __future__ import annotations
 
-import shlex
 from dataclasses import dataclass
 from typing import Any, Callable
 from uuid import UUID
@@ -17,6 +16,7 @@ from runtime.recruitment import PostgresRecruitmentService
 from runtime.postgres_sessions import PostgresSessionLifecycle
 from runtime.player_activation import PostgresPlayerActivationService
 from runtime.security import AuthorizationService
+from runtime.player_commands import parse_player_command
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,32 +41,14 @@ class AuthorizedPlayerCommandGateway:
     purpose: str = "gameplay"
 
     def execute(self, credential: str, line: str) -> CommandResult:
-        """Authorize one known command before dispatch; deny by default."""
-        try:
-            parts = shlex.split(line)
-        except ValueError:
+        """Parse one canonical command, authorize its catalogue action, then dispatch."""
+        parsed = parse_player_command(line)
+        if not parsed.ok:
             return CommandResult(False, "Invalid command.")
-        if not parts:
-            return CommandResult(False, "Invalid command.")
-
-        command = parts[0].casefold()
-        allowed_commands = {
-            "help", "status", "profile", "recruit", "career",
-            "start", "pause", "resume", "quit", "home", "workspaces", "back", "where",
-        }
-        valid_shape = (len(parts) == 1 and command in allowed_commands) or (
-            command == "workspace" and len(parts) == 2 and parts[1] in {
-                "home", "operations", "cases", "people", "evidence-scenes",
-                "department", "legal-custody", "resources-finance",
-                "reports-notifications", "system-status",
-            }
-        )
-        if not valid_shape:
-            return CommandResult(False, "Invalid command.")
-
+        command = parsed.command
         decision = self.authorization.decide(
             credential,
-            action=f"player.command.{command}",
+            action=command.permission_action,
             resource=self.player_resource,
             purpose=self.purpose,
             expected_principal_id=self.principal_id,
