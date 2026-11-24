@@ -178,7 +178,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
         }
         parcel_rows.append({
             "dossier": dossier,
-            "frontages": sorted(frontage_rows, key=lambda x: x["road_segment_id"]),
+            "frontages": sorted(frontage_rows, key=lambda x: (x["road_id"], x["frontage_candidate_id"])),
             "access_candidates": sorted(access_rows, key=lambda x: x["access_candidate_id"]),
             "water_adjacencies": sorted(water_adjacencies, key=lambda x: x["water_feature_id"]),
         })
