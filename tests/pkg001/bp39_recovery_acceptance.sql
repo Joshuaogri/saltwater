@@ -114,7 +114,7 @@ BEGIN
     RAISE EXCEPTION 'unavailable gates were not honestly reported: %',report;
   END IF;
 
-  UPDATE sw_runtime.state SET world_tick=world_tick+1 WHERE singleton=1;
+  UPDATE sw_runtime.state SET state=2,player_present=true,world_tick=world_tick+1 WHERE singleton=1;
   report:=sw_runtime.validate_checkpoint_manifest(checkpoint_id);
   IF report->'gates'->'runtime_and_tick'->>'status'<>'fail'
      OR COALESCE((report->>'valid')::boolean,true) THEN
