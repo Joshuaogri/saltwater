@@ -1,11 +1,13 @@
 """BP40-02 canonical player command catalogue and typed parser tests."""
 import unittest
+from dataclasses import FrozenInstanceError
 
 from runtime.player_commands import (
     COMMAND_BY_TOKEN,
     COMMAND_CATALOGUE,
     COMMAND_IDS,
     CommandClass,
+    CommandParseResult,
     ParseErrorCode,
     parse_player_command,
     render_command_help,
@@ -29,6 +31,15 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
             self.assertTrue(item.argument_grammar)
             self.assertIsInstance(item.classification, CommandClass)
             self.assertFalse(item.may_advance_time)
+
+    def test_catalogue_and_parse_result_are_immutable(self):
+        with self.assertRaises(TypeError):
+            COMMAND_BY_TOKEN["new-command"] = COMMAND_BY_TOKEN["help"]
+        parsed = parse_player_command("help")
+        with self.assertRaises(FrozenInstanceError):
+            parsed.command = None
+        with self.assertRaises(ValueError):
+            CommandParseResult()
 
     def test_catalogue_order_and_ids_are_deterministic(self):
         first = [(x.token, x.command_id) for x in COMMAND_CATALOGUE]
