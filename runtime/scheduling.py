@@ -294,5 +294,9 @@ class TickScheduler:
                     False, error_code="owner_handler_error",
                     retry_after_tick=state.world_tick + 1,
                 )
-        # The store enforces the running/present gate again transactionally.
-        return self.store.finish(schedule, result, self.kernel.status().world_tick)
+        # Re-check after handler return; the PostgreSQL store independently
+        # revalidates lifecycle under its runtime-row lock during finalization.
+        final_state = self.kernel.status()
+        if final_state.lifecycle != Lifecycle.RUNNING or not final_state.player_present:
+            return False
+        return self.store.finish(schedule, result, final_state.world_tick)
