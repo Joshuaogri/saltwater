@@ -41,8 +41,11 @@ def audit_parcel_dossiers(source: dict, candidates: dict | None = None,
     road_reserve = shape(topology["city_road_reserve_geometry"])
     road_edge = road_reserve.boundary
     segment_by_id = {row["segment_id"]: row for row in corridors["segments"]}
-    segment_polygons = {sid: Polygon(row["reserve_polygon"][0])
-                        for sid, row in segment_by_id.items()}
+    segment_ids_ordered = list(segment_by_id)
+    segment_geometries_ordered = [Polygon(segment_by_id[sid]["reserve_polygon"][0])
+                                  for sid in segment_ids_ordered]
+    segment_polygons = dict(zip(segment_ids_ordered, segment_geometries_ordered))
+    segment_tree = STRtree(segment_geometries_ordered)
     roads = {row["id"]: row for row in source["roads"]}
     water = {row["id"]: shape(row["geometry"]) for row in source["features"]
              if row.get("properties", {}).get("entity_type") in
@@ -87,7 +90,11 @@ def audit_parcel_dossiers(source: dict, candidates: dict | None = None,
         parcel = _parcel_polygon(candidate)
         parcel_boundary = parcel.boundary
         expected_by_road = {}
-        for segment_id, segment in segment_by_id.items():
+        nearby_segment_indexes = segment_tree.query(parcel_boundary, predicate="intersects")
+        for segment_index in nearby_segment_indexes:
+            index = int(segment_index)
+            segment_id = segment_ids_ordered[index]
+            segment = segment_by_id[segment_id]
             contact = parcel_boundary.intersection(segment_polygons[segment_id].boundary).intersection(road_edge)
             if contact.length > 0.01:
                 expected_by_road.setdefault(segment["road_id"], []).append((segment_id, contact))
