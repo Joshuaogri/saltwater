@@ -140,7 +140,7 @@ jobs:
           echo "fixture_rows_per_second=$(awk -v ms="$elapsed_ms" 'BEGIN {if(ms>0) printf "%.2f",19500/(ms/1000); else print "n/a"}')"
           echo "fixture_source_bytes=$(wc -c < tests/pkg001/sw_db_001_world_fixture.sql)"
           echo "manifest_source_bytes=$(wc -c < data/fixtures/sw-db-001-opening-manifest.json)"
-          echo "fixture_manifest_sha256=0a5f0c1a1f692c33e392ab18d9f346b5d966022525c1f1d95b9e8e76b9e3d798"
+          echo "fixture_manifest_sha256=811d0adaecd0e009e80bbd50532545b5ecb226390a079b9833b0a5a8e6d23e6d"
       - name: Measure full-scale fixture storage and per-domain relation bytes
         run: |
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
