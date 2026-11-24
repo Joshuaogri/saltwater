@@ -6,6 +6,7 @@ DECLARE
   first_id bigint;
   repeated_id bigint;
   second_id bigint;
+  third_id bigint;
   claimed record;
   completed boolean;
   denied boolean := false;
@@ -32,6 +33,9 @@ BEGIN
     'world', 'world:second', current_tick, 2, 10, current_tick+10, 'bp37-second'
   );
   IF first_id >= second_id THEN RAISE EXCEPTION 'schedule identities are not stable'; END IF;
+  third_id := sw_runtime.create_schedule(
+    'world', 'world:expiring', current_tick, 2, 5, current_tick+1, 'bp37-third'
+  );
 
   SELECT * INTO claimed FROM sw_runtime.claim_due_schedule();
   IF claimed.schedule_id <> first_id THEN
@@ -52,6 +56,18 @@ BEGIN
   IF NOT completed THEN RAISE EXCEPTION 'valid failed dispatch was not recorded'; END IF;
   IF (SELECT status FROM sw_runtime.schedule WHERE schedule_id=second_id) <> 'failed' THEN
     RAISE EXCEPTION 'failed handler state was not retained';
+  END IF;
+
+  SELECT * INTO claimed FROM sw_runtime.claim_due_schedule();
+  IF claimed.schedule_id <> third_id THEN
+    RAISE EXCEPTION 'third due schedule was not selected';
+  END IF;
+  SELECT sw_runtime.finish_schedule(
+    claimed.schedule_id, claimed.claim_token, true, NULL, NULL
+  ) INTO completed;
+  IF NOT completed OR
+     (SELECT status FROM sw_runtime.schedule WHERE schedule_id=third_id) <> 'expired' THEN
+    RAISE EXCEPTION 'recurring schedule expiry was not applied';
   END IF;
 
   -- Representative 1,000-row schedule fixture for storage measurement.
