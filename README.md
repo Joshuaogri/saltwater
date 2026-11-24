@@ -47,7 +47,7 @@ Package: [BP38-01 — Database Integrity and Migration Foundation](docs/implemen
 The **platform foundation is deployed; the simulation runtime and domain systems are not yet implemented**.
 
 - Neon project: Saltwater (`misty-breeze-20463094`), production branch `br-bitter-rain-bdz9ddid`, database `neondb`.
-- Foundation migration `0001_foundation.sql` is applied and recorded as version 1.
+- Foundation migration `0001_foundation.sql` and migration `0002_migration_integrity.sql` are applied and recorded as versions 1 and 2.
 - A successful live connection probe verified a transactional read/write in a temporary table and rolled it back.
 - Read-only SQL verification on 2026-11-23 measured `pg_database_size` at **9,306,112 bytes (9.306 MB / 8.875 MiB)** and user relations at **188,416 bytes**.
 - The database currently has five user tables: three in `sw_core` and two in `sw_ops`. The single `world_config` row records Saltwater, one playable city and the 10,000-person cap; `event_type` and `simulation_event` contain zero rows.
@@ -65,7 +65,7 @@ Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22
 - Population cap now has a closed distinct-person counting formula: usual residents ∪ persons physically present ∪ active Saltwater Police Service members; one person ID counts once. Opening target: 9,000 civilian residents + 500 police personnel = 9,500 unique people, 500 shared headroom.
 - Foundational geography is fixed: one contiguous coastal island city-state, 12 km × 9 km fictional local grid, eastern harbour, eight districts and 24 neighbourhoods. Detailed map construction and routing validation remain implementation work.
 - BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP-04 business distribution remains a separate open design item.
-- No Neon production write or seed has been authorised or performed.
+- The approved BP38-01 migration writes are complete; no operational geography import or simulation seed data has been authorised or performed.
 
 ## Detailed map and road network — SW-GEO-V1
 
