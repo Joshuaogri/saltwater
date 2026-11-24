@@ -1,0 +1,76 @@
+name: BP04-03 Stage B Disposable PostgreSQL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/proposals/0013_bp02_parcel_address_candidate.sql"
+      - "tests/pkg001/bp04_03_stage_b_acceptance.sql"
+      - "tests/pkg001/test_bp04_03_stage_b_contract.py"
+      - "tests/pkg001/geography_identity_map_acceptance.sql"
+      - "tests/pkg001/bp04_01_geography_fixture.sql"
+      - ".github/workflows/bp04-03-stage-b-disposable.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stage-b-disposable-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run BP04-03 Stage B contract tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp04_03_stage_b_contract.py" -v
+      - name: Apply existing platform and physical-asset proposals to disposable PostgreSQL
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0005_player_identity_activation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0006_bp37_tick_scheduling.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_canonical_world_provisioning.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0011_bp04_property_premises_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_physical_asset_detail_profiles.sql
+      - name: Load SW-GEO-V1 identity fixtures into disposable database only
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
+      - name: Create disposable BP04 geography references
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
+      - name: Measure and apply BP-02 parcel/address candidate schema
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0013_bp02_parcel_address_candidate.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp04_03_stage_b_schema_growth_bytes=$((after-before))"
+          echo "bp04_03_stage_b_proposal_source_bytes=$(wc -c < db/proposals/0013_bp02_parcel_address_candidate.sql)"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_geo' ORDER BY 3 DESC;"
+      - name: Run BP04-03 Stage B parcel/address acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_b_acceptance.sql
