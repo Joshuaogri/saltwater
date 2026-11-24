@@ -98,9 +98,9 @@ def import_dossiers(conn, data, manifest_sha):
                      perimeter_m,compactness_index,centroid_x_m,centroid_y_m,label_point_x_m,label_point_y_m,
                      bounds_min_x_m,bounds_min_y_m,bounds_max_x_m,bounds_max_y_m,
                      exterior_vertex_count,interior_ring_count,road_frontage_length_m,frontage_segment_count,
-                     water_boundary_contact_length_m,adjacent_water_feature_count,frontage_review_status,
+                     frontage_candidate_count,water_boundary_contact_length_m,adjacent_water_feature_count,frontage_review_status,
                      geometry_review_status,measurement_basis,source_ref,actor_ref,confidence_code,reason)
-                    VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                    VALUES (%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT DO NOTHING""",
                     (parcel_id, bytes(geometry_hash), digest, dossier["perimeter_m"], dossier["compactness_index"],
                      dossier["centroid_x_m"], dossier["centroid_y_m"], dossier["label_point_x_m"], dossier["label_point_y_m"],
