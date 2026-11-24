@@ -56,6 +56,15 @@ class NamingRegistryTests(unittest.TestCase):
         with self.assertRaises(NameCollision):
             self.registry.reserve("business", "b1", "Nneka")
 
+    def test_second_canonical_name_supersedes_the_previous_active_name(self):
+        self.registry.reserve("geography_road", "road-2", "Old Quays Road")
+        self.registry.reserve("geography_road", "road-2", "Harbour Foundry Road")
+        old = self.registry.search("Old Quays Road").records[0]
+        new = self.registry.search("Harbour Foundry Road").records[0]
+        self.assertEqual(old.status, "superseded")
+        self.assertEqual(new.status, "active")
+        self.assertEqual(old.entity_id, new.entity_id)
+
     def test_rename_preserves_old_reservation_and_entity_id(self):
         self.registry.reserve("geography_road", "road-1", "Old Quay Road")
         new = self.registry.rename("geography_road", "road-1", "Harbour View Road")
