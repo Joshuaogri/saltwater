@@ -56,6 +56,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
         sid: Polygon(segment["reserve_polygon"][0])
         for sid, segment in segment_by_id.items()
     }
+    road_edge_boundary = road_reserve.boundary
 
     parcel_rows = []
     parcel_geometries = []
@@ -69,7 +70,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
         contacts_by_road = {}
         for segment_id in parcel.get("road_frontage_segment_ids", []):
             segment = segment_by_id[segment_id]
-            contact = boundary.intersection(segment_polygons[segment_id].boundary)
+            contact = boundary.intersection(segment_polygons[segment_id].boundary).intersection(road_edge_boundary)
             lines = _line_parts(contact)
             if sum(line.length for line in lines) > 0.01:
                 contacts_by_road.setdefault(segment["road_id"], []).append((segment, lines))
