@@ -288,10 +288,10 @@ $$;
 
 CREATE FUNCTION sw_names.search_name(p_value text)
 RETURNS TABLE(reservation_id bigint,entity_type text,entity_id bigint,name_form text,
-              display_name text,status text)
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $$
+              display_name text,status text,ambiguous boolean)
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_core AS $
   SELECT r.reservation_id,r.entity_type,r.entity_id,r.name_form,r.display_name,
-         sw_names.latest_status(r.reservation_id)
+         sw_names.latest_status(r.reservation_id),count(*) OVER () > 1
   FROM sw_names.name_reservation r
   WHERE r.normalized_key=sw_names.normalize_name(p_value)
   ORDER BY r.entity_type,r.entity_id,r.reservation_id
