@@ -65,6 +65,26 @@ jobs:
             -c "SELECT 1 FROM sw_core.world_config WHERE world_id = 1 AND country_name = 'Saltwater' AND city_name = 'Saltwater' AND living_population_limit = 10000 AND playable_city_count = 1"
           psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \
             -c "SELECT 1 FROM sw_ops.schema_migration WHERE version = 2 AND checksum_sha256 ~ '^[0-9a-f]{64}$'"
+      - name: Prove checksum drift and schema drift are rejected
+        env:
+          DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_test
+          PGPASSWORD: test-only-password
+        run: |
+          cp -R db/migrations /tmp/saltwater-migrations-drift
+          printf '\\n-- deliberate checksum drift fixture\\n' >> /tmp/saltwater-migrations-drift/0001_foundation.sql
+          if python scripts/migrate.py --migrations /tmp/saltwater-migrations-drift; then
+            echo "ERROR: checksum drift was not detected"
+            exit 1
+          fi
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \\
+            -c "ALTER TABLE sw_core.world_config ADD COLUMN bp38_drift_probe integer"
+          if python scripts/migrate.py; then
+            echo "ERROR: live schema drift was not detected"
+            exit 1
+          fi
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test \\
+            -c "ALTER TABLE sw_core.world_config DROP COLUMN bp38_drift_probe"
+          python scripts/migrate.py
       - name: Apply PKG-001 proposal to disposable PostgreSQL only
         env:
           PGPASSWORD: test-only-password
