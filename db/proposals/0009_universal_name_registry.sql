@@ -166,6 +166,14 @@ BEGIN
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
   END IF;
+  IF NEW.generation_batch_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM sw_names.generation_batch b
+    WHERE b.batch_id=NEW.generation_batch_id
+      AND ((NEW.entity_type='PERSON' AND b.domain='PERSON')
+        OR (NEW.entity_type='GEOGRAPHY' AND b.domain IN ('GEOGRAPHY','ROAD')))
+  ) THEN
+    RAISE EXCEPTION 'generator manifest domain does not match the owning entity type';
+  END IF;
 
   -- High-similarity candidates are held for review before any domain row can
   -- claim them. The GIN trigram index keeps the check bounded as the registry grows.
