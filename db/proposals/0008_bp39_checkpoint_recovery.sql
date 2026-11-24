@@ -309,20 +309,6 @@ END
 $bp39$;
 
 CREATE FUNCTION sw_runtime.finish_event_claim_recovery() RETURNS boolean
-
-DECLARE
-  state_row sw_runtime.state%ROWTYPE;
-  work_row sw_runtime.event_work%ROWTYPE;
-  prior sw_runtime.event_claim_recovery%ROWTYPE;
-  existing sw_runtime.event_claim_recovery%ROWTYPE;
-  final_status text;
-BEGIN
-  SELECT * INTO state_row FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
-  IF NOT FOUND OR state_row.state<>4 OR state_row.player_present THEN
-    RAISE EXCEPTION 'quarantine resolution requires frozen recovering runtime';
-  END IF;
-  IF p_decision IS NULL OR p_decision NOT IN ('effect_committed','effect_absent')
-     OR p_owner_domain IS NULL OR p_owner_domain !~ '^[a-z][a-z0-9_]{1,47}
 LANGUAGE plpgsql AS $bp39$
 DECLARE state_row sw_runtime.state%ROWTYPE;
 BEGIN
