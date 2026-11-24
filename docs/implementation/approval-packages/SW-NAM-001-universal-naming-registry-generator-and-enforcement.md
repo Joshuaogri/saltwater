@@ -170,6 +170,7 @@ Required tests:
 23. The exact `Saltwater` canonical name is accepted for the sovereign-root and playable-city pair only.
 24. A third entity, alias, historical name or any other cross-type duplicate of `Saltwater` is rejected, and name-only lookup returns an explicit two-result ambiguity.
 25. Generator batch manifests are immutable, idempotently registered, versioned and linked to each generated name reservation; the manifest survives backup/restore.
+26. Each entity has at most one active canonical name; rename and historical-name reactivation supersede the previous active canonical assignment, and direct table inserts cannot bypass this invariant.
 
 CI must apply the foundation plus proposals 0002–0009 to a fresh disposable PostgreSQL 16 service, run the registry SQL acceptance suite and Python tests, and report storage measurements. No workflow may connect to Neon or require Neon secrets.
 
@@ -193,7 +194,7 @@ The package is complete only when all of the following are evidenced:
 - the SQL registry schema applies cleanly to disposable PostgreSQL 16 after proposals 0002–0008;
 - existing geography and person name writes are enforced through the registry;
 - domain ownership and stable IDs are preserved;
-- all 25 required test groups pass with attached execution evidence;
+- all 26 required test groups pass with attached execution evidence;
 - deterministic canon import registers all in-scope current names and reports every conflict;
 - generator produces varied, reproducible candidates and cannot bypass reservations;
 - concurrent uniqueness is enforced by PostgreSQL, not only Python;
