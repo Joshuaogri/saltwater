@@ -6,8 +6,10 @@ on:
     paths:
       - "db/proposals/0010_canonical_world_provisioning.sql"
       - "db/proposals/0011_bp04_property_premises_foundation.sql"
+      - "db/proposals/0012_bp04_physical_asset_detail_profiles.sql"
       - "tests/pkg001/sw_db_001_*.sql"
       - "tests/pkg001/bp04_01_*.sql"
+      - "tests/pkg001/bp04_02_*.sql"
       - "tests/pkg001/test_population_concurrency.py"
       - "tests/pkg001/population_cap_fixture.sql"
       - "scripts/verify_sw_db_001_contract.py"
@@ -138,6 +140,16 @@ jobs:
           echo "bp04_01_schema_incremental_bytes=$((after-before))"
           echo "bp04_01_proposal_source_bytes=$(wc -c < db/proposals/0011_bp04_property_premises_foundation.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_property','sw_names') ORDER BY 5 DESC;"
+      - name: Measure BP04-02 deep physical profile schema-only growth
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_physical_asset_detail_profiles.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp04_02_schema_database_bytes_before=$before"
+          echo "bp04_02_schema_database_bytes_after=$after"
+          echo "bp04_02_schema_incremental_bytes=$((after-before))"
+          echo "bp04_02_proposal_source_bytes=$(wc -c < db/proposals/0012_bp04_physical_asset_detail_profiles.sql)"
+          psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY 5 DESC;"
       - name: Provision deterministic opening population and business fixture
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
@@ -171,6 +183,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
       - name: Run BP04-01 property and premises identity acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_acceptance.sql
+      - name: Run BP04-02 deep physical asset profile acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_02_profile_acceptance.sql
       - name: Verify same-manifest provisioning is idempotent
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
