@@ -165,7 +165,16 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
       - name: Test database access boundary
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/security_boundary.sql
+      - name: Capture consistent BP39 checkpoint manifest
+        id: bp39-checkpoint
+        run: |
+          checkpoint_id=$(psql -qAt -v ON_ERROR_STOP=1 -c "BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; SELECT sw_runtime.capture_checkpoint_manifest('disposable-ci','saltwater','main','$PGDATABASE','ci:bp39','approval:BP39-01'); COMMIT;" | tail -n1)
+          test -n "$checkpoint_id"
+          echo "checkpoint_id=$checkpoint_id" >> "$GITHUB_OUTPUT"
+          echo "BP39_CHECKPOINT_ID=$checkpoint_id"
       - name: Backup and restore disposable database
+        env:
+          BP39_CHECKPOINT_ID: ${{ steps.bp39-checkpoint.outputs.checkpoint_id }}
         run: |
           cid=$(docker ps -q --filter ancestor=postgres:16 | head -n1)
           test -n "$cid"
@@ -177,3 +186,6 @@ jobs:
           actual=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_people.population_history)||':'||(SELECT count(*) FROM sw_people.profile_history)||':'||(SELECT count(*) FROM sw_core.simulation_event)||':'||(SELECT max(event_id) FROM sw_core.simulation_event)||':'||(SELECT world_tick FROM sw_runtime.state WHERE singleton=1)||':'||(SELECT living_included FROM sw_people.population_counter WHERE singleton=1)")
           test "$expected" = "$actual"
           echo "BACKUP_RESTORE_MANIFEST_MATCH=$actual"
+          restore_report=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT sw_runtime.validate_checkpoint_manifest('$BP39_CHECKPOINT_ID');")
+          echo "BP39_RESTORE_VALIDATION=$restore_report"
+          echo "$restore_report" | jq -e '.valid == false and .gates.schema_watermark.status == "pass" and .gates.runtime_and_tick.status == "pass" and .gates.event_watermark.status == "pass" and .gates.event_work.status == "pass" and .gates.schedules.status == "pass" and .gates.population_cap.status == "pass" and .gates.manifest_identity.status == "pass" and .gates.structural_integrity.status == "pass" and .gates.append_only_history.status == "pass" and .gates.player_absence_freeze.status == "pass" and .gates.permission_hidden_truth.status == "not_executed"'
