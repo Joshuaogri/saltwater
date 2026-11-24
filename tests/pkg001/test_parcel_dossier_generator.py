@@ -42,6 +42,7 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
             frontage_ids = {frontage["frontage_candidate_id"] for frontage in row["frontages"]}
             for frontage in row["frontages"]:
                 self.assertGreater(len(frontage["road_segment_ids"]), 0)
+                self.assertGreater(frontage["contact_component_count"], 0)
             for access in row["access_candidates"]:
                 self.assertIn(access["frontage_candidate_id"], frontage_ids)
                 self.assertEqual(access["review_status"], "UNREVIEWED_GEOMETRIC_CANDIDATE")
