@@ -130,7 +130,7 @@ CREATE INDEX address_alias_lookup_idx
   ON sw_geo.address_alias(address_spatial_id,valid_from_tick);
 
 CREATE FUNCTION sw_geo.guard_parcel_profile_kind()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $parcel$
 DECLARE
   v_payload bytea;
   v_hash bytea;
