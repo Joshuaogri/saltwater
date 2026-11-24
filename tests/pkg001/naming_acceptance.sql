@@ -175,6 +175,13 @@ BEGIN
     IF SQLERRM='duplicate complete person name unexpectedly succeeded' THEN RAISE; END IF;
   END;
 
+  PERFORM sw_names.change_status(v_old_reservation,'reactivated',1,
+    'sw-nam-reactivation-test','test-runner','restore prior canonical name');
+  IF sw_names.latest_status(v_old_reservation) <> 'active'
+     OR sw_names.latest_status(v_new_reservation) <> 'superseded' THEN
+    RAISE EXCEPTION 'canonical name reactivation did not supersede the previous active name';
+  END IF;
+
   BEGIN
     INSERT INTO sw_names.name_reservation
       (entity_type,entity_id,name_form,display_name,normalized_key,namespace_slot,
