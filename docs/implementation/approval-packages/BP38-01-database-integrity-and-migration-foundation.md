@@ -1,6 +1,6 @@
 # BP38-01 — Database Integrity and Migration Foundation
 
-**Status:** IMPLEMENTED ON `main` — FINAL CODE REVIEW PASSED; Neon legacy-baseline adoption remains pending  
+**Status:** IMPLEMENTED ON `main` — FINAL CODE REVIEW PASSED; BP38-02 baseline comparison and checksum adoption complete; migration 0002 production application plan prepared, awaiting separate approval  
 **Approval:** User approved BP38-01 implementation on 2026-11-24.  
 **Blueprint:** BP-38, fixed BP-01–BP-44 structure.  
 **Database authority:** Neon PostgreSQL.  
@@ -34,9 +34,9 @@ Migration 0002 strengthens `sw_ops.schema_migration` by requiring a valid SHA-25
 
 ## 4. Legacy production baseline
 
-The live production ledger contains migration 0001 with a NULL checksum. The new runner deliberately refuses to silently bless this row. A future production adoption step must independently verify the existing schema against the approved 0001 baseline, measure the exact database effect, and receive its own explicit production-operation approval.
+The live production ledger's version-1 `foundation` checksum was NULL during the initial BP38-01 rollout. BP38-02 subsequently completed an independent PostgreSQL 18 replay comparison and supplementary read-only catalogue review. The user explicitly approved the exact one-row checksum adoption; it was executed and verified. The production row now contains the exact committed 0001 SHA-256 `d4f874f71eb53a961fd3abe87a9342d0354a006ef04575158d2c72937dbe6aa8`. Database size remained 9,306,112 bytes (0-byte delta), and the ledger relation remained 49,152 bytes.
 
-No Neon production migration, data write, upload, credential change or schema mutation is authorised here. The former push-triggered production deployment workflow was disabled after its attempted 0002 run failed on the existing NULL checksum; a read-only Neon check confirmed the ledger remains at version 1, the checksum is still NULL, migration 0002 is absent and database size remains 9,306,112 bytes.
+Migration 0002 remains unapplied. Its separate production application plan is [BP38-01 migration 0002 production application plan](BP38-01-migration-0002-production-application-plan.md). It specifies the exact DDL, live preconditions, advisory/table locking, transaction/rollback behavior, bounded session timeouts, storage estimate and postflight checks. No migration-0002 production write is authorised or performed by this package.
 
 ## 5. Files delivered
 
@@ -81,5 +81,9 @@ BP38-01 can be marked verified only after:
 - [x] the implementation register and README report the actual evidence;
 - [x] production remains unchanged;
 - [x] final code review; scope limitations are documented.
-- [ ] independent clean-replay comparison against the legacy production baseline and integration-register closure.
-- [ ] separately approved production adoption of the verified legacy checksum, followed by migration 0002.
+- [x] independent PostgreSQL 18 clean-replay comparison and supplementary live Neon catalogue review completed under BP38-02.
+- [x] separately approved version-1 checksum adoption executed and verified; measured database-size delta was 0 bytes.
+- [x] exact migration-0002 production application plan prepared with live baseline and bounded storage estimate.
+- [ ] separate explicit approval and execution of migration 0002 on Neon production.
+
+Migration 0002 is not part of the completed checksum-adoption operation. BP38-01 repository implementation and disposable tests are complete; production migration execution remains a separate gate.
