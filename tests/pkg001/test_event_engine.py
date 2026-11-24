@@ -112,6 +112,7 @@ class EventEngineTests(unittest.TestCase):
         failing.register(replace(self.engine._handlers["geo.create"], handle=broken))
         event_id = failing.submit(self.definition("broken", max_attempts=2))
         self.assertEqual(failing.dispatch_one().status, "failed")
+        self.kernel.advance_tick()
         self.assertEqual(failing.dispatch_one().status, "quarantined")
         self.assertEqual(self.store.inspect(event_id)["attempt_count"], 2)
         self.assertEqual(self.store.inspect(event_id)["error_code"], "owner_handler_error")
