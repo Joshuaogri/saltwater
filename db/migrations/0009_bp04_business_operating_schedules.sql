@@ -1,5 +1,5 @@
 -- BP04 phase 7: business operating schedules for time-aware police gameplay.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.business_weekly_profile (
   business_id text PRIMARY KEY REFERENCES sw_property.business(business_id) DEFERRABLE INITIALLY DEFERRED,
