@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 53 THEN
-    RAISE EXCEPTION 'expected 53 BP04 phase-1+2+3+4 tables, found %', v_count;
+  IF v_count <> 65 THEN
+    RAISE EXCEPTION 'expected 65 BP04 phase-1+2+3+4+5 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -73,6 +73,26 @@ BEGIN
     SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
       AND conname='access_group_no_person_members' AND convalidated
   ) THEN RAISE EXCEPTION 'person credential exclusion checks missing'; END IF;
+
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='asset_valuation'
+      AND column_name='assessed_value_swc' AND data_type='bigint'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='insurance_policy'
+      AND column_name='insurer_organisation_id' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_tax_assessment'
+      AND column_name='assessment_status' AND data_type='text'
+  ) THEN RAISE EXCEPTION 'typed valuation, insurance or tax fields missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
+      AND conname='asset_valuation_land_valuation_id_fkey' AND condeferrable
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
+      AND conname='insurance_coverage_insurance_policy_id_fkey' AND condeferrable
+  ) THEN RAISE EXCEPTION 'valuation and insurance lineage foreign keys missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
