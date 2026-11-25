@@ -415,16 +415,40 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["method_code"],r["effective_from_tick"],r["source_ref"],ACTOR,
                        r["confidence_code"],r["reason"]) for r in d["measurements"]])
 
-                level_map = {}
-                for row in d["building_levels"]:
-                    cur.execute("""
-                        INSERT INTO sw_property.building_level
-                        (building_id,level_code,level_name,level_order,level_type,source_ref,actor_ref,effective_from_tick,reason)
-                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING level_id
-                    """, (building_map[row["candidate_building_id"]],row["level_code"],row["level_name"],
-                          row["level_order"],row["level_type"],row["source_ref"],ACTOR,
-                          row["effective_from_tick"],row["reason"]))
-                    level_map[(row["candidate_building_id"],row["level_code"])] = cur.fetchone()[0]
+                if progress_callback:
+                    progress_callback("physical_measurements", round((time.perf_counter()-started)*1000, 3))
+
+                level_rows = d["building_levels"]
+                _execute_many(cur, """
+                    INSERT INTO sw_property.building_level
+                    (building_id,level_code,level_name,level_order,level_type,source_ref,actor_ref,effective_from_tick,reason)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, [(building_map[row["candidate_building_id"]],row["level_code"],row["level_name"],
+                       row["level_order"],row["level_type"],row["source_ref"],ACTOR,
+                       row["effective_from_tick"],row["reason"]) for row in level_rows])
+
+                # Resolve generated database IDs in one indexed read rather than
+                # performing 27,730 individual INSERT ... RETURNING round trips.
+                candidate_by_building_id = {value:key for key,value in building_map.items()}
+                cur.execute("""
+                    SELECT building_id,level_code,level_id
+                    FROM sw_property.building_level
+                    WHERE building_id = ANY(%s)
+                """, (list(building_map.values()),))
+                level_map = {
+                    (candidate_by_building_id[building_id],level_code):level_id
+                    for building_id,level_code,level_id in cur.fetchall()
+                }
+                if len(level_map) != len(level_rows):
+                    raise RuntimeError(
+                        f"Building-level identity reconciliation failed: "
+                        f"expected {len(level_rows)}, found {len(level_map)}"
+                    )
+                if progress_callback:
+                    progress_callback("building_levels", round((time.perf_counter()-started)*1000, 3))
+
+                if progress_callback:
+                    progress_callback("physical_measurements", round((time.perf_counter()-started)*1000, 3))
 
                 _execute_many(cur, """
                     INSERT INTO sw_property.building_component
@@ -435,6 +459,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["component_type"],r["material_code"],r["condition_code"],r["source_ref"],
                        ACTOR,r["effective_from_tick"],r["reason"]) for r in d["building_components"]])
 
+                if progress_callback:
+                    progress_callback("building_components", round((time.perf_counter()-started)*1000, 3))
+
                 _execute_many(cur, """
                     INSERT INTO sw_property.premises_room
                     (premises_id,room_code,room_type,floor_level,area_m2,accessibility_state,source_ref,actor_ref,effective_from_tick,reason)
@@ -442,6 +469,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 """, [(premises_map[r["candidate_premises_id"]],r["room_code"],r["room_type"],
                        r["floor_level"],r["area_m2"],r["accessibility_state"],r["source_ref"],
                        ACTOR,r["effective_from_tick"],r["reason"]) for r in d["premises_rooms"]])
+
+                if progress_callback:
+                    progress_callback("premises_rooms", round((time.perf_counter()-started)*1000, 3))
 
                 _execute_many(cur, """
                     INSERT INTO sw_property.utility_system
@@ -453,6 +483,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["source_ref"],ACTOR,r["effective_from_tick"],r["confidence_code"],r["reason"])
                       for r in d["utility_systems"]])
 
+                if progress_callback:
+                    progress_callback("utility_systems", round((time.perf_counter()-started)*1000, 3))
+
                 _execute_many(cur, """
                     INSERT INTO sw_property.physical_feature
                     (entity_type,entity_id,feature_type,feature_label,feature_state,source_ref,actor_ref,
@@ -462,6 +495,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["feature_label"],r["feature_state"],r["source_ref"],ACTOR,
                        r["effective_from_tick"],r["confidence_code"],r["reason"]) for r in d["physical_features"]])
 
+                if progress_callback:
+                    progress_callback("physical_features", round((time.perf_counter()-started)*1000, 3))
+
                 _execute_many(cur, """
                     INSERT INTO sw_property.condition_assessment
                     (entity_type,entity_id,element_code,condition_code,assessed_tick,assessor_ref,
@@ -470,6 +506,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 """, [(r["entity_type"],entity_id(r["entity_type"],r["entity_id"]),r["element_code"],
                        r["condition_code"],r["assessed_tick"],ACTOR,r["source_ref"],r["confidence_code"],
                        r["findings"],r["recommended_action"]) for r in d["condition_assessments"]])
+
+                if progress_callback:
+                    progress_callback("condition_assessments", round((time.perf_counter()-started)*1000, 3))
 
                 _execute_many(cur, """
                     INSERT INTO sw_property.asset_assertion
@@ -481,6 +520,7 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        ACTOR,r["confidence_code"],r["reason"]) for r in d["asset_assertions"]])
 
                 if progress_callback:
+                    progress_callback("asset_assertions", round((time.perf_counter()-started)*1000, 3))
                     progress_callback("detail_registers", round((time.perf_counter()-started)*1000, 3))
 
                 # Store source parcel lineage and geometry payloads after identity creation.
