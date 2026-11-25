@@ -47,9 +47,29 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
                 self.assertGreater(len(frontage["road_segment_ids"]), 0)
                 self.assertGreater(frontage["contact_component_count"], 0)
             for access in row["access_candidates"]:
-                self.assertIn(access["frontage_candidate_id"], frontage_ids)
-                self.assertEqual(access["review_status"], "UNREVIEWED_GEOMETRIC_CANDIDATE")
-                self.assertEqual(access["candidate_type"], "unclassified_access_location")
+                if access["candidate_type"] == "road_reserve_proximity_connection":
+                    self.assertIsNone(access["frontage_candidate_id"])
+                    self.assertTrue(access["road_connection_candidate_id"])
+                    self.assertEqual(access["contact_type"], "POINT_CONTACT_ONLY")
+                    self.assertEqual(access["review_status"], "UNREVIEWED_ROAD_RESERVE_PROXIMITY_CANDIDATE")
+                else:
+                    self.assertIn(access["frontage_candidate_id"], frontage_ids)
+                    self.assertEqual(access["review_status"], "UNREVIEWED_GEOMETRIC_CANDIDATE")
+                    self.assertEqual(access["candidate_type"], "unclassified_access_location")
+
+    def test_no_frontage_parcels_have_explicit_point_contact_candidates(self):
+        no_frontage = [row for row in self.result["parcels"] if not row["frontages"]]
+        self.assertEqual(len(no_frontage), 2)
+        expected = {
+            "BPC-SWD04N1-004-02": "SWR-B2",
+            "BPC-SWD08N1-018-02": "SWR-B1",
+        }
+        for row in no_frontage:
+            parcel_id = row["dossier"]["candidate_parcel_id"]
+            candidate = row["access_candidates"][0]
+            self.assertEqual(candidate["road_id"], expected[parcel_id])
+            self.assertEqual(candidate["contact_type"], "POINT_CONTACT_ONLY")
+            self.assertLessEqual(candidate["distance_to_road_reserve_m"], 0.01)
 
     def test_adjacency_pairs_are_unique_and_canonical(self):
         pairs = [(r["left_candidate_parcel_id"], r["right_candidate_parcel_id"]) for r in self.result["adjacency"]]
