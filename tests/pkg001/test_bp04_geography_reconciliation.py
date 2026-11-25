@@ -66,7 +66,7 @@ class BP04GeographyReconciliationTests(unittest.TestCase):
         self.assertEqual(result["canonical_binding_status"],
                          "DESIGN_IDENTITIES_BOUND_OPERATIONAL_RELEASE_BLOCKED")
         self.assertFalse(result["operational_approval"])
-        self.assertFalse(result["database_write_performed")
+        self.assertFalse(result["database_write_performed"])
 
     def test_missing_candidate_parcel_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "source parcel candidate is unresolved"):
