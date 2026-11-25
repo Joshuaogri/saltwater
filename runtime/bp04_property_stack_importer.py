@@ -21,6 +21,7 @@ DATASETS = {
     "SW-PROPERTY-WORLD-V1": "data/property/saltwater-property-world-v1.json.gz",
     "SW-BUSINESS-REGISTRY-V1": "data/business/saltwater-business-registry-v1.json.gz",
     "SW-PROPERTY-TENURE-V1": "data/property/saltwater-property-tenure-v1.json.gz",
+    "SW-BUILDING-SERVICES-V1": "data/property/saltwater-building-services-v1.json.gz",
 }
 
 def read_document(path: Path) -> tuple[dict, bytes]:
@@ -83,6 +84,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     world = documents["SW-PROPERTY-WORLD-V1"]
     registry = documents["SW-BUSINESS-REGISTRY-V1"]
     tenure = documents["SW-PROPERTY-TENURE-V1"]
+    services = documents["SW-BUILDING-SERVICES-V1"]
 
     # The tenure register is the superset: it already contains every property owner organisation plus historical owners and managers.
     add("organisation", "SW-PROPERTY-TENURE-V1", rows(tenure, "organisations"),
@@ -122,6 +124,24 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         lambda ds,r: {"agreement_id":r["agreement_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r["unit_id"],"landlord_organisation_id":r.get("landlord_organisation_id"),"tenant_business_id":r.get("tenant_business_id"),"operator_business_id":r.get("operator_business_id"),"establishment_id":r.get("establishment_id"),"agreement_type":r["agreement_type"],"commencement_year":r.get("commencement_year"),"expiry_year":r.get("expiry_year"),"agreement_status":r["agreement_status"],"source_dataset":ds})
     add("occupancy", "SW-PROPERTY-TENURE-V1", rows(tenure, "occupancies"),
         lambda ds,r: {"occupancy_id":r["occupancy_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r["unit_id"],"occupant_business_id":r.get("occupant_business_id"),"establishment_id":r.get("establishment_id"),"agreement_id":r.get("agreement_id"),"occupant_type":r["occupant_type"],"occupancy_status":r["occupancy_status"],"effective_from_year":r.get("effective_from_year"),"effective_to_year":r.get("effective_to_year"),"source_dataset":ds})
+
+    # Phase 2: typed building systems and utility/service relationships.
+    add("building_system", "SW-BUILDING-SERVICES-V1", rows(services, "building_systems"),
+        lambda ds,r: {"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"system_type":r["system_type"],"system_status":r.get("system_status"),"condition":r.get("condition"),"capacity_band":r.get("capacity_band"),"redundancy_profile":r.get("redundancy_profile"),"control_mode":r.get("control_mode"),"inspection_cycle_days":r.get("inspection_cycle_days"),"last_inspection_year":r.get("last_inspection_year"),"next_inspection_due_tick":r.get("next_inspection_due_tick"),"provider_organisation_id":r.get("provider_organisation_id"),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
+    add("business_utility_responsibility", "SW-BUILDING-SERVICES-V1", rows(services, "business_utility_responsibilities"),
+        lambda ds,r: {"service_responsibility_id":r["service_responsibility_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r.get("unit_id"),"occupancy_id":r.get("occupancy_id"),"occupant_business_id":r.get("occupant_business_id"),"utility_scope":r["utility_scope"],"responsibility_profile":r.get("responsibility_profile"),"metering_basis":r.get("metering_basis"),"financial_postings_created":r["financial_postings_created"],"source_dataset":ds})
+    add("equipment_asset", "SW-BUILDING-SERVICES-V1", rows(services, "equipment_assets"),
+        lambda ds,r: {"equipment_id":r["equipment_id"],"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"equipment_type":r["equipment_type"],"equipment_reference":r.get("equipment_reference"),"manufacturer_profile":r.get("manufacturer_profile"),"installation_year":r.get("installation_year"),"condition":r.get("condition"),"operational_state":r.get("operational_state"),"maintenance_class":r.get("maintenance_class"),"replacement_priority":r.get("replacement_priority"),"source_dataset":ds})
+    add("meter", "SW-BUILDING-SERVICES-V1", rows(services, "meters"),
+        lambda ds,r: {"meter_id":r["meter_id"],"utility_account_id":r["utility_account_id"],"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"unit_id":r.get("unit_id"),"utility_type":r["utility_type"],"meter_role":r.get("meter_role"),"meter_type":r.get("meter_type"),"serial_reference":r.get("serial_reference"),"read_frequency":r.get("read_frequency"),"meter_state":r.get("meter_state"),"reading_value":numeric_value(r.get("reading_value")),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
+    add("system_inspection", "SW-BUILDING-SERVICES-V1", rows(services, "system_inspections"),
+        lambda ds,r: {"inspection_id":r["inspection_id"],"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"inspection_type":r["inspection_type"],"inspection_interval_days":r.get("inspection_interval_days"),"last_completed_year":r.get("last_completed_year"),"next_due_tick":r.get("next_due_tick"),"inspection_status":r.get("inspection_status"),"result_profile":r.get("result_profile"),"source_dataset":ds})
+    add("utility_account", "SW-BUILDING-SERVICES-V1", rows(services, "utility_accounts"),
+        lambda ds,r: {"utility_account_id":r["utility_account_id"],"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"account_holder_organisation_id":r.get("account_holder_organisation_id"),"property_manager_organisation_id":r.get("property_manager_organisation_id"),"account_scope":r.get("account_scope"),"billing_responsibility_profile":r.get("billing_responsibility_profile"),"metering_basis":r.get("metering_basis"),"account_status":r.get("account_status"),"financial_postings_created":r["financial_postings_created"],"source_dataset":ds})
+    add("utility_connection", "SW-BUILDING-SERVICES-V1", rows(services, "utility_connections"),
+        lambda ds,r: {"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"primary_building_id":r.get("primary_building_id"),"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"connection_point_type":r.get("connection_point_type"),"connection_capacity_band":r.get("connection_capacity_band"),"supply_redundancy":r.get("supply_redundancy"),"connection_state":r.get("connection_state"),"is_live_game_connection":r["is_live_game_connection"],"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
+    add("utility_provider_profile", "SW-BUILDING-SERVICES-V1", rows(services, "utility_providers"),
+        lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"fictional_entity":r["fictional_entity"],"service_area":r.get("service_area"),"source_dataset":ds})
     return batches, counts
 
 def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test") -> dict:
@@ -176,7 +196,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                        OR current.source_record_count IS DISTINCT FROM excluded.source_record_count
                        OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count""",
                     (release_id,dataset_id,info["source_path"],info["source_sha256"],info["compressed_bytes"],info["uncompressed_bytes"],collection_count,collection_count))
-            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy"]
+            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility"]
             for table in table_order:
                 entries = batches.get(table, [])
                 if not entries:
@@ -186,9 +206,9 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                     raise ValueError(f"Inconsistent mapped columns for {table}")
                 placeholders = ",".join(["%s"] * len(columns))
                 col_sql = ",".join(f'"{c}"' for c in columns)
-                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id"})
+                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id","building_system_id","utility_connection_id","organisation_id","utility_account_id","meter_id","equipment_id","inspection_id","service_responsibility_id"})
                 pk = {
-                    "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id"
+                    "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id","building_system":"building_system_id","utility_connection":"utility_connection_id","utility_provider_profile":"organisation_id","utility_account":"utility_account_id","meter":"meter_id","equipment_asset":"equipment_id","system_inspection":"inspection_id","business_utility_responsibility":"service_responsibility_id"
                 }[table]
                 compare_current = ",".join(f'current."{column}"' for column in columns if column != pk)
                 compare_excluded = ",".join(f'excluded."{column}"' for column in columns if column != pk)
