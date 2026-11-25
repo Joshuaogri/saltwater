@@ -119,11 +119,11 @@ jobs:
         run: |
           set -euo pipefail
           BEFORE="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT pg_database_size(current_database());')"
-          python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production
+          python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production --archive-only
           AFTER="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT pg_database_size(current_database());')"
           echo "database_bytes_before_repeat=$BEFORE"
           echo "database_bytes_after_repeat=$AFTER"
           test "$BEFORE" = "$AFTER"
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_archive_only_acceptance.sql
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "SELECT count(*) AS bp04_tables FROM information_schema.tables WHERE table_schema='sw_property' AND table_type='BASE TABLE';"
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS final_database_bytes;"
