@@ -1,5 +1,6 @@
-"""Load the phase-1 Saltwater property/business stack into disposable PostgreSQL.
+"""Load the phased Saltwater property/business/maintenance stack into disposable PostgreSQL.
 
+The release includes property, business, tenure, building-services and maintenance sources.
 Production use is deliberately blocked. The command accepts only the disposable
 saltwater_test database unless an explicit future implementation changes this
 guard through reviewed code. It imports compressed columnar JSON losslessly.
