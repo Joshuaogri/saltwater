@@ -215,6 +215,18 @@ SET lifecycle_state='allocated',
 FROM sw_police.resource_allocation r
 WHERE r.asset_id=a.asset_id AND r.status='active';
 
+INSERT INTO sw_police.resource_asset_event(
+ asset_id,event_kind,prior_lifecycle_state,resulting_lifecycle_state,
+ prior_serviceability_state,resulting_serviceability_state,effective_tick,
+ actor_ref,reason,source_ref
+)
+SELECT a.asset_id,'lifecycle_changed','available','allocated',
+       a.serviceability_state,a.serviceability_state,0,
+       'system:resource-baseline','Asset placed into initial unit resource pool.',
+       'SWPS-RESOURCE-BASELINE-V1'
+FROM sw_police.resource_asset a
+JOIN sw_police.resource_allocation r USING(asset_id);
+
 INSERT INTO sw_police.resource_allocation_event(allocation_id,event_kind,effective_tick,actor_ref,reason,source_ref)
 SELECT allocation_id,'allocated',0,'system:initial-resource-baseline',
        'Initial unit pool allocation from Saltwater Police Service resource establishment.',
