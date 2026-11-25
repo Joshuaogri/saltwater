@@ -553,3 +553,17 @@ The first disposable import correctly exposed truncated-ID collisions in the gen
 ### BP04 phase 10 — property rights, boundary and access evidence
 
 Added seven typed relational tables and mapped all seven collections from `SW-PROPERTY-RIGHTS-AND-BOUNDARIES-V1`: 420 property-rights schedules, 12,500 contractual-right indexes, 420 boundary-evidence records, 2,984 physical-access evidence records, 1,680 utility-wayleave requirement records, zero registered instruments, and nine future instrument templates (**18,013 source rows**). Contractual rights link to existing tenure agreements; access points/routes remain physical evidence, not inferred legal rights; parcel geometry remains non-survey-grade evidence. Migration: `db/proposals/0022_bp04_property_rights_boundaries.sql`. The disposable import acceptance now checks all seven collections and their principal relationships. No Neon production writes.
+
+### BP04 phases 1–10 — complete disposable import benchmark
+
+The full 14-source package was imported into disposable PostgreSQL 16 using the 92-table schema. Benchmark workflow [45656098435](https://github.com/Joshuaogri/saltwater/actions/runs/45656098435) completed successfully:
+- Compressed source package: **29,434,820 bytes (28.07 MiB)**; uncompressed source total: **558,602,287 bytes (532.72 MiB)**.
+- Source inventory: **14 datasets, 105 collections and 1,950,923 source records**.
+- Mapping: **8 fully mapped datasets, 3 partially mapped, 3 archive-only**; 86 collections mapped and 19 retained archive-only; **1,422,202 rows mapped**.
+- Cross-reference violations: **0**.
+- Disposable database size after import: **627,792,919 bytes (598.71 MiB)**.
+- Repeat import: database size remained **627,792,919 bytes**; **0 inserts, updates or deletes**. Idempotency passed.
+- Live Neon baseline (read-only measurement): **9,306,112 bytes (8.875 MiB)**. Estimated incremental storage for this package is approximately **618,486,807 bytes (589.83 MiB)**, giving an estimated post-import total near **627.8 MB (598.71 MiB)**. This is a PostgreSQL 16 benchmark estimate, not a production Neon measurement.
+- No production Neon schema or data writes have been made.
+
+The 19 archive-only collections remain losslessly retained in their compressed source datasets; they are not fabricated into gameplay records. The mapped collections provide typed relational access for the core property, business, tenure, operating-hours, building-services, maintenance, security, lawful-use, title/lifecycle, rights and access relationships.
