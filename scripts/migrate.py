@@ -169,7 +169,7 @@ def has_fingerprint_column(conn) -> bool:
         return cur.fetchone()[0]
 
 
-def verify(conn, migrations: list[Migration]) -> None:
+def verify(conn, migrations: list[Migration], allow_pending: bool = False) -> None:
     with conn.cursor() as cur:
         cur.execute("""
             SELECT to_regclass('sw_ops.schema_migration') IS NOT NULL
@@ -196,7 +196,7 @@ def verify(conn, migrations: list[Migration]) -> None:
     if seen != set(range(1, max(seen, default=0) + 1)):
         raise RuntimeError("Database migration history contains a version gap")
     pending = [m.filename for m in migrations if m.version not in seen]
-    if pending:
+    if pending and not allow_pending:
         raise RuntimeError("Pending migrations: " + ", ".join(pending))
     if rows and has_fingerprint_column(conn):
         latest_fingerprint = rows[-1][3]
@@ -206,7 +206,8 @@ def verify(conn, migrations: list[Migration]) -> None:
         if latest_fingerprint.strip().lower() != actual_fingerprint:
             raise RuntimeError("Live schema drift detected: catalogue fingerprint differs from latest migration")
     print(f"OK: {len(rows)} applied migrations; checksums match" +
-          ("; live schema fingerprint matches" if rows and has_fingerprint_column(conn) else ""))
+          ("; live schema fingerprint matches" if rows and has_fingerprint_column(conn) else "") +
+          (("; pending migrations: " + ", ".join(pending)) if pending else ""))
 
 
 def apply(conn, migrations: list[Migration]) -> None:
@@ -280,6 +281,7 @@ def main() -> int:
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--migrations", default="db/migrations")
     parser.add_argument("--apply", action="store_true", help="apply pending migrations (never implied)")
+    parser.add_argument("--allow-pending", action="store_true", help="read-only verification may report unapplied migrations without failing")
     args = parser.parse_args()
     if not args.database_url:
         parser.error("DATABASE_URL or --database-url is required")
@@ -291,7 +293,7 @@ def main() -> int:
             if args.apply:
                 apply(conn, migrations)
             else:
-                verify(conn, migrations)
+                verify(conn, migrations, allow_pending=args.allow_pending)
     except Exception as exc:
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
