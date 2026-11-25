@@ -210,25 +210,6 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     building_access_reconciliation = reconcile_building_access_roads(
         properties, addresses, parcel_dossiers, physical_assets
     )
-    building_access_by_address = {
-        row["source_address_id"]: row
-        for row in building_access_reconciliation["address_access_road_results"]
-    }
-    frontage_exception_crosscheck = []
-    for row in frontage_exceptions:
-        access_row = building_access_by_address.get(row["source_address_id"])
-        frontage_exception_crosscheck.append({
-            **row,
-            "building_access_road_candidate_status": (
-                access_row["status"] if access_row else "NOT_FOUND"
-            ),
-            "building_access_road_candidate_id": (
-                access_row["address_access_road_candidate_id"] if access_row else None
-            ),
-            "building_access_road_candidate_ids": (
-                access_row["candidate_access_road_ids"] if access_row else []
-            ),
-        })
     frontage_counts = {}
     for address in identity_register["addresses"]:
         status = address["road_frontage_match_status"]
@@ -251,6 +232,25 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
             "ROAD_MATCHES_PARCEL_FRONTAGE_CANDIDATE", "NOT_EVALUATED"
         )
     ]
+    building_access_by_address = {
+        row["source_address_id"]: row
+        for row in building_access_reconciliation["address_access_road_results"]
+    }
+    frontage_exception_crosscheck = []
+    for row in frontage_exceptions:
+        access_row = building_access_by_address.get(row["source_address_id"])
+        frontage_exception_crosscheck.append({
+            **row,
+            "building_access_road_candidate_status": (
+                access_row["status"] if access_row else "NOT_FOUND"
+            ),
+            "building_access_road_candidate_id": (
+                access_row["address_access_road_candidate_id"] if access_row else None
+            ),
+            "building_access_road_candidate_ids": (
+                access_row["candidate_access_road_ids"] if access_row else []
+            ),
+        })
     result.update({
         "building_access_road_candidate_status_counts": building_access_reconciliation["address_access_road_candidate_status_counts"],
         "building_access_road_candidate_references_resolved": building_access_reconciliation["address_access_road_candidate_references_resolved"],
