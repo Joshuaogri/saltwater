@@ -11,6 +11,11 @@ class GlobalEstateCapacityAuditTests(unittest.TestCase):
   cls.world=load("data/property/saltwater-property-world-v1.json")
   cls.businesses=load("data/business/saltwater-business-registry-v1.json")
   cls.data=build_estate_capacity_audit(cls.geo,cls.world,cls.businesses)
+ def test_building_free_site_count_uses_property_identity_not_difference(self):
+  properties_with_buildings = {x["property_id"] for x in self.world["buildings"]}
+  expected = sum(1 for x in self.world["properties"] if x["property_id"] not in properties_with_buildings)
+  self.assertEqual(self.data["summary"]["properties_without_buildings"], expected)
+  self.assertGreaterEqual(self.data["summary"]["properties_without_buildings"], 0)
  def test_source_totals_reconcile(self):
   s=self.data["summary"]
   self.assertEqual(s["property_site_count"],len(self.world["properties"]))
