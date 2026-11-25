@@ -9,6 +9,11 @@ on:
       - "runtime/player_command_runtime.py"
       - "runtime/application.py"
       - "runtime/security.py"
+      - "runtime/chatgpt_tool_handler.py"
+      - "runtime/player_host_adapter.py"
+      - "tests/pkg001/test_chatgpt_tool_handler.py"
+      - "tests/pkg001/test_player_host_adapter.py"
+      - "docs/integration/player-command-tool.schema.json"
       - "runtime/bp04_lookup.py"
       - "runtime/bp04_police_access.py"
       - "runtime/bp04_geography_reconciliation.py"
@@ -45,6 +50,8 @@ jobs:
         run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
       - name: Test player command parser, interface and authenticated runtime
         run: python -m unittest tests.pkg001.test_player_commands tests.pkg001.test_player_interface tests.pkg001.test_player_command_runtime -v
+      - name: Test ChatGPT command contract and trusted host boundary
+        run: python -m unittest tests.pkg001.test_chatgpt_tool_handler tests.pkg001.test_player_host_adapter -v
       - name: Test audited officer-only BP04 access and authorization
         run: python -m unittest tests.pkg001.test_authorization tests.pkg001.test_bp04_police_access -v
       - name: Test BP04 lookup and BP02 reconciliation contracts
