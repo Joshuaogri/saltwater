@@ -75,9 +75,12 @@ def build_business_operations(source: dict) -> dict:
                 "valid_to_tick": None,
                 "source_generator": GENERATOR,
             })
+    schedules_by_business = {}
+    for schedule in schedules:
+        schedules_by_business.setdefault(schedule["business_id"], []).append(schedule)
     weekly_profiles = []
     for business in registry["businesses"]:
-        rows = [x for x in schedules if x["business_id"] == business["business_id"]]
+        rows = schedules_by_business[business["business_id"]]
         weekly_profiles.append({
             "business_id": business["business_id"],
             "establishment_id": establishments[business["business_id"]]["establishment_id"],
