@@ -48,8 +48,8 @@ def _sector_for(index: int):
         cursor -= count
     raise ValueError("Business sector allocation does not cover registry target")
 
-def build_business_registry(source: dict) -> dict:
-    property_world = build_property_world(source)
+def build_business_registry(source: dict, property_world: dict | None = None) -> dict:
+    property_world = property_world or build_property_world(source)
     units = property_world["units"]
     premises = {x["premises_id"]: x for x in property_world["premises"]}
     properties = {x["property_id"]: x for x in property_world["properties"]}
