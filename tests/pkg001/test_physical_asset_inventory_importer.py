@@ -79,6 +79,18 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
                             and row["contact_type"] == "POINT_CONTACT_ONLY"
                             for row in proximity))
 
+    def test_connector_candidates_include_multi_segment_geometry(self):
+        connectors = self.inventory["access_connectors"]
+        multi_segment = [row for row in connectors
+                         if len(row["geometry_coordinates"]) > 2]
+        self.assertTrue(multi_segment, "visibility routing must retain multi-segment paths")
+        for row in connectors:
+            coordinates = row["geometry_coordinates"]
+            self.assertGreaterEqual(len(coordinates), 2)
+            self.assertNotEqual(coordinates[0], coordinates[-1])
+            self.assertTrue(all(isinstance(point, list) and len(point) == 2
+                                for point in coordinates))
+
     def test_connector_candidates_cannot_claim_construction_or_access_rights(self):
         for field, value in (("constructed_state", "constructed"),
                              ("surface_code", "asphalt"),
