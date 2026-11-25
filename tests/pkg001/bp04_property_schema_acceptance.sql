@@ -1,5 +1,5 @@
 \set ON_ERROR_STOP on
-DO $$
+DO $bp04$
 DECLARE
   v_count integer;
 BEGIN
@@ -128,6 +128,6 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_transaction_index' AND column_name='ownership_event_id' AND data_type='text')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='premises_lifecycle_event' AND column_name='lawful_use_certificate_id' AND data_type='text')
   THEN RAISE EXCEPTION 'typed property title, transaction or lifecycle fields missing'; END IF;
-END $;
+END $bp04$;
 
 SELECT 'BP04 phase-1 through phase-9 schema acceptance passed' AS result;
