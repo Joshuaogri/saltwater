@@ -18,6 +18,9 @@ on:
       - "runtime/bp04_police_access.py"
       - "runtime/bp04_geography_reconciliation.py"
       - "runtime/bp02_parcel_address_identity.py"
+      - "runtime/bp02_address_access_reconciliation.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
       - "runtime/geography_identity_reconciliation.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/road_corridor_audit.py"
@@ -31,6 +34,7 @@ on:
       - "tests/pkg001/test_bp04_police_access.py"
       - "tests/pkg001/test_bp04_geography_reconciliation.py"
       - "tests/pkg001/test_bp02_parcel_address_identity.py"
+      - "tests/pkg001/test_bp02_address_access_reconciliation.py"
       - "tests/pkg001/test_geography_identity_reconciliation.py"
       - "data/geography/saltwater-geography-v1.json"
       - "data/geography/saltwater-geography-v1-identity-map.json"
@@ -58,6 +62,6 @@ jobs:
       - name: Test audited officer-only BP04 access and authorization
         run: python -m unittest tests.pkg001.test_authorization tests.pkg001.test_bp04_police_access -v
       - name: Test BP04 lookup and BP02 reconciliation contracts
-        run: python -m unittest tests.pkg001.test_bp04_lookup tests.pkg001.test_bp04_geography_reconciliation tests.pkg001.test_bp02_parcel_address_identity tests.pkg001.test_geography_identity_reconciliation -v
+        run: python -m unittest tests.pkg001.test_bp04_lookup tests.pkg001.test_bp04_geography_reconciliation tests.pkg001.test_bp02_parcel_address_identity tests.pkg001.test_bp02_address_access_reconciliation tests.pkg001.test_geography_identity_reconciliation -v
       - name: Reconcile all property addresses to BP02 source geography and parcel candidates
         run: python -m runtime.bp04_geography_reconciliation
