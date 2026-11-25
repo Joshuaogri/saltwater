@@ -87,3 +87,26 @@ The inventory preserves each dataset's canonical metadata ID, source path, SHA-2
 The inventory exposed the actual canonical source ID `SW-PROPERTY-RIGHTS-AND-BOUNDARIES-V1` (the filename alias omits “AND”), and the global estate audit's canonical ID `SW-GLOBAL-ESTATE-CAPACITY-AUDIT-V1`. The implementation uses source metadata as authoritative.
 
 This inventory is not a database import and does not imply that all 105 collections have typed relational mappings. The existing phase-one importer still relationally maps only property world, business registry and tenure. Next, map remaining operational collections into typed tables with explicit key/reference rules, while retaining each original gzip source exactly once in the compressed archive. Keep the global capacity audit as a validation/evidence source unless a specific operational need requires otherwise. Then run complete disposable PostgreSQL 16 reconciliation, idempotency, rollback and storage tests. No Neon production changes.
+
+
+## Phase 6 — complete source archiving and per-collection mapping ledger
+
+Workflow [45643776748](https://github.com/Joshuaogri/saltwater/actions/runs/45643776748) passed against main commit `17d7f81dab331241399990c4432e81fc1c8ac0a9`. Migration `0018_bp04_source_collection_mapping.sql` extends the import ledger with `mapping_status` and adds one `source_dataset_collection` row per source collection. All 14 original gzip inputs are archived once, keyed by SHA-256. Typed mapping and archive-only preservation are tracked separately, so the ledger no longer falsely requires every source row to become a typed operational row.
+
+| Measure | Verified result |
+|---|---:|
+| Source datasets archived | 14 / 14 |
+| Source collections inventoried | 105 |
+| Total source records | 1,950,947 |
+| Collections with typed mappings | 65 |
+| Typed-mapped source rows | 1,277,945 |
+| Archive-only collections | 40 |
+| Archive-only source rows | 673,002 |
+| Compressed package | 23,023,562 bytes (21.96 MiB) |
+| Uncompressed source JSON | 559,420,873 bytes (533.50 MiB) |
+| Source archive relation | 23,797,760 bytes |
+| Disposable database after import | 550,149,143 bytes (524.66 MiB) |
+| Cross-reference violations | 0 |
+| Database size after repeat import | 550,149,143 bytes (unchanged) |
+
+The repeated import produced zero table insert/update/delete mutations. This proves idempotency for the current package and importer; it does not mean all source collections are operationally mapped. The remaining 40 collections are preserved exactly in the source archives and must be mapped selectively where they support police-simulation gameplay. Prioritize business operating schedules, development/use controls, title and lifecycle, rights/access evidence and claims/loss workflows. Keep the global estate capacity audit as evidence. Avoid adding facilities-management complexity without a gameplay requirement. No Neon production schema or data changes have occurred.
