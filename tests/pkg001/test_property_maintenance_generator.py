@@ -40,6 +40,18 @@ class PropertyMaintenanceTests(unittest.TestCase):
   pids={x["property_id"] for x in self.world["properties"]}
   self.assertTrue(all(x["property_id"] in pids for x in d["maintenance_plans"]+d["inspections"]+d["defects"]))
   self.assertTrue(all(x["responsible_contractor_organisation_id"] in orgs for x in d["work_orders"]))
+ def test_all_generated_register_identifiers_are_unique(self):
+  keys={
+   "maintenance_contractors":"organisation_id","maintenance_plans":"maintenance_plan_id",
+   "maintenance_cycles":"maintenance_cycle_id","inspections":"inspection_id","defects":"defect_id",
+   "work_requests":"work_request_id","work_orders":"work_order_id","work_order_lines":"work_order_line_id",
+   "material_issues":"material_issue_id","maintenance_events":"maintenance_event_id","warranties":"warranty_id",
+   "replacement_forecasts":"replacement_plan_id","emergency_procedures":"procedure_id"
+  }
+  for collection, key in keys.items():
+   values=[row[key] for row in self.data[collection]]
+   self.assertEqual(len(values),len(set(values)),f"{collection} contains duplicate {key}")
+   self.assertTrue(all(values),f"{collection} contains an empty {key}")
  def test_no_people_finance_or_population_writes(self):
   s=self.data["summary"]
   self.assertEqual(s["person_records_created"],0); self.assertEqual(s["population_records_created"],0); self.assertEqual(s["financial_postings_created"],0)
