@@ -96,7 +96,7 @@ Parcel IDs are deterministic SHA-256-derived `SWP-` identifiers; address IDs are
 
 The updated BP04-to-BP02 reconciliation therefore distinguishes design identity coverage (420/420) from operational canonical release (still blocked). The source geography is still marked not approved for operational seed. This is a genuine source identity layer, not a Neon upload.
 
-The real-source frontage reconciliation further checked address road references against the road owning each parcel candidate's shared-boundary frontage segments. It found 415 direct matches, three source-road conflicts and two parcels without a frontage-road candidate. The three conflicts and two no-frontage cases are enumerated in the integration record. A single candidate frontage road is available for only 88/420 addresses; 330/420 have multiple frontage-road candidates requiring address-side review, and 2/420 have none. No candidate road is promoted to an operational address road without review.
+The real-source frontage reconciliation further checked address road references against the road owning each parcel candidate's shared-boundary frontage segments. It found 415 direct matches, three source-road conflicts and two parcels without a frontage-road candidate. The three conflicts and two no-frontage cases are enumerated in the integration record. A single candidate frontage road is available for only 88/420 addresses; 330/420 have multiple frontage-road candidates requiring address-side review, and 2/420 have none. No candidate road is promoted to an operational address road without review. The expanded integration passed 107 tests on `main` in [run 45685903741](https://github.com/Joshuaogri/saltwater/actions/runs/45685903741).
 
 ## 5. Final decision
 
