@@ -31,7 +31,8 @@ def build_estate_capacity_audit(geography, world, businesses):
     unit_class = _counts(units, "unit_class")
     premises_type = _counts(premises, "premises_type")
     max_floors = max(floors, default=0)
-    no_building = len(properties)-len(buildings)
+    properties_with_buildings = {x["property_id"] for x in buildings}
+    no_building = sum(1 for x in properties if x["property_id"] not in properties_with_buildings)
     district_rows = [{"district_id":k,**v} for k,v in sorted(by_district.items())]
     summary = {
       "district_count":len(geography["districts"]),
