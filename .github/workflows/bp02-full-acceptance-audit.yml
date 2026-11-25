@@ -16,12 +16,9 @@ on:
       - "runtime/parcel_dossier_generator.py"
       - "runtime/parcel_dossier_geometry_audit.py"
       - "runtime/physical_asset_inventory_generator.py"
-      - "runtime/building_access_candidate_audit.py"
-      - "runtime/building_access_connector_topology_audit.py"
-      - "runtime/building_access_connector_audit.py"
-      - "runtime/building_access_route_corridor_audit.py"
       - "tests/pkg001/test_bp02_address_frontage_exception_resolution.py"
       - "tests/pkg001/test_bp02_address_review_register.py"
+      - "tests/pkg001/test_building_access_candidate_audit.py"
       - ".github/workflows/bp02-full-acceptance-audit.yml"
   workflow_dispatch:
 
