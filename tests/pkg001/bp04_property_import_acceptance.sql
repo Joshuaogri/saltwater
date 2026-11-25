@@ -102,9 +102,11 @@ BEGIN
   ) THEN RAISE EXCEPTION 'contractual rights agreement lineage failure'; END IF;
   IF EXISTS (
     SELECT 1 FROM sw_property.physical_access_evidence_register a
-    LEFT JOIN sw_property.access_point p USING(access_point_id)
-    LEFT JOIN sw_property.property_site s USING(property_id)
+    LEFT JOIN sw_property.access_point p ON p.access_point_id=a.access_point_id
+    LEFT JOIN sw_property.property_site s ON s.property_id=a.property_id
     WHERE p.access_point_id IS NULL OR s.property_id IS NULL
   ) THEN RAISE EXCEPTION 'physical access evidence linkage failure'; END IF;
 END $bp04$;
+SELECT mapping_status, count(*) AS dataset_count, sum(source_record_count) AS source_rows, sum(loaded_record_count) AS loaded_rows FROM sw_property.import_dataset GROUP BY mapping_status ORDER BY mapping_status;
+SELECT mapping_status, count(*) AS collection_count, sum(source_record_count) AS source_rows, sum(loaded_record_count) AS loaded_rows FROM sw_property.source_dataset_collection GROUP BY mapping_status ORDER BY mapping_status;
 SELECT 'BP04 imported source ledger and business operations acceptance passed' AS result;
