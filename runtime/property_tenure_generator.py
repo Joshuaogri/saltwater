@@ -9,7 +9,6 @@ import hashlib
 import json
 from pathlib import Path
 
-from runtime.business_registry_generator import build_business_registry
 from runtime.property_world_generator import build_property_world, to_columnar_document
 
 GENERATOR = "SW-PROPERTY-TENURE-GENERATOR-001"
@@ -41,9 +40,19 @@ def _manager_model(model: str, property_id: str):
     }
 
 
-def build_property_tenure(source: dict) -> dict:
-    world = build_property_world(source)
-    registry = build_business_registry(source, property_world=world)
+def _expand_columnar(document: dict) -> dict:
+    expanded = dict(document.get('metadata', {}))
+    for name, table in document.get('tables', {}).items():
+        columns = table['columns']
+        expanded[name] = [dict(zip(columns, row)) for row in table['rows']]
+    return expanded
+
+
+def build_property_tenure(source: dict, property_world: dict | None = None, registry: dict | None = None) -> dict:
+    world = property_world or build_property_world(source)
+    if registry is None:
+        from runtime.business_registry_generator import build_business_registry
+        registry = build_business_registry(source, property_world=world)
     properties = {x["property_id"]: x for x in world["properties"]}
     owners = {x["organisation_id"]: x for x in world["owner_organisations"]}
     current_interests = {x["property_id"]: x for x in world["ownership_interests"]}
@@ -313,8 +322,9 @@ def build_property_tenure(source: dict) -> dict:
 
 def main():
     root = Path(__file__).resolve().parents[1]
-    source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-    result = build_property_tenure(source)
+    world_doc = json.loads((root / "data/property/saltwater-property-world-v1.json").read_text(encoding="utf-8"))
+    registry_doc = json.loads((root / "data/business/saltwater-business-registry-v1.json").read_text(encoding="utf-8"))
+    result = build_property_tenure({}, property_world=_expand_columnar(world_doc), registry=_expand_columnar(registry_doc))
     output = root / "data/property/saltwater-property-tenure-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     document = to_columnar_document(result)
