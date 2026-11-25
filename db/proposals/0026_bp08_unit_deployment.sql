@@ -94,7 +94,7 @@ BEGIN
       membership_type,effective_from_tick,source_ref
     ) VALUES (
       gen_random_uuid(),NEW.personnel_id,v_unit_id,NEW.post_id,
-      NEW.position_appointment_id,'primary',NEW.effective_from_tick,
+      NEW.position_appointment_id,CASE WHEN NEW.appointment_type='substantive' THEN 'primary' ELSE 'attachment' END,NEW.effective_from_tick,
       'BP08:career-post:'||NEW.position_appointment_id::text
     );
   END IF;
@@ -220,13 +220,14 @@ SELECT u.unit_id,c.official_name,u.unit_type_code,u.functional_domain,u.dispatch
        s.operational_status,
        (u.lifecycle_state='active' AND u.dispatchable
          AND s.operational_status='available'
-         AND coalesce(m.active_members,0)>=u.minimum_crew_size) AS dispatch_eligible,
+         AND coalesce(m.active_members,0)>=u.minimum_crew_size) AS staffing_eligible,
+       false AS dispatch_eligible,
        CASE
          WHEN u.lifecycle_state<>'active' THEN 'unit_not_active'
          WHEN NOT u.dispatchable THEN 'not_a_dispatch_unit'
          WHEN s.operational_status<>'available' THEN 'unit_not_verified_available'
          WHEN coalesce(m.active_members,0)<u.minimum_crew_size THEN 'below_minimum_crew'
-         ELSE 'eligible_pending_resource_readiness'
+         ELSE 'resource_readiness_not_integrated'
        END AS readiness_reason
 FROM sw_police.unit_profile u
 JOIN sw_police.current_organisation_component c ON c.component_id=u.unit_id
