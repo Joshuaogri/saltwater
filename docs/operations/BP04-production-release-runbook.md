@@ -20,7 +20,13 @@ The importer `runtime/bp04_property_stack_importer.py` defaults to the disposabl
 - Repeat import: zero inserts, updates or deletes; database size unchanged.
 - Benchmark source package SHA-256: `54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be`.
 
-The above is the accepted benchmark snapshot, not yet a fresh benchmark of the current release commit. Re-run the BP04 workflow after every importer, schema or dataset change and use its latest successful manifest as the release pin.
+The production migration runner and importer were then tested together on both PostgreSQL 16 and 18 in successful workflow [45664193870](https://github.com/Joshuaogri/saltwater/actions/runs/45664193870), commit `9b4089fdd90e2eb996e166eb7ef667681a25c5ae`. Both versions applied migrations 0001–0012 through `scripts/migrate.py --apply`, passed schema acceptance, importer guard tests, all 14-source import and source-ledger acceptance, and repeat-import storage-stability checks. The package digest remained `54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be`.
+
+Measured full disposable database sizes including the foundation migrations:
+- PostgreSQL 16: 628,120,599 bytes (628.12 MB / 599.02 MiB).
+- PostgreSQL 18: 628,569,791 bytes (628.57 MB / 599.45 MiB).
+- Repeat import on both versions: database size unchanged.
+- PostgreSQL 18 is the closest benchmark for Neon, which runs PostgreSQL 18.7.
 
 ## Ordered migration sequence
 
@@ -60,6 +66,10 @@ Before production execution:
 - If post-import acceptance fails, stop game use of BP04 and restore the verified pre-release Neon restore point; preserve logs and the failed release manifest for diagnosis.
 - Re-importing the same package is designed to be idempotent, but this must be confirmed against production after deployment.
 
+## Manual production release workflow
+
+The manual-only workflow `.github/workflows/neon-production-migrations.yml` now performs the ordered migration, compressed dataset import, production acceptance and repeat-import storage check. It runs only from `main`, requires the exact confirmation `APPLY_BP04_TO_NEON`, requires a pre-release Neon restore-point reference, checks the exact package SHA-256 and targets only the database named `neondb`. It is not triggered by pushes and has not been run against production.
+
 ## Current production state
 
-Read-only Neon measurement on 2026-11-25: database size 9,306,112 bytes (9.306 MB); five user tables; no `sw_property` tables. No BP04 production schema or data has been applied. Estimated post-import database size is approximately 627.8 MB (598.71 MiB), subject to production measurement.
+Read-only Neon measurement on 2026-11-25: database size 9,306,112 bytes (9.306 MB); five user tables; no `sw_property` tables. No BP04 production schema or data has been applied. Estimated post-import database size is approximately 628.57 MB (599.45 MiB) using the PostgreSQL 18 benchmark. Against the 9,306,112-byte live baseline, the estimated incremental database growth is approximately 619,263,679 bytes (619.26 MB / 590.58 MiB), subject to production measurement.
