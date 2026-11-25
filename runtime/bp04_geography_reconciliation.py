@@ -250,6 +250,9 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
             "building_access_road_candidate_ids": (
                 access_row["candidate_access_road_ids"] if access_row else []
             ),
+            "building_access_road_candidate_details": (
+                access_row["candidate_access_road_details"] if access_row else {}
+            ),
         })
     result.update({
         "building_access_road_candidate_status_counts": building_access_reconciliation["address_access_road_candidate_status_counts"],
