@@ -53,7 +53,7 @@ def build_property_world(source: dict) -> dict:
     road_counters = defaultdict(int)
     property_rows, building_rows, premises_rows, unit_rows = [], [], [], []
     address_rows, access_rows, route_rows, site_feature_rows = [], [], [], []
-    ownership_rows, building_component_rows, room_rows = [], [], []
+    ownership_rows, owner_organisations, building_component_rows, room_rows = [], [], [], []
     unit_access_rows = []
     address_for_property = {}
     buildings_for_property = defaultdict(list)
