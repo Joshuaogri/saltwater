@@ -305,7 +305,7 @@ def build_property_world(source: dict) -> dict:
             pgeom = Polygon(next(x for x in base["properties"] if x["candidate_property_id"] == pid)["geometry"][0])
             nearest_road = next((r for r in source["roads"] if r["id"] == property_road[pid]), None)
             route_rows.append({
-                "route_id": f"SWRTE-{_slug(access_id)}",
+                "route_id": f"SWRTE-{_route_slug(access_id)}",
                 "access_point_id": access_id, "property_id": pid,
                 "building_id": bid, "road_id": property_road[pid],
                 "road_segment_ids": [],
