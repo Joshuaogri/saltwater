@@ -80,10 +80,10 @@ def build_development_control(world,tenure,services,maintenance,valuation):
     # It does not imply that an occupant/person exists.
     for u in units_by_premises.get(prid,[]):
      occupancy_compliance.append({"use_compliance_id":_entity_id("SWUSECOMP",u["unit_id"]),"property_id":pid,"building_id":bid,"premises_id":prid,"unit_id":u["unit_id"],"permitted_use_class":permitted,"compliance_state":"unoccupied_or_occupancy_not_assessed","inspection_required_on_occupation":True,"person_records_created":0})
-   # A small subset of properties carries ongoing permitted capital works projects.
-   if _n(pid+"capital-works",1,100)<=18:
-    project_id=_entity_id("SWPROJECT",pid)
-    development_projects.append({"development_project_id":project_id,"property_id":pid,"project_type":_pick(["building_rehabilitation","utility_capacity_upgrade","fire_and_life_safety_upgrade","coastal_resilience_works","accessibility_upgrade"],pid+"project-type"),"project_status":"approved_preconstruction","project_sponsor_organisation_id":owner,"property_manager_organisation_id":manager,"planning_permission_id":next((x["planning_permission_id"] for x in planning_permissions if x["property_id"]==pid),None),"project_start_tick":None,"project_completion_tick":None,"construction_activity_started":False,"financial_commitments_created":False,"project_history_basis":"fictional_current_development_pipeline"})
+   # A subset of existing buildings carries a distinct permitted capital-works project.
+   if _n(bid+"capital-works",1,100)<=18:
+    project_id=_entity_id("SWPROJECT",bid)
+    development_projects.append({"development_project_id":project_id,"property_id":pid,"project_type":_pick(["building_rehabilitation","utility_capacity_upgrade","fire_and_life_safety_upgrade","coastal_resilience_works","accessibility_upgrade"],bid+"project-type"),"project_status":"approved_preconstruction","project_sponsor_organisation_id":owner,"property_manager_organisation_id":manager,"planning_permission_id":permission_id,"project_start_tick":None,"project_completion_tick":None,"construction_activity_started":False,"financial_commitments_created":False,"project_history_basis":"fictional_current_development_pipeline"})
  for rule in [
   ("SW-PLAN-PORT-01","port_and_maritime_operations","port_and_maritime_operations",["navigation_safety","hazardous_cargo_separation","security_perimeter","emergency_response_access"]),
   ("SW-PLAN-LOG-01","logistics_and_warehousing","logistics_and_warehousing",["heavy_vehicle_circulation","freight_queue_management","fire_appliance_access"]),
