@@ -1,3 +1,4 @@
+import gzip
 import json
 import unittest
 from pathlib import Path
@@ -12,7 +13,8 @@ class BusinessRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-        world_document = json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text(encoding="utf-8"))
+        with gzip.open(ROOT / "data/property/saltwater-property-world-v1.json.gz", "rt", encoding="utf-8") as source_file:
+            world_document = json.load(source_file)
         cls.property_world = _expand_columnar(world_document)
         cls.registry = build_business_registry(source, property_world=cls.property_world)
 
