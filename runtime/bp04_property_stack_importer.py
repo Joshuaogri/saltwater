@@ -332,7 +332,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         lambda ds,r: {"tax_rule_id":r["tax_rule_id"],"tax_year":r["tax_year"],"rule_type":r.get("rule_type"),"currency":r["currency"],"collection_cycle":r.get("collection_cycle"),"billing_and_payment_authority":r.get("billing_and_payment_authority"),"effective_tick":r.get("effective_tick"),"fictional_rule":boolean_value(r.get("fictional_rule")),"source_dataset":ds})
     return batches, counts
 
-def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test") -> dict:
+def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test", archive_only: bool = False) -> dict:
     with psycopg.connect(dsn) as conn:
         dbname = conn.execute("select current_database()").fetchone()[0]
         if dbname != expected_database:
@@ -349,7 +349,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 "source_path": relative, "source_sha256": hashlib.sha256(raw).hexdigest(),
                 "compressed_bytes": len(raw), "uncompressed_bytes": len(gzip.decompress(raw)),
             }
-        batches, source_counts = build_batches(documents)
+        # Archive-only is the compact production storage mode: retain each original gzip\n        # dataset exactly once and defer row expansion to the runtime reader.\n        batches, source_counts = ({}, {}) if archive_only else build_batches(documents)
         package_sha = hashlib.sha256(json.dumps(manifest_files,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         commit = os.environ.get("GITHUB_SHA", "local-unpinned")
         release_id = "SWREL-" + hashlib.sha256((commit + package_sha).encode()).hexdigest()[:20].upper()
@@ -372,7 +372,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 source_doc = documents[dataset_id]
                 source_collections = source_doc["tables"]
                 source_collection_counts = {name: len(table["rows"]) for name, table in source_collections.items()}
-                mapped_collection_names = {key.split(".",1)[1] for key in source_counts if key.startswith(dataset_id+".") and key.split(".",1)[1] in source_collections}
+                mapped_collection_names = set() if archive_only else {key.split(".",1)[1] for key in source_counts if key.startswith(dataset_id+".") and key.split(".",1)[1] in source_collections}
                 source_record_count = sum(source_collection_counts.values())
                 loaded_record_count = sum(source_collection_counts[name] for name in mapped_collection_names)
                 mapping_status = "archive_only" if not mapped_collection_names else ("fully_mapped" if len(mapped_collection_names) == len(source_collections) else "partially_mapped")
@@ -451,14 +451,14 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
             if fk_violations:
                 raise RuntimeError(f"Cross-reference reconciliation failed: {fk_violations} violations")
             size_bytes = conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]
-        return {"database":dbname,"release_id":release_id,"package_sha256":package_sha,"file_manifest":manifest_files,"source_collection_counts":source_counts,"verified_table_counts":actual,"cross_reference_violations":fk_violations,"database_size_bytes":size_bytes}
+        return {"database":dbname,"storage_mode":"compressed_archive_only" if archive_only else "typed_relational","release_id":release_id,"package_sha256":package_sha,"file_manifest":manifest_files,"source_collection_counts":source_counts,"source_records":sum(sum(len(t["rows"]) for t in d["tables"].values()) for d in documents.values()),"typed_rows_loaded":sum(actual.values()),"archive_bytes":sum(v["compressed_bytes"] for v in manifest_files.values()),"verified_table_counts":actual,"cross_reference_violations":fk_violations,"database_size_bytes":size_bytes}
 
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1])
     parser.add_argument("--dsn",default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--expected-database",default="saltwater_test")
-    parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")
+    parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")\n    parser.add_argument("--archive-only",action="store_true",help="Store the lossless compressed source datasets and provenance ledgers only; do not materialise typed rows.")
     args=parser.parse_args()
     if not args.dsn:
         parser.error("Set DATABASE_URL to the target PostgreSQL connection.")
@@ -466,7 +466,7 @@ def main():
         parser.error("Production import refused: pass --allow-production explicitly after the production release gate.")
     if args.allow_production and args.expected_database != "neondb":
         parser.error("--allow-production is valid only with --expected-database neondb.")
-    print(json.dumps(import_package(args.root,args.dsn,args.expected_database),indent=2,sort_keys=True))
+    print(json.dumps(import_package(args.root,args.dsn,args.expected_database,args.archive_only),indent=2,sort_keys=True))
 
 if __name__=="__main__":
     main()
