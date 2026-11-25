@@ -405,133 +405,7 @@ BEGIN
      OR p_confidence NOT IN ('high','medium','low','unverified','unknown')
      OR p_rationale IS NULL OR length(trim(p_rationale))=0
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
-     OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
-  p_incident_id integer,
-  p_new_status text,
-  p_actor_ref text,
-  p_authority_ref text,
-  p_reason text,
-  p_idempotency_key text,
-  p_duplicate_of_incident_id integer DEFAULT NULL,
-  p_resolution_code text DEFAULT NULL
-) RETURNS bigint
-LANGUAGE plpgsql AS $bp12$
-DECLARE
-  v_runtime sw_runtime.state%ROWTYPE;
-  v_incident sw_incident.incident%ROWTYPE;
-  v_event_id bigint;
-  v_event_type_id smallint;
-  v_allowed boolean:=false;
-BEGIN
-  IF p_new_status NOT IN ('RECEIVED','AWAITING_TRIAGE','ASSESSED','ALLOCATED','DISPATCHED','RESPONDING',
-      'ATTENDED','ACTIVE_MANAGEMENT','MONITORING','RESOLVED','CLOSED','CANCELLED','DUPLICATE_LINKED','REOPENED')
-     OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
-     OR p_reason IS NULL OR length(trim(p_reason))=0
-     OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$'
-     OR p_new_status='DUPLICATE_LINKED' AND p_duplicate_of_incident_id IS NULL
-     OR p_new_status IN ('CLOSED','CANCELLED') AND length(trim(p_reason))=0 THEN
-    RAISE EXCEPTION 'invalid incident transition request';
-  END IF;
-  SELECT se.event_id INTO v_event_id
-  FROM sw_core.simulation_event se
-  JOIN sw_core.event_type et USING(event_type_id)
-  WHERE se.idempotency_key=p_idempotency_key;
-  IF FOUND THEN
-    IF NOT EXISTS(SELECT 1 FROM sw_core.simulation_event
-      WHERE event_id=v_event_id AND subject_kind='incident'
-        AND subject_id=p_incident_id AND event_type_id IN
-          (SELECT event_type_id FROM sw_core.event_type WHERE event_code='INCIDENT_STATE_CHANGED')) THEN
-      RAISE EXCEPTION 'incident transition idempotency key conflicts with another event';
-    END IF;
-    RETURN v_event_id;
-  END IF;
-
-  SELECT * INTO v_runtime FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
-  IF NOT FOUND OR v_runtime.state<>2 OR NOT v_runtime.player_present THEN
-    RAISE EXCEPTION 'incident transition requires running player-present simulation';
-  END IF;
-  SELECT * INTO v_incident FROM sw_incident.incident WHERE incident_id=p_incident_id FOR UPDATE;
-  IF NOT FOUND THEN RAISE EXCEPTION 'incident not found'; END IF;
-
-  v_allowed:=CASE v_incident.status
-    WHEN 'RECEIVED' THEN p_new_status IN ('AWAITING_TRIAGE','ASSESSED','CANCELLED','DUPLICATE_LINKED')
-    WHEN 'AWAITING_TRIAGE' THEN p_new_status IN ('ASSESSED','CANCELLED','DUPLICATE_LINKED')
-    WHEN 'ASSESSED' THEN p_new_status IN ('ALLOCATED','MONITORING','RESOLVED','CANCELLED')
-    WHEN 'ALLOCATED' THEN p_new_status IN ('DISPATCHED','MONITORING','RESOLVED','CANCELLED')
-    WHEN 'DISPATCHED' THEN p_new_status IN ('RESPONDING','ATTENDED','ACTIVE_MANAGEMENT','CANCELLED')
-    WHEN 'RESPONDING' THEN p_new_status IN ('ATTENDED','ACTIVE_MANAGEMENT','MONITORING','RESOLVED')
-    WHEN 'ATTENDED' THEN p_new_status IN ('ACTIVE_MANAGEMENT','MONITORING','RESOLVED')
-    WHEN 'ACTIVE_MANAGEMENT' THEN p_new_status IN ('ATTENDED','MONITORING','RESOLVED')
-    WHEN 'MONITORING' THEN p_new_status IN ('ACTIVE_MANAGEMENT','RESOLVED','CLOSED')
-    WHEN 'RESOLVED' THEN p_new_status IN ('CLOSED','REOPENED')
-    WHEN 'CLOSED' THEN p_new_status='REOPENED'
-    WHEN 'REOPENED' THEN p_new_status IN ('AWAITING_TRIAGE','ASSESSED','ALLOCATED','ACTIVE_MANAGEMENT')
-    ELSE false
-  END;
-  IF NOT v_allowed THEN
-    RAISE EXCEPTION 'invalid incident state transition: % -> %',v_incident.status,p_new_status;
-  END IF;
-  IF p_duplicate_of_incident_id IS NOT NULL AND p_new_status<>'DUPLICATE_LINKED' THEN
-    RAISE EXCEPTION 'duplicate target is only valid for DUPLICATE_LINKED transition';
-  END IF;
-  IF p_duplicate_of_incident_id IS NOT NULL AND
-     (p_duplicate_of_incident_id=p_incident_id OR NOT EXISTS(
-       SELECT 1 FROM sw_incident.incident WHERE incident_id=p_duplicate_of_incident_id)) THEN
-    RAISE EXCEPTION 'duplicate target incident is invalid';
-  END IF;
-
-  SELECT event_type_id INTO v_event_type_id FROM sw_core.event_type WHERE event_code='INCIDENT_STATE_CHANGED';
-  INSERT INTO sw_core.simulation_event(
-    event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key
-  ) VALUES (
-    v_event_type_id,now(),v_runtime.world_tick,'incident',p_incident_id,
-    'incident:'||p_incident_id::text,
-    jsonb_build_object('prior_status',v_incident.status,'new_status',p_new_status,
-      'reason',p_reason,'authority_ref',p_authority_ref),
-    p_idempotency_key
-  ) RETURNING event_id INTO v_event_id;
-
-  UPDATE sw_incident.incident
-  SET status=p_new_status,record_version=record_version+1,updated_tick=v_runtime.world_tick,
-      last_event_id=v_event_id,updated_at=now(),
-      duplicate_of_incident_id=coalesce(p_duplicate_of_incident_id,duplicate_of_incident_id),
-      resolution_code=coalesce(p_resolution_code,resolution_code),
-      closed_tick=CASE WHEN p_new_status IN ('CLOSED','CANCELLED') THEN v_runtime.world_tick
-                       WHEN p_new_status='REOPENED' THEN NULL ELSE closed_tick END,
-      closure_reason=CASE WHEN p_new_status IN ('CLOSED','CANCELLED') THEN p_reason
-                          WHEN p_new_status='REOPENED' THEN NULL ELSE closure_reason END
-  WHERE incident_id=p_incident_id;
-
-  IF p_new_status='DUPLICATE_LINKED' THEN
-    INSERT INTO sw_incident.incident_source_link(
-      incident_id,source_type,source_record_id,link_type,linked_tick,source_event_id,source_ref
-    ) VALUES (
-      p_incident_id,'system','incident:'||p_duplicate_of_incident_id::text,'duplicate',
-      v_runtime.world_tick,v_event_id,'incident-duplicate:'||p_incident_id::text
-    );
-  END IF;
-
-  INSERT INTO sw_incident.incident_event(
-    incident_id,source_event_id,event_kind,prior_status,resulting_status,
-    prior_priority,resulting_priority,effective_tick,actor_ref,authority_ref,source_ref,reason
-  ) VALUES (
-    p_incident_id,v_event_id,'state_changed',v_incident.status,p_new_status,
-    v_incident.priority,v_incident.priority,v_runtime.world_tick,p_actor_ref,
-    p_authority_ref,'incident:'||p_incident_id::text,p_reason
-  );
-
-  UPDATE sw_runtime.state SET last_event_id=v_event_id,updated_at=now() WHERE singleton=1;
-  RETURN v_event_id;
-END
-$bp12$;
-
-CREATE VIEW sw_incident.incident_current AS
-SELECT i.*,
-       (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
-       (SELECT count(*) FROM sw_incident.incident_source_link s WHERE s.incident_id=i.incident_id)::integer AS source_count
-FROM sw_incident.incident i;
-
-COMMIT;
+     OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$' THEN
  THEN
     RAISE EXCEPTION 'invalid incident assessment';
   END IF;
@@ -590,7 +464,6 @@ COMMIT;
   RETURN v_event_id;
 END
 $bp12$;
-
 CREATE FUNCTION sw_incident.transition_incident(
   p_incident_id integer,
   p_new_status text,
