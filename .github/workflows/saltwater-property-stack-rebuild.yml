@@ -72,7 +72,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add \
-            data/property/saltwater-property-world-v1.json \
+            data/property/saltwater-property-world-v1.json.gz \
             data/business/saltwater-business-registry-v1.json \
             data/business/saltwater-business-operations-v1.json \
             data/property/saltwater-property-tenure-v1.json \
