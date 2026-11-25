@@ -23,9 +23,11 @@ def build_identity_register(
     properties: Iterable[dict],
     addresses: Iterable[dict],
     geography_entity_codes: set[str],
+    road_segment_to_road: dict[str, str] | None = None,
 ) -> dict:
     properties = list(properties)
     addresses = list(addresses)
+    road_segment_to_road = road_segment_to_road or {}
     candidates = candidate_manifest.get("parcels", [])
     candidate_by_id = {}
     for candidate in candidates:
@@ -81,7 +83,21 @@ def build_identity_register(
         parcel_id = candidate_to_parcel.get(candidate_id)
         if parcel_id is None:
             raise ValueError(f"{source_address_id}: linked parcel candidate is unresolved")
+        candidate = candidate_by_id[candidate_id]
+        frontage_roads = {
+            road_segment_to_road[segment_id]
+            for segment_id in candidate.get("road_frontage_segment_ids", [])
+            if segment_id in road_segment_to_road
+        }
         road_id = source_address.get("road_id")
+        if not road_segment_to_road:
+            frontage_match_status = "NOT_EVALUATED"
+        elif road_id in frontage_roads:
+            frontage_match_status = "ROAD_MATCHES_PARCEL_FRONTAGE_CANDIDATE"
+        elif frontage_roads:
+            frontage_match_status = "ADDRESS_ROAD_DIFFERS_FROM_PARCEL_FRONTAGE_CANDIDATE"
+        else:
+            frontage_match_status = "NO_PARCEL_FRONTAGE_CANDIDATE"
         district_id = source_address.get("district_id")
         neighbourhood_id = source_address.get("neighbourhood_id")
         for label, value in (("road", road_id), ("district", district_id), ("neighbourhood", neighbourhood_id)):
@@ -105,6 +121,8 @@ def build_identity_register(
             "identity_status": "STABLE_DESIGN_IDENTITY",
             "address_status": "SOURCE_DERIVED_NOT_OPERATIONALLY_VERIFIED",
             "frontage_status": "NOT_PROVEN_BY_IDENTITY_MAPPING",
+            "road_frontage_match_status": frontage_match_status,
+            "candidate_frontage_road_ids": sorted(frontage_roads),
             "operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
         })
 
