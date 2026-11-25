@@ -37,7 +37,7 @@ def inspect_dataset(root: Path, dataset_id: str, relative_path: str) -> dict:
         raise ValueError(f"{relative_path}: unsupported storage format")
     metadata = document.get("metadata")
     if not isinstance(metadata, dict) or metadata.get("dataset_id") != dataset_id:
-        raise ValueError(f"{relative_path}: dataset identity mismatch")
+        raise ValueError(f"{relative_path}: dataset identity mismatch; expected={dataset_id!r}, found={metadata.get(\"dataset_id\")!r}")
     tables = document.get("tables")
     if not isinstance(tables, dict):
         raise ValueError(f"{relative_path}: tables must be an object")
