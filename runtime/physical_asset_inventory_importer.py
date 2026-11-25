@@ -149,7 +149,7 @@ def _execute_many(cur, sql: str, rows: list[tuple]) -> int:
 
 
 def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
-                     source_commit: str = "unknown") -> dict:
+                     source_commit: str = "unknown", progress_callback=None) -> dict:
     if conn.info.dbname != "saltwater_test":
         raise RuntimeError("Refusing BP04-03 Stage E import outside database saltwater_test")
     manifest_sha, candidate_set_id = validate_manifests(inventory, candidates, dossiers)
@@ -187,6 +187,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
             if batch:
                 existing = True
                 batch_id = batch[0]
+                if progress_callback:
+                    progress_callback("geometry_and_candidate_links", round((time.perf_counter()-started)*1000, 3))
+
                 inserted = {"identities": 0, "relationships": 0, "profiles": 0,
                             "details": 0, "geometry": 0, "candidate_site_links": 0, "access_connector_candidates": 0}
             else:
@@ -228,6 +231,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                     """, (row["candidate_property_id"],row["display_name"],row["source_ref"],ACTOR,REASON))
                     property_map[row["candidate_property_id"]] = cur.fetchone()[0]
 
+                if progress_callback:
+                    progress_callback("property_identities", round((time.perf_counter()-started)*1000, 3))
+
                 for row in inventory["buildings"]:
                     cur.execute("""
                         INSERT INTO sw_property.building
@@ -240,6 +246,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                         (property_id,building_id,valid_from_tick,source_ref,actor_ref,reason)
                         VALUES (%s,%s,0,%s,%s,%s)
                     """, (property_map[row["property_id"]],building_map[row["candidate_building_id"]],row["source_ref"],ACTOR,REASON))
+
+                if progress_callback:
+                    progress_callback("building_identities_and_property_links", round((time.perf_counter()-started)*1000, 3))
 
                 for row in inventory["premises"]:
                     cur.execute("""
@@ -256,6 +265,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                         VALUES (%s,%s,0,%s,%s,%s)
                     """, (building_map[row["building_id"]],premises_map[row["candidate_premises_id"]],row["source_ref"],ACTOR,REASON))
 
+                if progress_callback:
+                    progress_callback("premises_identities_and_building_links", round((time.perf_counter()-started)*1000, 3))
+
                 for row in inventory["units"]:
                     cur.execute("""
                         INSERT INTO sw_property.unit_space
@@ -270,6 +282,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                         VALUES (%s,%s,0,%s,%s,%s)
                     """, (premises_map[row["premises_id"]],unit_map[row["candidate_unit_id"]],row["source_ref"],ACTOR,REASON))
 
+                if progress_callback:
+                    progress_callback("unit_identities_and_premises_links", round((time.perf_counter()-started)*1000, 3))
+
                 for row in inventory["access_points"]:
                     cur.execute("""
                         INSERT INTO sw_property.access_point
@@ -279,6 +294,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                     """, (row["candidate_access_point_id"],row["display_name"],
                           building_map[row["building_id"]],row["source_ref"],ACTOR,REASON))
                     access_map[row["candidate_access_point_id"]] = cur.fetchone()[0]
+
+                if progress_callback:
+                    progress_callback("access_point_identities", round((time.perf_counter()-started)*1000, 3))
 
                 _execute_many(cur, """
                     INSERT INTO sw_property.access_connector_candidate
@@ -307,6 +325,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                     inventory_sha, row["source_ref"], ACTOR, row["confidence_code"],
                     row["effective_from_tick"], row["reason"],
                 ) for row in inventory["access_connectors"]])
+
+                if progress_callback:
+                    progress_callback("access_connector_candidates", round((time.perf_counter()-started)*1000, 3))
 
                 # Profiles are inserted only after all stable numeric identities exist.
                 p = inventory["profiles"]
@@ -374,6 +395,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["emergency_egress"],r["loading_capable"],r["emergency_egress_state"],
                        r["loading_capability_state"],r["source_ref"],ACTOR,r["confidence_code"],
                        r["effective_from_tick"],r["reason"]) for r in p["access_points"]])
+
+                if progress_callback:
+                    progress_callback("profiles", round((time.perf_counter()-started)*1000, 3))
 
                 d = inventory["details"]
                 entity_maps = {"PROPERTY":property_map,"BUILDING":building_map,
@@ -456,6 +480,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                        r["value_text"],r["knowledge_state"],r["effective_from_tick"],r["source_ref"],
                        ACTOR,r["confidence_code"],r["reason"]) for r in d["asset_assertions"]])
 
+                if progress_callback:
+                    progress_callback("detail_registers", round((time.perf_counter()-started)*1000, 3))
+
                 # Store source parcel lineage and geometry payloads after identity creation.
                 parcel_by_id = {r["source_candidate_parcel_id"]: r for r in inventory["properties"]}
                 for row in inventory["properties"]:
@@ -502,6 +529,8 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
             cur.execute("SELECT pg_database_size(current_database())")
             after_bytes = cur.fetchone()[0]
 
+    if progress_callback:
+        progress_callback("transaction_committed", round((time.perf_counter()-started)*1000, 3))
     elapsed_ms = round((time.perf_counter()-started)*1000,3)
     return {
         "manifest_sha256": manifest_sha, "batch_id": batch_id,
@@ -543,7 +572,16 @@ def main():
             dbname=os.getenv("PGDATABASE","saltwater_test"),user=os.getenv("PGUSER","saltwater_test"),
             password=os.getenv("PGPASSWORD","test-only"))
     try:
-        result=import_inventory(conn,inventory,candidates,dossiers,args.source_commit)
+        def report_progress(phase, elapsed_ms):
+            print(json.dumps({
+                "stage_e_import_progress": phase,
+                "elapsed_ms": elapsed_ms,
+            }), flush=True)
+
+        result=import_inventory(
+            conn, inventory, candidates, dossiers, args.source_commit,
+            progress_callback=report_progress,
+        )
         print(json.dumps(result,indent=2,sort_keys=True))
     finally:
         conn.close()
