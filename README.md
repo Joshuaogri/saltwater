@@ -2,6 +2,10 @@
 
 Saltwater is a fictional sovereign city-state and a single-city police simulation.
 
+## Latest verified delivery — 2026-11-25
+
+BP04's **compressed archive-only production release is deployed and verified**, but the **full BP04 division is not yet complete**. Production currently retains 14 source archives, 105 collections and 1,950,923 source records; the live database measures 41,525,248 bytes. The full acceptance audit records the remaining blockers and the next implementation step: [BP04 full acceptance audit](docs/implementation/test-evidence/BP04-full-acceptance-audit-2026-11-25.md). This status supersedes older BP04 production-pending statements elsewhere in this README.
+
 ## Canonical constraints
 
 - Country and city: **Saltwater**.
@@ -44,27 +48,25 @@ Package: [BP38-01 — Database Integrity and Migration Foundation](docs/implemen
 
 ## Current status
 
-The **platform foundation is deployed; the simulation runtime and domain systems are not yet implemented**.
+The **platform foundation and BP04 compressed source archive release are deployed**. The full police simulation runtime and several domain interfaces remain in development.
 
-- Neon project: Saltwater (`misty-breeze-20463094`), production branch `br-bitter-rain-bdz9ddid`, database `neondb`.
-- Foundation migration `0001_foundation.sql` and migration `0002_migration_integrity.sql` are applied and recorded as versions 1 and 2.
-- A successful live connection probe verified a transactional read/write in a temporary table and rolled it back.
-- Read-only SQL verification on 2026-11-23 measured `pg_database_size` at **9,306,112 bytes (9.306 MB / 8.875 MiB)** and user relations at **188,416 bytes**.
-- The database currently has five user tables: three in `sw_core` and two in `sw_ops`. The single `world_config` row records Saltwater, one playable city and the 10,000-person cap; `event_type` and `simulation_event` contain zero rows.
-- No resident, police-personnel, business, case or evidence domain schemas or production seed records are present. A first text command-interface layer now exists in `runtime/player_interface.py`; persistent player saves, canonical officer/career creation and the full game application are not yet implemented.
-- GitHub Actions migration, database-validation, live-connection and storage-benchmark workflows are present. Benchmark 0005 briefly created a synthetic Neon benchmark schema and removed it after measurement; its operation-ledger record remains. No production simulation seed data remains.
-- Three disposable PostgreSQL runs of benchmark 0008 measured approximately **651.779 MB** full-database and **642.728 MB** relations. This is repeatability evidence for the synthetic workload, not final capacity approval.
-- **Neon 1 GB production capacity remains NOT APPROVED; production seeding remains BLOCKED.** The 16-record narrative fixture has passed automated structural checks, but its human-review rows remain pending and the fixture is not approved.
-- The storage/write gate remains mandatory: before any proposed Neon migration, schema change, seed/import, bulk write or upload, measure the current baseline, estimate incremental bytes and MB/MiB with assumptions/range, show the projected total and wait for explicit user approval.
+- Neon project: Saltwater (`misty-breeze-20463094`), production branch `br-still-cloud-bdvaw8u4`, database `neondb`.
+- Production migration ledger contains versions 1–12; BP04 migrations 0003–0012 are applied.
+- BP04 production archive release passed in [workflow run 45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246). It stores 14 compressed datasets, 105 collections and 1,950,923 source records (29,434,820 compressed bytes); zero typed static source rows were materialised.
+- Read-only Neon verification on 2026-11-25 measured `pg_database_size` at **41,525,248 bytes (41.53 MB / 39.60 MiB)**, an increase of **32,219,136 bytes (32.22 MB)** over the 9,306,112-byte pre-BP04 baseline.
+- The BP04 schema contains 92 base tables. Archive/provenance ledgers contain the deployed source package; the other static domain tables remain empty by design under the archive-only storage model.
+- BP04's full division acceptance audit **has not passed**. The source estate includes 10,000 businesses and the property/building/premises/unit/address/access collections, but canonical BP-02 address binding, indexed gameplay lookups, full cross-register acceptance and authorised police-facing query integration remain outstanding. See [BP04 full acceptance audit](docs/implementation/test-evidence/BP04-full-acceptance-audit-2026-11-25.md).
+- No resident, police-personnel, case or evidence production seed records have been loaded. The 10,000-person cap remains binding. Production simulation seeding beyond the approved BP04 archive release remains blocked.
+- The storage/write gate remains mandatory for every future Neon write: measure the current baseline, estimate incremental bytes and MB/MiB with assumptions/range, show the projected total and wait for explicit user approval.
 
-Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22 project metadata) is a different measurement from PostgreSQL `pg_database_size`; do not compare or substitute the two without an explicit metric definition.
+Provider-reported logical-size metadata is a different measurement from PostgreSQL `pg_database_size`; do not compare or substitute the two without an explicit metric definition.
 
 ## Latest canon decisions — 2026-11-24
 
 - Adopted [SW-CANON-001 — Population Scope and Foundational Geography](docs/blueprint/decisions/SW-CANON-001-population-scope-and-foundational-geography.md).
 - Population cap now has a closed distinct-person counting formula: usual residents ∪ persons physically present ∪ active Saltwater Police Service members; one person ID counts once. Opening target: 9,000 civilian residents + 500 police personnel = 9,500 unique people, 500 shared headroom.
 - Foundational geography is fixed: one contiguous coastal island city-state, 12 km × 9 km fictional local grid, eastern harbour, eight districts and 24 neighbourhoods. Detailed map construction and routing validation remain implementation work.
-- BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP-04 business distribution remains a separate open design item.
+- BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP04 now has a 10,000-business source registry baseline; full registry and gameplay acceptance remains open.
 - The approved BP38-01 migration writes are complete; no operational geography import or simulation seed data has been authorised or performed.
 
 ## BP04-03 — citywide terrain/obstacle survey coverage grid
@@ -693,7 +695,7 @@ The archive-only release workflow passed on both PostgreSQL 16 and PostgreSQL 18
 
 The import preserved all 14 archives, 105 source collections and 1,950,923 source records. The archive-only acceptance test passed on both PostgreSQL versions, and the second import left database size unchanged. Against the previous typed-row production growth of 616,505,344 bytes, the PostgreSQL 18 archive-only benchmark reduces incremental growth by approximately **94.88%** (about 19.5 times smaller).
 
-The 31.57 MB figure is incremental database growth, not the final total size. Starting from the 9.31 MB production baseline, the closest PostgreSQL 18 benchmark indicates an approximately **40.88 MB total database** after an archive-only import. This remains a disposable benchmark, not a production measurement. Neon has not been written; production remains at 9.31 MB pending fresh explicit authorisation.
+The 31.57 MB figure is incremental database growth in the disposable PostgreSQL 18 benchmark, not the production measurement. The later archive-only production deployment is measured separately in the latest status section at the top of this README.
 
 
 **Safe default:** the importer now defaults to `compressed_archive_only` even when no storage flag is supplied. The previous expanded representation is available only through the explicit `--typed-relational` option for disposable benchmarking; the importer itself rejects typed-relational mode when the target database is `neondb`. The production workflow also explicitly passes `--archive-only`.
