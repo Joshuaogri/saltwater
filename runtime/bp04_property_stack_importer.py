@@ -148,19 +148,28 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
         manifest = {"release_id":release_id,"source_commit":commit,"package_sha256":package_sha,"files":manifest_files,"source_collection_counts":source_counts}
         with conn.transaction():
             conn.execute("SET CONSTRAINTS ALL DEFERRED")
-            conn.execute("""INSERT INTO sw_property.import_release(release_id,source_commit,package_sha256,manifest)
+            conn.execute("""INSERT INTO sw_property.import_release AS current(release_id,source_commit,package_sha256,manifest)
                 VALUES (%s,%s,%s,%s) ON CONFLICT(release_id) DO UPDATE SET
-                source_commit=excluded.source_commit, package_sha256=excluded.package_sha256, manifest=excluded.manifest""",
+                source_commit=excluded.source_commit, package_sha256=excluded.package_sha256, manifest=excluded.manifest
+                WHERE current.source_commit IS DISTINCT FROM excluded.source_commit
+                   OR current.package_sha256 IS DISTINCT FROM excluded.package_sha256
+                   OR current.manifest IS DISTINCT FROM excluded.manifest""",
                 (release_id,commit,package_sha,Jsonb(manifest)))
             for dataset_id, info in manifest_files.items():
                 collection_count = sum(v for k,v in source_counts.items() if k.startswith(dataset_id+"."))
-                conn.execute("""INSERT INTO sw_property.import_dataset
+                conn.execute("""INSERT INTO sw_property.import_dataset AS current
                     (release_id,dataset_id,source_path,source_sha256,compressed_bytes,uncompressed_bytes,source_record_count,loaded_record_count)
                     VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT(release_id,dataset_id) DO UPDATE SET source_path=excluded.source_path,
                     source_sha256=excluded.source_sha256,compressed_bytes=excluded.compressed_bytes,
                     uncompressed_bytes=excluded.uncompressed_bytes,source_record_count=excluded.source_record_count,
-                    loaded_record_count=excluded.loaded_record_count""",
+                    loaded_record_count=excluded.loaded_record_count
+                    WHERE current.source_sha256 IS DISTINCT FROM excluded.source_sha256
+                       OR current.source_path IS DISTINCT FROM excluded.source_path
+                       OR current.compressed_bytes IS DISTINCT FROM excluded.compressed_bytes
+                       OR current.uncompressed_bytes IS DISTINCT FROM excluded.uncompressed_bytes
+                       OR current.source_record_count IS DISTINCT FROM excluded.source_record_count
+                       OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count""",
                     (release_id,dataset_id,info["source_path"],info["source_sha256"],info["compressed_bytes"],info["uncompressed_bytes"],collection_count,collection_count))
             table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy"]
             for table in table_order:
