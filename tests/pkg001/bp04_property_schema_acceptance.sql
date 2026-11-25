@@ -68,10 +68,10 @@ BEGIN
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
-      AND conname='physical_key_check' AND convalidated
+      AND conname='physical_key_no_person_credential' AND convalidated
   ) OR NOT EXISTS (
     SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
-      AND conname='access_group_check' AND convalidated
+      AND conname='access_group_no_person_members' AND convalidated
   ) THEN RAISE EXCEPTION 'person credential exclusion checks missing'; END IF;
 
   IF NOT EXISTS (
