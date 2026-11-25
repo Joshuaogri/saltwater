@@ -1,9 +1,9 @@
-"""Load the phased Saltwater property/business/maintenance stack into disposable PostgreSQL.
+"""Load the canonical Saltwater BP04 property/business stack into PostgreSQL.
 
-The release includes property, business, tenure, building-services, maintenance, security, valuation, insurance and tax sources.
-Production use is deliberately blocked. The command accepts only the disposable
-saltwater_test database unless an explicit future implementation changes this
-guard through reviewed code. It imports compressed columnar JSON losslessly.
+The importer defaults to the disposable saltwater_test database. Production use
+requires the explicit --allow-production flag and an expected database of neondb.
+It imports compressed columnar JSON losslessly and verifies the release in one
+transaction.
 """
 from __future__ import annotations
 
@@ -157,8 +157,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("building_component", "SW-PROPERTY-WORLD-V1", rows(world, "building_components"),
         lambda ds,r: {"component_id":r["component_id"],"building_id":r["building_id"],"component_type":r.get("component_type"),"display_name":pick(r,"display_name","material",default=r["component_id"]),"source_dataset":ds})
     add("premises_room", "SW-PROPERTY-WORLD-V1", rows(world, "premises_rooms"),
-        lambda ds,r: {"room_id":r["room_id"],"premises_id":r["premises_id"],"display_name":pick(r,"room_name","display_name","room_code",default=r["room_id"]),"room_type":r.get("room_type"),"floor_name":pick(r,"floor_name","floor_level"),"source_dataset":ds})
-    add("ownership_interest", "SW-PROPERTY-WORLD-V1", rows(world, "ownership_interests"),
+        lambda ds,r: {"room_id":r["room_id"],"premises_id":r["premises_id"],"display_name":pick(r,"room_name","display_name","room_code",default=r["room_id"]),"room_type":r.get("room_type"),"floor_name":pick(r,"floor_name","floor_level"),"source_dataset":ds})    add("ownership_interest", "SW-PROPERTY-WORLD-V1", rows(world, "ownership_interests"),
         lambda ds,r: {"ownership_interest_id":r["ownership_interest_id"],"property_id":r["property_id"],"owner_organisation_id":r["owner_organisation_id"],"management_model":r.get("management_model"),"interest_type":r.get("interest_type"),"source_dataset":ds})
 
     add("business", "SW-BUSINESS-REGISTRY-V1", rows(registry, "businesses"),
@@ -317,8 +316,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("asset_valuation", "SW-PROPERTY-VALUE-RISK-TAX-V1", rows(value_risk, "asset_valuations"),
         lambda ds,r: {"asset_valuation_id":r["asset_valuation_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"land_valuation_id":r["land_valuation_id"],"improvement_valuation_id":r.get("improvement_valuation_id"),"valuation_purpose":r.get("valuation_purpose"),"currency":r["currency"],"assessed_value_swc":r["assessed_value_swc"],"value_band":r.get("value_band"),"valuation_method":r.get("valuation_method"),"valuation_tick":r.get("valuation_tick"),"valuation_status":r.get("valuation_status"),"source_dataset":ds})
     add("premises_valuation", "SW-PROPERTY-VALUE-RISK-TAX-V1", rows(value_risk, "premises_valuations"),
-        lambda ds,r: {"premises_valuation_id":r["premises_valuation_id"],"property_id":r["property_id"],"building_id":r["building_id"],"premises_id":r["premises_id"],"valuation_basis":r.get("valuation_basis"),"assessed_value_swc":r["assessed_value_swc"],"value_band":r.get("value_band"),"valuation_tick":r.get("valuation_tick"),"source_dataset":ds})
-    add("insurance_policy", "SW-PROPERTY-VALUE-RISK-TAX-V1", rows(value_risk, "insurance_policies"),
+        lambda ds,r: {"premises_valuation_id":r["premises_valuation_id"],"property_id":r["property_id"],"building_id":r["building_id"],"premises_id":r["premises_id"],"valuation_basis":r.get("valuation_basis"),"assessed_value_swc":r["assessed_value_swc"],"value_band":r.get("value_band"),"valuation_tick":r.get("valuation_tick"),"source_dataset":ds})    add("insurance_policy", "SW-PROPERTY-VALUE-RISK-TAX-V1", rows(value_risk, "insurance_policies"),
         lambda ds,r: {"insurance_policy_id":r["insurance_policy_id"],"property_id":r["property_id"],"policyholder_organisation_id":r["policyholder_organisation_id"],"insured_property_manager_organisation_id":r["insured_property_manager_organisation_id"],"insurer_organisation_id":r["insurer_organisation_id"],"policy_type":r.get("policy_type"),"policy_status":r.get("policy_status"),"effective_tick":r.get("effective_tick"),"renewal_interval_days":r.get("renewal_interval_days"),"currency":r.get("currency"),"sum_insured_swc":r["sum_insured_swc"],"deductible_band":r.get("deductible_band"),"premium_calculation":r.get("premium_calculation"),"claim_history":r.get("claim_history"),"source_dataset":ds})
     add("insurance_coverage", "SW-PROPERTY-VALUE-RISK-TAX-V1", rows(value_risk, "insurance_coverages"),
         lambda ds,r: {"coverage_id":r["coverage_id"],"insurance_policy_id":r["insurance_policy_id"],"coverage_type":r.get("coverage_type"),"limit_swc":r["limit_swc"],"coverage_state":r.get("coverage_state"),"source_dataset":ds})
@@ -458,9 +456,14 @@ def main():
     parser.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1])
     parser.add_argument("--dsn",default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--expected-database",default="saltwater_test")
+    parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")
     args=parser.parse_args()
     if not args.dsn:
-        parser.error("Set DATABASE_URL to the disposable PostgreSQL connection.")
+        parser.error("Set DATABASE_URL to the target PostgreSQL connection.")
+    if args.expected_database == "neondb" and not args.allow_production:
+        parser.error("Production import refused: pass --allow-production explicitly after the production release gate.")
+    if args.allow_production and args.expected_database != "neondb":
+        parser.error("--allow-production is valid only with --expected-database neondb.")
     print(json.dumps(import_package(args.root,args.dsn,args.expected_database),indent=2,sort_keys=True))
 
 if __name__=="__main__":
