@@ -120,6 +120,7 @@ def run_full_bp02_acceptance_audit() -> dict:
                 "checks": route_corridors["checks"],
                 "passed_checks": route_corridors["passed_checks"],
                 "failed_checks": route_corridors["failed_checks"],
+                "exceptions": route_corridors["exceptions"],
                 "operational_approval": route_corridors["operational_approval"],
             },
         },
@@ -169,6 +170,27 @@ def main() -> None:
         "structural_checks": report["structural_checks"],
         "operational_gates": report["operational_gates"],
         "frontage_exception_dispositions": report["frontage_exception_resolution"]["disposition_counts"],
+        "layer_failure_details": {
+            "building_access": {
+                "failed_checks": report["layer_reports"]["building_access_candidates"]["failed_checks"],
+                "exception_counts": {
+                    key: len(value) for key, value
+                    in report["layer_reports"]["building_access_candidates"]["exceptions"].items()
+                },
+            },
+            "route_corridors": {
+                "failed_checks": report["layer_reports"]["route_corridor_candidates"]["failed_checks"],
+                "exception_counts": {
+                    key: len(value) for key, value
+                    in report["layer_reports"]["route_corridor_candidates"]["exceptions"].items()
+                },
+                "exception_samples": {
+                    key: value[:5] for key, value
+                    in report["layer_reports"]["route_corridor_candidates"]["exceptions"].items()
+                    if value
+                },
+            },
+        },
         "authority": report["authority"],
     }, indent=2, sort_keys=True))
     if report["structural_status"] != "PASS":
