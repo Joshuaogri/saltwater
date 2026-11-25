@@ -35,6 +35,10 @@ def _slug(value):
     return "".join(c for c in value.upper() if c.isalnum())[:22]
 
 
+def _route_slug(value):
+    return "".join(c for c in value.upper() if c.isalnum())
+
+
 def _address_number(parcel_id, road_id, counters):
     counters[road_id] += 1
     return counters[road_id] * 2 + (1 if counters[road_id] % 2 else 0)
@@ -275,7 +279,7 @@ def build_property_world(source: dict) -> dict:
             coords = connector["geometry_coordinates"]
             path_type = "shared_access_spur" if prox else ("service_drive" if "vehicle" in access["access_modes"] else "paved_pedestrian_path")
             route_rows.append({
-                "route_id": f"SWRTE-{"".join(ch for ch in access_id.upper() if ch.isalnum())}",
+                "route_id": f"SWRTE-{_route_slug(access_id)}",
                 "access_point_id": access_id, "property_id": pid,
                 "building_id": bid, "road_id": a.get("road_link_road_id"),
                 "road_segment_ids": a.get("road_link_segment_ids", []),
