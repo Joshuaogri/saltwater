@@ -100,18 +100,18 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: python scripts/migrate.py --apply
-      - name: Import all 14 compressed BP04 datasets into Neon
+      - name: Store all 14 compressed BP04 datasets in Neon without typed-row expansion
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GITHUB_SHA: ${{ github.sha }}
-        run: python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production
-      - name: Run production schema and import acceptance
+        run: python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production --archive-only
+      - name: Run production schema and archive-only acceptance
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           set -euo pipefail
           psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_archive_only_acceptance.sql
       - name: Verify production repeat-import idempotency and storage stability
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
