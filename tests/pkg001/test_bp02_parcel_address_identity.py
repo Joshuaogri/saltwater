@@ -77,7 +77,7 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
             build_identity_register(self.candidates, self.properties, broken, self.codes)
 
     def test_orphan_property_fails_closed(self):
-        with self.assertRaisesRegex(ValueError, "without exactly one mapped primary address"):
+        with self.assertRaisesRegex(ValueError, "address property reference is unresolved"):
             build_identity_register(self.candidates, self.properties[:1], self.addresses, self.codes)
 
 
