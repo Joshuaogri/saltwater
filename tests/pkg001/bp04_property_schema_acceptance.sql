@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 76 THEN
-    RAISE EXCEPTION 'expected 76 BP04 phase-1 through phase-8 tables, found %', v_count;
+  IF v_count <> 85 THEN
+    RAISE EXCEPTION 'expected 85 BP04 phase-1 through phase-9 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -123,6 +123,11 @@ BEGIN
     SELECT 1 FROM information_schema.tables
     WHERE table_schema='sw_property' AND table_name='import_dataset'
   ) THEN RAISE EXCEPTION 'import release ledger missing'; END IF;
-END $$;
 
-SELECT 'BP04 phase-1 through phase-8 schema acceptance passed' AS result;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_title_register' AND column_name='registered_proprietor_organisation_id' AND data_type='text')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_transaction_index' AND column_name='ownership_event_id' AND data_type='text')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='premises_lifecycle_event' AND column_name='lawful_use_certificate_id' AND data_type='text')
+  THEN RAISE EXCEPTION 'typed property title, transaction or lifecycle fields missing'; END IF;
+END $;
+
+SELECT 'BP04 phase-1 through phase-9 schema acceptance passed' AS result;
