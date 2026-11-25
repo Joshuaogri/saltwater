@@ -78,28 +78,28 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
         if not property_geom.covers(point):
             point_errors.append(access_id)
 
-        frontage_candidates = dossier_row.get("access_candidates", [])
-        frontage_points = {
+        connection_candidates = dossier_row.get("access_candidates", [])
+        connection_points = {
             row["access_candidate_id"]: Point(row["candidate_x_m"], row["candidate_y_m"])
-            for row in frontage_candidates
+            for row in connection_candidates
         }
-        if not frontage_points:
+        if not connection_points:
             access_with_no_frontage += 1
             if access.get("road_link_candidate_id") is not None:
                 link_errors.append(access_id)
             continue
 
         distances = sorted(
-            ((point.distance(frontage_point), candidate_id)
-             for candidate_id, frontage_point in frontage_points.items()),
+            ((point.distance(connection_point), candidate_id)
+             for candidate_id, connection_point in connection_points.items()),
             key=lambda item: (round(item[0], 9), item[1]),
         )
         nearest_distance, nearest_id = distances[0]
         linked_id = access.get("road_link_candidate_id")
-        if linked_id not in frontage_points:
+        if linked_id not in connection_points:
             link_errors.append(access_id)
         else:
-            linked_distance = point.distance(frontage_points[linked_id])
+            linked_distance = point.distance(connection_points[linked_id])
             if (abs(linked_distance - nearest_distance) > 0.00001 or linked_id != nearest_id
                     or access.get("road_link_candidate_distance_m") is None
                     or abs(access["road_link_candidate_distance_m"] - linked_distance) > 0.001):
@@ -127,9 +127,19 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
                     or access.get("road_link_status") != "UNRESOLVED_NO_FRONTAGE"
                     or access.get("road_link_candidate_distance_m") is not None):
                 status_errors.append(access_id)
-        elif (access.get("road_link_basis") != "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE"
-              or access.get("road_link_status") != "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE"):
-            status_errors.append(access_id)
+        else:
+            linked_candidate = next(
+                row for row in connection_candidates
+                if row["access_candidate_id"] == linked_id
+            )
+            expected_basis = (
+                "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE"
+                if linked_candidate.get("candidate_type") == "road_reserve_proximity_connection"
+                else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE"
+            )
+            if (access.get("road_link_basis") != expected_basis
+                    or access.get("road_link_status") != "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE"):
+                status_errors.append(access_id)
 
     distances = [value for values in distances_by_position.values() for value in values]
     distances.sort()
@@ -157,6 +167,10 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
             "building_candidates": len(assets["buildings"]),
             "building_boundary_access_candidates": len(access_rows),
             "access_candidates_without_parcel_frontage": access_with_no_frontage,
+            "point_contact_road_reserve_candidates": sum(
+                1 for row in assets["access_points"]
+                if row.get("road_link_contact_type") == "POINT_CONTACT_ONLY"
+            ),
             "assigned_frontage_link_mismatches": len(nearest_mismatches),
         },
         "measurements": {

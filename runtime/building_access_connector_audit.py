@@ -110,7 +110,9 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
         lengths.append(line.length)
         connectors.append({
             "candidate_access_point_id": aid,
-            "candidate_frontage_id": frontage_id,
+            "candidate_road_connection_id": frontage_id,
+            "road_connection_type": frontage.get("candidate_type"),
+            "road_connection_contact_type": frontage.get("contact_type"),
             "property_id": prop["candidate_property_id"],
             "building_id": building["candidate_building_id"],
             "straight_connector_length_m": round(line.length, 3),
@@ -158,6 +160,9 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
             "direct_geometry_feasible_unreviewed": status_counts["DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"],
             "direct_geometry_blocked_unreviewed": status_counts["DIRECT_GEOMETRY_BLOCKED_UNREVIEWED"],
             "no_frontage_candidate": status_counts["NO_FRONTAGE_CANDIDATE"],
+            "point_contact_road_reserve_candidates": sum(
+                1 for row in connectors if row["road_connection_contact_type"] == "POINT_CONTACT_ONLY"
+            ),
         },
         "measurements": {
             "connector_length_median": round(median, 3),

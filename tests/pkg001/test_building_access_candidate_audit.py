@@ -46,7 +46,10 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         for access in self.assets["access_points"]:
             if access["road_link_candidate_id"] is not None:
                 self.assertIsNotNone(access["road_link_candidate_distance_m"])
-                self.assertEqual(access["road_link_basis"], "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE")
+                self.assertIn(access["road_link_basis"], (
+                    "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE",
+                    "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE",
+                ))
                 self.assertEqual(access["road_link_status"], "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE")
 
     def test_a_wrong_parcel_frontage_link_fails(self):

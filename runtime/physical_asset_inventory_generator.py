@@ -312,8 +312,16 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                     linked_frontage_id = None
                     linked_frontage_point = None
 
+            linked_candidate = next(
+                (row for row in frontage_candidates
+                 if row["access_candidate_id"] == linked_frontage_id), None
+            )
             link_distance = (boundary_point.distance(linked_frontage_point)
                              if linked_frontage_point is not None else None)
+            proximity_link = bool(
+                linked_candidate
+                and linked_candidate.get("candidate_type") == "road_reserve_proximity_connection"
+            )
             access_code = f"SWA-{slug}-B01-A{access_no:02d}"
             access_name = _name("ACCESS_POINT", f"{parcel_id}:A{access_no:02d}", occupied)
             access_points.append({
@@ -327,8 +335,16 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 "point_m": [round(boundary_point.x, 6), round(boundary_point.y, 6)],
                 "point_status": "UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE",
                 "road_link_candidate_id": linked_frontage_id,
+                "road_link_candidate_type": linked_candidate.get("candidate_type") if linked_candidate else None,
+                "road_link_road_id": linked_candidate.get("road_id") if linked_candidate else None,
+                "road_link_segment_ids": linked_candidate.get("road_segment_ids", []) if linked_candidate else [],
+                "road_link_contact_type": linked_candidate.get("contact_type") if linked_candidate else None,
                 "road_link_candidate_distance_m": round(link_distance, 3) if link_distance is not None else None,
-                "road_link_basis": "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE" if linked_frontage_id else "NO_FRONTAGE_CANDIDATE",
+                "road_link_basis": (
+                    "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
+                    else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE" if linked_frontage_id
+                    else "NO_FRONTAGE_CANDIDATE"
+                ),
                 "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE" if linked_frontage_id else "UNRESOLVED_NO_FRONTAGE",
                 "source_ref": f"{SOURCE}:{building_code}:access:{access_no}",
                 "actor_ref": ACTOR, "confidence_code": "estimated",

@@ -136,6 +136,43 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
             })
 
 
+        # A parcel can touch a road reserve at a single point without having
+        # a frontage edge. Preserve that topology as a separate road-reserve
+        # proximity candidate; never mislabel it as a frontage.
+        if not frontage_rows:
+            proximity_choices = []
+            for segment_id, segment in sorted(segment_by_id.items()):
+                segment_edge = segment_polygons[segment_id].boundary
+                parcel_point, road_point = __import__(
+                    "shapely.ops", fromlist=["nearest_points"]
+                ).nearest_points(boundary, segment_edge)
+                distance = parcel_point.distance(road_point)
+                proximity_choices.append((
+                    round(distance, 9), segment_id, parcel_point, road_point, segment
+                ))
+            if proximity_choices:
+                distance, segment_id, parcel_point, road_point, segment = min(
+                    proximity_choices, key=lambda item: (item[0], item[1])
+                )
+                road_id = segment["road_id"]
+                access_rows.append({
+                    "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-PROX-{segment_id}",
+                    "frontage_candidate_id": None,
+                    "road_connection_candidate_id": f"PRC-{parcel['candidate_parcel_id']}-{segment_id}",
+                    "road_id": road_id,
+                    "road_segment_ids": [segment_id],
+                    "candidate_x_m": round(road_point.x, 6),
+                    "candidate_y_m": round(road_point.y, 6),
+                    "parcel_boundary_x_m": round(parcel_point.x, 6),
+                    "parcel_boundary_y_m": round(parcel_point.y, 6),
+                    "distance_to_road_reserve_m": round(distance, 6),
+                    "candidate_type": "road_reserve_proximity_connection",
+                    "contact_type": "POINT_CONTACT_ONLY" if distance <= 0.01 else "NEAREST_EDGE_PROXIMITY_NOT_FRONTAGE",
+                    "review_status": "UNREVIEWED_ROAD_RESERVE_PROXIMITY_CANDIDATE",
+                    "source_ref": f"{source['dataset_id']}:{road_id}:{segment_id}",
+                    "confidence_code": "estimated",
+                })
+
         unique_frontage_length = boundary.intersection(road_reserve.boundary).length
         water_contact = boundary.intersection(water_union.boundary).length if water_union else 0.0
         water_adjacencies = []

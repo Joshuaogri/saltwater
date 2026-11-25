@@ -46,12 +46,16 @@ class ParcelDossierGeometryAuditTests(unittest.TestCase):
             ("BPC-SWD08N1-018-02", "SWR-B1"),
         ):
             row = by_id[parcel_id]
-            self.assertTrue(row["frontages"], parcel_id)
-            self.assertTrue(row["access_candidates"], parcel_id)
-            self.assertIn(expected_road, {f["road_id"] for f in row["frontages"]})
+            self.assertEqual(row["frontages"], [])
+            self.assertEqual(len(row["access_candidates"]), 1)
+            connection = row["access_candidates"][0]
+            self.assertEqual(connection["candidate_type"], "road_reserve_proximity_connection")
+            self.assertEqual(connection["contact_type"], "POINT_CONTACT_ONLY")
+            self.assertEqual(connection["road_id"], expected_road)
+            self.assertLessEqual(connection["distance_to_road_reserve_m"], 0.01)
             self.assertEqual(
                 row["dossier"]["frontage_status"],
-                "ROAD_RESERVE_EDGE_CONTACT_CANDIDATE",
+                "NO_ROAD_EDGE_CONTACT_IDENTIFIED",
             )
 
     def test_frontage_cannot_reference_a_different_road(self):
