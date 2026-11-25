@@ -20,7 +20,7 @@ def build_property_rights(world, tenure, lifecycle, services, security):
     agreements=tenure["agreements"]
     access={x["access_point_id"]:x for x in world["access_points"]}
     routes={x["access_point_id"]:x for x in world["access_routes"]}
-    connections={x["property_id"]:[] for x in props}
+    connections={pid:[] for pid in props}
     for row in services["property_utility_connections"]:
         connections.setdefault(row["property_id"],[]).append(row)
     # Contractual occupancy rights are indexes to existing agreements, not new grants.
