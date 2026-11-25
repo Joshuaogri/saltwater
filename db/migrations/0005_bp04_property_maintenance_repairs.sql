@@ -1,5 +1,5 @@
 -- BP04 phase 3: maintenance, defects, repairs and asset lifecycle.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.maintenance_contractor_profile (
  organisation_id text PRIMARY KEY REFERENCES sw_property.organisation(organisation_id) DEFERRABLE INITIALLY DEFERRED,
