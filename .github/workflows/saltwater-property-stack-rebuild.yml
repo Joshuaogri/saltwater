@@ -5,6 +5,8 @@ on:
     paths:
       - "runtime/property_stack_rebuild.py"
       - "runtime/property_development_control_generator.py"
+      - "runtime/property_lifecycle_transactions_generator.py"
+      - "tests/pkg001/test_property_lifecycle_transactions_generator.py"
       - "tests/pkg001/test_property_development_control_generator.py"
       - "data/property/saltwater-property-world-v1.json.gz"
       - ".github/workflows/saltwater-property-stack-rebuild.yml"
