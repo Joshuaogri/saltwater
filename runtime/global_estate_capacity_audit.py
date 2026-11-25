@@ -1,6 +1,7 @@
 """Audit Saltwater's built-estate capacity against its global-hub canon."""
 from __future__ import annotations
 import hashlib, json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from collections import Counter, defaultdict
 from runtime.property_tenure_generator import _expand_columnar
@@ -84,7 +85,7 @@ def build_estate_capacity_audit(geography, world, businesses):
 
 def main():
     root=Path(__file__).resolve().parents[1]
-    def load(path): return _expand_columnar(json.loads((root/path).read_text(encoding="utf-8")))
+    def load(path): return _expand_columnar(load_json(root/path))
     geography=json.loads((root/"data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
     data=build_estate_capacity_audit(geography,load("data/property/saltwater-property-world-v1.json"),load("data/business/saltwater-business-registry-v1.json"))
     out=root/"data/property/saltwater-global-estate-capacity-audit-v1.json"
