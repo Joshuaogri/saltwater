@@ -1,0 +1,46 @@
+name: Saltwater Canonical Property World Build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/property_world_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/road_reserve_topology.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "tests/pkg001/test_property_world_generator.py"
+      - ".github/workflows/saltwater-property-world-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry dependency
+        run: python -m pip install "shapely==2.1.2"
+      - name: Generate canonical property world
+        run: python -m runtime.property_world_generator
+      - name: Run property hierarchy and access regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_property_world_generator.py" -v
+      - name: Persist generated textual game records on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/property/saltwater-property-world-v1.json
+          if git diff --cached --quiet; then
+            echo "Canonical property world is unchanged."
+            exit 0
+          fi
+          git commit -m "Generate canonical Saltwater property world"
+          git push origin HEAD:main
