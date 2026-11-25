@@ -300,3 +300,25 @@ No invoices, payments, cost ledger, capital commitments, residents, employees or
 - [Generator](runtime/property_maintenance_generator.py)
 - [Regression tests](tests/pkg001/test_property_maintenance_generator.py)
 - [Build workflow](.github/workflows/saltwater-property-maintenance-build.yml)
+
+
+## BP-04 — property security and access control (SW-PROPERTY-SECURITY-ACCESS-V1)
+
+The property security layer is generated from the canonical property, tenure and building-services records:
+- 804 door/gate records and 804 linked lock records, covering every canonical property/building access point.
+- 1,233 controlled physical key records across 1,233 mechanical key cylinders, with restricted keyway profiles, duplicate controls and organisation-managed key cabinets.
+- Electronic door-controller/reader devices for electronically controlled entrances.
+- 18,830 access zones across building entry, building security areas, premises and individual units.
+- 10,000 business-occupancy access groups, permission sets and organisation-level assignments linked to current leases/concessions and unit occupancy.
+- Door policies cover schedules, contractor/work-order authorisation, visitor passes, lost-credential revocation and emergency override audit.
+
+The model preserves free emergency egress and does not issue credentials to named people. Individual credential assignment, access logs and key issue events are runtime gameplay records, not fabricated baseline history. No residents, employees, person credentials, population records, invoices or financial postings are created.
+
+Generation and seven regression tests passed in [workflow 45579877325](https://github.com/Joshuaogri/saltwater/actions/runs/45579877325). The compact columnar dataset is 13,065,912 bytes.
+
+- [Security and access dataset](data/property/saltwater-property-security-access-v1.json)
+- [Generator](runtime/property_security_access_generator.py)
+- [Regression tests](tests/pkg001/test_property_security_access_generator.py)
+- [Build workflow](.github/workflows/saltwater-property-security-access-build.yml)
+
+No Neon upload or production seed write has occurred.
