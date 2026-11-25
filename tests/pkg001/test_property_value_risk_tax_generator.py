@@ -36,6 +36,19 @@ class PropertyValueRiskTaxTests(unittest.TestCase):
   policies={x["insurance_policy_id"] for x in self.data["insurance_policies"]}
   self.assertTrue(all(x["insurance_policy_id"] in policies for x in self.data["insurance_coverages"]))
   self.assertEqual(len(self.data["insurance_coverages"]),3*len(policies))
+ def test_all_valuation_register_identifiers_are_unique(self):
+  keys={
+   "condition_assessments":"condition_assessment_id","land_valuations":"land_valuation_id",
+   "improvement_valuations":"improvement_valuation_id","asset_valuations":"asset_valuation_id",
+   "premises_valuations":"premises_valuation_id","insurance_policies":"insurance_policy_id",
+   "insurance_coverages":"coverage_id","property_risks":"property_risk_id",
+   "insurer_organisations":"organisation_id","property_tax_assessments":"property_tax_assessment_id",
+   "tax_exemption_reviews":"tax_exemption_review_id","tax_rules":"tax_rule_id"
+  }
+  for collection,key in keys.items():
+   values=[row[key] for row in self.data[collection]]
+   self.assertEqual(len(values),len(set(values)),f"{collection} contains duplicate {key}")
+   self.assertTrue(all(values),f"{collection} contains empty {key}")
  def test_no_person_or_financial_transactions(self):
   s=self.data["summary"]
   for key in ("person_records_created","population_records_created","claims_created","financial_postings_created","invoices_created","payments_created"): self.assertEqual(s[key],0)
