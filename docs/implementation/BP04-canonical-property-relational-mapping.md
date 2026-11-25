@@ -142,7 +142,7 @@ This makes the compressed package the authoritative stored copy while retaining 
 
 ## Verified archive-only storage benchmark — PostgreSQL 16 and 18 (2026-11-25)
 
-The archive-only release workflow passed on both PostgreSQL 16 and PostgreSQL 18 in GitHub Actions run [45671765479](https://github.com/Joshuaogri/saltwater/actions/runs/45671765479), commit `d79d32510227868ed7e99d85187b5c40a2ec01c0`.
+The archive-only release workflow passed on both PostgreSQL 16 and PostgreSQL 18 in GitHub Actions run [45672135316](https://github.com/Joshuaogri/saltwater/actions/runs/45672135316), commit `a1836b83df980824a5291d7ed67b89cba5c624e9`.
 
 | Measure | PostgreSQL 16 | PostgreSQL 18 (closest Neon benchmark) |
 |---|---:|---:|
