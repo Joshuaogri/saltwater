@@ -84,6 +84,22 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         self.assertGreaterEqual(len(spurs), 4)
         self.assertTrue(all(r["fictional_access_basis"] == "constructed_in_game_route" for r in spurs))
 
+
+    def test_multi_building_campuses_have_distinct_building_numbers_and_access(self):
+        grouped = {}
+        for building in self.world["buildings"]:
+            grouped.setdefault(building["property_id"], []).append(building)
+        campuses = [rows for rows in grouped.values() if len(rows) > 1]
+        self.assertGreater(len(campuses), 0)
+        routes = {x["access_point_id"] for x in self.world["access_routes"]}
+        access = {x["access_point_id"] for x in self.world["access_points"]}
+        self.assertEqual(routes, access)
+        for rows in campuses:
+            self.assertEqual(len({x["building_number"] for x in rows}), len(rows))
+            self.assertEqual(len({x["building_id"] for x in rows}), len(rows))
+            for row in rows:
+                self.assertGreaterEqual(len(row["access_point_ids"]), 2)
+
     def test_unit_occupancy_does_not_create_people(self):
         self.assertEqual(self.world["summary"]["population_created"], 0)
         self.assertEqual(self.world["summary"]["unassigned_resident_count"], 0)
@@ -113,7 +129,7 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         self.assertEqual(document["schema"], "saltwater-canonical-property-world-columnar/1.0")
         self.assertEqual(document["metadata"]["summary"]["property_count"], 420)
         self.assertEqual(len(document["tables"]["units"]["rows"]), self.world["summary"]["unit_count"])
-        self.assertEqual(len(document["tables"]["access_routes"]["rows"]), 804)
+        self.assertEqual(len(document["tables"]["access_routes"]["rows"]), self.world["summary"]["constructed_access_route_count"])
         self.assertGreater(path.stat().st_size, 0)
 
     def test_textual_storage_format_is_columnar_and_lossless_for_counts(self):
