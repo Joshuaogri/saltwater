@@ -173,3 +173,16 @@ The BP04 archive-only production release completed successfully in [workflow run
 This supersedes earlier statements in this plan that Neon still contained only five foundation tables or that no BP04 production upload had occurred. The storage model remains compressed archive-only; do not restore the previous typed-row import plan or re-upload the package.
 
 **Full BP04 division acceptance did not pass.** The remaining gaps are documented in [BP04 full acceptance audit](test-evidence/BP04-full-acceptance-audit-2026-11-25.md): BP-02 canonical address/parcel binding, property/business/organisation lookup by stable identifiers, comprehensive cross-register acceptance, and authorised police-facing access. Continue on `main`; use disposable PostgreSQL for tests. No additional Neon writes without fresh explicit authorisation.
+
+
+## Gameplay lookup implementation — 2026-11-25
+
+The compressed archive reader now has a gameplay-facing, process-local lookup layer in [`runtime/bp04_lookup.py`](../../runtime/bp04_lookup.py). It indexes stable property, address, building, premises, unit, access-point, business and establishment identities; supports bounded partial search for addresses, businesses and properties; and resolves property, address and business dossiers without persisting duplicate static rows.
+
+- Dedicated synthetic contract tests passed as part of [run 45678245109](https://github.com/Joshuaogri/saltwater/actions/runs/45678245109) on PostgreSQL 16 and 18.
+- Integration tests against the actual imported compressed archives passed on both PostgreSQL versions in [run 45678573423](https://github.com/Joshuaogri/saltwater/actions/runs/45678573423).
+- Verified indexed counts: 420 properties, 420 addresses, 1,474 buildings, 27,730 premises, 180,733 units, 2,984 access points, 10,000 businesses and 10,000 establishments.
+- Real archive address search resolved to property/building records; business search resolved to establishment, address and property records.
+- The lookup object retains selected process-local identity/navigation fields only. It does not create Neon typed rows, change the archive package or perform Neon writes.
+
+This completes the bounded lookup-layer task. It does not activate BP-02 canonical parcel/address identity, and it is not yet connected to the player command dispatcher or an authorised police-facing adapter. Full BP04 acceptance remains blocked on those integrations and the outstanding cross-register/operational acceptance. See [BP04 gameplay lookup](BP04-gameplay-lookup.md) and the [full acceptance audit](test-evidence/BP04-full-acceptance-audit-2026-11-25.md).
