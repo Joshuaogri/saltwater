@@ -8,8 +8,8 @@ from runtime.property_world_generator import to_columnar_document
 
 GENERATOR = "SW-PROPERTY-LIFECYCLE-TRANSACTIONS-001"
 
-def _slug(value):
-    return "".join(c for c in str(value).upper() if c.isalnum())[:24]
+def _stable_key(value):
+    return hashlib.sha256(str(value).encode("utf-8")).hexdigest()[:16].upper()
 
 def build_property_lifecycle(world, tenure, development):
     properties = {x["property_id"]: x for x in world["properties"]}
@@ -29,7 +29,7 @@ def build_property_lifecycle(world, tenure, development):
     for pid, prop in sorted(properties.items()):
         interest = interests[pid]
         owner = interest["owner_organisation_id"]
-        title_id = f"SWTITLE-{_slug(pid)}"
+        title_id = f"SWTITLE-{_stable_key(pid)}"
         title_register.append({
             "title_register_id": title_id, "property_id": pid,
             "current_ownership_interest_id": interest["ownership_interest_id"],
@@ -56,7 +56,7 @@ def build_property_lifecycle(world, tenure, development):
         # Ownership changes remain authoritative in the tenure dataset. This table is
         # a transaction index referencing those source events, never a second event log.
         for event in sorted(events_by_property.get(pid, []), key=lambda x: (x.get("effective_year") or 0, x["ownership_event_id"])):
-            event_key = hashlib.sha256(event["ownership_event_id"].encode()).hexdigest()[:12]
+            event_key = hashlib.sha256(event["ownership_event_id"].encode()).hexdigest()[:16]
             instrument_id = f"SWTI-{event_key}"
             title_instruments.append({
                 "title_instrument_id": instrument_id, "property_id": pid,
@@ -93,7 +93,7 @@ def build_property_lifecycle(world, tenure, development):
     for bid, building in sorted(buildings.items()):
         pid = building["property_id"]
         building_events.append({
-            "lifecycle_event_id": f"SWBLE-{_slug(bid)}-BASE",
+            "lifecycle_event_id": f"SWBLE-{_stable_key(bid)}-BASE",
             "property_id": pid, "building_id": bid,
             "event_type": "existing_building_baseline_registration",
             "effective_year": building.get("construction_year"), "effective_tick": 0,
@@ -106,7 +106,7 @@ def build_property_lifecycle(world, tenure, development):
     premises_events = []
     for prid, item in sorted(premises.items()):
         premises_events.append({
-            "lifecycle_event_id": f"SWPRE-LE-{_slug(prid)}",
+            "lifecycle_event_id": f"SWPRE-LE-{_stable_key(prid)}",
             "property_id": item["property_id"], "building_id": item["building_id"],
             "premises_id": prid, "event_type": "existing_premises_baseline_registration",
             "effective_tick": 0, "event_status": "existing_asset_baseline",
