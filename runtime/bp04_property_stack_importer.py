@@ -45,10 +45,21 @@ def read_document(path: Path) -> tuple[dict, bytes]:
         raise ValueError(f"Malformed columnar dataset: {path}")
     return doc, raw
 
+class SourceRows(list):
+    """Expanded source rows retaining their exact source collection identity."""
+    def __init__(self, collection_name: str, values=()):
+        super().__init__(values)
+        self.collection_name = collection_name
+
+
+def source_collection_key(dataset: str, source_rows: list[dict], target_table: str) -> str:
+    return f"{dataset}.{getattr(source_rows, 'collection_name', target_table)}"
+
+
 def rows(doc: dict, name: str) -> list[dict]:
     table = doc["tables"].get(name)
     if table is None:
-        return []
+        return SourceRows(name)
     columns, values = table.get("columns"), table.get("rows")
     if not isinstance(columns, list) or not isinstance(values, list):
         raise ValueError(f"Malformed columnar collection: {name}")
@@ -57,7 +68,7 @@ def rows(doc: dict, name: str) -> list[dict]:
         if len(values_row) != len(columns):
             raise ValueError(f"{name}[{index}] has {len(values_row)} values for {len(columns)} columns")
         result.append(dict(zip(columns, values_row)))
-    return result
+    return SourceRows(name, result)
 
 def pick(row: dict, *keys: str, default=None):
     for key in keys:
@@ -103,7 +114,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     counts: dict[str, int] = {}
 
     def add(table: str, dataset: str, source_rows: list[dict], mapper):
-        counts[f"{dataset}.{table}"] = len(source_rows)
+        counts[source_collection_key(dataset, source_rows, table)] = len(source_rows)
         batches.setdefault(table, []).extend(mapper(dataset, row) for row in source_rows)
 
     def mapped(ds, row, columns, booleans=()):
@@ -120,6 +131,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     maintenance = documents["SW-PROPERTY-MAINTENANCE-V1"]
     security = documents["SW-PROPERTY-SECURITY-ACCESS-V1"]
     value_risk = documents["SW-PROPERTY-VALUE-RISK-TAX-V1"]
+    business_operations = documents["SW-BUSINESS-OPERATIONS-V1"]
 
     # The tenure register is the superset: it already contains every property owner organisation plus historical owners and managers.
     add("organisation", "SW-PROPERTY-TENURE-V1", rows(tenure, "organisations"),
@@ -159,6 +171,12 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         lambda ds,r: {"agreement_id":r["agreement_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r["unit_id"],"landlord_organisation_id":r.get("landlord_organisation_id"),"tenant_business_id":r.get("tenant_business_id"),"operator_business_id":r.get("operator_business_id"),"establishment_id":r.get("establishment_id"),"agreement_type":r["agreement_type"],"commencement_year":r.get("commencement_year"),"expiry_year":r.get("expiry_year"),"agreement_status":r["agreement_status"],"source_dataset":ds})
     add("occupancy", "SW-PROPERTY-TENURE-V1", rows(tenure, "occupancies"),
         lambda ds,r: {"occupancy_id":r["occupancy_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r["unit_id"],"occupant_business_id":r.get("occupant_business_id"),"establishment_id":r.get("establishment_id"),"agreement_id":r.get("agreement_id"),"occupant_type":r["occupant_type"],"occupancy_status":r["occupancy_status"],"effective_from_year":r.get("effective_from_year"),"effective_to_year":r.get("effective_to_year"),"source_dataset":ds})
+
+    # Business opening, service and delivery schedules support time-aware dispatch and scene access.
+    add("business_weekly_profile", "SW-BUSINESS-OPERATIONS-V1", rows(business_operations, "weekly_profiles"),
+        lambda ds,r: {"business_id":r["business_id"],"establishment_id":r["establishment_id"],"weekly_open_days":r["weekly_open_days"],"weekly_closed_days":r["weekly_closed_days"],"has_continuous_service":boolean_value(r["has_continuous_service"]),"has_appointment_service":boolean_value(r["has_appointment_service"]),"valid_from_tick":r["valid_from_tick"],"source_dataset":ds})
+    add("business_daily_schedule", "SW-BUSINESS-OPERATIONS-V1", rows(business_operations, "daily_schedules"),
+        lambda ds,r: {"business_schedule_id":r["business_schedule_id"],"business_id":r["business_id"],"establishment_id":r["establishment_id"],"day_of_week":r["day_of_week"],"day_number":r["day_number"],"operating_status":r["operating_status"],"is_open_to_customers":boolean_value(r["is_open_to_customers"]),"customer_open_time":r.get("customer_open_time"),"customer_close_time":r.get("customer_close_time"),"service_window":r["service_window"],"staff_shift_pattern":r["staff_shift_pattern"],"delivery_window_start":r.get("delivery_window_start"),"delivery_window_end":r.get("delivery_window_end"),"emergency_contact_route":r["emergency_contact_route"],"valid_from_tick":r["valid_from_tick"],"valid_to_tick":r.get("valid_to_tick"),"source_generator":r["source_generator"],"source_dataset":ds})
 
     # Utility providers extend the canonical organisation registry; do not assume
     # every service provider was already present in the property-tenure register.
@@ -226,7 +244,6 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     for row in permission_rows:
         for index, zone_id in enumerate(row.get("permitted_zone_ids",[]),1):
             grant_rows.append({"grant_id":"SWPZG-"+hashlib.sha256((row["permission_set_id"]+"|"+zone_id).encode()).hexdigest()[:24].upper(),"permission_set_id":row["permission_set_id"],"access_zone_id":zone_id,"grant_order":index,"source_dataset":"SW-PROPERTY-SECURITY-ACCESS-V1"})
-    counts["SW-PROPERTY-SECURITY-ACCESS-V1.permission_zone_grant"]=len(grant_rows)
     batches.setdefault("permission_zone_grant",[]).extend(grant_rows)
     add("organisation_access_assignment", "SW-PROPERTY-SECURITY-ACCESS-V1", rows(security, "organisation_access_assignments"),
         lambda ds,r: {"access_assignment_id":r["access_assignment_id"],"access_group_id":r["access_group_id"],"business_id":r.get("business_id"),"occupancy_id":r.get("occupancy_id"),"permission_set_id":r["permission_set_id"],"assignment_basis":r.get("assignment_basis"),"assignment_status":r.get("assignment_status"),"person_credentials_created":r.get("person_credentials_created",0),"source_dataset":ds})
@@ -335,7 +352,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                            OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count
                            OR current.mapping_status IS DISTINCT FROM excluded.mapping_status""",
                         (release_id,dataset_id,collection_name,collection_rows,collection_loaded,collection_status))
-            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility","maintenance_contractor_profile","maintenance_plan","maintenance_cycle","maintenance_inspection","maintenance_defect","maintenance_work_request","maintenance_work_order","maintenance_work_order_line","maintenance_material_issue","maintenance_event","equipment_warranty","equipment_replacement_forecast","building_emergency_procedure","security_door","security_lock","key_cylinder","physical_key","security_device","access_zone","access_group","permission_set","permission_zone_grant","organisation_access_assignment","key_cabinet","access_policy","insurer_profile","property_condition_assessment","land_valuation","improvement_valuation","asset_valuation","premises_valuation","insurance_policy","insurance_coverage","property_risk","property_tax_assessment","tax_exemption_review","property_tax_rule"]
+            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility","maintenance_contractor_profile","maintenance_plan","maintenance_cycle","maintenance_inspection","maintenance_defect","maintenance_work_request","maintenance_work_order","maintenance_work_order_line","maintenance_material_issue","maintenance_event","equipment_warranty","equipment_replacement_forecast","building_emergency_procedure","security_door","security_lock","key_cylinder","physical_key","security_device","access_zone","access_group","permission_set","permission_zone_grant","organisation_access_assignment","key_cabinet","access_policy","insurer_profile","property_condition_assessment","land_valuation","improvement_valuation","asset_valuation","premises_valuation","insurance_policy","insurance_coverage","property_risk","property_tax_assessment","tax_exemption_review","property_tax_rule","business_weekly_profile","business_daily_schedule"]
             for table in table_order:
                 entries = batches.get(table, [])
                 if not entries:
@@ -345,7 +362,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                     raise ValueError(f"Inconsistent mapped columns for {table}")
                 placeholders = ",".join(["%s"] * len(columns))
                 col_sql = ",".join(f'"{c}"' for c in columns)
-                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id","building_system_id","utility_connection_id","organisation_id","utility_account_id","meter_id","equipment_id","inspection_id","service_responsibility_id","maintenance_contractor_profile_id","maintenance_plan_id","maintenance_cycle_id","inspection_id","defect_id","work_request_id","work_order_id","work_order_line_id","material_issue_id","maintenance_event_id","warranty_id","replacement_plan_id","procedure_id","door_id","lock_id","cylinder_id","key_id","security_device_id","access_zone_id","access_group_id","permission_set_id","grant_id","access_assignment_id","key_cabinet_id","access_policy_id","condition_assessment_id","land_valuation_id","improvement_valuation_id","asset_valuation_id","premises_valuation_id","insurance_policy_id","coverage_id","property_risk_id","tax_exemption_review_id","tax_rule_id"})
+                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id","building_system_id","utility_connection_id","organisation_id","utility_account_id","meter_id","equipment_id","inspection_id","service_responsibility_id","maintenance_contractor_profile_id","maintenance_plan_id","maintenance_cycle_id","inspection_id","defect_id","work_request_id","work_order_id","work_order_line_id","material_issue_id","maintenance_event_id","warranty_id","replacement_plan_id","procedure_id","door_id","lock_id","cylinder_id","key_id","security_device_id","access_zone_id","access_group_id","permission_set_id","grant_id","access_assignment_id","key_cabinet_id","access_policy_id","condition_assessment_id","land_valuation_id","improvement_valuation_id","asset_valuation_id","premises_valuation_id","insurance_policy_id","coverage_id","property_risk_id","tax_exemption_review_id","tax_rule_id","business_schedule_id"})
                 pk = {
                     "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id","building_system":"building_system_id","utility_connection":"utility_connection_id","utility_provider_profile":"organisation_id","utility_account":"utility_account_id","meter":"meter_id","equipment_asset":"equipment_id","system_inspection":"inspection_id","business_utility_responsibility":"service_responsibility_id", "maintenance_contractor_profile":"organisation_id","maintenance_plan":"maintenance_plan_id","maintenance_cycle":"maintenance_cycle_id","maintenance_inspection":"inspection_id","maintenance_defect":"defect_id","maintenance_work_request":"work_request_id","maintenance_work_order":"work_order_id","maintenance_work_order_line":"work_order_line_id","maintenance_material_issue":"material_issue_id","maintenance_event":"maintenance_event_id","equipment_warranty":"warranty_id","equipment_replacement_forecast":"replacement_plan_id","building_emergency_procedure":"procedure_id", "security_door":"door_id","security_lock":"lock_id","key_cylinder":"cylinder_id","physical_key":"key_id","security_device":"security_device_id","access_zone":"access_zone_id","access_group":"access_group_id","permission_set":"permission_set_id","permission_zone_grant":"grant_id","organisation_access_assignment":"access_assignment_id","key_cabinet":"key_cabinet_id","access_policy":"access_policy_id", "insurer_profile":"organisation_id","property_condition_assessment":"condition_assessment_id","land_valuation":"land_valuation_id","improvement_valuation":"improvement_valuation_id","asset_valuation":"asset_valuation_id","premises_valuation":"premises_valuation_id","insurance_policy":"insurance_policy_id","insurance_coverage":"coverage_id","property_risk":"property_risk_id","property_tax_assessment":"property_tax_assessment_id","tax_exemption_review":"tax_exemption_review_id","property_tax_rule":"tax_rule_id"
                 }[table]
