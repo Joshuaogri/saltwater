@@ -702,3 +702,11 @@ The 31.57 MB figure is incremental database growth in the disposable PostgreSQL 
 
 
 **Safe default:** the importer now defaults to `compressed_archive_only` even when no storage flag is supplied. The previous expanded representation is available only through the explicit `--typed-relational` option for disposable benchmarking; the importer itself rejects typed-relational mode when the target database is `neondb`. The production workflow also explicitly passes `--archive-only`.
+
+## BP-02 frontage exception dispositions and full acceptance audit
+
+The five P1 BP04 address/frontage exceptions have now been examined against the SW-GEO-V1 road-reserve and parcel-boundary candidate geometry. Three have a single geometric parcel-frontage candidate (North Coast Road for two parcels; South Coast Road for one), but all three sites have no candidate building, so the original source address road is preserved and no address correction is promoted. The other two have only point-contact proximity to Customs Bridge / Harbour Bridge road reserves; bridge point contact is not street frontage. These are explicitly classified as bridge-access design blockers, not silently converted to street addresses.
+
+New implementation: `runtime/bp02_address_frontage_exception_resolution.py`. A consolidated, read-only BP-02 acceptance audit is implemented in `runtime/bp02_full_acceptance_audit.py`; it combines city/road geometry, all 420 parcel dossiers, address/property references, 768 building-boundary access candidates, connector topology and route-corridor candidate checks. Its CI run is linked from the BP-02 acceptance audit record. Passing structural geometry checks does not approve canonical addresses or operational access.
+
+Current release remains blocked: SW-GEO-V1 is still a design baseline; 420 canonical operational address matches and operational access-point approvals are absent. No Neon writes or property archive uploads were performed.
