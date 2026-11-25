@@ -45,6 +45,7 @@ jobs:
       - name: Run complete BP-02 parcel, address and access-point acceptance audit
         run: python -m runtime.bp02_full_acceptance_audit
       - name: Upload complete BP-02 acceptance report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bp02-full-parcel-address-access-acceptance
