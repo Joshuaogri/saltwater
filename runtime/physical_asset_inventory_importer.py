@@ -447,9 +447,6 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 if progress_callback:
                     progress_callback("building_levels", round((time.perf_counter()-started)*1000, 3))
 
-                if progress_callback:
-                    progress_callback("physical_measurements", round((time.perf_counter()-started)*1000, 3))
-
                 _execute_many(cur, """
                     INSERT INTO sw_property.building_component
                     (building_id,level_id,component_type,material_code,condition_code,source_ref,actor_ref,effective_from_tick,reason)
