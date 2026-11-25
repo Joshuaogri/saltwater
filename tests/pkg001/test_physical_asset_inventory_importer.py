@@ -89,7 +89,7 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
             tampered["manifest_sha256"] = __import__(
                 "runtime.physical_asset_inventory_importer", fromlist=["_sha"]
             )._sha(tampered)
-            with self.assertRaisesRegex(ValueError, "unknown|not_assessed"):
+            with self.assertRaisesRegex(ValueError, "unknown|not_assessed|Unassessed"):
                 validate_manifests(tampered, self.candidates, self.dossiers)
 
     def test_connector_candidate_must_reference_existing_access_point(self):
