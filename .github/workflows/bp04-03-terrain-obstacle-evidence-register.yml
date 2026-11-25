@@ -1,0 +1,33 @@
+name: BP04-03 Terrain Evidence Intake and Review Register
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/terrain_obstacle_source_model.py"
+      - "runtime/terrain_obstacle_evidence_register.py"
+      - "tests/pkg001/test_terrain_obstacle_evidence_register.py"
+      - ".github/workflows/bp04-03-terrain-obstacle-evidence-register.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evidence-register:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run evidence intake and review regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_terrain_obstacle_evidence_register.py" -v
+      - name: Generate empty source-linked evidence register
+        run: python -m runtime.terrain_obstacle_evidence_register
+      - name: Upload read-only evidence register
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-terrain-obstacle-evidence-register
+          path: bp04-03-terrain-obstacle-evidence-register.json
+          if-no-files-found: error
+          retention-days: 14
