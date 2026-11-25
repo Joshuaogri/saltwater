@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 65 THEN
-    RAISE EXCEPTION 'expected 65 BP04 phase-1+2+3+4+5 tables, found %', v_count;
+  IF v_count <> 66 THEN
+    RAISE EXCEPTION 'expected 66 BP04 phase-1+2+3+4+5+6 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -93,6 +93,14 @@ BEGIN
     SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
       AND conname='insurance_coverage_insurance_policy_id_fkey' AND condeferrable
   ) THEN RAISE EXCEPTION 'valuation and insurance lineage foreign keys missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='import_dataset'
+      AND column_name='mapping_status' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.tables WHERE table_schema='sw_property'
+      AND table_name='source_dataset_collection'
+  ) THEN RAISE EXCEPTION 'source collection mapping ledger missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
