@@ -4,6 +4,7 @@ BEGIN
   IF (SELECT count(*) FROM sw_police.resource_model)<>15
      OR (SELECT count(*) FROM sw_police.resource_asset)<>527
      OR (SELECT count(*) FROM sw_police.resource_asset_event WHERE event_kind='registered')<>527
+     OR (SELECT count(*) FROM sw_police.resource_asset_event WHERE event_kind='lifecycle_changed')<>500
      OR (SELECT count(*) FROM sw_police.resource_allocation)<>500
      OR (SELECT count(*) FROM sw_police.resource_allocation_event)<>500 THEN
     RAISE EXCEPTION 'initial police resource catalogue, assets or allocations do not reconcile';
