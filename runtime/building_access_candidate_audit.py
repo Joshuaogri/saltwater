@@ -27,12 +27,15 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
 
     property_source_ids = [row["source_candidate_parcel_id"] for row in assets["properties"]]
     access_ids = [row["candidate_access_point_id"] for row in access_rows]
+    generation = assets.get("generation", {})
     identity_ok = (
-        len(property_by_id) == len(assets["properties"]) == 420
-        and len(building_by_id) == len(assets["buildings"]) == 384
-        and len(access_ids) == len(set(access_ids)) == 768
-        and len(set(property_source_ids)) == 420
+        len(property_by_id) == len(assets["properties"]) == generation.get("property_count")
+        and len(building_by_id) == len(assets["buildings"]) == generation.get("building_count")
+        and len(access_ids) == len(set(access_ids)) == generation.get("access_point_candidate_count")
+        and len(set(property_source_ids)) == len(property_source_ids)
+        and len(property_source_ids) == len(parcel_by_id)
         and set(property_source_ids) == set(parcel_by_id)
+        and generation.get("access_connector_candidate_count") == len(assets.get("access_connectors", []))
     )
 
     hierarchy_errors, footprint_errors, point_errors = [], [], []
