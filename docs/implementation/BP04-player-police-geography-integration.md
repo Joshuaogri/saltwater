@@ -1,6 +1,6 @@
 # BP04 player, police and BP-02 geography integration
 
-**Status:** player command integration and officer-authorised adapter implemented on `main`; regression workflow passed on PostgreSQL-independent test fixtures. BP-02 canonical parcel/address binding remains blocked because no canonical parcel or address identities exist in the current BP-02 source map.
+**Status:** player command integration and officer-authorised adapter implemented on `main`; stable SWP/SWA design identities and the 420-address review register are generated and tested. Operational BP-02 canonical parcel/address binding remains blocked pending geography approval.
 
 ## 1. Player command surface
 
@@ -143,9 +143,33 @@ Two addresses have no frontage-road candidate:
 
 For a single frontage-road candidate, the register exposes a separate `address_road_candidate_id`; the original source road remains unchanged. This is a geometric design candidate only, not a canonical road correction, legal frontage, entrance or proof of access. The five exceptions remain open for BP-02 spatial/address review.
 
+### Building-access evidence cross-check
+
+The same reconciliation now compares each source address against the generated building-boundary access candidates, not just parcel-boundary frontage:
+
+| Measure | Result |
+|---|---:|
+| Property sites | 420 |
+| Building design candidates | 1,474 |
+| Building-boundary access-point candidates | 2,948 |
+| Property sites with candidate buildings and road-access evidence | 384 |
+| Source road matches the building-access road candidate set | 384/384 |
+| Property sites with no generated building candidates | 36 |
+| Unresolved building-to-road candidate links | 0 |
+
+The two addresses with no parcel-boundary frontage candidate are not left without road context: both have building-access road-reserve proximity candidates matching their source road:
+- `SWADDR-BPCSWD04N100402` → `SWR-B2`
+- `SWADDR-BPCSWD08N101802` → `SWR-B1`
+
+Both are `road_reserve_proximity_connection` with `POINT_CONTACT_ONLY`. They are proximity evidence, not frontage edges, entrances, traversable paths or legal/operational access.
+
+The three source-road/frontage conflicts are all on property sites with no generated building candidates. Their alternatives remain `SWR-H17` (two addresses) and `SWR-H01` (one address); no source road is overwritten.
+
+The 420-address review register classifies the records as P1=5 (three road conflicts plus two no-frontage cases), P2=33 (no-building sites not already classified P1), and P3=382 (source-context-coherent candidates). There are 36 no-building sites in total, three of which also have a P1 frontage conflict. The register remains an audit queue, not an approval.
+
 ## 4. Verification and write boundary
 
-The expanded BP04 player/police/geography workflow passed on `main` in [run 45686302214](https://github.com/Joshuaogri/saltwater/actions/runs/45686302214): 108 tests passed across player commands/runtime, ChatGPT host boundary, officer authorization, lookup, BP02 identity generation, address-frontage matching and geography reconciliation. The live-source reconciliation completed with 420/420 stable design parcel identities, 420/420 stable design address identities, 415 source-road/frontage candidate matches, 3 single-alternative road candidates flagged for review, 2 no-frontage cases and 418/420 candidate road references resolved. The authenticated player application composition test also passed in the Python-kernel job of [run 45681404048](https://github.com/Joshuaogri/saltwater/actions/runs/45681404048). The separate disposable-PostgreSQL job in that PKG-001 run remains blocked by an unrelated syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; it is not a failure of the BP04 lookup tests.
+The expanded BP04 player/police/geography workflow passed on `main` in [run 45688271976](https://github.com/Joshuaogri/saltwater/actions/runs/45688271976): 120 tests passed across player commands/runtime, ChatGPT host boundary, officer authorization, lookup, BP02 identity generation, building-access reconciliation, address-frontage matching and the address review register. The live-source reconciliation completed with 420/420 stable design parcel identities, 420/420 stable design address identities, 415 source-road/frontage candidate matches, 3 single-alternative road candidates flagged for review, 2 no-frontage cases, 384/384 building-access source-road matches and 36 property sites without generated building candidates. The authenticated player application composition test also passed in the Python-kernel job of [run 45681404048](https://github.com/Joshuaogri/saltwater/actions/runs/45681404048). The separate disposable-PostgreSQL job in that PKG-001 run remains blocked by an unrelated syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; it is not a failure of the BP04 lookup tests.
 
 The geography audit reports `database_write_performed: false`. No Neon writes, policy-grant writes, migrations, address promotions or archive re-uploads were performed. The separate PKG-001 and database-migration workflows remain blocked by the unrelated existing syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; the dedicated BP04 integration workflow passed.
 
