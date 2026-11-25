@@ -1,21 +1,129 @@
-name: Saltwater Neon production migration gate
+name: Saltwater BP04 production Neon release
 
-# Deliberately manual and non-deploying. Production migration automation remains
-# disabled until the exact baseline-adoption and operation-specific approval
-# process is implemented and approved. Repository pushes never connect to Neon.
+# Manual-only production release. No push, schedule or automatic deployment trigger.
+# Requires an exact confirmation value and a recorded pre-release Neon restore point.
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_release:
+        description: Type/select APPLY_BP04_TO_NEON to execute the BP04 production release
+        required: true
+        type: choice
+        options:
+          - NO
+          - APPLY_BP04_TO_NEON
+        default: NO
+      restore_point_reference:
+        description: Neon restore point / backup reference created before this release
+        required: true
+        type: string
 
 permissions:
   contents: read
 
+concurrency:
+  group: saltwater-neon-bp04-production
+  cancel-in-progress: false
+
 jobs:
-  production-deployment-disabled:
+  validate-release-request:
     runs-on: ubuntu-latest
     steps:
-      - name: Refuse unapproved production deployment
+      - name: Require main branch and explicit release confirmation
+        env:
+          REF: ${{ github.ref }}
+          CONFIRM: ${{ inputs.confirm_release }}
+          RESTORE_POINT: ${{ inputs.restore_point_reference }}
         run: |
-          echo "::error::Automatic Neon production deployment is disabled."
-          echo "A reviewed, exact migration operation and explicit user approval are required."
-          exit 1
+          set -euo pipefail
+          test "$REF" = "refs/heads/main" || { echo "::error::Production release is permitted from main only."; exit 1; }
+          test "$CONFIRM" = "APPLY_BP04_TO_NEON" || { echo "::error::Explicit APPLY_BP04_TO_NEON confirmation is required."; exit 1; }
+          test -n "$RESTORE_POINT" || { echo "::error::A pre-release Neon restore point reference is required."; exit 1; }
+
+  deploy-bp04:
+    needs: validate-release-request
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL client and importer driver
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Verify target, restore reference, source commit and exact compressed package digest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESTORE_POINT: ${{ inputs.restore_point_reference }}
+          EXPECTED_PACKAGE_SHA256: "54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be"
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "${DATABASE_URL:-}" || { echo "::error::DATABASE_URL secret is missing."; exit 1; }
+          test -n "$RESTORE_POINT"
+          DB_NAME="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT current_database();')"
+          test "$DB_NAME" = "neondb" || { echo "::error::Expected neondb, got $DB_NAME"; exit 1; }
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          from runtime.bp04_property_stack_importer import DATASETS, read_document
+          manifest = {}
+          for dataset_id, relative in DATASETS.items():
+              path = Path(relative)
+              raw = path.read_bytes()
+              read_document(path)
+              manifest[dataset_id] = {
+                  "source_path": relative,
+                  "source_sha256": hashlib.sha256(raw).hexdigest(),
+                  "compressed_bytes": len(raw),
+                  "uncompressed_bytes": len(gzip.decompress(raw)),
+              }
+          digest = hashlib.sha256(json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+          print(f"package_sha256={digest}")
+          print(f"compressed_source_bytes={sum(x['compressed_bytes'] for x in manifest.values())}")
+          expected = "54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be"
+          if digest != expected:
+              raise SystemExit("Pinned BP04 package digest mismatch; rebuild and benchmark before deployment.")
+          PY
+          python scripts/migrate.py --allow-pending
+          BEFORE="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT pg_database_size(current_database());')"
+          echo "database_bytes_before=$BEFORE"
+          echo "restore_point_reference=$RESTORE_POINT"
+          echo "source_commit=$GITHUB_SHA"
+      - name: Apply ordered BP04 production migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scripts/migrate.py --apply
+      - name: Import all 14 compressed BP04 datasets into Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production
+      - name: Run production schema and import acceptance
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+      - name: Verify production repeat-import idempotency and storage stability
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          BEFORE="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT pg_database_size(current_database());')"
+          python runtime/bp04_property_stack_importer.py --expected-database neondb --allow-production
+          AFTER="$(psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -Atc 'SELECT pg_database_size(current_database());')"
+          echo "database_bytes_before_repeat=$BEFORE"
+          echo "database_bytes_after_repeat=$AFTER"
+          test "$BEFORE" = "$AFTER"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "SELECT count(*) AS bp04_tables FROM information_schema.tables WHERE table_schema='sw_property' AND table_type='BASE TABLE';"
+          psql "$DATABASE_URL" -X -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS final_database_bytes;"
