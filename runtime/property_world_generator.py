@@ -62,6 +62,18 @@ def build_property_world(source: dict) -> dict:
     buildings_by_id = {b["candidate_building_id"]: b for b in base["buildings"]}
     premises_by_id = {p["candidate_premises_id"]: p for p in base["premises"]}
     units_by_id = {u["candidate_unit_id"]: u for u in base["units"]}
+    base_buildings_by_property = defaultdict(list)
+    base_premises_by_building = defaultdict(list)
+    base_units_by_premises = defaultdict(list)
+    base_access_by_building = defaultdict(list)
+    for row in base["buildings"]:
+        base_buildings_by_property[row["property_id"]].append(row)
+    for row in base["premises"]:
+        base_premises_by_building[row["building_id"]].append(row)
+    for row in base["units"]:
+        base_units_by_premises[row["premises_id"]].append(row)
+    for row in base["access_points"]:
+        base_access_by_building[row["building_id"]].append(row)
 
     road_counters = defaultdict(int)
     property_rows, building_rows, premises_rows, unit_rows = [], [], [], []
@@ -78,7 +90,7 @@ def build_property_world(source: dict) -> dict:
     property_road = {}
     for p in base["properties"]:
         slug = _slug(p["source_candidate_parcel_id"])
-        candidates = [a for a in base["access_points"] if a["building_id"] == f"SWB-STR-{slug}-B01"]
+        candidates = base_access_by_building.get(f"SWB-STR-{slug}-B01", [])
         road_id = next((a["road_link_road_id"] for a in candidates if a.get("road_link_road_id")), None)
         if road_id is None:
             parcel = next(x for x in source["roads"] if x["id"] == "SWR-V03")
@@ -162,7 +174,7 @@ def build_property_world(source: dict) -> dict:
                 "source_ref": f"{GENERATOR}:{parcel_id}:{kind}",
             })
 
-        for b in [x for x in base["buildings"] if x["property_id"] == pid]:
+        for b in base_buildings_by_property[pid]:
             bid = b["candidate_building_id"]
             buildings_for_property[pid].append(bid)
             building_geom = Polygon(b["geometry"][0], b["geometry"][1:])
@@ -200,7 +212,7 @@ def build_property_world(source: dict) -> dict:
                     "maintenance_cycle_days": _num(bid+component+"-cycle", 90, 365),
                 })
 
-            for prem in [x for x in base["premises"] if x["building_id"] == bid]:
+            for prem in base_premises_by_building[bid]:
                 pr_id = prem["candidate_premises_id"]
                 premises_for_building[bid].append(pr_id)
                 premises_rows.append({
@@ -230,7 +242,7 @@ def build_property_world(source: dict) -> dict:
                         "source_ref": f"{GENERATOR}:{pr_id}:room:{ri}",
                     })
 
-                for unit in [x for x in base["units"] if x["premises_id"] == pr_id]:
+                for unit in base_units_by_premises[pr_id]:
                     uid = unit["candidate_unit_id"]
                     units_for_premises[pr_id].append(uid)
                     unit_rows.append({
@@ -379,18 +391,27 @@ def build_property_world(source: dict) -> dict:
             "source_ref": f"{GENERATOR}:{access_id}:site-path",
         })
 
+    unit_count_by_property = defaultdict(int)
+    unit_count_by_building = defaultdict(int)
+    premises_count_by_property = defaultdict(int)
+    for row in unit_rows:
+        unit_count_by_property[row["property_id"]] += 1
+        unit_count_by_building[row["building_id"]] += 1
+    for row in premises_rows:
+        premises_count_by_property[row["property_id"]] += 1
+
     for prop in property_rows:
         pid = prop["property_id"]
         prop["building_ids"] = sorted(buildings_for_property[pid])
         prop["primary_building_id"] = prop["building_ids"][0] if prop["building_ids"] else None
         prop["access_point_ids"] = sorted(a["access_point_id"] for a in access_rows if a["property_id"] == pid)
-        prop["unit_count"] = sum(1 for u in unit_rows if u["property_id"] == pid)
-        prop["premises_count"] = sum(1 for x in premises_rows if x["property_id"] == pid)
+        prop["unit_count"] = unit_count_by_property[pid]
+        prop["premises_count"] = premises_count_by_property[pid]
 
     for b in building_rows:
         b["premises_ids"] = sorted(premises_for_building[b["building_id"]])
         b["access_point_ids"] = sorted(access_by_building[b["building_id"]])
-        b["unit_count"] = sum(1 for u in unit_rows if u["building_id"] == b["building_id"])
+        b["unit_count"] = unit_count_by_building[b["building_id"]]
 
     for p in premises_rows:
         p["unit_ids"] = sorted(units_for_premises[p["premises_id"]])
