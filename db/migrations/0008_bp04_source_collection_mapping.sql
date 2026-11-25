@@ -1,5 +1,5 @@
 -- BP04 phase 6: complete source inventory, archive-first package accounting and collection mapping status.
--- Disposable PostgreSQL benchmark only. Never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 ALTER TABLE sw_property.import_dataset
   DROP CONSTRAINT IF EXISTS import_dataset_check;
