@@ -11,19 +11,6 @@ on:
       - "runtime/road_corridor_audit.py"
       - "runtime/road_reserve_topology.py"
       - "tests/pkg001/test_parcel_dossier_geometry_audit.py"
-      - "runtime/bp02_full_acceptance_audit.py"
-      - "runtime/bp02_address_frontage_exception_resolution.py"
-      - "runtime/bp02_address_review_register.py"
-      - "runtime/bp04_geography_reconciliation.py"
-      - "runtime/geography_geometry_audit.py"
-      - "runtime/building_access_candidate_audit.py"
-      - "runtime/building_access_connector_topology_audit.py"
-      - "runtime/building_access_connector_audit.py"
-      - "runtime/building_access_route_corridor_audit.py"
-      - "tests/pkg001/test_bp02_address_review_register.py"
-      - "tests/pkg001/test_bp02_address_frontage_exception_resolution.py"
-      - "data/geography/saltwater-geography-v1-identity-map.json"
-      - "data/property/saltwater-property-world-v1.json.gz"
       - ".github/workflows/bp04-03-parcel-dossier-geometry-audit.yml"
   workflow_dispatch:
 
@@ -44,12 +31,3 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_geometry_audit.py" -v
       - name: Emit independent parcel dossier geometry audit
         run: python -m runtime.parcel_dossier_geometry_audit
-      - name: Run consolidated BP-02 parcel, address and access-point acceptance audit
-        run: python -m runtime.bp02_full_acceptance_audit
-      - name: Upload consolidated BP-02 acceptance report
-        uses: actions/upload-artifact@v4
-        with:
-          name: bp02-full-parcel-address-access-acceptance
-          path: bp02-full-parcel-address-access-acceptance.json
-          if-no-files-found: error
-          retention-days: 30
