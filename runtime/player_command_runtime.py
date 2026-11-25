@@ -16,6 +16,8 @@ from runtime.application import (
 )
 from runtime.player_interface import CommandResult, PlayerProfile
 from runtime.security import AuthorizationService, PrincipalKind, SessionVerifier
+from runtime.bp04_lookup import BP04Lookup
+from runtime.player_commands import parse_player_command
 
 
 class PlayerContextError(RuntimeError):
@@ -109,6 +111,7 @@ class PostgresPlayerCommandRuntime:
         connect: Callable[[], Any],
         verifier: SessionVerifier,
         authorization: AuthorizationService,
+        bp04_lookup: BP04Lookup | None = None,
     ):
         if not callable(connect):
             raise TypeError("connect must be a trusted PostgreSQL connection factory")
@@ -119,7 +122,17 @@ class PostgresPlayerCommandRuntime:
         self._connect = connect
         self._verifier = verifier
         self._authorization = authorization
+        self._bp04_lookup = bp04_lookup
         self._resolver = PostgresPlayerContextResolver(connect)
+
+    def _lookup_for_command(self, command_text: str):
+        parsed = parse_player_command(command_text)
+        if not parsed.ok or parsed.command.token not in {"find", "inspect"}:
+            return None
+        if self._bp04_lookup is None:
+            with self._connect() as conn:
+                self._bp04_lookup = BP04Lookup(conn)
+        return self._bp04_lookup
 
     def execute(self, credential: str, command_text: str) -> CommandResult:
         """Resolve the session identity, then authorize and dispatch one command."""
@@ -132,8 +145,9 @@ class PostgresPlayerCommandRuntime:
             context = self._resolver.resolve(
                 session.principal_id, session.active_person_id
             )
+            lookup = self._lookup_for_command(command_text)
             application = create_postgres_player_application(
-                self._connect, context.profile
+                self._connect, context.profile, bp04_lookup=lookup
             )
             gateway: AuthorizedPlayerCommandGateway = bind_authorized_player_commands(
                 application, self._authorization, session.principal_id
