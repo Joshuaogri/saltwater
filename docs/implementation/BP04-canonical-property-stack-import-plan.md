@@ -76,3 +76,21 @@ No production migration, table creation, seed insert, upload or bulk write is au
 - The exact migration/import operations to be run.
 
 Wait for the user's explicit approval before applying any schema or data change to production Neon. Keep the GitHub source and README synchronized with the measured outcome.
+
+
+## Phase 2 — building services and utilities typed mapping
+
+The first additional operational register is now mapped through `db/proposals/0014_bp04_building_services_utilities.sql` and `runtime/bp04_property_stack_importer.py`. It covers all eight source collections in `SW-BUILDING-SERVICES-V1`, totaling 426,399 records:
+
+- `building_systems` → `sw_property.building_system`
+- `utility_connections` → `sw_property.utility_connection`
+- `utility_providers` → `sw_property.utility_provider_profile`
+- `utility_accounts` → `sw_property.utility_account`
+- `meters` → `sw_property.meter`
+- `equipment_assets` → `sw_property.equipment_asset`
+- `system_inspections` → `sw_property.system_inspection`
+- `business_utility_responsibilities` → `sw_property.business_utility_responsibility`
+
+The mapping uses typed numeric, integer, bigint, boolean and text fields; primary IDs remain source IDs. Foreign keys connect services to the canonical property/building/unit/organisation/business/occupancy registers. Utility accounts and meters reference their upstream connection/account; equipment and inspections reference their building system. The original compressed source remains archived exactly once, not copied as per-row JSONB.
+
+Source boolean flags in this dataset are encoded as 0/1 values, so the importer normalizes them to PostgreSQL booleans. The acceptance check now expects 28 tables across phases 1 and 2. The disposable benchmark run is [45635002711](https://github.com/Joshuaogri/saltwater/actions/runs/45635002711); the import/reconciliation and repeat-import/storage results remain pending final verification. No production Neon changes.
