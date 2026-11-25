@@ -234,7 +234,7 @@ def build_property_world(source: dict) -> dict:
                 room_types = ["primary_space","circulation","service_room","sanitary_room"]
                 for ri, room_type in enumerate(room_types,1):
                     room_rows.append({
-                        "room_id": f"SWRM-{_slug(pr_id)}-{ri:02d}",
+                        "room_id": f"SWRM-{hashlib.sha256(pr_id.encode("utf-8")).hexdigest()[:12].upper()}-{ri:02d}",
                         "premises_id": pr_id, "building_id": bid,
                         "room_code": f"{prem['floor_code']}-R{ri:02d}",
                         "room_type": room_type,
