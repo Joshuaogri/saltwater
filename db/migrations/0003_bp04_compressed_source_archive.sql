@@ -1,5 +1,5 @@
 -- BP04 canonical property-stack relational model, phase 1.
--- Production migration candidate. Validate on disposable PostgreSQL before production application.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 -- Stable Saltwater source IDs are primary keys; no surrogate-ID translation is needed.
 BEGIN;
 CREATE SCHEMA IF NOT EXISTS sw_property;
