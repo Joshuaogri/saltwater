@@ -506,6 +506,92 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 "footprint_inside_property": bool(site.covers(footprint)),
             })
 
+    # Final geometry reconciliation runs after every building footprint is known.
+    # The initial per-building pass can only see its own footprint; this second
+    # pass prevents a connector from crossing a building generated later in the
+    # estate sequence. Existing access-point boundary locations are preserved.
+    building_geometry_by_id = {
+        row["candidate_building_id"]: Polygon(row["geometry"][0], row["geometry"][1:])
+        for row in buildings
+    }
+    property_geometry_by_id = {
+        row["candidate_property_id"]: Polygon(row["geometry"][0], row["geometry"][1:])
+        for row in properties
+    }
+    access_by_id = {row["candidate_access_point_id"]: row for row in access_points}
+    building_by_id = {row["candidate_building_id"]: row for row in buildings}
+    dossier_by_parcel = {
+        row["dossier"]["candidate_parcel_id"]: row for row in dossiers["parcels"]
+    }
+    for connector in access_connectors:
+        access = access_by_id.get(connector["access_point_candidate_id"])
+        building = building_by_id.get(access.get("building_id")) if access else None
+        if not access or not building:
+            continue
+        parcel_id = building["source_candidate_parcel_id"]
+        prop = next((row for row in properties
+                     if row["source_candidate_parcel_id"] == parcel_id), None)
+        dossier = dossier_by_parcel.get(parcel_id)
+        if prop is None or dossier is None:
+            continue
+        property_geom = property_geometry_by_id[prop["candidate_property_id"]]
+        own_id = building["candidate_building_id"]
+        own_geom = building_geometry_by_id[own_id]
+        start = Point(access["point_m"])
+        choices = []
+        for candidate in dossier.get("access_candidates", []):
+            end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
+            line = LineString([start, end])
+            if line.is_empty or not line.is_valid or line.length <= 0:
+                continue
+            if not property_geom.covers(line):
+                continue
+            if line.intersection(own_geom).length > 0.01:
+                continue
+            blocked = False
+            for other_id, other_geom in building_geometry_by_id.items():
+                if other_id == own_id:
+                    continue
+                if line.intersection(other_geom).length > 0.01:
+                    blocked = True
+                    break
+            if blocked:
+                continue
+            choices.append((round(line.length, 9), candidate["access_candidate_id"],
+                            candidate, end, line))
+        if not choices:
+            # Preserve the original candidate and its evidence. The independent
+            # geometry audit will report it as blocked; never invent a reroute.
+            continue
+        _, candidate_id, candidate, end, line = min(
+            choices, key=lambda item: (item[0], item[1])
+        )
+        proximity = candidate.get("candidate_type") == "road_reserve_proximity_connection"
+        access.update({
+            "road_link_candidate_id": candidate_id,
+            "road_link_candidate_type": candidate.get("candidate_type"),
+            "road_link_road_id": candidate.get("road_id"),
+            "road_link_segment_ids": candidate.get("road_segment_ids", []),
+            "road_link_contact_type": candidate.get("contact_type"),
+            "road_link_candidate_distance_m": round(line.length, 3),
+            "road_link_basis": "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity
+                               else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE",
+            "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE",
+        })
+        connector.update({
+            "road_access_candidate_id": candidate_id,
+            "frontage_candidate_id": candidate.get("frontage_candidate_id"),
+            "road_connection_candidate_id": candidate.get("road_connection_candidate_id"),
+            "road_id": candidate.get("road_id"),
+            "road_segment_ids": candidate.get("road_segment_ids", []),
+            "connector_type": "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity
+                             else "BUILDING_TO_FRONTAGE_CANDIDATE",
+            "contact_type": candidate.get("contact_type") if proximity else "FRONTAGE_CANDIDATE",
+            "length_m": round(line.length, 3),
+            "geometry_coordinates": [[round(start.x, 6), round(start.y, 6)],
+                                     [round(end.x, 6), round(end.y, 6)]],
+        })
+
     # Full BP04-02 profile and typed child-record layer. Design-derived values
     # are explicitly labelled; unavailable physical facts are not fabricated.
     property_profiles, building_profiles, premises_profiles = [], [], []
