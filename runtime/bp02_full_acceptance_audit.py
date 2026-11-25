@@ -171,6 +171,8 @@ def main() -> None:
         "frontage_exception_dispositions": report["frontage_exception_resolution"]["disposition_counts"],
         "authority": report["authority"],
     }, indent=2, sort_keys=True))
+    if report["structural_status"] != "PASS":
+        raise SystemExit("BP-02 structural acceptance audit failed; see generated report")
 
 
 if __name__ == "__main__":
