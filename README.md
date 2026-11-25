@@ -613,3 +613,10 @@ The BP04 schema has been promoted from disposable-only proposals into the ordere
 The accepted benchmark package contains 14 compressed datasets, 105 collections and 1,950,923 source records; 1,422,202 typed-mapped rows across 92 tables; 19 archive-only collections; three partially mapped collections; zero cross-reference violations; 29,434,820 compressed bytes; and a 627,792,919-byte (598.71 MiB) disposable PostgreSQL footprint. Repeat import was storage-stable. Benchmark package SHA-256: `54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be`.
 
 **Production deployment remains pending.** The current release commit must pass a fresh disposable benchmark, then production preflight must confirm the latest source/package digest, backup/restore point, migration ledger, live schema fingerprint, storage headroom and before/after measurements. The latest read-only Neon baseline on 2026-11-25 is 9,306,112 bytes; five user tables exist and no `sw_property` tables are present. No BP04 production writes have occurred. See [BP04 production release runbook](docs/operations/BP04-production-release-runbook.md).
+
+
+### BP09 — police resource inventory and readiness
+
+Added `db/proposals/0027_bp09_police_resource_readiness.sql`: 15 resource models, **527 individually tagged assets**, 50 fleet vehicles, 500 initial unit-pool allocations and 27 unallocated central-store assets. Every asset has a registration-history event; each unit-pool allocation has an allocation event. Seven dispatchable units have complete minimum equipment requirements. The readiness projection now requires verified staffing, operational availability and resource sufficiency together. No unit is dispatch-eligible until it has a real roster and an available status; resource inventory alone cannot create a dispatchable unit.
+
+BP09 disposable acceptance passed in [PKG-001 run 45663358864](https://github.com/Joshuaogri/saltwater/actions/runs/45663358864). Full regression is completing the population-cap and backup/restore checks. Next is to connect the communications/CAD and incident workflow, then field response, using only units that become genuinely ready.
