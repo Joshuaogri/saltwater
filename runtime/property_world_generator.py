@@ -466,7 +466,7 @@ def main():
     output = root / "data/property/saltwater-property-world-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     document = to_columnar_document(result)
-    output.write_text(json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\\n", encoding="utf-8")
+    output.write_text(json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"], "storage_format": document["storage_format"], "output_bytes": output.stat().st_size}, indent=2, sort_keys=True))
 
 
