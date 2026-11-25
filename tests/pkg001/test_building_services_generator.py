@@ -48,6 +48,9 @@ class BuildingServicesTests(unittest.TestCase):
         occupancy_ids = {x["occupancy_id"] for x in self.tenure["occupancies"]}
         self.assertEqual(len(d["business_utility_responsibilities"]), 10000)
         self.assertTrue(all(x["occupancy_id"] in occupancy_ids for x in d["business_utility_responsibilities"]))
+        responsibility_units = {x["occupancy_id"]: x["unit_id"] for x in d["business_utility_responsibilities"]}
+        expected_units = {x["occupancy_id"]: x["unit_id"] for x in self.tenure["occupancies"]}
+        self.assertEqual(responsibility_units, expected_units)
 
     def test_provider_and_owner_relationships_resolve(self):
         d = self.data
