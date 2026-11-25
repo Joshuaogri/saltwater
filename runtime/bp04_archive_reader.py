@@ -30,9 +30,13 @@ def decode_archive(dataset_id: str, payload: bytes, expected_sha256: str) -> dic
 
 def load_dataset(conn, dataset_id: str) -> dict[str, Any]:
     row = conn.execute(
-        """SELECT compressed_payload, source_sha256
-           FROM sw_property.source_dataset_archive
-           WHERE dataset_id = %s""",
+        """SELECT a.compressed_payload, a.source_sha256
+           FROM sw_property.source_dataset_archive a
+           JOIN sw_property.import_dataset d ON d.source_sha256 = a.source_sha256
+           JOIN sw_property.import_release r ON r.release_id = d.release_id
+           WHERE d.dataset_id = %s
+           ORDER BY r.imported_at DESC
+           LIMIT 1""",
         (dataset_id,),
     ).fetchone()
     if row is None:
