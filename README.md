@@ -626,3 +626,18 @@ The current production-release workflow is manual-only: `.github/workflows/neon-
 
 
 The 14 compressed source archives total 29,434,820 bytes (29.43 MB / 28.07 MiB); the ten production migration files total 65,681 bytes; the importer source is 68,115 bytes and executes in the GitHub runner. Combined static release files are 29,568,616 bytes (29.57 MB / 28.20 MiB). This is not the total database growth: typed rows, indexes and PostgreSQL overhead account for the much larger measured disposable footprint.
+
+
+## BP04 production release checkpoint — 2026-11-25
+
+A manual Neon restore snapshot was created on the production branch before the BP04 production release attempt:
+
+- Neon project: `misty-breeze-20463094`; branch: `production`; database: `neondb`.
+- Restore snapshot: `snap-calm-credit-bdfp5tog` (created 2026-11-25T17:37:13Z).
+- Read-only PostgreSQL baseline after snapshot: **9,306,112 bytes (9.306 MB / 8.875 MiB)**; five user base tables.
+- Migration ledger remains at versions **1 (foundation)** and **2 (migration_integrity)**.
+- BP04 migrations **0003–0012 have not been applied**; no BP04 source datasets or typed relational records have been uploaded. Production remains unchanged by BP04.
+- The validated BP04 release remains 14 compressed datasets (29,434,820 bytes; 29.43 MB) and ten migrations. The PostgreSQL 18 disposable benchmark projected approximately 619,263,679 bytes (619.26 MB / 590.58 MiB) of incremental database growth; this is not a production measurement.
+- The manual production workflow has not been dispatched. The production release must remain pending until the workflow is started from `main`, its required `DATABASE_URL` secret is available, and the workflow completes all migration, import, acceptance and repeat-import checks.
+
+No production BP04 write is claimed by this checkpoint.
