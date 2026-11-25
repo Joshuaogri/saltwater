@@ -53,10 +53,11 @@ class ParcelDossierGeometryAuditTests(unittest.TestCase):
             self.assertEqual(connection["contact_type"], "POINT_CONTACT_ONLY")
             self.assertEqual(connection["road_id"], expected_road)
             self.assertLessEqual(connection["distance_to_road_reserve_m"], 0.01)
-            self.assertEqual(
-                row["dossier"]["frontage_status"],
-                "NO_ROAD_EDGE_CONTACT_IDENTIFIED",
+            candidate = next(
+                item for item in self.candidates["parcels"]
+                if item["candidate_parcel_id"] == parcel_id
             )
+            self.assertEqual(candidate["frontage_status"], "NO_ROAD_EDGE_CONTACT_IDENTIFIED")
 
     def test_frontage_cannot_reference_a_different_road(self):
         bad = json.loads(json.dumps(self.dossiers))

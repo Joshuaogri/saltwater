@@ -23,7 +23,7 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         self.assertEqual(self.report["counts"]["property_site_candidates"], 420)
         self.assertEqual(self.report["counts"]["building_candidates"], 384)
         self.assertEqual(self.report["counts"]["building_boundary_access_candidates"], 768)
-        self.assertEqual(self.report["counts"]["access_candidates_without_parcel_frontage"], 0)
+        self.assertEqual(self.report["counts"]["building_access_candidates_without_road_connection_candidate"], 0)
         self.assertEqual(self.report["counts"]["point_contact_road_reserve_candidates"], 4)
         self.assertTrue(all(a["road_link_candidate_id"] for a in self.assets["access_points"]))
 
@@ -32,7 +32,7 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         self.assertTrue(self.report["checks"]["building_footprints_remain_inside_their_parcel_property"])
 
     def test_frontage_links_resolve_to_same_parcel(self):
-        self.assertTrue(self.report["checks"]["road_link_candidates_resolve_to_the_same_parcel_frontage"])
+        self.assertTrue(self.report["checks"]["road_link_candidates_resolve_to_the_same_parcel_frontage_or_road_reserve_proximity"])
 
     def test_access_facts_are_not_fabricated(self):
         self.assertTrue(self.report["checks"]["access_facts_remain_unknown_or_not_assessed"])
@@ -41,7 +41,7 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
 
     def test_each_access_candidate_uses_nearest_frontage_and_records_gap(self):
         self.assertTrue(
-            self.report["checks"]["each_building_access_candidate_links_to_its_nearest_geometric_frontage"],
+            self.report["checks"]["each_building_access_candidate_links_to_its_nearest_geometric_road_connection"],
             self.report["exceptions"]["assigned_link_not_nearest"][:10],
         )
         for access in self.assets["access_points"]:

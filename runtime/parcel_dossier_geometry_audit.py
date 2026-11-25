@@ -218,7 +218,10 @@ def audit_parcel_dossiers(source: dict, candidates: dict | None = None,
             not frontage_errors and actual_frontage_count == expected_frontages
         ),
         "access_candidates_match_frontage_or_road_proximity_geometry_and_remain_unreviewed": (
-            not access_errors and actual_access_count == actual_frontage_count
+            not access_errors and actual_access_count == (
+                actual_frontage_count
+                + sum(1 for row in dossier_rows.values() if not row.get("frontages"))
+            )
         ),
         "water_adjacencies_match_source_water_geometry": not water_errors,
         "parcel_adjacency_register_is_complete_and_measured": adjacency_ok,

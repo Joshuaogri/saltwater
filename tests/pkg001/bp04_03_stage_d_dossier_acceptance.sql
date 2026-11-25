@@ -56,6 +56,18 @@ BEGIN
     ('PAC-TEST-A-01',v_a,1,'PFC-TEST-A-01',5,0,'unclassified_access_location',
      'UNREVIEWED_GEOMETRIC_CANDIDATE',v_manifest,'bp04-03-stage-d-test','test-runner','estimated','synthetic access candidate');
 
+  INSERT INTO sw_geo.parcel_access_location_candidate
+    (access_candidate_id,parcel_spatial_id,version_no,frontage_candidate_id,
+     road_connection_candidate_id,road_id,road_segment_ids,contact_type,
+     distance_to_road_reserve_m,parcel_boundary_x_m,parcel_boundary_y_m,
+     candidate_x_m,candidate_y_m,candidate_type,review_status,source_manifest_sha256,
+     source_ref,actor_ref,confidence_code,reason)
+  VALUES
+    ('PAC-TEST-B-PROX',v_b,1,NULL,'PRC-TEST-B-01','SWR-TEST-01',ARRAY['SWS-TEST-01'],
+     'POINT_CONTACT_ONLY',0,15,10,15,10,'road_reserve_proximity_connection',
+     'UNREVIEWED_ROAD_RESERVE_PROXIMITY_CANDIDATE',v_manifest,'bp04-03-stage-d-test',
+     'test-runner','estimated','synthetic point-contact road-reserve candidate');
+
   INSERT INTO sw_geo.parcel_adjacency_candidate
     (left_parcel_spatial_id,left_version_no,right_parcel_spatial_id,right_version_no,
      left_neighbourhood_spatial_id,right_neighbourhood_spatial_id,relationship_code,
@@ -78,7 +90,8 @@ BEGIN
   IF (SELECT count(*) FROM sw_geo.parcel_frontage_candidate WHERE parcel_spatial_id=v_a) <> 1
      OR (SELECT count(*) FROM sw_geo.parcel_access_location_candidate WHERE parcel_spatial_id=v_a) <> 1
      OR (SELECT count(*) FROM sw_geo.parcel_adjacency_candidate WHERE left_parcel_spatial_id=v_a) <> 1
-     OR (SELECT count(*) FROM sw_geo.parcel_water_adjacency_candidate WHERE parcel_spatial_id=v_b) <> 1 THEN
+     OR (SELECT count(*) FROM sw_geo.parcel_water_adjacency_candidate WHERE parcel_spatial_id=v_b) <> 1
+     OR (SELECT count(*) FROM sw_geo.parcel_access_location_candidate WHERE parcel_spatial_id=v_b) <> 1 THEN
     RAISE EXCEPTION 'Parcel dossier child records failed acceptance';
   END IF;
 END

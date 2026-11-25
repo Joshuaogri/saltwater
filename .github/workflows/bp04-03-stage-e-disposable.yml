@@ -9,12 +9,15 @@ on:
       - "db/proposals/0013_bp02_parcel_address_candidate.sql"
       - "db/proposals/0014_bp04_parcel_dossier_detail.sql"
       - "db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql"
+      - "db/proposals/0016_bp04_road_reserve_proximity_candidates.sql"
       - "runtime/physical_asset_inventory_generator.py"
       - "runtime/physical_asset_inventory_importer.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/parcel_dossier_generator.py"
       - "runtime/parcel_candidate_importer.py"
       - "runtime/parcel_dossier_importer.py"
+      - "tests/pkg001/test_parcel_dossier_importer.py"
+      - "tests/pkg001/bp04_03_stage_d_dossier_acceptance.sql"
       - "tests/pkg001/test_physical_asset_inventory_generator.py"
       - "tests/pkg001/test_physical_asset_inventory_importer.py"
       - "tests/pkg001/bp04_03_stage_e_acceptance.sql"
@@ -62,6 +65,7 @@ jobs:
         run: |
           python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_generator.py" -v
           python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_importer.py" -v
+          python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_importer.py" -v
       - name: Apply approved foundations to disposable PostgreSQL 16
         run: |
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
@@ -80,6 +84,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_01_geography_fixture.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0013_bp02_parcel_address_candidate.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0014_bp04_parcel_dossier_detail.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0016_bp04_road_reserve_proximity_candidates.sql
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")

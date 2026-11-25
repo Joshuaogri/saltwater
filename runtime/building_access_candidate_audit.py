@@ -151,8 +151,8 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
         "building_footprints_remain_inside_their_parcel_property": not footprint_errors,
         "building_access_points_are_on_building_boundaries_and_inside_property": not point_errors,
         "asset_to_parcel_and_parent_hierarchy_is_consistent": not hierarchy_errors,
-        "road_link_candidates_resolve_to_the_same_parcel_frontage": not link_errors,
-        "each_building_access_candidate_links_to_its_nearest_geometric_frontage": not nearest_mismatches,
+        "road_link_candidates_resolve_to_the_same_parcel_frontage_or_road_reserve_proximity": not link_errors,
+        "each_building_access_candidate_links_to_its_nearest_geometric_road_connection": not nearest_mismatches,
         "access_facts_remain_unknown_or_not_assessed": not status_errors,
         "no_operational_address_or_access_point_is_created": (
             generation.get("canonical_addresses_created") == 0
@@ -166,7 +166,7 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
             "property_site_candidates": len(assets["properties"]),
             "building_candidates": len(assets["buildings"]),
             "building_boundary_access_candidates": len(access_rows),
-            "access_candidates_without_parcel_frontage": access_with_no_frontage,
+            "building_access_candidates_without_road_connection_candidate": access_with_no_frontage,
             "point_contact_road_reserve_candidates": sum(
                 1 for row in assets["access_points"]
                 if row.get("road_link_contact_type") == "POINT_CONTACT_ONLY"
@@ -194,7 +194,7 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
         "canonical_addresses_created": 0,
         "operational_seed_eligible": False,
         "database_write_performed": False,
-        "interpretation": "Straight-line distances are geometric proximity measurements only. They do not establish a driveway, entrance, traversable path, legal frontage or usable emergency access.",
+        "interpretation": "Straight-line distances are geometric proximity measurements only. Frontage and point-contact road-reserve candidates remain distinct. Neither establishes a driveway, entrance, traversable path, legal frontage or usable emergency access.",
     }
 
 

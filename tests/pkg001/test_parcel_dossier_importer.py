@@ -54,6 +54,29 @@ class ParcelDossierImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Duplicate"):
             validate_manifest(bad, self.candidates)
 
+    def test_point_contact_road_reserve_candidate_is_validated(self):
+        proximity_rows = [
+            access for row in self.manifest["parcels"] for access in row["access_candidates"]
+            if access["candidate_type"] == "road_reserve_proximity_connection"
+        ]
+        self.assertEqual(len(proximity_rows), 2)
+        self.assertTrue(all(
+            access["contact_type"] == "POINT_CONTACT_ONLY"
+            and access["frontage_candidate_id"] is None
+            and access["road_connection_candidate_id"]
+            and len(access["road_segment_ids"]) == 1
+            for access in proximity_rows
+        ))
+        bad = copy.deepcopy(self.manifest)
+        target = next(
+            access for row in bad["parcels"] for access in row["access_candidates"]
+            if access["candidate_type"] == "road_reserve_proximity_connection"
+        )
+        target["road_connection_candidate_id"] = None
+        self._rehash(bad)
+        with self.assertRaisesRegex(ValueError, "proximity candidate is incomplete"):
+            validate_manifest(bad, self.candidates)
+
     def test_operational_access_or_address_claims_are_rejected(self):
         bad = copy.deepcopy(self.manifest)
         bad["summary"]["operational_access_points_created"] = 1

@@ -69,8 +69,28 @@ def validate_manifest(data, candidates):
         if dossier["adjacent_water_feature_ids"] != sorted(item["water_feature_id"] for item in row["water_adjacencies"]):
             raise ValueError("Parcel water adjacency IDs do not match water adjacency rows")
         frontage_ids = {item["frontage_candidate_id"] for item in row["frontages"]}
-        if any(item["frontage_candidate_id"] not in frontage_ids for item in row["access_candidates"]):
-            raise ValueError("Access location candidate has no matching frontage candidate")
+        for access in row["access_candidates"]:
+            if access.get("candidate_type") == "unclassified_access_location":
+                if (access.get("frontage_candidate_id") not in frontage_ids
+                        or access.get("road_connection_candidate_id") is not None
+                        or access.get("review_status") != "UNREVIEWED_GEOMETRIC_CANDIDATE"):
+                    raise ValueError("Access location candidate has no matching frontage candidate")
+            elif access.get("candidate_type") == "road_reserve_proximity_connection":
+                if (access.get("frontage_candidate_id") is not None
+                        or not access.get("road_connection_candidate_id")
+                        or not access.get("road_id")
+                        or len(access.get("road_segment_ids", [])) != 1
+                        or access.get("contact_type") not in (
+                            "POINT_CONTACT_ONLY", "NEAREST_EDGE_PROXIMITY_NOT_FRONTAGE"
+                        )
+                        or access.get("distance_to_road_reserve_m") is None
+                        or access["distance_to_road_reserve_m"] < 0
+                        or access.get("parcel_boundary_x_m") is None
+                        or access.get("parcel_boundary_y_m") is None
+                        or access.get("review_status") != "UNREVIEWED_ROAD_RESERVE_PROXIMITY_CANDIDATE"):
+                    raise ValueError("Road-reserve proximity candidate is incomplete or malformed")
+            else:
+                raise ValueError("Unsupported parcel access-location candidate type")
     for row in data.get("adjacency", []):
         if row["left_candidate_parcel_id"] >= row["right_candidate_parcel_id"]:
             raise ValueError("Parcel adjacency pairs must be canonically ordered")
@@ -177,14 +197,24 @@ def import_dossiers(conn, data, manifest_sha, candidates):
                 for access in row["access_candidates"]:
                     cur.execute(
                         """INSERT INTO sw_geo.parcel_access_location_candidate
-                        (access_candidate_id,parcel_spatial_id,version_no,frontage_candidate_id,candidate_x_m,candidate_y_m,
-                         candidate_type,review_status,source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
-                        VALUES (%s,%s,1,%s,%s,%s,%s,%s,%s,%s,'BP04-03-PARCEL-DOSSIER-IMPORTER','estimated',
-                                'Unreviewed geometric point on a road-reserve contact; not an entrance or access-point identity.')
+                        (access_candidate_id,parcel_spatial_id,version_no,frontage_candidate_id,
+                         road_connection_candidate_id,road_id,road_segment_ids,contact_type,
+                         distance_to_road_reserve_m,parcel_boundary_x_m,parcel_boundary_y_m,
+                         candidate_x_m,candidate_y_m,candidate_type,review_status,
+                         source_manifest_sha256,source_ref,actor_ref,confidence_code,reason)
+                        VALUES (%s,%s,1,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                                'BP04-03-PARCEL-DOSSIER-IMPORTER','estimated',%s)
                         ON CONFLICT DO NOTHING""",
-                        (access["access_candidate_id"], parcel_id, access["frontage_candidate_id"],
-                         access["candidate_x_m"], access["candidate_y_m"], access["candidate_type"],
-                         access["review_status"], digest, access["source_ref"]),
+                        (access["access_candidate_id"], parcel_id, access.get("frontage_candidate_id"),
+                         access.get("road_connection_candidate_id"), access.get("road_id"),
+                         access.get("road_segment_ids", []), access.get("contact_type"),
+                         access.get("distance_to_road_reserve_m"), access.get("parcel_boundary_x_m"),
+                         access.get("parcel_boundary_y_m"), access["candidate_x_m"], access["candidate_y_m"],
+                         access["candidate_type"], access["review_status"], digest, access["source_ref"],
+                         ("Point-contact or nearest-edge road-reserve proximity candidate; not legal frontage, "
+                          "driveway, entrance or access right.")
+                         if access["candidate_type"] == "road_reserve_proximity_connection"
+                         else "Unreviewed geometric point on a frontage candidate; not an entrance or access-point identity."),
                     )
                     inserted["access_candidates"] += cur.rowcount
 

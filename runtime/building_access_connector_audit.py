@@ -38,14 +38,14 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
     ]
     access_rows = assets["access_points"]
     connectors = []
-    errors = {"missing_parent": [], "missing_frontage": [], "outside_parent_property": [],
+    errors = {"missing_parent": [], "missing_road_connection_candidate": [], "outside_parent_property": [],
               "crosses_origin_building": [], "crosses_other_building": [],
               "crosses_water": [], "invalid_geometry": []}
     lengths = []
     status_counts = {
         "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED": 0,
         "DIRECT_GEOMETRY_BLOCKED_UNREVIEWED": 0,
-        "NO_FRONTAGE_CANDIDATE": 0,
+        "NO_ROAD_CONNECTION_CANDIDATE": 0,
     }
 
     buildings_by_property = {}
@@ -72,9 +72,9 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
         }.get(frontage_id)
         if frontage is None:
             if frontage_id is None:
-                status_counts["NO_FRONTAGE_CANDIDATE"] += 1
+                status_counts["NO_ROAD_CONNECTION_CANDIDATE"] += 1
                 continue
-            errors["missing_frontage"].append(aid)
+            errors["missing_road_connection_candidate"].append(aid)
             continue
 
         start = Point(access["point_m"])
@@ -128,7 +128,7 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
     median = lengths[len(lengths) // 2] if lengths else 0.0
     checks = {
         "all_linked_candidates_have_valid_parent_and_frontage": (
-            not errors["missing_parent"] and not errors["missing_frontage"]
+            not errors["missing_parent"] and not errors["missing_road_connection_candidate"]
         ),
         "every_connector_is_inside_its_parent_property": not errors["outside_parent_property"],
         "no_feasible_connector_crosses_its_origin_building_interior": not any(
@@ -159,7 +159,7 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
             "direct_connector_candidates_tested": len(connectors),
             "direct_geometry_feasible_unreviewed": status_counts["DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"],
             "direct_geometry_blocked_unreviewed": status_counts["DIRECT_GEOMETRY_BLOCKED_UNREVIEWED"],
-            "no_frontage_candidate": status_counts["NO_FRONTAGE_CANDIDATE"],
+            "unlinked_road_connection_candidate": status_counts["NO_ROAD_CONNECTION_CANDIDATE"],
             "point_contact_road_reserve_candidates": sum(
                 1 for row in connectors if row["road_connection_contact_type"] == "POINT_CONTACT_ONLY"
             ),
