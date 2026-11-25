@@ -111,7 +111,7 @@ def build_route_corridor_candidates(source: dict, candidates: dict | None = None
 
         try:
             coords = connector["geometry_coordinates"]
-            if connector.get("geometry_type") != "LineString" or len(coords) != 2:
+            if connector.get("geometry_type") != "LineString" or len(coords) < 2:
                 raise ValueError("expected two-point LineString")
             line = LineString(coords)
             if line.is_empty or not line.is_valid or line.length <= 0:
