@@ -79,9 +79,21 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
             {"SW-RSEG-1": "SW-R01", "SW-RSEG-2": "SW-R02"},
         )
         first = next(row for row in result["addresses"] if row["source_address_id"] == "SWADDR-1")
-        self.assertEqual(first["address_road_candidate_status"], "MULTIPLE_FRONTAGE_ROADS_REQUIRE_REVIEW")
-        self.assertIsNone(first["address_road_candidate_id"])
+        self.assertEqual(first["address_road_candidate_status"], "SOURCE_ROAD_MATCHES_FRONTAGE_SET")
+        self.assertEqual(first["address_road_candidate_id"], "SW-R01")
         self.assertEqual(first["candidate_frontage_road_ids"], ["SW-R01", "SW-R02"])
+
+    def test_single_alternative_frontage_road_is_proposed_but_flagged_for_review(self):
+        addresses = [dict(row) for row in self.addresses]
+        addresses[0]["road_id"] = "SW-R02"
+        result = build_identity_register(
+            self.candidates, self.properties, addresses, self.codes,
+            {"SW-RSEG-1": "SW-R01"},
+        )
+        first = next(row for row in result["addresses"] if row["source_address_id"] == "SWADDR-1")
+        self.assertEqual(first["address_road_candidate_id"], "SW-R01")
+        self.assertEqual(first["address_road_candidate_status"], "SINGLE_ALTERNATIVE_FRONTAGE_ROAD_REQUIRES_REVIEW")
+        self.assertEqual(first["road_id"], "SW-R02")
 
     def test_unresolved_road_fails_closed(self):
         broken = [dict(row) for row in self.addresses]
