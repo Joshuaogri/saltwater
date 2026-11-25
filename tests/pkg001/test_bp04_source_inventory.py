@@ -42,16 +42,16 @@ class SourceInventoryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "width mismatch"):
                 inspect_dataset(root, "SW-TEST-V1", "fixture.json.gz")
 
-    def test_rejects_dataset_identity_mismatch(self):
+    def test_rejects_missing_canonical_dataset_identity(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             document = {
                 "storage_format": "textual_json_columnar_v1",
-                "metadata": {"dataset_id": "OTHER"},
+                "metadata": {},
                 "tables": {},
             }
             self.write_dataset(root, document)
-            with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            with self.assertRaisesRegex(ValueError, "missing canonical metadata.dataset_id"):
                 inspect_dataset(root, "SW-TEST-V1", "fixture.json.gz")
 
 
