@@ -16,6 +16,24 @@ BEGIN
   SELECT count(*) INTO n FROM sw_property.access_point;
   IF n<>768 THEN RAISE EXCEPTION 'Expected 768 access-point candidate identities, got %',n; END IF;
 
+  SELECT count(*) INTO n FROM sw_property.access_connector_candidate;
+  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 persistent access connector candidates, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.access_connector_candidate
+   WHERE connector_type='BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE'
+     AND contact_type='POINT_CONTACT_ONLY'
+     AND frontage_candidate_id IS NULL
+     AND road_connection_candidate_id IS NOT NULL;
+  IF n<>4 THEN RAISE EXCEPTION 'Expected four point-contact-only proximity connector candidates, got %',n; END IF;
+  SELECT count(*) INTO n FROM sw_property.access_connector_candidate
+   WHERE geometry_status<>'UNREVIEWED_GEOMETRIC_LINE_ONLY'
+      OR review_status<>'unreviewed_candidate'
+      OR constructed_state<>'unknown' OR surface_code<>'unknown'
+      OR slope_state<>'not_assessed' OR barrier_state<>'not_assessed'
+      OR pedestrian_suitability<>'not_assessed' OR vehicle_suitability<>'not_assessed'
+      OR accessibility_state<>'not_assessed' OR legal_access_state<>'not_assessed'
+      OR public_access_state<>'not_assessed' OR emergency_egress_state<>'not_assessed';
+  IF n<>0 THEN RAISE EXCEPTION 'Connector candidate attributes improperly promoted: %',n; END IF;
+
   SELECT count(*) INTO n FROM sw_property.property_candidate_site;
   IF n<>420 THEN RAISE EXCEPTION 'Property candidate-site lineage count mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate;

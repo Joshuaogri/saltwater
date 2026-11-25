@@ -155,6 +155,33 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         self.assertEqual(generation["unresolved_source_entity_code_mappings"], 0)
         self.assertEqual(generation["unresolved_source_spatial_mappings"], 0)
 
+    def test_access_connector_candidates_are_complete_and_fully_unverified(self):
+        connectors = self.manifest["access_connectors"]
+        self.assertEqual(len(connectors), self.manifest["generation"]["access_connector_candidate_count"])
+        self.assertEqual(len(connectors), len(self.manifest["access_points"]))
+        self.assertEqual(len({row["candidate_connector_id"] for row in connectors}), len(connectors))
+        access_ids = {row["candidate_access_point_id"] for row in self.manifest["access_points"]}
+        for row in connectors:
+            self.assertIn(row["access_point_candidate_id"], access_ids)
+            self.assertEqual(row["geometry_type"], "LineString")
+            self.assertEqual(len(row["geometry_coordinates"]), 2)
+            self.assertGreaterEqual(row["length_m"], 0)
+            self.assertEqual(row["geometry_status"], "UNREVIEWED_GEOMETRIC_LINE_ONLY")
+            self.assertEqual(row["review_status"], "unreviewed_candidate")
+            for field in ("constructed_state", "surface_code"):
+                self.assertEqual(row[field], "unknown")
+            for field in ("slope_state", "barrier_state", "pedestrian_suitability",
+                          "vehicle_suitability", "accessibility_state", "legal_access_state",
+                          "public_access_state", "emergency_egress_state"):
+                self.assertEqual(row[field], "not_assessed")
+            self.assertTrue(row["source_ref"])
+            self.assertTrue(row["actor_ref"])
+        proximity = [row for row in connectors
+                     if row["connector_type"] == "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE"]
+        self.assertEqual(len(proximity), 4)
+        self.assertTrue(all(row["contact_type"] == "POINT_CONTACT_ONLY"
+                            for row in proximity))
+
     def test_geometry_audit_matches_generated_buildings(self):
         audit = [row for row in self.manifest["geometry_audit"] if "building" in row]
         self.assertEqual(len(audit), self.manifest["generation"]["building_count"])

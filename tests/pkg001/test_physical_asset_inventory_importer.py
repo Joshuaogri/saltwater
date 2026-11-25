@@ -67,6 +67,40 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "100 source entity_code mappings"):
             validate_manifests(tampered, self.candidates, self.dossiers)
 
+    def test_connector_candidates_are_complete_and_non_operational(self):
+        connectors = self.inventory["access_connectors"]
+        self.assertEqual(len(connectors), 768)
+        validate_manifests(self.inventory, self.candidates, self.dossiers)
+        proximity = [row for row in connectors
+                     if row["connector_type"] == "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE"]
+        self.assertEqual(len(proximity), 4)
+        self.assertTrue(all(row["frontage_candidate_id"] is None
+                            and row["road_connection_candidate_id"]
+                            and row["contact_type"] == "POINT_CONTACT_ONLY"
+                            for row in proximity))
+
+    def test_connector_candidates_cannot_claim_construction_or_access_rights(self):
+        for field, value in (("constructed_state", "constructed"),
+                             ("surface_code", "asphalt"),
+                             ("legal_access_state", "confirmed"),
+                             ("emergency_egress_state", "available")):
+            tampered = copy.deepcopy(self.inventory)
+            tampered["access_connectors"][0][field] = value
+            tampered["manifest_sha256"] = __import__(
+                "runtime.physical_asset_inventory_importer", fromlist=["_sha"]
+            )._sha(tampered)
+            with self.assertRaisesRegex(ValueError, "unknown|not_assessed"):
+                validate_manifests(tampered, self.candidates, self.dossiers)
+
+    def test_connector_candidate_must_reference_existing_access_point(self):
+        tampered = copy.deepcopy(self.inventory)
+        tampered["access_connectors"][0]["access_point_candidate_id"] = "MISSING"
+        tampered["manifest_sha256"] = __import__(
+            "runtime.physical_asset_inventory_importer", fromlist=["_sha"]
+        )._sha(tampered)
+        with self.assertRaisesRegex(ValueError, "missing access-point"):
+            validate_manifests(tampered, self.candidates, self.dossiers)
+
     def test_geojson_payload_checksum_is_deterministic(self):
         payload = _geojson("Point", [10.5, 20.25])
         self.assertEqual(payload, {"type": "Point", "coordinates": [10.5, 20.25]})

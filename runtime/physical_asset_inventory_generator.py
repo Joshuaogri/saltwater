@@ -116,7 +116,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
 
     dossier_by_id = {r["dossier"]["candidate_parcel_id"]: r for r in dossiers["parcels"]}
     occupied: set[str] = set()
-    properties, buildings, premises, units, access_points = [], [], [], [], []
+    properties, buildings, premises, units, access_points, access_connectors = [], [], [], [], [], []
     geometries = []
     for parcel in sorted(candidates["parcels"], key=lambda p: p["candidate_parcel_id"]):
         parcel_id = parcel["candidate_parcel_id"]
@@ -350,6 +350,54 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 "actor_ref": ACTOR, "confidence_code": "estimated",
                 "effective_from_tick": 0,
             })
+
+            # Persist the geometric connector as its own typed candidate. Its
+            # geometry is not evidence of a constructed or legally usable route.
+            if linked_candidate is not None and linked_frontage_point is not None:
+                connector_type = (
+                    "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
+                    else "BUILDING_TO_FRONTAGE_CANDIDATE"
+                )
+                connector_id = f"SWAC-{slug}-B01-A{access_no:02d}-C01"
+                connector_geometry = [
+                    [round(boundary_point.x, 6), round(boundary_point.y, 6)],
+                    [round(linked_frontage_point.x, 6), round(linked_frontage_point.y, 6)],
+                ]
+                access_connectors.append({
+                    "candidate_connector_id": connector_id,
+                    "access_point_candidate_id": access_code,
+                    "road_access_candidate_id": linked_frontage_id,
+                    "frontage_candidate_id": linked_candidate.get("frontage_candidate_id"),
+                    "road_connection_candidate_id": linked_candidate.get("road_connection_candidate_id"),
+                    "road_id": linked_candidate.get("road_id"),
+                    "road_segment_ids": linked_candidate.get("road_segment_ids", []),
+                    "connector_type": connector_type,
+                    "contact_type": (
+                        linked_candidate.get("contact_type") if proximity_link
+                        else "FRONTAGE_CANDIDATE"
+                    ),
+                    "length_m": round(link_distance, 3),
+                    "coordinate_reference": CRS,
+                    "geometry_type": "LineString",
+                    "geometry_coordinates": connector_geometry,
+                    "geometry_status": "UNREVIEWED_GEOMETRIC_LINE_ONLY",
+                    "review_status": "unreviewed_candidate",
+                    "constructed_state": "unknown",
+                    "surface_code": "unknown",
+                    "slope_state": "not_assessed",
+                    "barrier_state": "not_assessed",
+                    "pedestrian_suitability": "not_assessed",
+                    "vehicle_suitability": "not_assessed",
+                    "accessibility_state": "not_assessed",
+                    "legal_access_state": "not_assessed",
+                    "public_access_state": "not_assessed",
+                    "emergency_egress_state": "not_assessed",
+                    "source_ref": f"{SOURCE}:{building_code}:connector:{access_no}:v1",
+                    "actor_ref": ACTOR,
+                    "confidence_code": "estimated",
+                    "effective_from_tick": 0,
+                    "reason": "Straight-line geometry derived from generated building-boundary and parcel road-connection candidates; construction, legal access, surface, gradient and route usability are not assessed.",
+                })
         geometries.append({
             "property": property_code, "building": building_code,
             "footprint_area_m2": round(footprint_area, 3),
@@ -566,6 +614,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "property_count": len(properties), "building_count": len(buildings),
             "premises_count": len(premises), "unit_count": len(units),
             "access_point_candidate_count": len(access_points),
+            "access_connector_candidate_count": len(access_connectors),
             "profile_record_count": sum(len(v) for v in (property_profiles, building_profiles, premises_profiles, unit_profiles, access_point_profiles)),
             "measurement_record_count": len(measurements), "building_level_count": len(building_levels),
             "building_component_count": len(building_components), "premises_room_count": len(premises_rooms),
@@ -584,6 +633,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         },
         "properties": properties, "buildings": buildings,
         "premises": premises, "units": units, "access_points": access_points,
+        "access_connectors": access_connectors,
         "profiles": {"properties": property_profiles, "buildings": building_profiles,
                      "premises": premises_profiles, "units": unit_profiles,
                      "access_points": access_point_profiles},
@@ -598,7 +648,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "Building footprints and access points are generated design candidates, not surveyed or approved facts.",
             "Premises and unit areas are generated space allocations, not measured floor plans.",
             "Construction materials, utilities, condition, defects, room layouts and capacity remain unknown or not assessed unless separately evidenced.",
-            "Access candidates do not establish doors, public rights, emergency egress or a traversable route to a road.",
+            "Access-point and connector candidates are geometric only; they do not establish doors, constructed paths, public/legal rights, emergency egress or traversable routes.",
             "No canonical addresses, operational spatial IDs, ownership, tenancy, occupancy, residents, business operators or police appointments are created.",
             "All 100 source records resolve to stable entity_code values; production spatial_id surrogate values are database-generated and remain unassigned until operational geography activation. Resolve them by entity_code in the target database.",
         ],

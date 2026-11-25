@@ -71,6 +71,40 @@ def validate_manifests(inventory: dict, candidates: dict, dossiers: dict) -> tup
     for row in inventory["access_points"]:
         if row["building_id"] not in building_ids or "premises_id" in row or "property_id" in row:
             raise ValueError("Access point parent does not match BP04-01 single-parent identity rules")
+    connectors = inventory.get("access_connectors")
+    if not isinstance(connectors, list) or len(connectors) != generation.get("access_connector_candidate_count"):
+        raise ValueError("Access connector candidate count does not match the inventory manifest")
+    access_ids = {row["candidate_access_point_id"] for row in inventory["access_points"]}
+    connector_ids = [row.get("candidate_connector_id") for row in connectors]
+    if None in connector_ids or len(connector_ids) != len(set(connector_ids)):
+        raise ValueError("Access connector candidates contain missing or duplicate identities")
+    if len(connectors) != len(access_ids):
+        raise ValueError("Every building-boundary access candidate must have one connector candidate")
+    for row in connectors:
+        if row.get("access_point_candidate_id") not in access_ids:
+            raise ValueError("Access connector references a missing access-point candidate")
+        if row.get("geometry_type") != "LineString" or len(row.get("geometry_coordinates", [])) != 2:
+            raise ValueError("Access connector must contain a two-endpoint LineString geometry")
+        if row.get("connector_type") not in (
+            "BUILDING_TO_FRONTAGE_CANDIDATE",
+            "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE",
+        ):
+            raise ValueError("Access connector type is not recognised")
+        if row.get("review_status") != "unreviewed_candidate" or row.get("geometry_status") != "UNREVIEWED_GEOMETRIC_LINE_ONLY":
+            raise ValueError("Access connectors must remain unreviewed geometric candidates")
+        if row.get("constructed_state") != "unknown" or row.get("surface_code") != "unknown":
+            raise ValueError("Unobserved connector construction and surface attributes must remain unknown")
+        for field in ("slope_state", "barrier_state", "pedestrian_suitability",
+                      "vehicle_suitability", "accessibility_state", "legal_access_state",
+                      "public_access_state", "emergency_egress_state"):
+            if row.get(field) != "not_assessed":
+                raise ValueError(f"Unassessed connector attribute {field} cannot be promoted")
+        if row.get("connector_type") == "BUILDING_TO_FRONTAGE_CANDIDATE":
+            if not row.get("frontage_candidate_id") or row.get("road_connection_candidate_id") is not None:
+                raise ValueError("Frontage connector must reference frontage, not proximity, lineage")
+        else:
+            if row.get("frontage_candidate_id") is not None or not row.get("road_connection_candidate_id"):
+                raise ValueError("Road-reserve proximity connector must retain separate non-frontage lineage")
     profiles = inventory.get("profiles", {})
     for group in groups:
         if len(profiles.get(group, [])) != len(inventory[group]):
@@ -147,13 +181,14 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 existing = True
                 batch_id = batch[0]
                 inserted = {"identities": 0, "relationships": 0, "profiles": 0,
-                            "details": 0, "geometry": 0, "candidate_site_links": 0}
+                            "details": 0, "geometry": 0, "candidate_site_links": 0, "access_connector_candidates": 0}
             else:
                 counts = {
                     "identities": expected, "profiles": profile_counts,
                     "details": detail_counts,
                     "geometry": len(inventory["properties"]) + len(inventory["buildings"]) + len(inventory["access_points"]),
                     "candidate_site_links": len(inventory["properties"]),
+                    "access_connector_candidates": len(inventory["access_connectors"]),
                 }
                 cur.execute("""
                     INSERT INTO sw_property.asset_generation_batch
@@ -237,6 +272,34 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                     """, (row["candidate_access_point_id"],row["display_name"],
                           building_map[row["building_id"]],row["source_ref"],ACTOR,REASON))
                     access_map[row["candidate_access_point_id"]] = cur.fetchone()[0]
+
+                _execute_many(cur, """
+                    INSERT INTO sw_property.access_connector_candidate
+                    (batch_id,access_point_id,candidate_connector_id,candidate_access_point_id,
+                     road_access_candidate_id,frontage_candidate_id,road_connection_candidate_id,
+                     road_id,road_segment_ids,connector_type,contact_type,length_m,
+                     coordinate_reference,geometry_payload,geometry_sha256,source_manifest_sha256,
+                     geometry_status,review_status,constructed_state,surface_code,slope_state,
+                     barrier_state,pedestrian_suitability,vehicle_suitability,accessibility_state,
+                     legal_access_state,public_access_state,emergency_egress_state,
+                     source_ref,actor_ref,confidence_code,effective_from_tick,reason)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,
+                            'UNREVIEWED_GEOMETRIC_LINE_ONLY','unreviewed_candidate','unknown','unknown',
+                            'not_assessed','not_assessed','not_assessed','not_assessed',
+                            'not_assessed','not_assessed','not_assessed','not_assessed',
+                            %s,%s,%s,%s,%s)
+                """, [(
+                    batch_id, access_map[row["access_point_candidate_id"]],
+                    row["candidate_connector_id"], row["access_point_candidate_id"],
+                    row["road_access_candidate_id"], row["frontage_candidate_id"],
+                    row["road_connection_candidate_id"], row["road_id"],
+                    row["road_segment_ids"], row["connector_type"], row["contact_type"],
+                    row["length_m"], row["coordinate_reference"],
+                    Jsonb(_geojson("LineString", row["geometry_coordinates"])),
+                    _geometry_hash(_geojson("LineString", row["geometry_coordinates"])),
+                    inventory_sha, row["source_ref"], ACTOR, row["confidence_code"],
+                    row["effective_from_tick"], row["reason"],
+                ) for row in inventory["access_connectors"]])
 
                 # Profiles are inserted only after all stable numeric identities exist.
                 p = inventory["profiles"]
@@ -426,6 +489,7 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                     "details": sum(detail_counts.values()),
                     "geometry": len(geometry_rows),
                     "candidate_site_links": len(inventory["properties"]),
+                    "access_connector_candidates": len(inventory["access_connectors"]),
                 }
 
             cur.execute("SELECT pg_database_size(current_database())")

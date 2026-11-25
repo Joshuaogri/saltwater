@@ -10,8 +10,10 @@ on:
       - "db/proposals/0014_bp04_parcel_dossier_detail.sql"
       - "db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql"
       - "db/proposals/0016_bp04_road_reserve_proximity_candidates.sql"
+      - "db/proposals/0017_bp04_access_connector_candidates.sql"
       - "runtime/physical_asset_inventory_generator.py"
       - "runtime/physical_asset_inventory_importer.py"
+      - "tests/pkg001/test_physical_asset_inventory_importer.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/parcel_dossier_generator.py"
       - "runtime/parcel_candidate_importer.py"
@@ -87,6 +89,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0016_bp04_road_reserve_proximity_candidates.sql
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0017_bp04_access_connector_candidates.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp04_03_stage_e_schema_growth_bytes=$((after-before))"
           echo "bp04_03_stage_e_proposal_source_bytes=$(wc -c < db/proposals/0015_bp04_stage_e_asset_geometry_and_batch.sql)"
@@ -144,6 +147,7 @@ jobs:
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.unit_space;')" = "15199"
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.asset_geometry_candidate;')" = "1572"
           test "$(psql -d saltwater_restore -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")" = "$(psql -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.access_connector_candidate;')" = "768"
           echo "BP04_03_STAGE_E_BACKUP_RESTORE_PASS"
       - name: Preserve complete Stage E asset manifest
         uses: actions/upload-artifact@v4
