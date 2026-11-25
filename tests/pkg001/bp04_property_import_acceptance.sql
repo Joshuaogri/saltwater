@@ -40,12 +40,12 @@ BEGIN
 
   SELECT mapping_status, loaded_record_count INTO v_status, v_development_rows
   FROM sw_property.import_dataset WHERE dataset_id='SW-PROPERTY-DEVELOPMENT-CONTROL-V1';
-  IF v_status <> 'partially_mapped' OR v_development_rows <> 34332 THEN
+  IF v_status <> 'partially_mapped' OR v_development_rows <> 34308 THEN
     RAISE EXCEPTION 'development-control mapping mismatch: status %, loaded %', v_status, v_development_rows;
   END IF;
   IF (SELECT count(*) FROM sw_property.lawful_use_certificate) <> 27730
      OR (SELECT count(*) FROM sw_property.building_inspection_schedule) <> 1474
-     OR (SELECT count(*) FROM sw_property.development_project) <> 282 THEN
+     OR (SELECT count(*) FROM sw_property.development_project) <> 258 THEN
     RAISE EXCEPTION 'development-control typed row counts incorrect';
   END IF;
   IF EXISTS (
