@@ -406,7 +406,6 @@ BEGIN
      OR p_rationale IS NULL OR length(trim(p_rationale))=0
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
      OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$' THEN
- THEN
     RAISE EXCEPTION 'invalid incident assessment';
   END IF;
   SELECT event_id INTO v_event_id FROM sw_core.simulation_event WHERE idempotency_key=p_idempotency_key;
