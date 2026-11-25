@@ -35,7 +35,7 @@ BEGIN
   IF v_state=2 AND v_present THEN
     v_incident_id:=sw_incident.create_incident(
       'system','BP12-ACCEPTANCE-001','Fictional test incident; no real occurrence.',
-      'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3,
+      'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3::smallint,
       'moderate','Fictional test location','SWPS-TEST-LOCATION','raw','unknown',NULL
     );
     SELECT status INTO v_status FROM sw_incident.incident WHERE incident_id=v_incident_id;
@@ -48,7 +48,7 @@ BEGIN
     END IF;
     v_second_id:=sw_incident.create_incident(
       'system','BP12-ACCEPTANCE-001','Fictional test incident; no real occurrence.',
-      'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3,
+      'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3::smallint,
       'moderate','Fictional test location','SWPS-TEST-LOCATION','raw','unknown',NULL
     );
     IF v_second_id<>v_incident_id THEN RAISE EXCEPTION 'incident create idempotency failed'; END IF;
@@ -94,7 +94,7 @@ BEGIN
     BEGIN
       PERFORM sw_incident.create_incident(
         'system','BP12-ACCEPTANCE-001','Fictional test incident; no real occurrence.',
-        'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3,
+        'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3::smallint,
         'moderate','Fictional test location','SWPS-TEST-LOCATION','raw','unknown',NULL
       );
       RAISE EXCEPTION 'incident intake was accepted while runtime was not active';
