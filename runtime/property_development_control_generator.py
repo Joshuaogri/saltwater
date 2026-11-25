@@ -12,6 +12,7 @@ def _n(k,lo,hi):
  return lo+int.from_bytes(d[:4],"big")%(hi-lo+1)
 def _pick(v,k): return v[_n(k,0,len(v)-1)]
 def _slug(v): return "".join(c for c in str(v).upper() if c.isalnum())[:24]
+def _entity_id(prefix,value): return f"{prefix}-{hashlib.sha256(str(value).encode()).hexdigest()[:20].upper()}"
 def build_development_control(world,tenure,services,maintenance,valuation):
  properties={x["property_id"]:x for x in world["properties"]}
  buildings={x["building_id"]:x for x in world["buildings"]}
@@ -55,33 +56,33 @@ def build_development_control(world,tenure,services,maintenance,valuation):
  for pid,p in sorted(properties.items()):
   owner=owners[pid]; manager=managers[pid]
   use=p.get("primary_use","commercial")
-  plan_id=f"SWDEVPLAN-{_slug(pid)}"
+  plan_id=_entity_id("SWDEVPLAN",pid)
   zoning=use_map.get(use,"commercial_business_use")
   site_plans.append({"site_development_plan_id":plan_id,"property_id":pid,"applicant_organisation_id":owner,"land_use_designation":zoning,"development_intensity":"existing_baseline","site_plan_status":"adopted_existing_development","site_constraints":["coastal_flood_and_surge_review","fire_appliance_access","utility_capacity","road_frontage_and_emergency_access"],"planning_policy_version":"SW-PLAN-2026-01","adoption_tick":0,"source_basis":"existing_canonical_property_world"})
   # Record the permission basis for current built form, not a pending application.
   for b in sorted([x for x in buildings.values() if x["property_id"]==pid],key=lambda x:x["building_id"]):
    bid=b["building_id"]; build_year=int(b.get("construction_year") or 2000); buse=b.get("building_use","commercial")
    permitted=use_map.get(buse,zoning)
-   permission_id=f"SWPLANPERM-{_slug(bid)}"
+   permission_id=_entity_id("SWPLANPERM",bid)
    planning_permissions.append({"planning_permission_id":permission_id,"site_development_plan_id":plan_id,"property_id":pid,"building_id":bid,"applicant_organisation_id":owner,"permission_type":"retrospective_canonical_baseline_development_consent","development_description":f"Existing {permitted.replace('_',' ')} building and associated site works","approved_use_class":permitted,"decision":"granted","decision_tick":0,"decision_basis":"fictional_existing_world_baseline","conditions":["maintain_fire_and_emergency_access","maintain_approved_drainage_and_coastal_protection","no_material_change_of_use_without_permission","maintain_accessible_egress_and_utility_capacity"],"permission_validity":"existing_development_authorised_in_game_canon","historic_application_fabricated":False})
-   control_id=f"SWBCONTROL-{_slug(bid)}"
+   control_id=_entity_id("SWBCONTROL",bid)
    bc_status="completion_certified"
    building_control.append({"building_control_case_id":control_id,"property_id":pid,"building_id":bid,"planning_permission_id":permission_id,"applicant_organisation_id":owner,"principal_contractor_organisation_id":None,"control_route":"full_plan_and_inspection_control","case_status":bc_status,"design_standard_profile":"SW-BUILDING-CODE-2026-01","fire_safety_review":"recorded_in_baseline","structural_review":"recorded_in_baseline","accessibility_review":"recorded_in_baseline","utility_and_drainage_review":"recorded_in_baseline","construction_year":build_year,"case_basis":"canonical_existing_building_baseline","inspection_history":"baseline_certification_not_fabricated_visit_log"})
-   cert_id=f"SWCOMPCERT-{_slug(bid)}"
-   certificates.append({"completion_certificate_id":cert_id,"property_id":pid,"building_id":bid,"building_control_case_id":control_id,"certificate_type":"building_completion_and_safe_use_certificate","certificate_status":"issued","issue_tick":0,"issue_basis":"existing_canonical_building_baseline","approved_use_class":permitted,"conditions":["fire_systems_maintained","structural_and_envelope_maintenance","emergency_egress_kept_clear","utility_systems_operated_within_capacity"],"certificate_number":f"SW-CC-{_slug(bid)}"})
+   cert_id=_entity_id("SWCOMPCERT",bid)
+   certificates.append({"completion_certificate_id":cert_id,"property_id":pid,"building_id":bid,"building_control_case_id":control_id,"certificate_type":"building_completion_and_safe_use_certificate","certificate_status":"issued","issue_tick":0,"issue_basis":"existing_canonical_building_baseline","approved_use_class":permitted,"conditions":["fire_systems_maintained","structural_and_envelope_maintenance","emergency_egress_kept_clear","utility_systems_operated_within_capacity"],"certificate_number":_entity_id("SW-CC",bid)})
    c=condition.get(bid,{})
    due_tick=_n(bid+"inspection-due",30,180)
-   inspections.append({"building_inspection_schedule_id":f"SWINSP-{_slug(bid)}","property_id":pid,"building_id":bid,"building_control_case_id":control_id,"inspection_type":"periodic_building_safety_and_code_compliance","inspection_interval_days":365,"next_due_tick":due_tick,"inspection_status":"scheduled_not_completed","priority":"urgent" if c.get("critical_defect_count",0)>0 else ("elevated" if c.get("follow_up_required") else "routine"),"linked_open_defects":len(defects_by_building.get(bid,[])),"inspection_visit_created":False})
+   inspections.append({"building_inspection_schedule_id":_entity_id("SWINSP",bid),"property_id":pid,"building_id":bid,"building_control_case_id":control_id,"inspection_type":"periodic_building_safety_and_code_compliance","inspection_interval_days":365,"next_due_tick":due_tick,"inspection_status":"scheduled_not_completed","priority":"urgent" if c.get("critical_defect_count",0)>0 else ("elevated" if c.get("follow_up_required") else "routine"),"linked_open_defects":len(defects_by_building.get(bid,[])),"inspection_visit_created":False})
    for pr in sorted(premises_by_building.get(bid,[]),key=lambda x:x["premises_id"]):
     prid=pr["premises_id"]; declared=permitted
-    lawful_uses.append({"lawful_use_certificate_id":f"SWUSE-{_slug(prid)}","property_id":pid,"building_id":bid,"premises_id":prid,"completion_certificate_id":cert_id,"lawful_use_class":declared,"certificate_status":"current","effective_tick":0,"change_of_use_permission_required":True,"use_conditions":["remain_within_approved_use_class","fire_capacity_and_egress_maintained","accessibility_and_sanitation_requirements_met","no hazardous_or_high-impact_activity_without_specific_consent"],"evidence_basis":"existing_premises_and_building_use_canon"})
+    lawful_uses.append({"lawful_use_certificate_id":_entity_id("SWUSE",prid),"property_id":pid,"building_id":bid,"premises_id":prid,"completion_certificate_id":cert_id,"lawful_use_class":declared,"certificate_status":"current","effective_tick":0,"change_of_use_permission_required":True,"use_conditions":["remain_within_approved_use_class","fire_capacity_and_egress_maintained","accessibility_and_sanitation_requirements_met","no hazardous_or_high-impact_activity_without_specific_consent"],"evidence_basis":"existing_premises_and_building_use_canon"})
     # Unit compliance is generated once for the units in this premises.
     # It does not imply that an occupant/person exists.
     for u in units_by_premises.get(prid,[]):
-     occupancy_compliance.append({"use_compliance_id":f"SWUSECOMP-{_slug(u['unit_id'])}","property_id":pid,"building_id":bid,"premises_id":prid,"unit_id":u["unit_id"],"permitted_use_class":permitted,"compliance_state":"unoccupied_or_occupancy_not_assessed","inspection_required_on_occupation":True,"person_records_created":0})
+     occupancy_compliance.append({"use_compliance_id":_entity_id("SWUSECOMP",u["unit_id"]),"property_id":pid,"building_id":bid,"premises_id":prid,"unit_id":u["unit_id"],"permitted_use_class":permitted,"compliance_state":"unoccupied_or_occupancy_not_assessed","inspection_required_on_occupation":True,"person_records_created":0})
    # A small subset of properties carries ongoing permitted capital works projects.
    if _n(pid+"capital-works",1,100)<=18:
-    project_id=f"SWPROJECT-{_slug(pid)}"
+    project_id=_entity_id("SWPROJECT",pid)
     development_projects.append({"development_project_id":project_id,"property_id":pid,"project_type":_pick(["building_rehabilitation","utility_capacity_upgrade","fire_and_life_safety_upgrade","coastal_resilience_works","accessibility_upgrade"],pid+"project-type"),"project_status":"approved_preconstruction","project_sponsor_organisation_id":owner,"property_manager_organisation_id":manager,"planning_permission_id":next((x["planning_permission_id"] for x in planning_permissions if x["property_id"]==pid),None),"project_start_tick":None,"project_completion_tick":None,"construction_activity_started":False,"financial_commitments_created":False,"project_history_basis":"fictional_current_development_pipeline"})
  for rule in [
   ("SW-PLAN-PORT-01","port_and_maritime_operations","port_and_maritime_operations",["navigation_safety","hazardous_cargo_separation","security_perimeter","emergency_response_access"]),
