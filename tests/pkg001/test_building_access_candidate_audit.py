@@ -57,7 +57,7 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         bad = json.loads(json.dumps(self.assets))
         bad["access_points"][0]["road_link_candidate_id"] = "PAC-NOT-A-REAL-FRONTAGE"
         report = audit_building_access_candidates(self.candidates, self.dossiers, bad)
-        self.assertFalse(report["checks"]["road_link_candidates_resolve_to_the_same_parcel_frontage"])
+        self.assertFalse(report["checks"]["road_link_candidates_resolve_to_the_same_parcel_frontage_or_road_reserve_proximity"])
 
     def test_no_database_write_or_operational_seed(self):
         self.assertFalse(self.report["database_write_performed"])
