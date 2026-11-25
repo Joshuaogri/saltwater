@@ -2,7 +2,7 @@
 
 **Result: NOT PASSED — BP04 is partially implemented and must not be marked COMPLETED.**
 
-**Audit source:** `main` at `625a75612dd760a8de7ef1362df1b23f61b23db1`  
+**Audit source:** `main` at the integration release commit (see current GitHub file history)  
 **Production release:** [GitHub Actions run 45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) — completed successfully  
 **Latest disposable archive-only validation:** [run 45672436619](https://github.com/Joshuaogri/saltwater/actions/runs/45672436619) — completed successfully  
 **Neon target:** project `misty-breeze-20463094`, production branch `br-still-cloud-bdvaw8u4`, database `neondb`.
@@ -66,22 +66,25 @@ The property-world generator regression verifies unique IDs within entity types,
 | C — ownership, tenancy and occupancy | PARTIAL | The source archives include ownership, management, 12,500 agreements and 10,000 occupancies. Production archive acceptance does not execute the full temporal, party-role, dispute, subletting and continuity checks in AC-C01–C07. |
 | D — organisations and facilities | PARTIAL | Organisation and facility-related source collections exist. Full service-level acceptance for healthcare capability and public transport operator/route/timetable integration (AC-D06/D07) is not evidenced as a tested, playable interface. |
 | E — staff, stock, supply and events | PARTIAL | Business profiles and schedules are present. The complete person/employment interfaces, stock reconciliation, causal disruption events and transactional rollback requirements in AC-E01–E07 are not verified end to end. |
-| F — police, evidence and information boundaries | BLOCKED | No dedicated police-facing property/business enquiry adapter was found in the current runtime. The archive reader exposes generic dataset/collection loading; it does not itself provide authorised property lookup, role-filtered access-control disclosure or complete evidence-provenance workflows. BP-42/BP-23 remain required cross-division interfaces. |
+| F — police, evidence and information boundaries | PARTIAL / BLOCKED | A separate officer-only BP04 adapter now checks the required principal kind, live grants and durable audit. It is default-deny until approved policy grants are provisioned, and it is not yet called by dispatch/incident/investigation services. BP-42/BP-23 remain required cross-division interfaces. |
 | G — quality, scale and storage | PARTIAL | Archive integrity, source counts, storage measurement and repeat-import stability pass. The 10,000-business query-performance budget, complete duplicate/reconciliation suite, representative lookup benchmarks and full criterion-to-test traceability are not yet demonstrated. |
 
 ## 4. Concrete blockers to full acceptance
 
-1. **Canonical geography binding:** reconcile each property/address reference with BP-02's authoritative parcel/address IDs and spatial identity. The lookup deliberately labels current references `source_geography_reference_only`; do not treat a generated address label as proof of a BP-02 canonical address.
-2. **Gameplay lookup layer:** the bounded property/address/building/premises/unit/access-point/business/establishment lookup API is now implemented in `runtime/bp04_lookup.py`, documented in [BP04 gameplay lookup](../BP04-gameplay-lookup.md), and its synthetic contract tests passed on PostgreSQL 16 and 18 in [run 45678245109](https://github.com/Joshuaogri/saltwater/actions/runs/45678245109), and its integration tests against the actual imported archive package passed on both PostgreSQL 16 and 18 in [run 45678573423](https://github.com/Joshuaogri/saltwater/actions/runs/45678573423). The integration check reconciled 420 properties, 420 addresses, 1,474 buildings, 27,730 premises, 180,733 units, 2,984 access points, 10,000 businesses and 10,000 establishments, then resolved real address and business searches to their linked property records. The lookup remains process-local and does not duplicate static rows in Neon. It is not yet wired into the player command dispatcher or an authorised police-facing adapter.
-3. **Cross-register acceptance:** test uniqueness, parent/child references, temporal relationships, business-versus-establishment identity, 10,000-business quality, organisation/facility links and all 105 collection counts from the pinned source release.
-4. **Police-facing access contract:** expose relevant property/business facts to police workflows through an authorised adapter, preserving provenance and uncertainty and respecting restricted keys, locks, layouts and sensitive records. Do not bypass BP-42 or evidence ownership.
+1. **Canonical BP-02 parcel/address identities:** the read-only reconciliation in [run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644) matched all 420 property-to-generated-candidate-parcel links, 420 property-to-address links, and 420 each of district, neighbourhood and road references to BP-02 `entity_code` values. It also confirmed that the current BP-02 identity map contains zero parcel and zero address identities. The 420 parcels remain unapproved candidates and the 420 BP04 addresses remain source-world labels. BP-02 must supply canonical parcel/address identities before BP04 can bind or promote them.
+2. **Gameplay lookup integration:** the bounded property/address/building/premises/unit/access-point/business/establishment API is implemented in `runtime/bp04_lookup.py`. The player interface now supports `find` and `inspect`; PKG-005 lazily loads the lookup only after the command gateway authorizes the action; PKG-006/007 host and ChatGPT contracts accept bounded lookup commands. See [lookup design](../BP04-gameplay-lookup.md) and [integration record](../BP04-player-police-geography-integration.md).
+3. **Police access integration:** `runtime/bp04_police_access.py` provides an officer-only adapter and a PostgreSQL composition factory using live grants and durable append-only audit. It denies non-officers and denies all ungranted requests. Approved `player.command.find/inspect` and `bp04.lookup.*` grants have not been provisioned in production; no Neon policy rows were changed. Dispatch, incident and investigation services still need to call this adapter.
+4. **Cross-register acceptance:** test uniqueness, parent/child references, temporal relationships, business-versus-establishment identity, 10,000-business quality, organisation/facility links and all 105 collection counts from the pinned source release.
 5. **Operational interfaces and regression:** verify the applicable healthcare, transport, utility, business-schedule, lifecycle and disruption interfaces; add representative lookup-performance, failure/rollback and recovery tests.
 
 ## 5. Final decision
 
 **BP04 production archive release: COMPLETED and VERIFIED.**  
+**Player command lookup integration: IMPLEMENTED AND TESTED.**  
+**Officer lookup adapter: IMPLEMENTED; production access remains default-deny pending policy grants and police-service integration.**  
+**BP04-to-BP02 source-context reconciliation: PASSED; canonical parcel/address binding: BLOCKED.**  
 **BP04 full division acceptance: NOT COMPLETED.**
 
-Do not mark the entire BP04 division `COMPLETED` yet. The next bounded implementation tasks are BP-02 identity reconciliation, player/police integration of the lookup API, and their acceptance tests. This can be developed on GitHub `main` and tested on disposable PostgreSQL without any further Neon write.
+Do not mark the entire BP04 division `COMPLETED` yet. The next prerequisite is BP-02's canonical parcel/address identity layer and approval. After those identities exist, bind the 420 properties and 420 addresses, provision the approved access grants through the controlled policy process, wire the officer adapter into police operational services, and complete the remaining cross-register acceptance. These tasks remain on GitHub `main`; no further Neon write is required for the source reconciliation or player lookup implementation.
 
 No Neon writes were made during this audit.
