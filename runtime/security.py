@@ -163,6 +163,7 @@ class AuthorizationService:
         now: datetime | None = None,
         reveal_trigger: str | None = None,
         expected_principal_id: UUID | None = None,
+        expected_principal_kind: PrincipalKind | None = None,
     ) -> AuthorizationDecision:
         at = now or datetime.now(timezone.utc)
         session = self._verifier.verify(credential) if credential else None
@@ -175,6 +176,8 @@ class AuthorizationService:
             reason = "invalid_or_unverifiable_session"
         elif expected_principal_id is not None and session.principal_id != expected_principal_id:
             reason = "principal_mismatch"
+        elif expected_principal_kind is not None and session.principal_kind != expected_principal_kind:
+            reason = "principal_kind_mismatch"
         elif session.principal_status != PrincipalStatus.ACTIVE:
             reason = "principal_not_active"
         elif session.session_status != SessionStatus.ACTIVE:
