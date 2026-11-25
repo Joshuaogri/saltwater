@@ -189,7 +189,7 @@ def parse_player_command(
                 supplied_token=supplied,
             ))
     elif definition.token == "find":
-        if len(args) < 3:
+        if not args:
             return CommandParseResult(error=CommandParseError(
                 ParseErrorCode.MISSING_ARGUMENT,
                 "Use find address|property|business <search text>.",
@@ -199,6 +199,12 @@ def parse_player_command(
             return CommandParseResult(error=CommandParseError(
                 ParseErrorCode.INVALID_VALUE,
                 "find supports address, property or business.",
+                supplied_token=supplied,
+            ))
+        if len(args) < 2:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.MISSING_ARGUMENT,
+                "Use find <type> <search text>.",
                 supplied_token=supplied,
             ))
         if len(" ".join(args[1:]).strip()) < 2:
