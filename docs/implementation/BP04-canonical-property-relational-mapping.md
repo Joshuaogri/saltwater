@@ -138,3 +138,23 @@ This makes the compressed package the authoritative stored copy while retaining 
 **Storage target:** database growth should be close to the 29.43 MB compressed package plus PostgreSQL metadata, ledger rows, TOAST chunk overhead and schema overhead. Do not claim an exact target until the PostgreSQL 16/18 disposable workflow measures it. Production Neon remains at its restored 9.31 MB baseline; no new production write is authorised by this design change.
 
 **Acceptance:** 14 archive payloads; 14 dataset ledger rows; 105 collection ledger rows; all source records accounted for; zero typed rows loaded; payload byte lengths and SHA-256 verified by the importer/reader; collection lookup returns the original columnar values; repeat import leaves database size unchanged.
+
+
+## Verified archive-only storage benchmark — PostgreSQL 16 and 18 (2026-11-25)
+
+The archive-only release workflow passed on both PostgreSQL 16 and PostgreSQL 18 in GitHub Actions run [45671765479](https://github.com/Joshuaogri/saltwater/actions/runs/45671765479), commit `d79d32510227868ed7e99d85187b5c40a2ec01c0`.
+
+| Measure | PostgreSQL 16 | PostgreSQL 18 (closest Neon benchmark) |
+|---|---:|---:|
+| Full disposable database size | 40,434,711 bytes (40.43 MB) | 40,875,711 bytes (40.88 MB) |
+| Baseline before BP04 import | 9,306,112 bytes | 9,306,112 bytes |
+| Incremental database growth | 31,128,599 bytes (31.13 MB) | 31,569,599 bytes (31.57 MB) |
+| Compressed source package | 29,434,820 bytes (29.43 MB) | 29,434,820 bytes (29.43 MB) |
+| `source_dataset_archive` relation | 28,368,896 bytes | 28,368,896 bytes |
+| Typed rows permanently imported | 0 | 0 |
+| Repeat-import size change | 0 bytes | 0 bytes |
+| Repeat-import row mutations | 0 | 0 |
+
+The import preserved all 14 archives, 105 source collections and 1,950,923 source records. The archive-only acceptance test passed on both PostgreSQL versions, and the second import left database size unchanged. Against the previous typed-row production growth of 616,505,344 bytes, the PostgreSQL 18 archive-only benchmark reduces incremental growth by approximately **94.88%** (about 19.5 times smaller).
+
+The 31.57 MB figure is incremental database growth, not the final total size. Starting from the 9.31 MB production baseline, the closest PostgreSQL 18 benchmark indicates an approximately **40.88 MB total database** after an archive-only import. This remains a disposable benchmark, not a production measurement. Neon has not been written; production remains at 9.31 MB pending fresh explicit authorisation.
