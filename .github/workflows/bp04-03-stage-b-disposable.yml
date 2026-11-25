@@ -6,6 +6,7 @@ on:
     paths:
       - "db/proposals/0013_bp02_parcel_address_candidate.sql"
       - "db/proposals/0014_bp04_parcel_dossier_detail.sql"
+      - "db/proposals/0016_bp04_road_reserve_proximity_candidates.sql"
       - "tests/pkg001/bp04_03_stage_d_dossier_acceptance.sql"
       - "tests/pkg001/bp04_03_stage_b_acceptance.sql"
       - "tests/pkg001/test_bp04_03_stage_b_contract.py"
@@ -110,6 +111,11 @@ jobs:
           after_dossier=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp04_03_stage_d_dossier_schema_growth_bytes=$((after_dossier-before_dossier))"
           echo "bp04_03_stage_d_dossier_proposal_source_bytes=$(wc -c < db/proposals/0014_bp04_parcel_dossier_detail.sql)"
+          before_proximity=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0016_bp04_road_reserve_proximity_candidates.sql
+          after_proximity=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp04_03_road_reserve_proximity_schema_growth_bytes=$((after_proximity-before_proximity))"
+          echo "bp04_03_road_reserve_proximity_proposal_source_bytes=$(wc -c < db/proposals/0016_bp04_road_reserve_proximity_candidates.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_geo' ORDER BY 3 DESC;"
       - name: Run BP04-03 Stage B parcel/address acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_03_stage_b_acceptance.sql
