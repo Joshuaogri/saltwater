@@ -11,7 +11,8 @@ CREATE TABLE sw_incident.incident (
     ('RECEIVED','AWAITING_TRIAGE','ASSESSED','ALLOCATED','DISPATCHED','RESPONDING',
      'ATTENDED','ACTIVE_MANAGEMENT','MONITORING','RESOLVED','CLOSED','CANCELLED',
      'DUPLICATE_LINKED','REOPENED')),
-  source_type text NOT NULL,
+  source_type text NOT NULL CHECK(source_type IN
+    ('communications_contact','police_call','cad_event','officer_report','alarm','interagency','system','other')),
   source_record_id text NOT NULL,
   reporter_person_id integer REFERENCES sw_people.person(person_id),
   caller_identity_state text NOT NULL CHECK(caller_identity_state IN
@@ -237,7 +238,11 @@ BEGIN
      OR p_caller_identity_state IS NULL OR p_caller_identity_state NOT IN ('known','claimed','anonymous','withheld','unknown','not_applicable')
      OR p_category_code IS NULL OR p_category_code=''
      OR p_priority IS NOT NULL AND p_priority NOT BETWEEN 1 AND 5
-     OR p_severity_code IS NULL OR p_severity_code NOT IN ('critical','high','moderate','low','unassessed') THEN
+     OR p_severity_code IS NULL OR p_severity_code NOT IN ('critical','high','moderate','low','unassessed')
+     OR (p_location_raw IS NOT NULL AND (p_location_type IS NULL OR p_location_type NOT IN
+       ('canonical_spatial','property','premises','road','landmark','public_space','raw','external')))
+     OR (p_location_raw IS NOT NULL AND (p_location_confidence IS NULL OR p_location_confidence NOT IN
+       ('high','medium','low','unverified','unknown'))) THEN
     RAISE EXCEPTION 'invalid incident intake data';
   END IF;
 
@@ -391,6 +396,9 @@ BEGIN
   END;
   IF NOT v_allowed THEN
     RAISE EXCEPTION 'invalid incident state transition: % -> %',v_incident.status,p_new_status;
+  END IF;
+  IF p_duplicate_of_incident_id IS NOT NULL AND p_new_status<>'DUPLICATE_LINKED' THEN
+    RAISE EXCEPTION 'duplicate target is only valid for DUPLICATE_LINKED transition';
   END IF;
   IF p_duplicate_of_incident_id IS NOT NULL AND
      (p_duplicate_of_incident_id=p_incident_id OR NOT EXISTS(
