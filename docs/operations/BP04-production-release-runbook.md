@@ -16,6 +16,8 @@ The importer `runtime/bp04_property_stack_importer.py` defaults to the disposabl
 - 1,422,202 typed-mapped rows; 19 archive-only collections; 3 partially mapped collections.
 - 92 relational tables; zero cross-reference violations.
 - Compressed source package: 29,434,820 bytes (29.43 MB / 28.07 MiB).
+- Ten production migration files: 65,681 bytes; importer source: 68,115 bytes.
+- Combined static release files: 29,568,616 bytes (29.57 MB / 28.20 MiB). Typed insert traffic and protocol overhead are additional.
 - Disposable PostgreSQL 16 size: 627,792,919 bytes (627.79 MB / 598.71 MiB).
 - Repeat import: zero inserts, updates or deletes; database size unchanged.
 - Benchmark source package SHA-256: `54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be`.
