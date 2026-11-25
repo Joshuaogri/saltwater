@@ -43,7 +43,7 @@ def _manager_model(model: str, property_id: str):
 
 def build_property_tenure(source: dict) -> dict:
     world = build_property_world(source)
-    registry = build_business_registry(source)
+    registry = build_business_registry(source, property_world=world)
     properties = {x["property_id"]: x for x in world["properties"]}
     owners = {x["organisation_id"]: x for x in world["owner_organisations"]}
     current_interests = {x["property_id"]: x for x in world["ownership_interests"]}
@@ -280,11 +280,12 @@ def build_property_tenure(source: dict) -> dict:
             "historical_expired_agreement_count": len(agreements) - len(businesses),
             "current_business_occupancy_count": len(occupancies),
             "unit_occupancy_state_count": len(unit_states),
-            "business_occupancy_count": len(business_unit if False else business_by_unit),
+            "business_occupancy_count": len(business_by_unit),
             "person_records_created": 0,
             "population_records_created": 0,
         },
         "organisations": all_organisations,
+        "current_ownership_interests": list(current_interests.values()),
         "ownership_events": ownership_events,
         "management_appointments": management_appointments,
         "agreements": agreements,
