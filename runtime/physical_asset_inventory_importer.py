@@ -83,8 +83,10 @@ def validate_manifests(inventory: dict, candidates: dict, dossiers: dict) -> tup
     for row in connectors:
         if row.get("access_point_candidate_id") not in access_ids:
             raise ValueError("Access connector references a missing access-point candidate")
-        if row.get("geometry_type") != "LineString" or len(row.get("geometry_coordinates", [])) != 2:
-            raise ValueError("Access connector must contain a two-endpoint LineString geometry")
+        coordinates = row.get("geometry_coordinates")
+        if (row.get("geometry_type") != "LineString" or not isinstance(coordinates, list)
+                or len(coordinates) < 2 or coordinates[0] == coordinates[-1]):
+            raise ValueError("Access connector must contain a valid multi-segment LineString with distinct endpoints")
         if not row.get("road_id") or not row.get("road_segment_ids"):
             raise ValueError("Access connector must retain road and road-segment lineage")
         if not row.get("road_access_candidate_id"):
