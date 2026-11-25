@@ -32,10 +32,12 @@ class GlobalEstateCapacityAuditTests(unittest.TestCase):
   self.assertEqual(sum(x["establishments"] for x in rows),len(self.businesses["establishments"]))
  def test_global_hub_scale_gap_is_explicit(self):
   findings={x["finding_id"]:x for x in self.data["capacity_findings"]}
-  self.assertEqual(findings["ESTATE-001"]["severity"],"critical")
+  self.assertEqual(findings["ESTATE-001"]["severity"],"high")
   self.assertEqual(findings["ESTATE-002"]["severity"],"high")
   self.assertEqual(findings["ESTATE-003"]["severity"],"high")
   self.assertEqual(self.data["design_constraints"]["population_cap"],10000)
+  self.assertGreaterEqual(self.data["summary"]["buildings_at_least_20_storeys"],1)
+  self.assertEqual(self.data["summary"]["vertical_profile_code"],"GLOBAL-ESTATE-VERTICAL-V1")
   self.assertTrue(self.data["design_constraints"]["one_city_only"])
  def test_audit_does_not_create_people_or_change_world(self):
   self.assertEqual(self.data["summary"]["people_records_created"],0)
