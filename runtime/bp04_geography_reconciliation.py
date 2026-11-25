@@ -16,6 +16,7 @@ from typing import Iterable
 
 from runtime.geography_identity_reconciliation import validate_identity_map
 from runtime.parcel_candidate_generator import build_candidates
+from runtime.bp02_parcel_address_identity import build_identity_register
 
 ROOT = Path(__file__).resolve().parents[1]
 GEO_PATH = ROOT / "data/geography/saltwater-geography-v1.json"
@@ -54,10 +55,14 @@ def reconcile_collections(
     geography_entity_codes: set[str],
     canonical_parcel_codes: set[str] | None = None,
     canonical_address_codes: set[str] | None = None,
+    canonical_parcel_by_candidate: dict[str, str] | None = None,
+    canonical_address_by_source: dict[str, str] | None = None,
 ) -> dict:
     properties, addresses = list(properties), list(addresses)
     canonical_parcel_codes = canonical_parcel_codes or set()
     canonical_address_codes = canonical_address_codes or set()
+    canonical_parcel_by_candidate = canonical_parcel_by_candidate or {}
+    canonical_address_by_source = canonical_address_by_source or {}
 
     property_by_id = {}
     for row in properties:
@@ -124,10 +129,13 @@ def reconcile_collections(
 
     canonical_parcel_matches = sum(
         1 for row in properties
-        if row.get("source_candidate_parcel_id") in canonical_parcel_codes
+        if row.get("source_candidate_parcel_id") in canonical_parcel_by_candidate
+        or row.get("source_candidate_parcel_id") in canonical_parcel_codes
     )
     canonical_address_matches = sum(
-        1 for row in addresses if row.get("address_id") in canonical_address_codes
+        1 for row in addresses
+        if row.get("address_id") in canonical_address_by_source
+        or row.get("address_id") in canonical_address_codes
     )
     return {
         "property_records": len(properties),
@@ -142,7 +150,7 @@ def reconcile_collections(
         "properties_still_awaiting_bp02_parcel_binding": len(properties) - canonical_parcel_matches,
         "addresses_still_awaiting_bp02_address_binding": len(addresses) - canonical_address_matches,
         "canonical_binding_status": (
-            "COMPLETE" if canonical_parcel_matches == len(properties)
+            "DESIGN_IDENTITIES_BOUND_OPERATIONAL_RELEASE_BLOCKED" if canonical_parcel_matches == len(properties)
             and canonical_address_matches == len(addresses)
             else "BLOCKED_BP02_CANONICAL_PARCEL_AND_ADDRESS_IDENTITIES_ABSENT"
         ),
@@ -166,15 +174,29 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     for row in identity_map.get("entries", []):
         types.setdefault(row["entity_type"], set()).add(row["entity_code"])
 
+    properties = _rows(property_document, "properties")
+    addresses = _rows(property_document, "addresses")
+    identity_register = build_identity_register(
+        candidate_manifest, properties, addresses, codes
+    )
+    parcel_map = {
+        row["source_candidate_parcel_id"]: row["parcel_id"]
+        for row in identity_register["parcels"]
+    }
+    address_map = {
+        row["source_address_id"]: row["address_id"]
+        for row in identity_register["addresses"]
+    }
     result = reconcile_collections(
-        _rows(property_document, "properties"),
-        _rows(property_document, "addresses"),
-        candidate_ids,
-        codes,
-        types.get("PARCEL", set()),
-        types.get("ADDRESS", set()),
+        properties, addresses, candidate_ids, codes,
+        types.get("PARCEL", set()), types.get("ADDRESS", set()),
+        parcel_map, address_map,
     )
     result.update({
+        "bp02_design_parcel_identity_count": identity_register["parcel_identity_count"],
+        "bp02_design_address_identity_count": identity_register["address_identity_count"],
+        "bp02_design_identity_register": identity_register["register_id"],
+        "operational_identity_release_approved": identity_register["operational_approval"],
         "audit": "BP04-TO-BP02-ADDRESS-RECONCILIATION",
         "source_geography_dataset": geo.get("dataset_id"),
         "source_geography_status": geo.get("status"),
@@ -185,8 +207,8 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
         "bp02_canonical_parcel_identity_count": len(types.get("PARCEL", set())),
         "bp02_canonical_address_identity_count": len(types.get("ADDRESS", set())),
         "limitations": [
-            "The 420 generated parcel polygons are design candidates, not BP-02 canonical parcel identities.",
-            "BP04 address IDs and labels are source-world labels, not BP-02 canonical address identities.",
+            "Stable BP-02 parcel and address design identities now bind all source records; geometry and address facts remain unapproved for operational release.",
+            "Source street labels and numbers remain unverified; no missing address attributes are invented.",
             "District, neighbourhood and road context resolves to stable BP-02 entity_code values only.",
             "No spatial_id surrogate is fabricated or copied from a disposable database.",
             "No canonical address is promoted and no production database is written.",
