@@ -27,7 +27,7 @@ CREATE TABLE sw_property.physical_key (
  property_id text NOT NULL REFERENCES sw_property.property_site(property_id) DEFERRABLE INITIALLY DEFERRED,
  key_class text, key_status text, issue_to_person_id text, issue_to_organisation_id text REFERENCES sw_property.organisation(organisation_id) DEFERRABLE INITIALLY DEFERRED,
  duplicate_control text, source_dataset text NOT NULL,
- CHECK (issue_to_person_id IS NULL)
+ CONSTRAINT physical_key_no_person_credential CHECK (issue_to_person_id IS NULL)
 );
 CREATE TABLE sw_property.security_device (
  security_device_id text PRIMARY KEY, device_type text, access_point_id text NOT NULL REFERENCES sw_property.access_point(access_point_id) DEFERRABLE INITIALLY DEFERRED,
@@ -57,7 +57,7 @@ CREATE TABLE sw_property.access_group (
  business_id text REFERENCES sw_property.business(business_id) DEFERRABLE INITIALLY DEFERRED,
  occupancy_id text REFERENCES sw_property.occupancy(occupancy_id) DEFERRABLE INITIALLY DEFERRED,
  group_status text, member_person_ids text[] NOT NULL, credential_issue_mode text, source_dataset text NOT NULL,
- CHECK (cardinality(member_person_ids)=0)
+ CONSTRAINT access_group_no_person_members CHECK (cardinality(member_person_ids)=0)
 );
 CREATE TABLE sw_property.permission_set (
  permission_set_id text PRIMARY KEY, access_group_id text NOT NULL REFERENCES sw_property.access_group(access_group_id) DEFERRABLE INITIALLY DEFERRED,
