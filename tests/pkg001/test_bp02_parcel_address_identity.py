@@ -57,6 +57,8 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
         self.assertEqual(result["addresses"][1]["source_address_attributes"]["building_number"], None)
         self.assertEqual(result["addresses"][0]["road_frontage_match_status"], "ROAD_MATCHES_PARCEL_FRONTAGE_CANDIDATE")
         self.assertEqual(result["addresses"][1]["road_frontage_match_status"], "NO_PARCEL_FRONTAGE_CANDIDATE")
+        self.assertEqual(result["addresses"][0]["address_road_candidate_id"], "SW-R01")
+        self.assertIsNone(result["addresses"][1]["address_road_candidate_id"])
 
     def test_rebuild_is_deterministic(self):
         self.assertEqual(self.build(), self.build())
