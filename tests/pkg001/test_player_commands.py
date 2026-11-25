@@ -19,7 +19,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         expected = {
             "help", "status", "profile", "recruit", "career", "start",
             "pause", "resume", "quit", "home", "workspaces", "workspace",
-            "back", "where",
+            "back", "where", "find", "inspect",
         }
         self.assertEqual(set(COMMAND_BY_TOKEN), expected)
         self.assertEqual(len(COMMAND_CATALOGUE), len(expected))
@@ -50,7 +50,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
 
     def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
         expected = {
-            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where"},
+            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect"},
             CommandClass.PRESENTATION_STATE: {"home", "workspace", "back"},
             CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit"},
         }
@@ -71,11 +71,15 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
 
     def test_exact_forms_parse_and_preserve_workspace_identifier(self):
         for token in COMMAND_BY_TOKEN:
-            if token == "workspace":
+            if token in {"workspace", "find", "inspect"}:
                 continue
             result = parse_player_command(token)
             self.assertTrue(result.ok, token)
             self.assertEqual(result.command.token, token)
+        self.assertTrue(parse_player_command("find address Harbour Avenue").ok)
+        self.assertEqual(parse_player_command('find business "Harbour Bank"').command.arguments,
+                         ("business", "Harbour Bank"))
+        self.assertTrue(parse_player_command("inspect property SWPROP-001").ok)
         result = parse_player_command("workspace reports-notifications")
         self.assertTrue(result.ok)
         self.assertEqual(result.command.arguments, ("reports-notifications",))
@@ -90,6 +94,11 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
             ("workspace cases extra", ParseErrorCode.INVALID_ARGUMENT_COUNT),
             ("status extra", ParseErrorCode.INVALID_ARGUMENT_COUNT),
             ("workspace Cases", ParseErrorCode.INVALID_VALUE),
+            ("find", ParseErrorCode.MISSING_ARGUMENT),
+            ("find address", ParseErrorCode.MISSING_ARGUMENT),
+            ("find person Joshua", ParseErrorCode.INVALID_VALUE),
+            ("inspect property", ParseErrorCode.INVALID_ARGUMENT_COUNT),
+            ("inspect person P-1", ParseErrorCode.INVALID_VALUE),
         )
         for command, expected in cases:
             with self.subTest(command=command):
@@ -110,6 +119,8 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
             self.assertIn(item.purpose, help_text)
         self.assertNotIn("bingo", help_text)
         self.assertIn("workspace <id>", help_text)
+        self.assertIn("find <type> <query>", help_text)
+        self.assertIn("inspect <type> <id>", help_text)
 
     def test_tool_boundary_can_require_exact_canonical_surface(self):
         self.assertTrue(parse_player_command(
