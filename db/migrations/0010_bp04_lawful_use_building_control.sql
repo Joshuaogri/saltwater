@@ -1,6 +1,6 @@
 -- BP04 phase 8: police-gameplay-relevant lawful-use and building-control records.
 -- The 180,733 unit-use-compliance rows remain losslessly archived, not duplicated as operational rows.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.site_development_plan (
   site_development_plan_id text PRIMARY KEY,
