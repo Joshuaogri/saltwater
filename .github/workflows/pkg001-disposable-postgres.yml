@@ -14,7 +14,9 @@ on:
       - "db/proposals/0008_bp39_checkpoint_recovery.sql"
       - "db/proposals/0009_universal_name_registry.sql"
       - "db/proposals/0023_bp05_police_architecture.sql"
+      - "db/proposals/0024_bp06_personnel_service_records.sql"
       - "tests/pkg001/police_architecture_acceptance.sql"
+      - "tests/pkg001/personnel_service_acceptance.sql"
       - "runtime/naming.py"
       - "runtime/name_generation.py"
       - "runtime/naming_inventory.py"
@@ -140,6 +142,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0023_bp05_police_architecture.sql
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/police_architecture_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0024_bp06_personnel_service_records.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -164,6 +167,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/geography_identity_map_acceptance.sql
       - name: Run PKG-003 recruit-entry acceptance checks
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/recruit_entry_acceptance.sql
+      - name: Verify BP06 personnel service dossier and supervisor links
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/personnel_service_acceptance.sql
       - name: Measure representative 1,000-person storage growth
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
