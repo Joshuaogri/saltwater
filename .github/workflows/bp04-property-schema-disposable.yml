@@ -5,15 +5,19 @@ on:
     branches: ["main"]
     paths:
       - "db/proposals/0012_bp04_canonical_property_stack.sql"
+      - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - ".github/workflows/bp04-property-schema-disposable.yml"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "data/property/saltwater-property-tenure-v1.json.gz"
+      - "data/business/saltwater-business-registry-v1.json.gz"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  schema-acceptance:
+  schema-and-import:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -30,17 +34,32 @@ jobs:
           --health-timeout 5s
           --health-retries 20
     env:
+      DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
+      PGPASSWORD: test-only
+      PGUSER: saltwater_test
       PGHOST: localhost
       PGPORT: 5432
-      PGUSER: saltwater_test
-      PGPASSWORD: test-only
       PGDATABASE: saltwater_test
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install importer driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Apply BP04 phase-1 proposal to disposable database only
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-      - name: Record disposable database size
+      - name: Import compressed property, business and tenure package
+        run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
+      - name: Verify second import preserves row counts
         run: |
-          psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database()) AS disposable_schema_bytes;"
+          BEFORE="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT string_agg(relname||':'||n_live_tup::text, ',' ORDER BY relname) FROM pg_stat_user_tables WHERE schemaname='sw_property';")"
+          python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
+          AFTER="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT string_agg(relname||':'||n_live_tup::text, ',' ORDER BY relname) FROM pg_stat_user_tables WHERE schemaname='sw_property';")"
+          test "$BEFORE" = "$AFTER"
+      - name: Report disposable PostgreSQL storage and table sizes
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS disposable_database_bytes;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(relid) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY total_bytes DESC;"
