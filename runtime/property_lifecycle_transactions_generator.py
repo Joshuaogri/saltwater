@@ -36,17 +36,17 @@ def build_property_lifecycle(world, tenure, development):
             "registered_proprietor_organisation_id": owner,
             "title_status": "registered_current", "tenure_type": interest.get("interest_type", "freehold_or_canonical_estate"),
             "registration_tick": 0, "source_basis": "canonical_property_world_and_tenure",
-            "boundary_record_id": f"SWBOUNDARY-{_slug(pid)}",
+            "boundary_record_id": f"SWBOUNDARY-{_stable_key(pid)}",
             "active_dispute_count": 0, "unresolved_title_issue_count": 0
         })
         property_interests.append({
-            "property_interest_record_id": f"SWINT-{_slug(pid)}",
+            "property_interest_record_id": f"SWINT-{_stable_key(pid)}",
             "property_id": pid, "ownership_interest_id": interest["ownership_interest_id"],
             "interest_holder_organisation_id": owner, "interest_type": interest.get("interest_type", "registered_ownership"),
             "interest_status": "current", "priority_order": 1, "source_basis": "current_ownership_interest"
         })
         lifecycle_events.append({
-            "lifecycle_event_id": f"SWPLE-{_slug(pid)}-REG",
+            "lifecycle_event_id": f"SWPLE-{_stable_key(pid)}-REG",
             "property_id": pid, "event_type": "canonical_property_registration",
             "effective_year": None, "effective_tick": 0, "event_status": "baseline_state_registration",
             "title_register_id": title_id, "source_record_id": pid,
@@ -83,7 +83,7 @@ def build_property_lifecycle(world, tenure, development):
                 "source_of_truth": "SW-PROPERTY-TENURE-V1"
             })
         encumbrance_register.append({
-            "encumbrance_register_id": f"SWENC-{_slug(pid)}", "property_id": pid,
+            "encumbrance_register_id": f"SWENC-{_stable_key(pid)}", "property_id": pid,
             "title_register_id": title_id, "recorded_encumbrance_count": 0,
             "register_state": "no_encumbrance_record_supplied",
             "mortgage_or_charge_status": "not_asserted", "caveat_or_lien_status": "not_asserted",
