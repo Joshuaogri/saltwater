@@ -31,6 +31,7 @@ def _visibility_path(start, end, property_geom, obstacle_geometries):
     """
     buffered = [g.buffer(0.25) for g in obstacle_geometries if not g.is_empty]
     obstacle_union = unary_union(buffered) if buffered else None
+    obstacle_interior = obstacle_union.buffer(-1e-5) if obstacle_union is not None else None
     nodes = [start, end]
     if obstacle_union is not None:
         geoms = list(obstacle_union.geoms) if obstacle_union.geom_type == "MultiPolygon" else [obstacle_union]
@@ -55,7 +56,9 @@ def _visibility_path(start, end, property_geom, obstacle_geometries):
             segment = LineString([nodes[i], nodes[j]])
             if segment.length <= 1e-8 or not property_geom.covers(segment):
                 continue
-            if obstacle_union is not None and segment.intersection(obstacle_union).length > 1e-6:
+            # Boundary-following visibility edges are valid; only reject entry
+            # into obstacle interiors (the 0.25 m buffer provides clearance).
+            if obstacle_interior is not None and not obstacle_interior.is_empty and segment.intersection(obstacle_interior).length > 1e-6:
                 continue
             weight = segment.length
             adjacency[i].append((j, weight))
