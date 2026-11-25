@@ -1,0 +1,53 @@
+name: BP04 player and police lookup integration with BP02 geography
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/player_commands.py"
+      - "runtime/player_interface.py"
+      - "runtime/player_command_runtime.py"
+      - "runtime/application.py"
+      - "runtime/security.py"
+      - "runtime/bp04_lookup.py"
+      - "runtime/bp04_police_access.py"
+      - "runtime/bp04_geography_reconciliation.py"
+      - "runtime/geography_identity_reconciliation.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/road_reserve_topology.py"
+      - "tests/pkg001/test_player_commands.py"
+      - "tests/pkg001/test_player_interface.py"
+      - "tests/pkg001/test_player_command_runtime.py"
+      - "tests/pkg001/test_authorization.py"
+      - "tests/pkg001/test_bp04_lookup.py"
+      - "tests/pkg001/test_bp04_police_access.py"
+      - "tests/pkg001/test_bp04_geography_reconciliation.py"
+      - "tests/pkg001/test_geography_identity_reconciliation.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1-identity-map.json"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - ".github/workflows/bp04-player-geography-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  player-police-and-geography:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry and PostgreSQL runtime dependencies
+        run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
+      - name: Test player command parser, interface and authenticated runtime
+        run: python -m unittest tests.pkg001.test_player_commands tests.pkg001.test_player_interface tests.pkg001.test_player_command_runtime -v
+      - name: Test audited officer-only BP04 access and authorization
+        run: python -m unittest tests.pkg001.test_authorization tests.pkg001.test_bp04_police_access -v
+      - name: Test BP04 lookup and BP02 reconciliation contracts
+        run: python -m unittest tests.pkg001.test_bp04_lookup tests.pkg001.test_bp04_geography_reconciliation tests.pkg001.test_geography_identity_reconciliation -v
+      - name: Reconcile all property addresses to BP02 source geography and parcel candidates
+        run: python -m runtime.bp04_geography_reconciliation
