@@ -463,8 +463,11 @@ def build_property_world(source: dict) -> dict:
             "The source parcel geometry and building footprints are deterministic game design geometry.",
         ],
     }
-    canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    body["manifest_sha256"] = hashlib.sha256(canonical).hexdigest()
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    digest = hashlib.sha256()
+    for chunk in encoder.iterencode(body):
+        digest.update(chunk.encode("utf-8"))
+    body["manifest_sha256"] = digest.hexdigest()
     return body
 
 
@@ -497,7 +500,9 @@ def main():
     output = root / "data/property/saltwater-property-world-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     document = to_columnar_document(result)
-    output.write_text(json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n", encoding="utf-8")
+    with output.open("w", encoding="utf-8", newline="") as stream:
+        json.dump(document, stream, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        stream.write("\n")
     print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"], "storage_format": document["storage_format"], "output_bytes": output.stat().st_size}, indent=2, sort_keys=True))
 
 
