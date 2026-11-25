@@ -164,3 +164,12 @@ The full 14-source package was imported into disposable PostgreSQL 16 using the 
 - No production Neon schema or data writes have been made.
 
 The 19 archive-only collections remain losslessly retained in their compressed source datasets; they are not fabricated into gameplay records. The mapped collections provide typed relational access for the core property, business, tenure, operating-hours, building-services, maintenance, security, lawful-use, title/lifecycle, rights and access relationships.
+
+
+## Superseding production and acceptance status — 2026-11-25
+
+The BP04 archive-only production release completed successfully in [workflow run 45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246). The live Neon database contains 14 compressed datasets, 105 collection ledger rows and 1,950,923 source records, with zero permanently materialised typed source rows. The 92-table BP04 schema and migrations 0003–0012 are deployed. The verified live database size is 41,525,248 bytes; growth from the 9,306,112-byte baseline is 32,219,136 bytes.
+
+This supersedes earlier statements in this plan that Neon still contained only five foundation tables or that no BP04 production upload had occurred. The storage model remains compressed archive-only; do not restore the previous typed-row import plan or re-upload the package.
+
+**Full BP04 division acceptance did not pass.** The remaining gaps are documented in [BP04 full acceptance audit](test-evidence/BP04-full-acceptance-audit-2026-11-25.md): BP-02 canonical address/parcel binding, property/business/organisation lookup by stable identifiers, comprehensive cross-register acceptance, and authorised police-facing access. Continue on `main`; use disposable PostgreSQL for tests. No additional Neon writes without fresh explicit authorisation.
