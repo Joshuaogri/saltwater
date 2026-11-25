@@ -641,3 +641,25 @@ A manual Neon restore snapshot was created on the production branch before the B
 - The manual production workflow has not been dispatched. The production release must remain pending until the workflow is started from `main`, its required `DATABASE_URL` secret is available, and the workflow completes all migration, import, acceptance and repeat-import checks.
 
 No production BP04 write is claimed by this checkpoint.
+
+
+## BP04 Neon production upload — result (2026-11-25)
+
+The manual production release workflow ran on `main` at commit `8854d66180a074f0e425d45803590ffbe14dc1a9` (run [45667318478](https://github.com/Joshuaogri/saltwater/actions/runs/45667318478)). The pre-write Neon restore snapshot was verified by the workflow: `snap-calm-credit-bdfp5tog`.
+
+**Production data deployment succeeded; the workflow ended in failure only at the strict repeat-import storage-stability assertion.**
+
+- Migrations **0003–0012** applied successfully; Neon migration ledger now contains versions 1–12.
+- All **14/14** compressed source datasets imported.
+- Package digest: `54090f74332c1d0fedb09b48ad1fd669b9d62c593c9a5c253e979cbafaf4a3be`.
+- Compressed source archives: **29,434,820 bytes (29.43 MB)**; uncompressed source data: **558,602,287 bytes**.
+- Source ledger: **1,950,923** source records; **1,422,202** typed mapped records; **0** cross-reference violations.
+- Production acceptance: schema acceptance and import acceptance both passed.
+- Neon now has **92 BP04 tables** in `sw_property` and **97 user base tables** overall.
+- Pre-upload database size: **9,306,112 bytes (9.31 MB)**.
+- Before repeat-import test: **624,893,952 bytes (624.89 MB)**.
+- After repeat-import test as measured by the workflow: **625,033,216 bytes (625.03 MB)**, an increase of **139,264 bytes (0.139 MB)** during the repeat operation. The workflow's exact-size-equality guard therefore failed; do not record the repeat-import storage-stability check as passed.
+- Latest live read-only measurement after the run: **625,811,456 bytes (625.81 MB / 596.6 MiB)**. This is **616,505,344 bytes (616.51 MB)** above the original baseline.
+- All 14 dataset ledger rows and all 12 migration ledger rows are present in production.
+
+The BP04 release is present and accepted in Neon. The outstanding item is to explain the small database-size delta during the repeat import, confirm row-count idempotency independently, and adjust the workflow's storage assertion if PostgreSQL maintenance/operation-ledger writes explain the delta. Do not re-import the package merely to retry the size assertion. No rollback was performed; retain the pre-release restore snapshot.
