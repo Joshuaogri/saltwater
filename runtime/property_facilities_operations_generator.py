@@ -32,7 +32,7 @@ def _id(prefix, value):
 def _class(row):
     return str(row.get("building_use") or row.get("property_use") or row.get("use_class") or row.get("property_type") or "general").lower()
 
-def build_facilities_operations(world, tenure, services, maintenance):
+def build_facilities_operations(world, tenure, services, maintenance, development_control):
     properties = world["properties"]
     buildings = world["buildings"]
     premises = world["premises"]
@@ -46,17 +46,20 @@ def build_facilities_operations(world, tenure, services, maintenance):
     unit_ids = {x["unit_id"] for x in units}
     tenure_unit_ids = {x["unit_id"] for x in tenure["unit_occupancy_states"]}
     meter_unit_ids = {x["unit_id"] for x in services["meters"] if x.get("meter_role") == "unit_submeter"}
+    development_control_unit_ids = {x["unit_id"] for x in development_control["unit_use_compliance"]}
     unit_reconciliation = {
       "property_world_unit_count": len(unit_ids),
       "tenure_unit_occupancy_state_count": len(tenure_unit_ids),
       "building_services_unit_submeter_count": len(meter_unit_ids),
-      "property_development_control_unit_count": 62585,
+      "property_development_control_unit_count": len(development_control_unit_ids),
       "world_vs_tenure_missing_unit_count": len(unit_ids - tenure_unit_ids),
       "world_vs_metering_missing_unit_count": len(unit_ids - meter_unit_ids),
       "tenure_unit_ids_not_in_world_count": len(tenure_unit_ids - unit_ids),
       "meter_unit_ids_not_in_world_count": len(meter_unit_ids - unit_ids),
-      "reconciliation_status": "reconciled" if unit_ids == tenure_unit_ids == meter_unit_ids and len(unit_ids) == 62585 else "mismatch_preserved_for_reconciliation",
-      "note": "The development-control count is cross-checked against source unit identities; no missing occupancy or meter records are fabricated."
+      "development_control_units_missing_from_world_count": len(development_control_unit_ids - unit_ids),
+      "world_units_missing_from_development_control_count": len(unit_ids - development_control_unit_ids),
+      "reconciliation_status": "reconciled" if unit_ids == tenure_unit_ids == meter_unit_ids == development_control_unit_ids else "mismatch_preserved_for_reconciliation",
+      "note": "Identity sets are compared across property world, tenure, utility submeters and development control; no missing units, occupancies or meters are fabricated."
     }
     contracts, schedules, zones, sla, escalation = [], [], [], [], []
     for index, p in enumerate(sorted(properties, key=lambda x:x["property_id"])):
@@ -165,13 +168,13 @@ def build_facilities_operations(world, tenure, services, maintenance):
       "service_zones":zones,"service_level_agreements":sla,
       "service_failure_escalation_rules":escalation,
       "service_requests":[],"service_visits":[],"supplier_performance_actuals":[],
-      "lineage":{"property_world":"SW-PROPERTY-WORLD-V1","property_tenure":"SW-PROPERTY-TENURE-V1","building_services":"SW-BUILDING-SERVICES-V1","property_maintenance":"SW-PROPERTY-MAINTENANCE-V1"},
+      "lineage":{"property_world":"SW-PROPERTY-WORLD-V1","property_tenure":"SW-PROPERTY-TENURE-V1","building_services":"SW-BUILDING-SERVICES-V1","property_maintenance":"SW-PROPERTY-MAINTENANCE-V1","property_development_control":"SW-PROPERTY-DEVELOPMENT-CONTROL-V1"},
       "governance":{
         "baseline":"Schedules and target SLAs define the opening operating model; no visit or performance result is invented.",
         "waste":"Waste streams are service definitions, not fabricated tonnage or manifests.",
         "finance":"No invoices, charges or payments are created; BP-34 is the sole financial posting authority.",
         "people":"No staff, contractors-as-persons, residents or other person records are created.",
-        "units":"The differing unit counts remain explicitly visible until identity-level reconciliation is completed."
+        "units":"Unit identities are cross-checked across property world, tenure, utility submeters and development control; any differences remain explicit."
       }
     }
     body["manifest_sha256"] = hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
@@ -180,7 +183,7 @@ def build_facilities_operations(world, tenure, services, maintenance):
 def main():
     root=Path(__file__).resolve().parents[1]
     def load(path): return _expand_columnar(json.loads((root/path).read_text(encoding="utf-8")))
-    data=build_facilities_operations(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-tenure-v1.json"),load("data/property/saltwater-building-services-v1.json"),load("data/property/saltwater-property-maintenance-v1.json"))
+    data=build_facilities_operations(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-tenure-v1.json"),load("data/property/saltwater-building-services-v1.json"),load("data/property/saltwater-property-maintenance-v1.json"),load("data/property/saltwater-property-development-control-v1.json"))
     out=root/"data/property/saltwater-property-facilities-operations-v1.json"
     doc=to_columnar_document(data);doc["schema"]="saltwater-property-facilities-operations-columnar/1.0"
     out.write_text(json.dumps(doc,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf-8")
