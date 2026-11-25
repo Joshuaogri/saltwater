@@ -152,7 +152,6 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0025_bp07_career_rank_and_post_history.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0026_bp08_unit_deployment.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0027_bp09_police_resource_readiness.sql
-          psql -v ON_ERROR_STOP=1 -f db/proposals/0027_bp09_police_resource_readiness.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -183,8 +182,6 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/career_history_acceptance.sql
       - name: Verify BP08 unit catalogue, establishment and readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/unit_deployment_acceptance.sql
-      - name: Verify BP09 resource inventory and dispatch readiness
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/resource_readiness_acceptance.sql
       - name: Verify BP09 resource inventory and dispatch readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/resource_readiness_acceptance.sql
       - name: Measure representative 1,000-person storage growth
