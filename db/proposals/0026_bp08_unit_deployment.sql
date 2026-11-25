@@ -198,7 +198,7 @@ SELECT u.unit_id,c.official_name,count(p.post_id)::integer AS authorised_posts,
 FROM sw_police.unit_profile u
 JOIN sw_police.current_organisation_component c ON c.component_id=u.unit_id
 LEFT JOIN sw_police.authorised_post p ON p.component_id=u.unit_id
-GROUP BY u.unit_id,u.official_name;
+GROUP BY u.unit_id,c.official_name;
 
 CREATE VIEW sw_police.unit_current_status AS
 SELECT u.unit_id,
