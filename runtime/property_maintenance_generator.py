@@ -1,6 +1,7 @@
 """Generate linked property maintenance, defects, inspections and repair records."""
 from __future__ import annotations
 import hashlib, json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
@@ -71,7 +72,7 @@ def build_property_maintenance(world, tenure, services):
 
 def main():
     root=Path(__file__).resolve().parents[1]
-    def load(path): return _expand_columnar(json.loads((root/path).read_text(encoding="utf-8")))
+    def load(path): return _expand_columnar(load_json(root/path))
     result=build_property_maintenance(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-tenure-v1.json"),load("data/property/saltwater-building-services-v1.json"))
     out=root/"data/property/saltwater-property-maintenance-v1.json"; doc=to_columnar_document(result); doc["schema"]="saltwater-property-maintenance-columnar/1.0"
     out.write_text(json.dumps(doc,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf-8")
