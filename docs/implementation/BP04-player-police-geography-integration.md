@@ -149,9 +149,13 @@ The expanded BP04 player/police/geography workflow passed on `main` in [run 4568
 
 The geography audit reports `database_write_performed: false`. No Neon writes, policy-grant writes, migrations, address promotions or archive re-uploads were performed. The separate PKG-001 and database-migration workflows remain blocked by the unrelated existing syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; the dedicated BP04 integration workflow passed.
 
-## 5. Remaining BP04 acceptance work
+## 5. Address placement review register
 
-1. Complete BP-02 operational geography release: review the 420 candidate parcel geometries, prove/resolve frontage and address placement, confirm address scope/aliases and version lineage, and explicitly approve the operational geography version.
+The read-only `SW-BP02-ADDRESS-PLACEMENT-REVIEW-V1` register now consolidates each of the 420 source addresses with its stable design IDs, original road, parcel frontage candidates and building-access candidates. It creates a five-record P1 queue for the three road conflicts and two missing-frontage cases; 36 properties without candidate buildings are separately classified. Source addresses and road references remain unchanged, and no operational address or access point is approved. See [BP-02 address placement review register](BP02-address-placement-review-register.md).
+
+## 6. Remaining BP04 acceptance work
+
+1. Complete BP-02 operational geography release: review the 420 candidate parcel geometries and the new 420-record address placement review register; resolve the five P1 frontage/address exceptions, review the 36 no-building-site cases as a separate property/address context question, confirm address scope/aliases and version lineage, and explicitly approve the operational geography version.
 2. Promote the stable SWP/SWA design identities only through that release gate; then bind operational BP02 entity IDs and resolve database-specific spatial_id values by entity_code where materialised.
 3. Provision the approved player and officer permission grants through the controlled authorization-policy process. This implementation deliberately did not modify Neon.
 4. Wire `BP04PoliceLookupAccess` into actual dispatch, incident and investigation workflows when those owning services are implemented.
