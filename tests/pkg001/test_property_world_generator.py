@@ -112,7 +112,7 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         document = json.loads(path.read_text(encoding="utf-8"))
         self.assertEqual(document["schema"], "saltwater-canonical-property-world-columnar/1.0")
         self.assertEqual(document["metadata"]["summary"]["property_count"], 420)
-        self.assertEqual(len(document["tables"]["units"]["rows"]), 15199)
+        self.assertEqual(len(document["tables"]["units"]["rows"]), self.world["summary"]["unit_count"])
         self.assertEqual(len(document["tables"]["access_routes"]["rows"]), 804)
         self.assertGreater(path.stat().st_size, 0)
 
