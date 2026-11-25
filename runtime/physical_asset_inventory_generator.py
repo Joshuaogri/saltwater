@@ -9,9 +9,10 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import heapq
 from pathlib import Path
 from shapely.geometry import LineString, Point, Polygon, box
-from shapely.ops import nearest_points
+from shapely.ops import nearest_points, unary_union
 from shapely.strtree import STRtree
 
 from runtime.parcel_candidate_generator import build_candidates
@@ -21,6 +22,70 @@ GENERATOR = "BP04-03-STAGE-E-ASSET-INVENTORY-V1"
 CRS = "SW-LOCAL-METRE-GRID-V1"
 SOURCE = "BP04-03-STAGE-E-GENERATED-DESIGN"
 ACTOR = "BP04-03-STAGE-E-GENERATOR-V1"
+
+def _visibility_path(start, end, property_geom, obstacle_geometries):
+    """Return the shortest parcel-contained polyline around mapped obstacles.
+
+    Obstacles are buffered before routing. Only geometry is inferred; this
+    does not establish a constructed, legal, accessible or usable route.
+    """
+    buffered = [g.buffer(0.25) for g in obstacle_geometries if not g.is_empty]
+    obstacle_union = unary_union(buffered) if buffered else None
+    nodes = [start, end]
+    if obstacle_union is not None:
+        geoms = list(obstacle_union.geoms) if obstacle_union.geom_type == "MultiPolygon" else [obstacle_union]
+        for geom in geoms:
+            if geom.geom_type != "Polygon":
+                continue
+            nodes.extend(Point(x, y) for x, y in list(geom.exterior.coords)[:-1])
+    # Drop duplicate coordinates while preserving deterministic node order.
+    unique = []
+    seen = set()
+    for point in nodes:
+        key = (round(point.x, 6), round(point.y, 6))
+        if key not in seen:
+            seen.add(key)
+            unique.append(point)
+    nodes = unique
+    if len(nodes) < 2:
+        return None
+    adjacency = [[] for _ in nodes]
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            segment = LineString([nodes[i], nodes[j]])
+            if segment.length <= 1e-8 or not property_geom.covers(segment):
+                continue
+            if obstacle_union is not None and segment.intersection(obstacle_union).length > 1e-6:
+                continue
+            weight = segment.length
+            adjacency[i].append((j, weight))
+            adjacency[j].append((i, weight))
+    distances = [float("inf")] * len(nodes)
+    previous = [None] * len(nodes)
+    distances[0] = 0.0
+    queue = [(0.0, 0)]
+    while queue:
+        distance, node = heapq.heappop(queue)
+        if distance > distances[node] + 1e-9:
+            continue
+        if node == 1:
+            break
+        for neighbour, weight in adjacency[node]:
+            candidate = distance + weight
+            if candidate + 1e-9 < distances[neighbour]:
+                distances[neighbour] = candidate
+                previous[neighbour] = node
+                heapq.heappush(queue, (candidate, neighbour))
+    if distances[1] == float("inf"):
+        return None
+    path = []
+    cursor = 1
+    while cursor is not None:
+        path.append(nodes[cursor])
+        cursor = previous[cursor]
+    path.reverse()
+    return LineString(path)
+
 
 USE = {
     "residential": ("residential", "dwelling", 4, 6, 62.0),
@@ -591,8 +656,47 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 choices.append((round(line.length, 9), candidate["access_candidate_id"],
                                 start_order, candidate, start, end, line))
         if not choices:
-            # Preserve the original candidate and its evidence. The independent
-            # geometry audit will report it as blocked; never invent a reroute.
+            # Direct lines can be blocked by neighbouring footprints. Build a
+            # visibility graph around buffered building/water obstacles and
+            # retain only routes wholly contained by this parcel.
+            obstacle_geometries = []
+            nearby_building_indexes = building_geometry_tree.query(property_geom, predicate="intersects")
+            for index in nearby_building_indexes:
+                other_id = building_geometry_ids[int(index)]
+                if other_id != own_id:
+                    obstacle_geometries.append(building_geometry_values[int(index)])
+            for feature in source.get("features", []):
+                if feature.get("properties", {}).get("entity_type") in ("harbour_water", "constructed_water"):
+                    water_geom = shape(feature["geometry"])
+                    if water_geom.intersects(property_geom):
+                        obstacle_geometries.append(water_geom)
+            # Keep the original access-point location first; alternate boundary
+            # samples are considered only if that start cannot be routed.
+            for start_order, start in start_candidates:
+                if start_order != 0 and any(start.distance(other) < 5.0 for other in same_building_accesses):
+                    continue
+                if not property_geom.covers(start):
+                    continue
+                point_indexes = building_geometry_tree.query(start, predicate="intersects")
+                if any(building_geometry_ids[int(index)] != own_id for index in point_indexes):
+                    continue
+                for candidate in sorted(dossier.get("access_candidates", []),
+                                        key=lambda row: row["access_candidate_id"]):
+                    end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
+                    if not property_geom.covers(end):
+                        continue
+                    line = _visibility_path(start, end, property_geom, obstacle_geometries)
+                    if line is None or line.length <= 0:
+                        continue
+                    if line.intersection(own_geom).length > 0.01:
+                        continue
+                    choices.append((round(line.length, 9), candidate["access_candidate_id"],
+                                    start_order, candidate, start, end, line))
+                if choices:
+                    break
+        if not choices:
+            # No obstacle-clear path exists within the parcel. Preserve the
+            # original proposal and let independent audits report it blocked.
             continue
         _, candidate_id, start_order, candidate, start, end, line = min(
             choices, key=lambda item: (item[0], item[1], item[2])
@@ -637,8 +741,8 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                              else "BUILDING_TO_FRONTAGE_CANDIDATE",
             "contact_type": candidate.get("contact_type") if proximity else "FRONTAGE_CANDIDATE",
             "length_m": round(line.length, 3),
-            "geometry_coordinates": [[round(start.x, 6), round(start.y, 6)],
-                                     [round(end.x, 6), round(end.y, 6)]],
+            "geometry_coordinates": [[round(x, 6), round(y, 6)]
+                                     for x, y in line.coords],
         })
 
     # Full BP04-02 profile and typed child-record layer. Design-derived values
