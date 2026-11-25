@@ -24,6 +24,7 @@ on:
       - "tests/pkg001/test_player_commands.py"
       - "tests/pkg001/test_player_interface.py"
       - "tests/pkg001/test_player_command_runtime.py"
+      - "tests/pkg001/test_player_application.py"
       - "tests/pkg001/test_authorization.py"
       - "tests/pkg001/test_bp04_lookup.py"
       - "tests/pkg001/test_bp04_police_access.py"
@@ -49,7 +50,7 @@ jobs:
       - name: Install deterministic geometry and PostgreSQL runtime dependencies
         run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
       - name: Test player command parser, interface and authenticated runtime
-        run: python -m unittest tests.pkg001.test_player_commands tests.pkg001.test_player_interface tests.pkg001.test_player_command_runtime -v
+        run: python -m unittest tests.pkg001.test_player_commands tests.pkg001.test_player_interface tests.pkg001.test_player_command_runtime tests.pkg001.test_player_application -v
       - name: Test ChatGPT command contract and trusted host boundary
         run: python -m unittest tests.pkg001.test_chatgpt_tool_handler tests.pkg001.test_player_host_adapter -v
       - name: Test audited officer-only BP04 access and authorization
