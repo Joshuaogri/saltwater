@@ -332,3 +332,12 @@ Implemented on `main` and generated from the persisted property, tenure, buildin
 - [Regression tests](tests/pkg001/test_property_value_risk_tax_generator.py)
 - [Build workflow](.github/workflows/saltwater-property-value-risk-tax-build.yml)
 
+## BP-04 — property development control, building control and lawful use (SW-PROPERTY-DEVELOPMENT-CONTROL-V1)
+
+Implemented on `main`; the deterministic generator consumes the persisted property, tenure, building-services, maintenance and valuation/condition datasets. It records 420 site development plans; 384 existing-building planning permissions; 384 building-control cases; 384 completion/safe-use certificates; 384 periodic inspection schedules; 1,327 premises lawful-use certificates; 62,585 unit-level use-compliance records; 72 approved pre-construction development projects; and four development-control rule profiles covering port/maritime, logistics, residential and critical digital infrastructure. The 384 permissions and completion certificates establish the existing fictional built-world baseline; they are not represented as newly submitted applications or fabricated historical inspection visits. All inspection schedules remain scheduled, not completed. The planning application register is empty until gameplay creates applications. The 72 development projects are approved but have not started construction. No people, population records, invoices, fees, payments or financial commitments were created. Seven regression tests passed in [run 45603224586](https://github.com/Joshuaogri/saltwater/actions/runs/45603224586). Output size: 15,029,136 bytes (~14.33 MiB); manifest SHA-256: `9699f165769898af8bc71a7911a2608f0ec8b464a94e6f950f92deccac7c9f60`.
+
+- [Property development-control dataset](data/property/saltwater-property-development-control-v1.json)
+- [Deterministic generator](runtime/property_development_control_generator.py)
+- [Regression tests](tests/pkg001/test_property_development_control_generator.py)
+- [Build workflow](.github/workflows/saltwater-property-development-control-build.yml)
+
