@@ -12,6 +12,9 @@ BEGIN
     WHERE e.career_id IS NULL OR e.event_id<>c.start_event_id
        OR e.effective_tick<>c.started_tick
   ) THEN RAISE EXCEPTION 'career opening event does not match authoritative episode facts'; END IF;
+  IF (SELECT count(*) FROM sw_core.event_type WHERE event_code IN ('CAREER_RANK_ASSIGNED','CAREER_POST_APPOINTED','CAREER_PROMOTION_CASE_OPENED','CAREER_PROMOTION_DECIDED','CAREER_ACTING_APPOINTED','CAREER_SECONDMENT_STARTED','CAREER_SERVICE_CREDIT_ADJUSTED'))<>7 THEN
+    RAISE EXCEPTION 'BP07 career event vocabulary incomplete';
+  END IF;
   IF (SELECT count(*) FROM sw_police.career_rank_assignment)<>0
      OR (SELECT count(*) FROM sw_police.career_post_appointment)<>0 THEN
     RAISE EXCEPTION 'recruit entry must not invent substantive rank or post appointment';
