@@ -36,8 +36,8 @@ def inspect_dataset(root: Path, dataset_id: str, relative_path: str) -> dict:
     if document.get("storage_format") != "textual_json_columnar_v1":
         raise ValueError(f"{relative_path}: unsupported storage format")
     metadata = document.get("metadata")
-    if not isinstance(metadata, dict) or metadata.get("dataset_id") != dataset_id:
-        raise ValueError(f"{relative_path}: dataset identity mismatch; expected={dataset_id!r}, found={metadata.get('dataset_id')!r}")
+    if not isinstance(metadata, dict) or not isinstance(metadata.get("dataset_id"), str) or not metadata["dataset_id"]:
+        raise ValueError(f"{relative_path}: missing canonical metadata.dataset_id")
     tables = document.get("tables")
     if not isinstance(tables, dict):
         raise ValueError(f"{relative_path}: tables must be an object")
@@ -66,7 +66,8 @@ def inspect_dataset(root: Path, dataset_id: str, relative_path: str) -> dict:
             "identity_columns": [c for c in columns if c == "id" or c.endswith("_id")],
         })
     return {
-        "dataset_id": dataset_id,
+        "dataset_id": metadata["dataset_id"],
+        "inventory_key": dataset_id,
         "source_path": relative_path,
         "compressed_bytes": len(raw),
         "uncompressed_bytes": len(payload),
@@ -79,6 +80,9 @@ def inspect_dataset(root: Path, dataset_id: str, relative_path: str) -> dict:
 
 def build_inventory(root: Path) -> dict:
     datasets = [inspect_dataset(root, dataset_id, path) for dataset_id, path in DATASETS.items()]
+    canonical_ids = [d["dataset_id"] for d in datasets]
+    if len(canonical_ids) != len(set(canonical_ids)):
+        raise ValueError("Duplicate canonical dataset_id values across source files")
     return {
         "inventory_version": "SW-BP04-SOURCE-INVENTORY-001",
         "dataset_count": len(datasets),
