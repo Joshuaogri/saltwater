@@ -29,7 +29,7 @@ class BuildingServicesTests(unittest.TestCase):
     def test_every_unit_has_electricity_and_water_submeters(self):
         d = self.data
         sub = [x for x in d["meters"] if x["meter_role"] == "unit_submeter"]
-        self.assertEqual(len(sub), 15199 * 2)
+        self.assertEqual(len(sub), len(self.world["units"]) * 2)
         self.assertEqual(len({x["meter_id"] for x in sub}), len(sub))
         unit_ids = {u["unit_id"] for u in self.world["units"]}
         self.assertTrue(all(x["unit_id"] in unit_ids for x in sub))
