@@ -4,6 +4,42 @@ from runtime.kernel import InMemoryRuntimeStore, Lifecycle, RuntimeKernel
 from runtime.player_interface import PlayerCommandInterface, PlayerProfile
 
 
+
+class FakeBP04Lookup:
+    def search(self, kind, query, limit=20):
+        if kind == "address":
+            return [{"address_id": "SWADDR-1", "address_label": "10 Harbour Avenue", "property_id": "SWPROP-1"}]
+        if kind == "business":
+            return [{"business_id": "SWBIZ-1", "trading_name": "Harbour Bank", "sector": "finance"}]
+        return [{"property_id": "SWPROP-1", "primary_use": "commercial", "source_district_id": "SW-D01", "source_neighbourhood_id": "SW-D01-N1"}]
+
+    def property_detail(self, identifier):
+        if identifier != "SWPROP-1":
+            return None
+        return {
+            "property": {"property_id": identifier, "primary_use": "commercial", "source_district_id": "SW-D01", "source_neighbourhood_id": "SW-D01-N1"},
+            "address": {"address_label": "10 Harbour Avenue", "address_id": "SWADDR-1"},
+            "buildings": [{"building_id": "SWBLD-1"}],
+            "businesses": [{"business_id": "SWBIZ-1", "trading_name": "Harbour Bank"}],
+            "geography_binding": "source_geography_reference_only",
+        }
+
+    def address_detail(self, identifier):
+        if identifier != "SWADDR-1":
+            return None
+        return {"address": {"address_id": identifier, "address_label": "10 Harbour Avenue", "property_id": "SWPROP-1", "road_id": "SW-R01", "district_id": "SW-D01", "neighbourhood_id": "SW-D01-N1"}, "geography_binding": "source_geography_reference_only"}
+
+    def business_detail(self, identifier):
+        if identifier != "SWBIZ-1":
+            return None
+        return {"business": {"business_id": identifier, "trading_name": "Harbour Bank", "sector": "finance", "status": "active"}, "establishments": [{"establishment_id": "SWEST-1", "establishment_name": "Harbour Bank HQ", "address": {"address_label": "10 Harbour Avenue"}, "property_id": "SWPROP-1"}]}
+
+    def get(self, kind, identifier):
+        if identifier != "SWBLD-1":
+            return None
+        return {"record_type": kind, "building_id": identifier, "property_id": "SWPROP-1", "building_use": "office"}
+
+
 class PlayerCommandInterfaceTests(unittest.TestCase):
     def setUp(self):
         self.store = InMemoryRuntimeStore()
@@ -87,6 +123,34 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
     def test_commands_reject_arguments_and_malformed_quotes(self):
         self.assertFalse(self.interface.execute("status extra").ok)
         self.assertFalse(self.interface.execute('"unterminated').ok)
+
+
+    def test_find_address_and_business_are_connected_to_lookup(self):
+        interface = PlayerCommandInterface(self.kernel, self.profile, bp04_lookup=FakeBP04Lookup())
+        address = interface.execute("find address Harbour Avenue")
+        business = interface.execute('find business "Harbour Bank"')
+        self.assertTrue(address.ok)
+        self.assertIn("SWADDR-1", address.message)
+        self.assertIn("10 Harbour Avenue", address.message)
+        self.assertTrue(business.ok)
+        self.assertIn("SWBIZ-1", business.message)
+        self.assertIn("Harbour Bank", business.message)
+
+    def test_inspect_property_address_business_and_building(self):
+        interface = PlayerCommandInterface(self.kernel, self.profile, bp04_lookup=FakeBP04Lookup())
+        prop = interface.execute("inspect property SWPROP-1")
+        address = interface.execute("inspect address SWADDR-1")
+        business = interface.execute("inspect business SWBIZ-1")
+        building = interface.execute("inspect building SWBLD-1")
+        self.assertIn("source_geography_reference_only", prop.message)
+        self.assertIn("SWPROP-1", address.message)
+        self.assertIn("SWEST-1", business.message)
+        self.assertIn("office", building.message)
+
+    def test_lookup_commands_fail_honestly_without_lookup_provider(self):
+        result = self.interface.execute("find address Harbour Avenue")
+        self.assertFalse(result.ok)
+        self.assertIn("not connected", result.message)
 
     def test_bingo_is_not_a_general_command(self):
         result = self.interface.execute("bingo")
