@@ -1,8 +1,12 @@
 import unittest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from unittest.mock import patch
 
-from runtime.bp04_police_access import BP04PoliceLookupAccess
+from runtime.bp04_police_access import (
+    BP04PoliceLookupAccess,
+    create_postgres_bp04_police_lookup_access,
+)
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
     PrincipalKind, PrincipalStatus, SessionStatus, VerifiedSession,
@@ -111,6 +115,21 @@ class BP04PoliceAccessTests(unittest.TestCase):
             self.access.search("officer-session", "room", "private")
         with self.assertRaises(ValueError):
             self.access.inspect("officer-session", "room", "ROOM-1")
+
+
+    def test_postgres_factory_uses_live_verifier_grant_provider_and_durable_audit(self):
+        with patch("runtime.postgres_security.PostgresSessionVerifier") as verifier, patch(
+            "runtime.postgres_security.PostgresAuditSink"
+        ) as audit, patch(
+            "runtime.postgres_security.PostgresGrantProvider"
+        ) as grants:
+            access = create_postgres_bp04_police_lookup_access(
+                lambda: None, self.lookup, self.session.principal_id
+            )
+        self.assertIsInstance(access, BP04PoliceLookupAccess)
+        verifier.assert_called_once()
+        audit.assert_called_once()
+        grants.assert_called_once()
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
