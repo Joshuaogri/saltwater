@@ -1,5 +1,5 @@
 -- BP04 phase 2: typed building systems and utility operations.
--- Production migration candidate. Validate on disposable PostgreSQL before production application.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 -- Source gzip remains archived once; operational records are stored in typed columns.
 BEGIN;
 CREATE TABLE sw_property.building_system (
