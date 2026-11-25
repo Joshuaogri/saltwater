@@ -349,7 +349,8 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 "source_path": relative, "source_sha256": hashlib.sha256(raw).hexdigest(),
                 "compressed_bytes": len(raw), "uncompressed_bytes": len(gzip.decompress(raw)),
             }
-        # Archive-only is the compact production storage mode: retain each original gzip\n        # dataset exactly once and defer row expansion to the runtime reader.\n        batches, source_counts = ({}, {}) if archive_only else build_batches(documents)
+        # Archive-only is the compact production storage mode: retain each original gzip\n        # dataset exactly once and defer row expansion to the runtime reader.
+        batches, source_counts = ({}, {}) if archive_only else build_batches(documents)
         package_sha = hashlib.sha256(json.dumps(manifest_files,sort_keys=True,separators=(",",":")).encode()).hexdigest()
         commit = os.environ.get("GITHUB_SHA", "local-unpinned")
         release_id = "SWREL-" + hashlib.sha256((commit + package_sha).encode()).hexdigest()[:20].upper()
