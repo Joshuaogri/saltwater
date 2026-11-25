@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from runtime.business_registry_generator import build_business_registry
+from runtime.property_world_generator import build_property_world
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -11,7 +12,8 @@ class BusinessRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-        cls.registry = build_business_registry(source)
+        cls.property_world = build_property_world(source)
+        cls.registry = build_business_registry(source, property_world=cls.property_world)
 
     def test_registry_meets_ten_thousand_distinct_business_invariant(self):
         rows = self.registry["businesses"]
@@ -35,9 +37,7 @@ class BusinessRegistryTests(unittest.TestCase):
             self.assertEqual(establishments[b["primary_establishment_id"]]["business_id"], b["business_id"])
 
     def test_establishments_resolve_full_property_hierarchy(self):
-        property_world = __import__("runtime.property_world_generator", fromlist=["build_property_world"]).build_property_world(
-            json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-        )
+        property_world = self.property_world
         props = {x["property_id"] for x in property_world["properties"]}
         buildings = {x["building_id"] for x in property_world["buildings"]}
         premises = {x["premises_id"] for x in property_world["premises"]}
