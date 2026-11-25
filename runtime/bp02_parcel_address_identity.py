@@ -111,6 +111,7 @@ def build_identity_register(
             "source_address_id": source_address_id,
             "property_id": property_id,
             "parcel_id": parcel_id,
+            "source_candidate_parcel_id": candidate_id,
             "road_id": road_id,
             "district_id": district_id,
             "neighbourhood_id": neighbourhood_id,
