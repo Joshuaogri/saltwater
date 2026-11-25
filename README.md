@@ -9,6 +9,10 @@ BP04's **compressed archive-only production release is deployed and verified**, 
 
 The BP04-to-BP02 reconciliation now emits a deterministic 420-address placement review register (`runtime/bp02_address_review_register.py`). It preserves all source road references, joins parcel-frontage and building-access evidence, and classifies the five P1 frontage/address exceptions, 33 P2 no-building-only cases and 382 P3 coherent candidates (36 no-building sites total, including three P1 conflicts). All 420 remain unapproved for operational use. The complete review-register and source reconciliation passed in the dedicated integration workflow; see [BP-02 address placement review register](docs/implementation/BP02-address-placement-review-register.md).
 
+### Current BP04-03 Stage E blocker — 2026-11-26
+
+The detailed Stage E disposable PostgreSQL workflow runs #38 and #39 passed generator/importer regression tests, PostgreSQL foundation setup, parcel/dossier acceptance and candidate generation/import. Both were cancelled during step 12, the large detailed physical-asset import, after the workflow's 35-minute job limit. The immediate blocker is therefore the disposable import execution budget; the earlier geometry-constraint defect has been corrected. The workflow timeout is now 120 minutes, and the importer emits phase-level elapsed-time markers so the next run can identify the expensive insert group. This remains disposable PostgreSQL validation only: no Stage E data has been written to Neon, and BP04 is not declared complete until the required gameplay integration and acceptance gates are closed.
+
 ## Canonical constraints
 
 - Country and city: **Saltwater**.
