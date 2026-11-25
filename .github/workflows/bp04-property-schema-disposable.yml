@@ -8,6 +8,7 @@ on:
       - "db/proposals/0014_bp04_building_services_utilities.sql"
       - "db/proposals/0015_bp04_property_maintenance_repairs.sql"
       - "db/proposals/0016_bp04_property_security_access.sql"
+      - "db/proposals/0017_bp04_property_valuation_tax.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - ".github/workflows/bp04-property-schema-disposable.yml"
@@ -17,6 +18,7 @@ on:
       - "data/property/saltwater-building-services-v1.json.gz"
       - "data/property/saltwater-property-maintenance-v1.json.gz"
       - "data/property/saltwater-property-security-access-v1.json.gz"
+      - "data/property/saltwater-property-value-risk-tax-v1.json.gz"
   workflow_dispatch:
 
 permissions:
@@ -61,9 +63,11 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0015_bp04_property_maintenance_repairs.sql
       - name: Apply BP04 phase-4 security and access schema to disposable database only
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0016_bp04_property_security_access.sql
+      - name: Apply BP04 phase-5 valuation and tax schema to disposable database only
+        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0017_bp04_property_valuation_tax.sql
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-      - name: Import compressed property, business, utility, maintenance and security package
+      - name: Import compressed property, business, utility, maintenance, security, valuation and tax package
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
       - name: Verify second import is idempotent and storage-stable
         run: |
