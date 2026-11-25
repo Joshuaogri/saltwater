@@ -41,8 +41,11 @@ jobs:
           manifest_path=Path("bp04-03-stage-e-physical-assets-manifest.json")
           data=json.loads(manifest_path.read_text())
           p=Path(data["compressed_artifact"])
-          digest=hashlib.sha256(p.read_bytes()).hexdigest()
-          assert digest==data["compressed_artifact_sha256"]
+          digest=hashlib.sha256()
+          with p.open("rb") as compressed:
+            for chunk in iter(lambda: compressed.read(1024*1024), b""):
+              digest.update(chunk)
+          assert digest.hexdigest()==data["compressed_artifact_sha256"]
           assert data["operational_approval"] is False
           assert data["generation"]["property_count"]==420
           assert data["generation"]["properties_without_buildings"] >= 0
