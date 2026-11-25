@@ -35,7 +35,10 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
         self.assertEqual(summary["frontage_review_required_count"], expected_frontage_parcels)
         self.assertEqual(summary["no_road_edge_contact_count"], 420 - expected_frontage_parcels)
         self.assertGreater(summary["frontage_candidate_count"], 0)
-        self.assertEqual(summary["access_location_candidate_count"], summary["frontage_candidate_count"])
+        self.assertEqual(
+            summary["access_location_candidate_count"],
+            summary["frontage_candidate_count"] + summary["no_road_edge_contact_count"],
+        )
         self.assertGreaterEqual(summary["frontage_segment_contact_count"], summary["frontage_candidate_count"])
         self.assertEqual(summary["operational_access_points_created"], 0)
         for row in self.result["parcels"]:
