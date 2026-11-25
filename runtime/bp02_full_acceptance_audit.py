@@ -1,0 +1,177 @@
+"""Read-only consolidated BP-02 parcel, address and access-point acceptance audit."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from runtime.geography_geometry_audit import audit_geometry
+from runtime.parcel_candidate_generator import build_candidates
+from runtime.parcel_dossier_generator import build_parcel_dossiers
+from runtime.parcel_dossier_geometry_audit import audit_parcel_dossiers
+from runtime.physical_asset_inventory_generator import build_asset_inventory
+from runtime.building_access_candidate_audit import audit_building_access_candidates
+from runtime.building_access_connector_topology_audit import audit_connector_topology
+from runtime.building_access_connector_audit import audit_direct_access_connectors
+from runtime.building_access_route_corridor_audit import build_route_corridor_candidates
+from runtime.bp04_geography_reconciliation import (
+    GEO_PATH, IDENTITY_MAP_PATH, PROPERTY_WORLD_PATH,
+    _read_columnar_gzip, build_reconciliation,
+)
+from runtime.bp02_address_frontage_exception_resolution import (
+    resolve_address_frontage_exceptions,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def run_full_bp02_acceptance_audit() -> dict:
+    source = json.loads(GEO_PATH.read_text(encoding="utf-8"))
+    identity_map = json.loads(IDENTITY_MAP_PATH.read_text(encoding="utf-8"))
+    property_document = _read_columnar_gzip(PROPERTY_WORLD_PATH)
+
+    geometry = audit_geometry(GEO_PATH)
+    candidates = build_candidates(source)
+    dossiers = build_parcel_dossiers(source, candidates)
+    assets = build_asset_inventory(source, candidates, dossiers)
+
+    parcel_geometry = audit_parcel_dossiers(source, candidates, dossiers)
+    building_access = audit_building_access_candidates(candidates, dossiers, assets)
+    connector_topology = audit_connector_topology(source, candidates, dossiers, assets)
+    direct_connectors = audit_direct_access_connectors(source, candidates, dossiers, assets)
+    route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
+
+    reconciliation = build_reconciliation(source, identity_map, property_document)
+    exception_resolution = resolve_address_frontage_exceptions(reconciliation, source)
+
+    address_source_integrity = {
+        "property_records": reconciliation["property_records"],
+        "address_records": reconciliation["address_records"],
+        "property_address_links": reconciliation["primary_property_address_links_resolved"],
+        "district_entity_code_matches": reconciliation["district_entity_code_matches"],
+        "neighbourhood_entity_code_matches": reconciliation["neighbourhood_entity_code_matches"],
+        "road_entity_code_matches": reconciliation["road_entity_code_matches"],
+        "design_parcel_identity_matches": reconciliation["bp02_design_parcel_identity_matches"],
+        "design_address_identity_matches": reconciliation["bp02_design_address_identity_matches"],
+        "canonical_parcel_identity_matches": reconciliation["canonical_parcel_identity_matches"],
+        "canonical_address_identity_matches": reconciliation["canonical_address_identity_matches"],
+    }
+
+    structural_checks = {
+        "source_geography_geometry": not geometry["failed_checks"],
+        "parcel_polygon_dossiers": not parcel_geometry["failed_checks"],
+        "building_boundary_access_candidates": not building_access["failed_checks"],
+        "access_connector_topology": not connector_topology["failed_checks"],
+        "direct_connector_geometry": not direct_connectors["failed_checks"],
+        "route_corridor_candidate_geometry": not route_corridors["failed_checks"],
+        "all_420_property_address_links_resolve": (
+            address_source_integrity["property_records"] == 420
+            and address_source_integrity["address_records"] == 420
+            and address_source_integrity["property_address_links"] == 420
+        ),
+        "all_address_area_and_road_references_resolve": (
+            address_source_integrity["district_entity_code_matches"] == 420
+            and address_source_integrity["neighbourhood_entity_code_matches"] == 420
+            and address_source_integrity["road_entity_code_matches"] == 420
+        ),
+        "all_five_frontage_exceptions_have_geometry_dispositions": (
+            exception_resolution["exception_count"] == 5
+            and exception_resolution["all_source_addresses_preserved"]
+            and sum(exception_resolution["disposition_counts"].values()) == 5
+        ),
+    }
+
+    operational_gates = {
+        "approved_operational_geography_source": (
+            source.get("status") == "APPROVED_FOR_OPERATIONAL_USE"
+        ),
+        "canonical_parcels_materialised": (
+            address_source_integrity["canonical_parcel_identity_matches"] == 420
+        ),
+        "canonical_addresses_materialised": (
+            address_source_integrity["canonical_address_identity_matches"] == 420
+        ),
+        "operational_access_points_approved": False,
+        "all_address_frontage_exceptions_closed": (
+            exception_resolution["unique_frontage_candidates_identified"] == 0
+            and exception_resolution["bridge_point_contact_cases"] == 0
+        ),
+    }
+
+    all_structural = all(structural_checks.values())
+    all_operational = all(operational_gates.values())
+    return {
+        "audit": "SW-BP02-FULL-PARCEL-ADDRESS-ACCESS-ACCEPTANCE",
+        "audit_version": "1.0",
+        "source_geography": source.get("dataset_id"),
+        "source_geography_status": source.get("status"),
+        "structural_status": "PASS" if all_structural else "FAIL",
+        "operational_release_status": "PASS" if all_operational else "BLOCKED",
+        "overall_status": "PASS" if all_structural and all_operational else "STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED" if all_structural else "FAIL",
+        "address_source_integrity": address_source_integrity,
+        "frontage_exception_resolution": exception_resolution,
+        "layer_reports": {
+            "geography_geometry": geometry,
+            "parcel_geometry": parcel_geometry,
+            "building_access_candidates": building_access,
+            "access_connector_topology": connector_topology,
+            "direct_access_connectors": direct_connectors,
+            "route_corridor_candidates": {
+                "summary": route_corridors["summary"],
+                "checks": route_corridors["checks"],
+                "passed_checks": route_corridors["passed_checks"],
+                "failed_checks": route_corridors["failed_checks"],
+                "operational_approval": route_corridors["operational_approval"],
+            },
+        },
+        "structural_checks": structural_checks,
+        "operational_gates": operational_gates,
+        "counts": {
+            "candidate_parcels": len(candidates["parcels"]),
+            "parcel_dossiers": len(dossiers["parcels"]),
+            "parcel_frontage_candidates": parcel_geometry["counts"]["frontage_candidates"],
+            "parcel_access_location_candidates": parcel_geometry["counts"]["access_location_candidates"],
+            "property_sites": len(assets["properties"]),
+            "building_candidates": len(assets["buildings"]),
+            "building_boundary_access_candidates": len(assets["access_points"]),
+            "access_connector_candidates": len(assets.get("access_connectors", [])),
+            "address_records": reconciliation["address_records"],
+            "frontage_exceptions": exception_resolution["exception_count"],
+            "canonical_addresses": address_source_integrity["canonical_address_identity_matches"],
+            "operational_access_points": 0,
+        },
+        "authority": {
+            "operational_approval": False,
+            "canonical_address_promotion": False,
+            "operational_access_point_promotion": False,
+            "database_write_performed": False,
+            "neon_write_performed": False,
+        },
+        "blockers": [
+            "SW-GEO-V1 remains a design baseline, not an approved operational geography release.",
+            "Three addresses have a unique parcel-frontage candidate but their source street references are not confirmed by address-side entrance evidence.",
+            "Two parcels have only point-contact proximity to bridge road reserves; bridge contact is not street frontage or a confirmed access route.",
+            "No canonical numbered addresses or operational access points have been approved/materialised.",
+            "Operational dispatch, patrol and emergency access require validated access routes and permissions beyond geometric candidate checks.",
+        ],
+    }
+
+
+def main() -> None:
+    report = run_full_bp02_acceptance_audit()
+    target = Path("bp02-full-parcel-address-access-acceptance.json")
+    target.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({
+        "audit": report["audit"],
+        "overall_status": report["overall_status"],
+        "structural_status": report["structural_status"],
+        "operational_release_status": report["operational_release_status"],
+        "counts": report["counts"],
+        "structural_checks": report["structural_checks"],
+        "operational_gates": report["operational_gates"],
+        "frontage_exception_dispositions": report["frontage_exception_resolution"]["disposition_counts"],
+        "authority": report["authority"],
+    }, indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
