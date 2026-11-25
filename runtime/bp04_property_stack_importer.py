@@ -157,7 +157,8 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("building_component", "SW-PROPERTY-WORLD-V1", rows(world, "building_components"),
         lambda ds,r: {"component_id":r["component_id"],"building_id":r["building_id"],"component_type":r.get("component_type"),"display_name":pick(r,"display_name","material",default=r["component_id"]),"source_dataset":ds})
     add("premises_room", "SW-PROPERTY-WORLD-V1", rows(world, "premises_rooms"),
-        lambda ds,r: {"room_id":r["room_id"],"premises_id":r["premises_id"],"display_name":pick(r,"room_name","display_name","room_code",default=r["room_id"]),"room_type":r.get("room_type"),"floor_name":pick(r,"floor_name","floor_level"),"source_dataset":ds})    add("ownership_interest", "SW-PROPERTY-WORLD-V1", rows(world, "ownership_interests"),
+        lambda ds,r: {"room_id":r["room_id"],"premises_id":r["premises_id"],"display_name":pick(r,"room_name","display_name","room_code",default=r["room_id"]),"room_type":r.get("room_type"),"floor_name":pick(r,"floor_name","floor_level"),"source_dataset":ds})
+    add("ownership_interest", "SW-PROPERTY-WORLD-V1", rows(world, "ownership_interests"),
         lambda ds,r: {"ownership_interest_id":r["ownership_interest_id"],"property_id":r["property_id"],"owner_organisation_id":r["owner_organisation_id"],"management_model":r.get("management_model"),"interest_type":r.get("interest_type"),"source_dataset":ds})
 
     add("business", "SW-BUSINESS-REGISTRY-V1", rows(registry, "businesses"),
