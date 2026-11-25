@@ -694,3 +694,6 @@ The archive-only release workflow passed on both PostgreSQL 16 and PostgreSQL 18
 The import preserved all 14 archives, 105 source collections and 1,950,923 source records. The archive-only acceptance test passed on both PostgreSQL versions, and the second import left database size unchanged. Against the previous typed-row production growth of 616,505,344 bytes, the PostgreSQL 18 archive-only benchmark reduces incremental growth by approximately **94.88%** (about 19.5 times smaller).
 
 The 31.57 MB figure is incremental database growth, not the final total size. Starting from the 9.31 MB production baseline, the closest PostgreSQL 18 benchmark indicates an approximately **40.88 MB total database** after an archive-only import. This remains a disposable benchmark, not a production measurement. Neon has not been written; production remains at 9.31 MB pending fresh explicit authorisation.
+
+
+**Safe default:** the importer now defaults to `compressed_archive_only` even when no storage flag is supplied. The previous expanded representation is available only through the explicit `--typed-relational` option for disposable benchmarking; the importer itself rejects typed-relational mode when the target database is `neondb`. The production workflow also explicitly passes `--archive-only`.
