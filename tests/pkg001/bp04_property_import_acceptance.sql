@@ -1,5 +1,5 @@
 \set ON_ERROR_STOP on
-DO $$
+DO $bp04$
 DECLARE
   v_datasets integer;
   v_collections integer;
@@ -80,5 +80,5 @@ BEGIN
     LEFT JOIN sw_property.property_title_register r USING(title_register_id)
     WHERE i.title_instrument_id IS NULL OR r.title_register_id IS NULL
   ) THEN RAISE EXCEPTION 'property transaction/title lineage failure'; END IF;
-END $;
+END $bp04$;
 SELECT 'BP04 imported source ledger and business operations acceptance passed' AS result;
