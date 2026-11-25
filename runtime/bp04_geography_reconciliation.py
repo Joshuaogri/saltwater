@@ -182,8 +182,12 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
 
     properties = _rows(property_document, "properties")
     addresses = _rows(property_document, "addresses")
+    road_segment_to_road = {
+        segment["id"]: segment["road_id"]
+        for segment in geo.get("network", {}).get("segments", [])
+    }
     identity_register = build_identity_register(
-        candidate_manifest, properties, addresses, codes
+        candidate_manifest, properties, addresses, codes, road_segment_to_road
     )
     parcel_map = {
         row["source_candidate_parcel_id"]: row["parcel_id"]
@@ -198,7 +202,12 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
         types.get("PARCEL", set()), types.get("ADDRESS", set()),
         parcel_map, address_map,
     )
+    frontage_counts = {}
+    for address in identity_register["addresses"]:
+        status = address["road_frontage_match_status"]
+        frontage_counts[status] = frontage_counts.get(status, 0) + 1
     result.update({
+        "address_road_frontage_candidate_status_counts": frontage_counts,
         "bp02_design_parcel_identity_count": identity_register["parcel_identity_count"],
         "bp02_design_address_identity_count": identity_register["address_identity_count"],
         "bp02_design_identity_register": identity_register["register_id"],
