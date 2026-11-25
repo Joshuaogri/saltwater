@@ -1,0 +1,206 @@
+"""Read-only BP04-to-BP02 source reconciliation; never promotes candidates to canon.
+
+BP-02 currently has stable IDs for the 100 source geography entities, but its
+operational parcel/address identities are not yet approved or materialised.
+This audit reconciles property source links to the generated parcel candidates
+and checks district/neighbourhood/road context against BP-02 entity_code values.
+It explicitly leaves every BP04 address non-canonical until BP-02 supplies
+approved parcel and address identities.
+"""
+from __future__ import annotations
+
+import gzip
+import json
+from pathlib import Path
+from typing import Iterable
+
+from runtime.geography_identity_reconciliation import validate_identity_map
+from runtime.parcel_candidate_generator import build_candidates
+
+ROOT = Path(__file__).resolve().parents[1]
+GEO_PATH = ROOT / "data/geography/saltwater-geography-v1.json"
+IDENTITY_MAP_PATH = ROOT / "data/geography/saltwater-geography-v1-identity-map.json"
+PROPERTY_WORLD_PATH = ROOT / "data/property/saltwater-property-world-v1.json.gz"
+
+
+def _read_columnar_gzip(path: Path) -> dict:
+    document = json.loads(gzip.decompress(path.read_bytes()))
+    if document.get("storage_format") != "textual_json_columnar_v1":
+        raise ValueError(f"Unsupported BP04 source format: {path}")
+    if not isinstance(document.get("tables"), dict):
+        raise ValueError(f"Malformed BP04 source document: {path}")
+    return document
+
+
+def _rows(document: dict, collection: str) -> list[dict]:
+    table = document.get("tables", {}).get(collection)
+    if not isinstance(table, dict):
+        raise ValueError(f"Missing BP04 collection: {collection}")
+    columns, values = table.get("columns"), table.get("rows")
+    if not isinstance(columns, list) or not isinstance(values, list):
+        raise ValueError(f"Malformed BP04 collection: {collection}")
+    result = []
+    for index, row in enumerate(values):
+        if not isinstance(row, list) or len(row) != len(columns):
+            raise ValueError(f"Malformed BP04 row {collection}[{index}]")
+        result.append(dict(zip(columns, row)))
+    return result
+
+
+def reconcile_collections(
+    properties: Iterable[dict],
+    addresses: Iterable[dict],
+    candidate_parcel_ids: set[str],
+    geography_entity_codes: set[str],
+    canonical_parcel_codes: set[str] | None = None,
+    canonical_address_codes: set[str] | None = None,
+) -> dict:
+    properties, addresses = list(properties), list(addresses)
+    canonical_parcel_codes = canonical_parcel_codes or set()
+    canonical_address_codes = canonical_address_codes or set()
+
+    property_by_id = {}
+    for row in properties:
+        identifier = row.get("property_id")
+        if not identifier or identifier in property_by_id:
+            raise ValueError(f"Missing or duplicate BP04 property ID: {identifier}")
+        property_by_id[identifier] = row
+
+    address_by_id = {}
+    for row in addresses:
+        identifier = row.get("address_id")
+        if not identifier or identifier in address_by_id:
+            raise ValueError(f"Missing or duplicate BP04 address ID: {identifier}")
+        address_by_id[identifier] = row
+
+    candidate_links = 0
+    property_address_links = 0
+    district_matches = 0
+    neighbourhood_matches = 0
+    road_matches = 0
+    errors = []
+
+    for prop in properties:
+        parcel_id = prop.get("source_candidate_parcel_id")
+        if parcel_id not in candidate_parcel_ids:
+            errors.append(f"{prop['property_id']}: source parcel candidate is unresolved: {parcel_id}")
+        else:
+            candidate_links += 1
+
+        address_id = prop.get("address_id")
+        address = address_by_id.get(address_id)
+        if address is None or address.get("property_id") != prop["property_id"]:
+            errors.append(f"{prop['property_id']}: primary BP04 address link is missing or inconsistent")
+            continue
+        property_address_links += 1
+
+        if prop.get("source_district_id") != address.get("district_id"):
+            errors.append(f"{prop['property_id']}: district context differs between property and address")
+        if prop.get("source_neighbourhood_id") != address.get("neighbourhood_id"):
+            errors.append(f"{prop['property_id']}: neighbourhood context differs between property and address")
+
+        if prop.get("source_district_id") in geography_entity_codes:
+            district_matches += 1
+        else:
+            errors.append(f"{prop['property_id']}: district ID is not a BP-02 entity_code")
+        if prop.get("source_neighbourhood_id") in geography_entity_codes:
+            neighbourhood_matches += 1
+        else:
+            errors.append(f"{prop['property_id']}: neighbourhood ID is not a BP-02 entity_code")
+        if address.get("road_id") in geography_entity_codes:
+            road_matches += 1
+        else:
+            errors.append(f"{address_id}: road ID is not a BP-02 entity_code")
+
+    orphan_addresses = sorted(
+        identifier for identifier, row in address_by_id.items()
+        if row.get("property_id") not in property_by_id
+    )
+    if orphan_addresses:
+        errors.append(f"orphan BP04 addresses: {orphan_addresses[:10]}")
+
+    if errors:
+        raise ValueError("\\n".join(errors))
+
+    canonical_parcel_matches = sum(
+        1 for row in properties
+        if row.get("source_candidate_parcel_id") in canonical_parcel_codes
+    )
+    canonical_address_matches = sum(
+        1 for row in addresses if row.get("address_id") in canonical_address_codes
+    )
+    return {
+        "property_records": len(properties),
+        "address_records": len(addresses),
+        "generated_candidate_parcel_links_resolved": candidate_links,
+        "primary_property_address_links_resolved": property_address_links,
+        "district_entity_code_matches": district_matches,
+        "neighbourhood_entity_code_matches": neighbourhood_matches,
+        "road_entity_code_matches": road_matches,
+        "canonical_parcel_identity_matches": canonical_parcel_matches,
+        "canonical_address_identity_matches": canonical_address_matches,
+        "properties_still_awaiting_bp02_parcel_binding": len(properties) - canonical_parcel_matches,
+        "addresses_still_awaiting_bp02_address_binding": len(addresses) - canonical_address_matches,
+        "canonical_binding_status": (
+            "COMPLETE" if canonical_parcel_matches == len(properties)
+            and canonical_address_matches == len(addresses)
+            else "BLOCKED_BP02_CANONICAL_PARCEL_AND_ADDRESS_IDENTITIES_ABSENT"
+        ),
+        "address_promotion_performed": False,
+        "operational_approval": False,
+        "database_write_performed": False,
+    }
+
+
+def build_reconciliation(geo: dict, identity_map: dict, property_document: dict) -> dict:
+    identity_result = validate_identity_map(geo, identity_map)
+    candidate_manifest = build_candidates(geo)
+    candidate_ids = {
+        row["candidate_parcel_id"] for row in candidate_manifest["parcels"]
+    }
+    codes = {row["entity_code"] for row in identity_map.get("entries", [])}
+    types = {
+        row["entity_type"]: set()
+        for row in identity_map.get("entries", [])
+    }
+    for row in identity_map.get("entries", []):
+        types.setdefault(row["entity_type"], set()).add(row["entity_code"])
+
+    result = reconcile_collections(
+        _rows(property_document, "properties"),
+        _rows(property_document, "addresses"),
+        candidate_ids,
+        codes,
+        types.get("PARCEL", set()),
+        types.get("ADDRESS", set()),
+    )
+    result.update({
+        "audit": "BP04-TO-BP02-ADDRESS-RECONCILIATION",
+        "source_geography_dataset": geo.get("dataset_id"),
+        "source_geography_status": geo.get("status"),
+        "source_identity_map_records": identity_result["resolved"],
+        "candidate_parcel_set_id": candidate_manifest["candidate_set_id"],
+        "candidate_parcel_count": len(candidate_ids),
+        "candidate_manifest_sha256": candidate_manifest["manifest_sha256"],
+        "bp02_canonical_parcel_identity_count": len(types.get("PARCEL", set())),
+        "bp02_canonical_address_identity_count": len(types.get("ADDRESS", set())),
+        "limitations": [
+            "The 420 generated parcel polygons are design candidates, not BP-02 canonical parcel identities.",
+            "BP04 address IDs and labels are source-world labels, not BP-02 canonical address identities.",
+            "District, neighbourhood and road context resolves to stable BP-02 entity_code values only.",
+            "No spatial_id surrogate is fabricated or copied from a disposable database.",
+            "No canonical address is promoted and no production database is written.",
+        ],
+    })
+    return result
+
+
+def main() -> None:
+    geo = json.loads(GEO_PATH.read_text(encoding="utf-8"))
+    identity_map = json.loads(IDENTITY_MAP_PATH.read_text(encoding="utf-8"))
+    property_document = _read_columnar_gzip(PROPERTY_WORLD_PATH)
+    print(json.dumps(build_reconciliation(geo, identity_map, property_document), indent=2, sort_keys=True))
+
+
+if __name__ == "__main__":
+    main()
