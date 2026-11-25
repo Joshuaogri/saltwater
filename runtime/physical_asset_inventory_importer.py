@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import gzip
 import hashlib
 import json
 import os
@@ -516,6 +517,13 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
     }
 
 
+def _read_manifest(path: str) -> dict:
+    source = Path(path)
+    opener = gzip.open if source.suffix == ".gz" else open
+    with opener(source, "rt", encoding="utf-8") as stream:
+        return json.load(stream)
+
+
 def main():
     parser=argparse.ArgumentParser()
     parser.add_argument("--manifest",required=True)
@@ -524,9 +532,9 @@ def main():
     parser.add_argument("--dsn",default=None)
     parser.add_argument("--source-commit",default=os.getenv("GITHUB_SHA","unknown"))
     args=parser.parse_args()
-    inventory=json.loads(Path(args.manifest).read_text(encoding="utf-8"))
-    candidates=json.loads(Path(args.candidate_manifest).read_text(encoding="utf-8"))
-    dossiers=json.loads(Path(args.dossier_manifest).read_text(encoding="utf-8"))
+    inventory=_read_manifest(args.manifest)
+    candidates=_read_manifest(args.candidate_manifest)
+    dossiers=_read_manifest(args.dossier_manifest)
     if args.dsn:
         conn=psycopg.connect(args.dsn)
     else:
