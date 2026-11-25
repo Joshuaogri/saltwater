@@ -17,7 +17,7 @@ BEGIN
   IF n<>2948 THEN RAISE EXCEPTION 'Expected 2948 access-point candidate identities, got %',n; END IF;
 
   SELECT count(*) INTO n FROM sw_property.access_connector_candidate;
-  IF n<>2948 THEN RAISE EXCEPTION 'Expected 768 persistent access connector candidates, got %',n; END IF;
+  IF n<>2948 THEN RAISE EXCEPTION 'Expected 2948 persistent access connector candidates, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.access_connector_candidate
    WHERE connector_type='BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE'
      AND contact_type='POINT_CONTACT_ONLY'
