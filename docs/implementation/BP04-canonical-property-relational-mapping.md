@@ -68,3 +68,22 @@ The importer inserts the archive before release-dataset rows, enforces the archi
 Workflow run [45630476765](https://github.com/Joshuaogri/saltwater/actions/runs/45630476765) passed on PostgreSQL 16. It loaded 402,658 records across all 17 typed tables with zero cross-reference violations. The three gzip source archives total 10,934,275 bytes; the uncompressed JSON totals 196,604,988 bytes. Measured final disposable database size: 135,257,111 bytes (128.99 MiB). Repeat import left size unchanged at 135,257,111 bytes.
 
 The 0013 schema and importer are still candidate/disposable-only. This benchmark covers property world, business registry and tenure only; all remaining property-domain registers must be added and benchmarked before the total property package can be sized. Production Neon remains untouched.
+
+
+## Complete 14-dataset source inventory (2026-11-25)
+
+The new read-only inventory implementation `runtime/bp04_source_inventory.py` was verified by GitHub Actions run [45633081533](https://github.com/Joshuaogri/saltwater/actions/runs/45633081533). All 14 compressed inputs passed structural validation:
+
+| Source measure | Verified total |
+|---|---:|
+| Datasets | 14 |
+| Columnar collections | 105 |
+| Source records | 1,950,947 |
+| Compressed source bytes | 23,023,562 (21.96 MiB) |
+| Uncompressed source bytes | 559,420,873 (533.5 MiB) |
+
+The inventory preserves each dataset's canonical metadata ID, source path, SHA-256, compressed and uncompressed byte counts, collection names, row counts, column names and candidate identity columns. It validates every row width against its collection's declared columns. The audit-only global-estate-capacity findings collection is included as evidence but is not automatically treated as operational property records.
+
+The inventory exposed the actual canonical source ID `SW-PROPERTY-RIGHTS-AND-BOUNDARIES-V1` (the filename alias omits “AND”), and the global estate audit's canonical ID `SW-GLOBAL-ESTATE-CAPACITY-AUDIT-V1`. The implementation uses source metadata as authoritative.
+
+This inventory is not a database import and does not imply that all 105 collections have typed relational mappings. The existing phase-one importer still relationally maps only property world, business registry and tenure. Next, map remaining operational collections into typed tables with explicit key/reference rules, while retaining each original gzip source exactly once in the compressed archive. Keep the global capacity audit as a validation/evidence source unless a specific operational need requires otherwise. Then run complete disposable PostgreSQL 16 reconciliation, idempotency, rollback and storage tests. No Neon production changes.
