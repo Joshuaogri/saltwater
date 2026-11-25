@@ -118,3 +118,23 @@ Workflow [45646271478](https://github.com/Joshuaogri/saltwater/actions/runs/4564
 Phase 7 adds two typed tables for the already-generated business operations source: `business_weekly_profile` (10,000 rows) and `business_daily_schedule` (70,000 rows). These records support time-aware business availability, dispatch context, scene access and delivery activity. No person records are generated. The complete database contains 68 tables. The largest relations include `meter` (195,067,904 bytes), `access_zone` (83,640,320), `unit_space` (58,318,848), `business_daily_schedule` (25,821,184), `premises_room` (23,887,872) and `source_dataset_archive` (23,797,760).
 
 The remaining archive-only inputs are existing source datasets, not requests to create additional property systems. Prioritize only police-gameplay-relevant records from development control, lifecycle/title, rights/boundaries and insurance claims. Facilities schedules and global estate audit remain archived unless a concrete gameplay requirement warrants further mapping. No Neon production changes occurred.
+
+
+## Superseding production storage model — compressed archive only (2026-11-25)
+
+The earlier typed-relational representation is retained as a disposable benchmark and schema-design reference, but it is **not the selected production import mode**. The 2026-11-25 production upload measured approximately 616.51 MB of database growth for a 29.43 MB compressed source package. The dominant design choice was permanent expansion of 1,422,202 mapped source rows into 92 relational tables.
+
+The selected production model is now **compressed archive only**:
+
+- Store each of the 14 original gzip datasets once in `sw_property.source_dataset_archive.compressed_payload`.
+- Preserve SHA-256, compressed/uncompressed byte counts, source paths, release manifest, and all 105 collection names and source row counts in the provenance ledgers.
+- Set every collection and dataset mapping status to `archive_only`; `loaded_record_count` is zero because no permanent typed rows are materialised.
+- Retrieve a dataset through `runtime/bp04_archive_reader.py`, verify its SHA-256, decompress in application memory, and expand only the requested collection into ordinary Python dictionaries.
+- Keep simulation changes and incident/personnel/event state in normal transactional tables. Do not persist a second full property-world representation merely to make static reference data queryable.
+- Cache decoded datasets in the application process where appropriate; never rewrite the archive during reads.
+
+This makes the compressed package the authoritative stored copy while retaining exact recoverability and application access. The 92-table schema remains available for future genuinely dynamic game state or small derived indexes, but the static BP04 source import must leave those domain tables empty. The old typed-row importer remains available only as an explicitly selected benchmark mode; the disposable and manual Neon release workflows now select `--archive-only`.
+
+**Storage target:** database growth should be close to the 29.43 MB compressed package plus PostgreSQL metadata, ledger rows, TOAST chunk overhead and schema overhead. Do not claim an exact target until the PostgreSQL 16/18 disposable workflow measures it. Production Neon remains at its restored 9.31 MB baseline; no new production write is authorised by this design change.
+
+**Acceptance:** 14 archive payloads; 14 dataset ledger rows; 105 collection ledger rows; all source records accounted for; zero typed rows loaded; payload byte lengths and SHA-256 verified by the importer/reader; collection lookup returns the original columnar values; repeat import leaves database size unchanged.
