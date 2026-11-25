@@ -29,7 +29,7 @@ CREATE TABLE sw_property.access_connector_candidate (
     jsonb_typeof(geometry_payload)='object'
     AND geometry_payload->>'type'='LineString'
     AND jsonb_typeof(geometry_payload->'coordinates')='array'
-    AND jsonb_array_length(geometry_payload->'coordinates')=2
+    AND jsonb_array_length(geometry_payload->'coordinates')>=2
   ),
   geometry_sha256 bytea NOT NULL CHECK (octet_length(geometry_sha256)=32),
   source_manifest_sha256 bytea NOT NULL CHECK (octet_length(source_manifest_sha256)=32),
