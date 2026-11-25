@@ -24,8 +24,8 @@ class DirectAccessConnectorAuditTests(unittest.TestCase):
 
     def test_all_building_boundary_candidates_are_accounted_for(self):
         counts = self.report["counts"]
-        self.assertEqual(counts["building_boundary_access_candidates"], 768)
-        self.assertEqual(counts["direct_connector_candidates_tested"], 768)
+        self.assertEqual(counts["building_boundary_access_candidates"], 2948)
+        self.assertEqual(counts["direct_connector_candidates_tested"], 2948)
         self.assertEqual(counts["unlinked_road_connection_candidate"], 0)
         self.assertEqual(counts["point_contact_road_reserve_candidates"], 4)
         self.assertEqual(counts["point_contact_only_road_reserve_connections"], 4)
