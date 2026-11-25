@@ -13,6 +13,7 @@ class PropertyTenureTests(unittest.TestCase):
     def setUpClass(cls):
         world = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text()))
         registry = _expand_columnar(json.loads((ROOT / "data/business/saltwater-business-registry-v1.json").read_text()))
+        cls.world = world
         cls.data = build_property_tenure({}, property_world=world, registry=registry)
 
     def test_every_property_has_current_owner_and_chronology(self):
