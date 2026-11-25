@@ -96,10 +96,10 @@ jobs:
           grep -q "valid only with --expected-database neondb" /tmp/bp04-prod-target.log
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-      - name: Archive all 14 compressed sources; import mapped property, business, operating schedules, lawful-use, building-control, title/lifecycle, rights, boundary and access, utility, maintenance, security, valuation and tax collections
+      - name: Store all 14 compressed source datasets without typed-row expansion
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL" --archive-only
-      - name: Verify source collection ledger and business schedule import
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+      - name: Verify archive-only storage and complete provenance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_archive_only_acceptance.sql
       - name: Verify second import is idempotent and storage-stable
         run: |
           BEFORE="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database());")"
