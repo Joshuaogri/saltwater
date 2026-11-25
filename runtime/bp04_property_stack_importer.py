@@ -191,17 +191,8 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 with conn.cursor() as cur:
                     cur.executemany(sql, values)
 
-            expected = {
-                "property_site":len(rows(documents["SW-PROPERTY-WORLD-V1"],"properties")),
-                "building":len(rows(documents["SW-PROPERTY-WORLD-V1"],"buildings")),
-                "premises":len(rows(documents["SW-PROPERTY-WORLD-V1"],"premises")),
-                "unit_space":len(rows(documents["SW-PROPERTY-WORLD-V1"],"units")),
-                "business":len(rows(documents["SW-BUSINESS-REGISTRY-V1"],"businesses")),
-                "establishment":len(rows(documents["SW-BUSINESS-REGISTRY-V1"],"establishments")),
-                "business_unit_link":len(rows(documents["SW-BUSINESS-REGISTRY-V1"],"business_unit_links")),
-                "occupancy_agreement":len(rows(documents["SW-PROPERTY-TENURE-V1"],"agreements")),
-                "occupancy":len(rows(documents["SW-PROPERTY-TENURE-V1"],"occupancies")),
-            }
+            expected = {table:len(entries) for table,entries in batches.items()}
+            expected["organisation"] = len({entry["organisation_id"] for entry in batches.get("organisation", [])})
             actual = {}
             for table, count in expected.items():
                 actual[table] = conn.execute(f'SELECT count(*) FROM sw_property."{table}"').fetchone()[0]
