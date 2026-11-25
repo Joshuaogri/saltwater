@@ -254,7 +254,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             footprint = campus_footprint
             building_suffix = f"B{building_index:02d}"
             building_code = f"SWB-STR-{slug}-{building_suffix}"
-            building_name = _name("BUILDING", f"{parcel_id}:{building_suffix}", occupied)
+            building_name = _name("BUILDING", parcel_id if building_index == 1 else f"{parcel_id}:{building_suffix}", occupied)
             storeys = _storey_count(land_use, parcel["source_district_id"], parcel_id if building_index == 1 else f"{parcel_id}:{building_suffix}")
             footprint_area = footprint.area
             gross_floor_area = footprint_area * storeys
@@ -282,7 +282,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             # spatially subordinate spaces, not operator or occupancy assignments.
             for floor in range(storeys):
                 premises_code = f"SWPR-{slug}-F{floor:02d}" if building_index == 1 else f"SWPR-{slug}-{building_suffix}-F{floor:02d}"
-                premises_name = _name("PREMISES", f"{parcel_id}:{building_suffix}:F{floor:02d}", occupied)
+                premises_name = _name("PREMISES", f"{parcel_id}:F{floor:02d}" if building_index == 1 else f"{parcel_id}:{building_suffix}:F{floor:02d}", occupied)
                 floor_area = footprint_area * 0.82
                 premises_type = {
                     "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
@@ -305,7 +305,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 count = max(1, min(12, int(floor_area / unit_area)))
                 for unit_no in range(1, count + 1):
                     unit_code = f"SWU-{slug}-F{floor:02d}-U{unit_no:02d}" if building_index == 1 else f"SWU-{slug}-{building_suffix}-F{floor:02d}-U{unit_no:02d}"
-                    unit_name = _name("UNIT", f"{parcel_id}:{building_suffix}:F{floor:02d}:U{unit_no:02d}", occupied)
+                    unit_name = _name("UNIT", f"{parcel_id}:F{floor:02d}:U{unit_no:02d}" if building_index == 1 else f"{parcel_id}:{building_suffix}:F{floor:02d}:U{unit_no:02d}", occupied)
                     units.append({
                         "candidate_unit_id": unit_code, "display_name": unit_name,
                         "premises_id": premises_code,
