@@ -13,7 +13,9 @@ BEGIN
   IF (SELECT count(*) FROM sw_police.service_number_history WHERE event_kind='issued')<>v_personnel THEN
     RAISE EXCEPTION 'each personnel service number must have one immutable issue event';
   END IF;
-  IF (SELECT count(*) FROM sw_police.personnel_supervision_link WHERE relationship_type='recruit_supervisor' AND effective_to_tick IS NULL)<>v_personnel THEN
+  IF (SELECT count(*) FROM sw_police.personnel_supervision_link WHERE relationship_type='recruit_supervisor' AND effective_to_tick IS NULL)
+     <>
+     (SELECT count(*) FROM sw_police.personnel WHERE service_standing='recruit') THEN
     RAISE EXCEPTION 'each recruit must have one active authorised supervisor relationship';
   END IF;
   IF EXISTS(
@@ -26,7 +28,7 @@ BEGIN
     WHERE e.appointment_id IS NULL OR e.service_state<>'active'
        OR e.personnel_category<>'sworn_officer' OR pop.person_id IS NULL
        OR pop.life_status<>1 OR pop.scope_status<>1 OR n.service_number IS NULL
-       OR s.supervisee_personnel_id IS NULL
+       OR (p.service_standing='recruit' AND s.supervisee_personnel_id IS NULL)
   ) THEN RAISE EXCEPTION 'personnel service dossier, person population or supervisor linkage is inconsistent'; END IF;
   IF EXISTS(
     SELECT 1 FROM sw_police.personnel p
