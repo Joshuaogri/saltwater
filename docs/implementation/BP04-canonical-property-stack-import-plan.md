@@ -132,3 +132,12 @@ The combined schema contains **76 tables**. The disposable PostgreSQL database m
 Rollback behavior for an intentionally invalid reference, production-equivalent heap/index/TOAST breakdown, and peak memory remain unmeasured. Complete those benchmark-hardening tasks before finalizing a production storage estimate. Review remaining archive-only lifecycle/title, rights/boundaries and insurance/loss content only where it directly supports police gameplay. Facilities schedules should remain archive-only unless a direct gameplay use is demonstrated. The global estate capacity audit can remain archive-only.
 
 No production Neon migration, table creation, seed insert or upload has been performed.
+
+
+## Phase 9 — title, ownership index and asset lifecycle (validation in progress)
+
+Candidate migration `db/proposals/0021_bp04_property_title_lifecycle.sql` adds nine typed tables. The importer maps all nine collections from `SW-PROPERTY-LIFECYCLE-TRANSACTIONS-V1`, a total of 31,956 source records. Ownership-event facts remain authoritative in the tenure dataset; the new transaction/instrument rows are indexes linked to the original ownership event IDs. No payment, settlement, mortgage, lien, boundary change or other unsupported event is fabricated.
+
+The first disposable import failed its row reconciliation because premises lifecycle IDs were based on a truncated slug: only 9,461 of 27,730 premises records had distinct IDs. This was corrected at the generator source by replacing truncated slugs with SHA-256-derived identifiers. A dedicated generator workflow [45653180837](https://github.com/Joshuaogri/saltwater/actions/runs/45653180837) passed all nine lifecycle regression tests, including uniqueness tests for every generated identifier collection. The generated output reports 420 title registers, 420 property interests, 531 title instruments, 531 transaction indexes, 1,474 building baseline events and 27,730 premises baseline events.
+
+The full dependency-ordered stack rebuild [45653180817](https://github.com/Joshuaogri/saltwater/actions/runs/45653180817) is in progress to regenerate the rights/boundary and other dependent compressed datasets from the corrected lifecycle identifiers. The final 85-table disposable import, zero-cross-reference check and repeat-import storage benchmark are not yet accepted. No production Neon writes have occurred.
