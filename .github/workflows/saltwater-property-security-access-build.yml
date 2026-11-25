@@ -6,9 +6,9 @@ on:
       - "runtime/property_security_access_generator.py"
       - "runtime/property_world_generator.py"
       - "runtime/property_tenure_generator.py"
-      - "data/property/saltwater-property-world-v1.json"
-      - "data/property/saltwater-property-tenure-v1.json"
-      - "data/property/saltwater-building-services-v1.json"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "data/property/saltwater-property-tenure-v1.json.gz"
+      - "data/property/saltwater-building-services-v1.json.gz"
       - "tests/pkg001/test_property_security_access_generator.py"
       - ".github/workflows/saltwater-property-security-access-build.yml"
   workflow_dispatch:
@@ -31,15 +31,27 @@ jobs:
           python-version: "3.12"
       - name: Install deterministic geometry dependency
         run: python -m pip install "shapely==2.1.2"
+      - name: Restore compressed canonical inputs
+        run: |
+          for archive in data/property/saltwater-property-world-v1.json.gz data/property/saltwater-property-tenure-v1.json.gz data/property/saltwater-building-services-v1.json.gz; do
+            gzip -t "$archive"
+            gzip -dc "$archive" > "${archive%.gz}"
+          done
       - name: Generate property security and access records
         run: python -m runtime.property_security_access_generator
       - name: Run property security and access regression tests
         run: python -m unittest discover -s tests/pkg001 -p "test_property_security_access_generator.py" -v
+      - name: Compress property security dataset
+        run: |
+          gzip -9 -n -c data/property/saltwater-property-security-access-v1.json > data/property/saltwater-property-security-access-v1.json.gz
+          gzip -t data/property/saltwater-property-security-access-v1.json.gz
+          rm data/property/saltwater-property-security-access-v1.json
       - name: Persist compact property security dataset on main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/property/saltwater-property-security-access-v1.json
+          git add data/property/saltwater-property-security-access-v1.json.gz
+          git rm --ignore-unmatch data/property/saltwater-property-security-access-v1.json
           if git diff --cached --quiet; then
             echo "Property security dataset is unchanged."
             exit 0
