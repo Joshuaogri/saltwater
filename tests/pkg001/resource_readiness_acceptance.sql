@@ -3,6 +3,7 @@ DO $bp09$
 BEGIN
   IF (SELECT count(*) FROM sw_police.resource_model)<>15
      OR (SELECT count(*) FROM sw_police.resource_asset)<>527
+     OR (SELECT count(*) FROM sw_police.resource_asset_event WHERE event_kind='registered')<>527
      OR (SELECT count(*) FROM sw_police.resource_allocation)<>500
      OR (SELECT count(*) FROM sw_police.resource_allocation_event)<>500 THEN
     RAISE EXCEPTION 'initial police resource catalogue, assets or allocations do not reconcile';
@@ -27,6 +28,9 @@ BEGIN
     WHERE status='active' AND effective_to_tick IS NULL
     GROUP BY asset_id HAVING count(*)>1
   ) THEN RAISE EXCEPTION 'serialized resource allocated more than once'; END IF;
+  IF (SELECT count(*) FROM sw_core.event_type WHERE event_code IN ('RESOURCE_ASSET_REGISTERED','RESOURCE_ASSET_STATE_CHANGED','RESOURCE_ASSET_MOVED','RESOURCE_ALLOCATION_CREATED','RESOURCE_ALLOCATION_RELEASED'))<>5 THEN
+    RAISE EXCEPTION 'BP09 resource event vocabulary incomplete';
+  END IF;
   IF (SELECT count(*) FROM sw_police.unit_resource_requirement)<>39
      OR (SELECT count(*) FROM sw_police.unit_resource_readiness)<>7
      OR (SELECT count(*) FROM sw_police.unit_resource_readiness WHERE resources_ready)<>7 THEN
