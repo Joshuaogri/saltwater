@@ -280,3 +280,23 @@ The layer records service availability, capacity bands, redundancy, account resp
 Build and seven regression tests passed in workflow [45578689850](https://github.com/Joshuaogri/saltwater/actions/runs/45578689850). The final regression-test optimisation also passed the regenerated workflow [45578778424](https://github.com/Joshuaogri/saltwater/actions/runs/45578778424).
 
 This dataset remains in GitHub only. No Neon upload or production seed write has occurred. Neon preparation remains after the remaining property-management layers, with compact import packaging, a fresh live database storage measurement, projected incremental storage and explicit approval before production writes.
+
+
+## BP-04 — property maintenance, defects and repairs (SW-PROPERTY-MAINTENANCE-V1)
+
+The maintenance and repair layer is generated from the persisted property-world, tenure and building-services datasets. It establishes:
+- 384 integrated building maintenance plans and 1,920 linked maintenance cycles.
+- 3,282 inspection schedules covering all 2,862 building systems and all 420 property sites.
+- 3,169 equipment-linked defect records with severity, discovery basis, operational and safety implications, urgency, root-cause profile and temporary controls.
+- 3,169 linked work requests; 2,119 open corrective work orders with trade requirements, responsible maintenance contractors, managing organisations, duration bands, line items, materials and lifecycle events.
+- 2,119 material issue records, 384 building emergency-maintenance procedures, equipment warranties and capital replacement forecasts.
+- 11 specialist fictional maintenance contractor organisations; contractor organisations are not individual people.
+
+The generated dataset is compact columnar JSON (9,261,100 bytes). Seven regression tests passed in [workflow 45579288100](https://github.com/Joshuaogri/saltwater/actions/runs/45579288100). The generator and tests verify property/building/system/equipment/work-order linkages, full inspection coverage, deterministic manifests and zero person, population or financial postings.
+
+No invoices, payments, cost ledger, capital commitments, residents, employees or contractor-person records are created. BP-34 retains financial authority. The dataset is committed to GitHub `main` only; no Neon upload or production seed write has occurred.
+
+- [Maintenance dataset](data/property/saltwater-property-maintenance-v1.json)
+- [Generator](runtime/property_maintenance_generator.py)
+- [Regression tests](tests/pkg001/test_property_maintenance_generator.py)
+- [Build workflow](.github/workflows/saltwater-property-maintenance-build.yml)
