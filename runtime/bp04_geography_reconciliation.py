@@ -129,13 +129,17 @@ def reconcile_collections(
 
     canonical_parcel_matches = sum(
         1 for row in properties
-        if row.get("source_candidate_parcel_id") in canonical_parcel_by_candidate
-        or row.get("source_candidate_parcel_id") in canonical_parcel_codes
+        if row.get("source_candidate_parcel_id") in canonical_parcel_codes
     )
     canonical_address_matches = sum(
-        1 for row in addresses
-        if row.get("address_id") in canonical_address_by_source
-        or row.get("address_id") in canonical_address_codes
+        1 for row in addresses if row.get("address_id") in canonical_address_codes
+    )
+    design_parcel_matches = sum(
+        1 for row in properties
+        if row.get("source_candidate_parcel_id") in canonical_parcel_by_candidate
+    )
+    design_address_matches = sum(
+        1 for row in addresses if row.get("address_id") in canonical_address_by_source
     )
     return {
         "property_records": len(properties),
@@ -148,10 +152,12 @@ def reconcile_collections(
         "canonical_parcel_identity_matches": canonical_parcel_matches,
         "canonical_address_identity_matches": canonical_address_matches,
         "properties_still_awaiting_bp02_parcel_binding": len(properties) - canonical_parcel_matches,
+        "bp02_design_parcel_identity_matches": design_parcel_matches,
         "addresses_still_awaiting_bp02_address_binding": len(addresses) - canonical_address_matches,
+        "bp02_design_address_identity_matches": design_address_matches,
         "canonical_binding_status": (
-            "DESIGN_IDENTITIES_BOUND_OPERATIONAL_RELEASE_BLOCKED" if canonical_parcel_matches == len(properties)
-            and canonical_address_matches == len(addresses)
+            "DESIGN_IDENTITIES_BOUND_OPERATIONAL_RELEASE_BLOCKED" if design_parcel_matches == len(properties)
+            and design_address_matches == len(addresses)
             else "BLOCKED_BP02_CANONICAL_PARCEL_AND_ADDRESS_IDENTITIES_ABSENT"
         ),
         "address_promotion_performed": False,
