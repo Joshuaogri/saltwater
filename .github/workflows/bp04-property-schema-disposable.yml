@@ -4,16 +4,16 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "db/proposals/0013_bp04_compressed_source_archive.sql"
-      - "db/proposals/0014_bp04_building_services_utilities.sql"
-      - "db/proposals/0015_bp04_property_maintenance_repairs.sql"
-      - "db/proposals/0016_bp04_property_security_access.sql"
-      - "db/proposals/0017_bp04_property_valuation_tax.sql"
-      - "db/proposals/0018_bp04_source_collection_mapping.sql"
-      - "db/proposals/0019_bp04_business_operating_schedules.sql"
-      - "db/proposals/0020_bp04_lawful_use_building_control.sql"
-      - "db/proposals/0021_bp04_property_title_lifecycle.sql"
-      - "db/proposals/0022_bp04_property_rights_boundaries.sql"
+      - "db/migrations/0003_bp04_compressed_source_archive.sql"
+      - "db/migrations/0004_bp04_building_services_utilities.sql"
+      - "db/migrations/0005_bp04_property_maintenance_repairs.sql"
+      - "db/migrations/0006_bp04_property_security_access.sql"
+      - "db/migrations/0007_bp04_property_valuation_tax.sql"
+      - "db/migrations/0008_bp04_source_collection_mapping.sql"
+      - "db/migrations/0009_bp04_business_operating_schedules.sql"
+      - "db/migrations/0010_bp04_lawful_use_building_control.sql"
+      - "db/migrations/0011_bp04_property_title_lifecycle.sql"
+      - "db/migrations/0012_bp04_property_rights_boundaries.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/test_bp04_property_stack_importer.py"
@@ -70,26 +70,26 @@ jobs:
           python-version: "3.12"
       - name: Install importer driver
         run: python -m pip install "psycopg[binary]>=3.2,<4"
-      - name: Apply BP04 phase-1 proposal to disposable database only
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0013_bp04_compressed_source_archive.sql
-      - name: Apply BP04 phase-2 building services schema to disposable database only
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0014_bp04_building_services_utilities.sql
-      - name: Apply BP04 phase-3 maintenance schema to disposable database only
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0015_bp04_property_maintenance_repairs.sql
-      - name: Apply BP04 phase-4 security and access schema to disposable database only
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0016_bp04_property_security_access.sql
-      - name: Apply BP04 phase-5 valuation and tax schema to disposable database only
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0017_bp04_property_valuation_tax.sql
+      - name: Apply BP04 production migration 0003 to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0003_bp04_compressed_source_archive.sql
+      - name: Apply BP04 production migration 0004 to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0004_bp04_building_services_utilities.sql
+      - name: Apply BP04 production migration 0005 to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0005_bp04_property_maintenance_repairs.sql
+      - name: Apply BP04 production migration 0006 to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0006_bp04_property_security_access.sql
+      - name: Apply BP04 production migration 0007 to disposable database
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0007_bp04_property_valuation_tax.sql
       - name: Apply BP04 phase-6 complete source inventory and mapping ledger
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0018_bp04_source_collection_mapping.sql
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0008_bp04_source_collection_mapping.sql
       - name: Apply BP04 phase-7 business operating schedules
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0019_bp04_business_operating_schedules.sql
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0009_bp04_business_operating_schedules.sql
       - name: Apply BP04 phase-8 lawful-use and building-control schema
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0020_bp04_lawful_use_building_control.sql
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0010_bp04_lawful_use_building_control.sql
       - name: Apply BP04 phase-9 property title and lifecycle schema
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0021_bp04_property_title_lifecycle.sql
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0011_bp04_property_title_lifecycle.sql
       - name: Apply BP04 phase-10 property rights and boundary schema
-        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0022_bp04_property_rights_boundaries.sql
+        run: psql -v ON_ERROR_STOP=1 -f db/migrations/0012_bp04_property_rights_boundaries.sql
       - name: Verify source collection identity handling
         run: python -m unittest tests.pkg001.test_bp04_property_stack_importer -v
       - name: Verify typed table inventory and integrity contracts
