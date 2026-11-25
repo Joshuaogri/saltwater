@@ -31,7 +31,8 @@ class BuildingServicesTests(unittest.TestCase):
         sub = [x for x in d["meters"] if x["meter_role"] == "unit_submeter"]
         self.assertEqual(len(sub), 15199 * 2)
         self.assertEqual(len({x["meter_id"] for x in sub}), len(sub))
-        self.assertTrue(all(x["unit_id"] in {u["unit_id"] for u in self.world["units"]} for x in sub))
+        unit_ids = {u["unit_id"] for u in self.world["units"]}
+        self.assertTrue(all(x["unit_id"] in unit_ids for x in sub))
 
     def test_building_systems_and_equipment_resolve(self):
         d = self.data
