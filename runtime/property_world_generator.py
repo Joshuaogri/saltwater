@@ -164,8 +164,9 @@ def build_property_world(source: dict) -> dict:
             construction_year = _num(bid+"-year", 1978, 2024)
             building_rows.append({
                 **b, "building_id": bid, "property_id": pid,
-                "address_id": address_id, "building_number": "A",
-                "building_form": _pick(["detached","semi_detached","terraced","courtyard_block","industrial_shed","institutional_block"], bid+"-form"),
+                "address_id": address_id, "building_number": chr(65 + int(bid.rsplit("B", 1)[-1]) - 1),
+                "building_form": b["building_form"],
+                "building_configuration": _pick(["detached","courtyard_block","podium_and_tower","multi_wing","industrial_shed","institutional_block"], bid+"-configuration"),
                 "structure_class": structure, "construction_system": structure,
                 "foundation_type": _pick(["reinforced_strip_foundations","reinforced_concrete_raft","piled_foundations","pad_foundations"], bid+"-foundation"),
                 "roof_form": roof, "roof_covering": _pick(["membrane","clay_tile","profiled_metal","standing_seam_metal"], bid+"-roof-cover"),
