@@ -146,10 +146,10 @@ jobs:
           docker run --rm --network host -e PGPASSWORD="$PGPASSWORD" -v /tmp:/tmp postgres:16 \
             pg_restore -h 127.0.0.1 -U "$PGUSER" -d saltwater_restore /tmp/saltwater-stage-e.dump
           test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.property_asset;')" = "420"
-          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.unit_space;')" = "15199"
-          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.asset_geometry_candidate;')" = "1572"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.unit_space;')" = "180733"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.asset_geometry_candidate;')" = "4842"
           test "$(psql -d saltwater_restore -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")" = "$(psql -Atc "SELECT encode(manifest_sha256,'hex') FROM sw_property.asset_generation_batch LIMIT 1;")"
-          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.access_connector_candidate;')" = "768"
+          test "$(psql -d saltwater_restore -Atc 'SELECT count(*) FROM sw_property.access_connector_candidate;')" = "2948"
           echo "BP04_03_STAGE_E_BACKUP_RESTORE_PASS"
       - name: Preserve complete Stage E asset manifest
         uses: actions/upload-artifact@v4
