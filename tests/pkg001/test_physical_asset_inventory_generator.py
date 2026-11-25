@@ -34,6 +34,16 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
 
     def test_all_parcel_candidates_have_a_property_site(self):
         self.assertEqual(self.manifest["generation"]["property_count"], 420)
+        self.assertGreater(self.manifest["generation"]["building_count"], 420)
+        buildings_by_property = {x["property_id"] for x in self.manifest["buildings"]}
+        expected_without_buildings = sum(
+            1 for x in self.manifest["properties"]
+            if x["candidate_property_id"] not in buildings_by_property
+        )
+        self.assertEqual(
+            self.manifest["generation"]["properties_without_buildings"],
+            expected_without_buildings,
+        )
         self.assertEqual(
             {p["source_candidate_parcel_id"] for p in self.manifest["properties"]},
             {p["candidate_parcel_id"] for p in self.candidates["parcels"]},
