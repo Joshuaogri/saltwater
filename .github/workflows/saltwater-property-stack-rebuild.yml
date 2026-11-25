@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - "runtime/property_stack_rebuild.py"
+      - "data/property/saltwater-property-world-v1.json.gz"
       - ".github/workflows/saltwater-property-stack-rebuild.yml"
   workflow_dispatch:
 permissions:
@@ -25,6 +26,12 @@ jobs:
           python-version: "3.12"
       - name: Install pinned geometry dependency
         run: python -m pip install "shapely==2.1.2"
+      - name: Restore compressed canonical snapshot for rebuild inputs
+        run: |
+          if [ -f data/property/saltwater-property-world-v1.json.gz ]; then
+            gzip -t data/property/saltwater-property-world-v1.json.gz
+            gzip -dc data/property/saltwater-property-world-v1.json.gz > data/property/saltwater-property-world-v1.json
+          fi
       - name: Rebuild all property and business datasets in dependency order
         run: python -m runtime.property_stack_rebuild
       - name: Validate physical asset inventory
@@ -54,6 +61,12 @@ jobs:
           python -m unittest discover -s tests/pkg001 -p "test_property_insurance_claims_generator.py" -v
           python -m unittest discover -s tests/pkg001 -p "test_property_facilities_operations_generator.py" -v
           python -m unittest discover -s tests/pkg001 -p "test_global_estate_capacity_audit.py" -v
+      - name: Compress canonical property world snapshot
+        run: |
+          gzip -9 -n -c data/property/saltwater-property-world-v1.json > data/property/saltwater-property-world-v1.json.gz
+          gzip -t data/property/saltwater-property-world-v1.json.gz
+          sha256sum data/property/saltwater-property-world-v1.json.gz
+          rm data/property/saltwater-property-world-v1.json
       - name: Persist one consistent property stack snapshot on main
         run: |
           git config user.name "github-actions[bot]"
@@ -73,6 +86,7 @@ jobs:
             data/property/saltwater-property-insurance-claims-v1.json \
             data/property/saltwater-property-facilities-operations-v1.json \
             data/property/saltwater-global-estate-capacity-audit-v1.json
+          git rm --ignore-unmatch data/property/saltwater-property-world-v1.json
           if git diff --cached --quiet; then
             echo "All property stack datasets are already current."
             exit 0
