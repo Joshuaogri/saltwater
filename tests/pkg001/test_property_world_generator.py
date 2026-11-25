@@ -107,6 +107,15 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
             values = [x[field] for x in rows]
             self.assertEqual(len(values), len(set(values)), field)
 
+    def test_persisted_textual_dataset_is_valid_json_and_count_consistent(self):
+        path = ROOT / "data/property/saltwater-property-world-v1.json"
+        document = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(document["schema"], "saltwater-canonical-property-world-columnar/1.0")
+        self.assertEqual(document["metadata"]["summary"]["property_count"], 420)
+        self.assertEqual(len(document["tables"]["units"]["rows"]), 15199)
+        self.assertEqual(len(document["tables"]["access_routes"]["rows"]), 804)
+        self.assertGreater(path.stat().st_size, 0)
+
     def test_textual_storage_format_is_columnar_and_lossless_for_counts(self):
         document = to_columnar_document(self.world)
         self.assertEqual(document["storage_format"], "textual_json_columnar_v1")
