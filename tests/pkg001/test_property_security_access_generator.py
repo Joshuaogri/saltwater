@@ -28,6 +28,9 @@ class PropertySecurityAccessTests(unittest.TestCase):
   d=self.data; occ={x["occupancy_id"] for x in self.tenure["occupancies"]}
   self.assertEqual(len(d["organisation_access_assignments"]),len(self.tenure["occupancies"]))
   self.assertTrue(all(x["occupancy_id"] in occ for x in d["organisation_access_assignments"]))
+  expected_units={x["occupancy_id"]:x["unit_id"] for x in self.tenure["occupancies"]}
+  group_units={x["occupancy_id"]:x["unit_id"] for x in d["access_groups"]}
+  self.assertEqual(group_units,expected_units)
   self.assertTrue(all(not x["member_person_ids"] for x in d["access_groups"]))
  def test_door_routes_and_maintenance_linkage(self):
   d=self.data; route_ids={x["route_id"] for x in self.world["access_routes"]}
