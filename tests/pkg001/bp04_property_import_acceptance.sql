@@ -61,5 +61,24 @@ BEGIN
     LEFT JOIN sw_property.establishment e USING (establishment_id)
     WHERE b.business_id IS NULL OR e.establishment_id IS NULL
   ) THEN RAISE EXCEPTION 'business schedule cross-reference failure'; END IF;
-END $$;
+
+  SELECT mapping_status, loaded_record_count INTO v_status, v_count
+  FROM sw_property.import_dataset WHERE dataset_id='SW-PROPERTY-LIFECYCLE-TRANSACTIONS-V1';
+  IF v_status <> 'fully_mapped' OR v_count <> 31956 THEN
+    RAISE EXCEPTION 'property lifecycle mapping mismatch: status %, loaded %', v_status, v_count;
+  END IF;
+  IF (SELECT count(*) FROM sw_property.property_title_register) <> 420
+     OR (SELECT count(*) FROM sw_property.property_title_instrument) <> 531
+     OR (SELECT count(*) FROM sw_property.property_transaction_index) <> 531
+     OR (SELECT count(*) FROM sw_property.building_lifecycle_event) <> 1474
+     OR (SELECT count(*) FROM sw_property.premises_lifecycle_event) <> 27730 THEN
+    RAISE EXCEPTION 'property lifecycle typed row counts incorrect';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM sw_property.property_transaction_index t
+    LEFT JOIN sw_property.property_title_instrument i USING(title_instrument_id)
+    LEFT JOIN sw_property.property_title_register r USING(title_register_id)
+    WHERE i.title_instrument_id IS NULL OR r.title_register_id IS NULL
+  ) THEN RAISE EXCEPTION 'property transaction/title lineage failure'; END IF;
+END $;
 SELECT 'BP04 imported source ledger and business operations acceptance passed' AS result;
