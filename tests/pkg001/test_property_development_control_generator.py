@@ -27,6 +27,11 @@ class PropertyDevelopmentControlTests(unittest.TestCase):
   self.assertEqual(len(d["unit_use_compliance"]),len(self.world["units"]))
   self.assertEqual(len({x["unit_id"] for x in d["unit_use_compliance"]}),len(d["unit_use_compliance"]))
   self.assertEqual(d["summary"]["unit_use_compliance_count"],len(self.world["units"]))
+ def test_all_generated_identifiers_are_unique(self):
+  for collection,field in (("site_development_plans","site_development_plan_id"),("planning_permissions","planning_permission_id"),("building_control_cases","building_control_case_id"),("building_inspection_schedules","building_inspection_schedule_id"),("completion_certificates","completion_certificate_id"),("lawful_use_certificates","lawful_use_certificate_id"),("unit_use_compliance","use_compliance_id"),("development_projects","development_project_id")):
+   values=[x[field] for x in self.data[collection]]
+   self.assertEqual(len(values),len(set(values)),f"{collection} contains colliding IDs")
+
  def test_all_references_resolve(self):
   d=self.data
   permissions={x["planning_permission_id"] for x in d["planning_permissions"]}
