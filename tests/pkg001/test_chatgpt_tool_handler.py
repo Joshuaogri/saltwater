@@ -65,6 +65,24 @@ class ChatGPTToolHandlerTests(unittest.TestCase):
         for command in ("workspace", "workspace cases extra", "workspace Cases", "workspace unknown", "workspace;quit"):
             self.assertFalse(self.call_handler({"command_text": command})["ok"])
 
+
+    def test_property_and_business_lookup_commands_are_allowed_with_bounded_search_text(self):
+        command = "find business Harbour Bank Global Headquarters"
+        result = self.call_handler({"command_text": command})
+        self.assertTrue(result["ok"])
+        self.adapter.execute.assert_called_once()
+        forwarded = self.adapter.execute.call_args.args[1]
+        self.assertEqual(forwarded.command_text, command)
+        self.assertTrue(self.call_handler({
+            "command_text": "inspect property SWPROP-000000000001"
+        })["ok"])
+
+    def test_lookup_command_length_is_bounded_at_256_characters(self):
+        accepted = "find address " + ("A" * 240)
+        rejected = "find address " + ("A" * 250)
+        self.assertTrue(self.call_handler({"command_text": accepted})["ok"])
+        self.assertFalse(self.call_handler({"command_text": rejected})["ok"])
+
     def test_request_reference_boundaries_and_type(self):
         self.assertTrue(self.call_handler({
             "command_text": "help", "request_reference": "x" * 128
