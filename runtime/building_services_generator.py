@@ -33,7 +33,7 @@ def _pick(values, key: str):
 
 
 def _slug(value: str) -> str:
-    return "".join(c for c in value.upper() if c.isalnum())[:24]
+    return "".join(c for c in value.upper() if c.isalnum())
 
 
 def build_building_services(world: dict, tenure: dict) -> dict:
