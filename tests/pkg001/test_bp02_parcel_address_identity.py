@@ -43,7 +43,7 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
         self.codes = {"SW-D01", "SW-D02", "SW-D01-N1", "SW-D02-N1", "SW-R01", "SW-R02"}
 
     def build(self):
-        return build_identity_register(self.candidates, self.properties, self.addresses, self.codes)
+        return build_identity_register(self.candidates, self.properties, self.addresses, self.codes, {"SW-RSEG-1": "SW-R01"})
 
     def test_stable_ids_and_complete_design_linkage(self):
         result = self.build()
@@ -55,6 +55,8 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
         self.assertFalse(result["operational_approval"])
         self.assertTrue(all(row["operational_status"] == "NOT_APPROVED_FOR_OPERATIONAL_SEED" for row in result["addresses"]))
         self.assertEqual(result["addresses"][1]["source_address_attributes"]["building_number"], None)
+        self.assertEqual(result["addresses"][0]["road_frontage_match_status"], "ROAD_MATCHES_PARCEL_FRONTAGE_CANDIDATE")
+        self.assertEqual(result["addresses"][1]["road_frontage_match_status"], "NO_PARCEL_FRONTAGE_CANDIDATE")
 
     def test_rebuild_is_deterministic(self):
         self.assertEqual(self.build(), self.build())
