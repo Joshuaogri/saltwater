@@ -1,9 +1,9 @@
 # BP04 canonical property-stack import package — design and benchmark plan
 
-**Status:** design stage; no canonical property import has been run.
+**Status:** production release candidate; disposable import validated; production Neon import not yet executed.
 **Target repository:** `Joshuaogri/saltwater`, `main` only.
 **Authoritative database:** Neon PostgreSQL project `misty-breeze-20463094`, branch `br-bitter-rain-bdz9ddid`, database `neondb`.
-**Safety:** production Neon remains read-only until the user separately approves a measured schema/import operation.
+**Safety:** ordered production migrations 0003–0012 and an explicitly guarded production importer now exist. Production Neon remains unchanged until the measured release preflight is complete and the user explicitly authorises the write.
 
 ## 1. Verified source estate
 
@@ -11,13 +11,17 @@ The expanded property stack is persisted on `main` as 14 deterministic gzip data
 
 These compressed repository sizes are not a PostgreSQL storage estimate. JSONB tuple overhead, indexes, TOAST, row headers, WAL and database metadata must be measured independently.
 
-## 2. Existing database code is not the canonical importer
+## 2. Production migration and importer path
+
+The canonical importer is `runtime/bp04_property_stack_importer.py`. It defaults to `saltwater_test`; targeting `neondb` requires `--expected-database neondb --allow-production`. The production migration copies are ordered as `db/migrations/0003` through `0012`; the migration runner `scripts/migrate.py` verifies names, checksums, ledger continuity and schema fingerprints, and applies each migration transactionally. The BP04 disposable workflow exercises the same production migration runner and importer on PostgreSQL 16 and 18.
+
+## 3. Existing database code is not the canonical importer
 
 The current BP04-01/BP04-02 SQL proposals and BP04-03 Stage E physical-asset importer are explicitly disposable-PostgreSQL acceptance assets. The Stage E importer rejects databases other than `saltwater_test`, imports candidate assets/profiles, and intentionally does not create operational addresses, operational access points, ownership, tenancy, occupancy or business assignments. It must not be repurposed as the canonical property-world importer.
 
 Production Neon currently contains only the five foundation tables in `sw_core` and `sw_ops`. There is no canonical property-stack schema or approved property seed importer deployed.
 
-## 3. Package contract
+## 4. Package contract
 
 The import package must be reproducible from the exact compressed GitHub snapshots at a pinned `main` commit. It must contain:
 
@@ -31,7 +35,7 @@ The import package must be reproducible from the exact compressed GitHub snapsho
 
 Do not re-encode all data as one opaque JSONB blob. The production target must use typed, domain-specific relational tables with stable unique constraints and foreign keys where the source semantics support them. Preserve uncertain or unverified relationships as such; do not promote geometric candidates, estimates, or inferred legal rights into operational facts.
 
-## 4. Required dependency order
+## 5. Required dependency order
 
 1. Canonical property, building, premises, unit, room, site-feature and access-point identities.
 2. Building components, spatial/access route lineage and physical hierarchy relationships.
@@ -48,7 +52,7 @@ Do not re-encode all data as one opaque JSONB blob. The production target must u
 
 A package can retain all registers in one immutable release, while the loader applies dependency order inside a single transaction or in restartable, checksummed batches.
 
-## 5. Disposable PostgreSQL benchmark
+## 6. Disposable PostgreSQL benchmark
 
 The benchmark must use an isolated PostgreSQL 16 instance/container, never the production Neon branch. It must:
 
@@ -64,7 +68,7 @@ The benchmark must use an isolated PostgreSQL 16 instance/container, never the p
 
 The final estimate for Neon must include a measured range and explicit assumptions for production indexes, constraints and expected operational metadata. It must not use gzip file size as a proxy for database size.
 
-## 6. Production gate
+## 7. Production gate
 
 No production migration, table creation, seed insert, upload or bulk write is authorised by this design document. Before any production operation, report:
 
