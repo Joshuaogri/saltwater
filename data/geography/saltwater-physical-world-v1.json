@@ -451,7 +451,7 @@
       "physical_feature_id": "SWPF-001",
       "name": "Ridge Crest Retaining Wall",
       "feature_type": "retaining_wall",
-      "neighbourhood_id": "SW-D01-N2",
+      "neighbourhood_id": "SW-D01-N3",
       "geometry": {
         "type": "LineString",
         "coordinates": [
