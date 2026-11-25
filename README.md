@@ -341,3 +341,12 @@ Implemented on `main`; the deterministic generator consumes the persisted proper
 - [Regression tests](tests/pkg001/test_property_development_control_generator.py)
 - [Build workflow](.github/workflows/saltwater-property-development-control-build.yml)
 
+
+
+## BP-04 — property title, transactions and lifecycle register (SW-PROPERTY-LIFECYCLE-TRANSACTIONS-V1)
+
+The deterministic property lifecycle generator is `runtime/property_lifecycle_transactions_generator.py`; its compact columnar output is `data/property/saltwater-property-lifecycle-transactions-v1.json`. It creates a unified title register for all 420 canonical property sites, 420 current property-interest records, 531 title instruments and 531 property-transaction index rows. Each transaction row references the authoritative ownership event ID in `SW-PROPERTY-TENURE-V1`; ownership history is not duplicated or re-authored. It also records baseline lifecycle lineage for all 384 buildings and 1,327 premises, linked to their existing development permissions, completion certificates and lawful-use certificates.
+
+Every property has an encumbrance register, but the absence of supplied mortgage, lien, easement or charge data is explicitly recorded as **not asserted**, not as proof that no such interests exist. Ten future gameplay action types are defined: acquisition, sale/transfer, subdivision, consolidation, redevelopment, demolition, change of use, easement/wayleave, mortgage/charge and lease/concession change. These action definitions do not fabricate completed events or mutate the current physical hierarchy. Subdivision and consolidation require new parcel geometry and parent/child lineage before execution. No financial postings, settlement, payments, people or population records are created.
+
+Eight regression tests passed in [workflow 45604525551](https://github.com/Joshuaogri/saltwater/actions/runs/45604525551). The generated dataset is approximately 1.00 MiB (1,044,637 bytes); manifest SHA-256: `c3d35be72d8175d4c9e096ba0aa4e93a1353bb92902c6f19f54acbf7e82fe1ea`. This is GitHub artifact size, not a PostgreSQL storage estimate. No Neon writes were made.
