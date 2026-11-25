@@ -1,4 +1,4 @@
-name: BP04 canonical property schema phases 1–10 — disposable PostgreSQL 16
+name: BP04 canonical property stack — 92-table disposable PostgreSQL 16 benchmark
 
 on:
   push:
