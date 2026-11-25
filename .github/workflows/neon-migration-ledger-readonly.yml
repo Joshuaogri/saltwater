@@ -32,7 +32,7 @@ jobs:
             echo "::error::DATABASE_URL secret is missing or empty."
             exit 1
           fi
-          python scripts/migrate.py
+          python scripts/migrate.py --allow-pending
       - name: Record non-secret production ledger and storage measurements
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
