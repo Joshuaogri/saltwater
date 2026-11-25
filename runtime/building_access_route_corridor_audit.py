@@ -9,7 +9,9 @@ import hashlib
 import json
 from pathlib import Path
 
+from shapely import distance as shapely_distance
 from shapely.geometry import LineString, Polygon, shape
+from shapely.strtree import STRtree
 
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.parcel_dossier_generator import build_parcel_dossiers
@@ -58,6 +60,9 @@ def build_route_corridor_candidates(source: dict, candidates: dict | None = None
     building_geometries = {
         key: _polygon(row["geometry"]) for key, row in buildings.items()
     }
+    building_geometry_ids = list(building_geometries)
+    building_geometry_values = [building_geometries[key] for key in building_geometry_ids]
+    building_geometry_tree = STRtree(building_geometry_values)
     water = [
         (f["id"], shape(f["geometry"]))
         for f in source.get("features", [])
@@ -124,18 +129,22 @@ def build_route_corridor_candidates(source: dict, candidates: dict | None = None
         if origin_crossing > TOLERANCE_M:
             exceptions["origin_building_interior_crossing"].append(cid)
 
-        other_building_hits = []
-        other_clearances = []
-        for other_id, other_geometry in building_geometries.items():
-            if other_id == building["candidate_building_id"]:
-                continue
-            if line.intersects(other_geometry):
-                other_building_hits.append(other_id)
-            other_clearances.append(line.distance(other_geometry))
+        origin_building_id = building["candidate_building_id"]
+        intersecting_indexes = building_geometry_tree.query(line, predicate="intersects")
+        other_building_hits = sorted(
+            building_geometry_ids[int(index)] for index in intersecting_indexes
+            if building_geometry_ids[int(index)] != origin_building_id
+        )
         if other_building_hits:
             exceptions["other_building_intersections"].append({
-                "connector_id": cid, "building_ids": sorted(other_building_hits)
+                "connector_id": cid, "building_ids": other_building_hits
             })
+        all_clearances = shapely_distance(line, building_geometry_values)
+        other_clearances = [
+            float(all_clearances[index])
+            for index, other_id in enumerate(building_geometry_ids)
+            if other_id != origin_building_id
+        ]
         min_building_clearance = min(other_clearances) if other_clearances else None
         if min_building_clearance is not None:
             clearance_values.append(min_building_clearance)
