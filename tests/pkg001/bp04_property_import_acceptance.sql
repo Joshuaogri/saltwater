@@ -76,8 +76,8 @@ BEGIN
   END IF;
   IF EXISTS (
     SELECT 1 FROM sw_property.property_transaction_index t
-    LEFT JOIN sw_property.property_title_instrument i USING(title_instrument_id)
-    LEFT JOIN sw_property.property_title_register r USING(title_register_id)
+    LEFT JOIN sw_property.property_title_instrument i ON i.title_instrument_id=t.title_instrument_id
+    LEFT JOIN sw_property.property_title_register r ON r.title_register_id=t.title_register_id
     WHERE i.title_instrument_id IS NULL OR r.title_register_id IS NULL
   ) THEN RAISE EXCEPTION 'property transaction/title lineage failure'; END IF;
 
