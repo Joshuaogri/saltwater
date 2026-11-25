@@ -512,10 +512,32 @@ Candidate schema `db/proposals/0017_bp04_property_valuation_tax.sql` adds 12 typ
 The valuation generator now uses collision-resistant long identifiers, with uniqueness regression checks across all 12 source collections. Its build workflow restores five compressed canonical dependencies and persists only a compressed dataset. The complete seven-source, 65-table disposable PostgreSQL 16 benchmark passed: [BP04 phase-5 run 45641900441](https://github.com/Joshuaogri/saltwater/actions/runs/45641900441). Valuation/tax records include 1,894 condition assessments, 420 land valuations, 1,474 improvement valuations, 1,894 asset valuations, 27,730 premises valuations, 420 insurance policies, 1,260 coverage records, 420 risk profiles, 420 annual tax assessments, 420 exemption reviews, one tax rule and five insurer profiles. The combined database measured **546,020,375 bytes (520.73 MiB)** with **zero cross-reference violations**. Repeat import passed with **546,020,375 bytes before and after**, and all row counts remained unchanged. Seven mapped gzip sources total **21,190,376 bytes (20.21 MiB)**; their uncompressed source JSON totals **437,861,928 bytes (417.58 MiB)**. This remains a partial import: development control, lifecycle transactions, rights/boundaries, insurance claims and facilities operations still require mapping and inclusion in the final benchmark. Neon production remains unchanged.
 
 
-## BP04 canonical property stack — Phase 6 source archive and mapping ledger
+## BP04 canonical property stack — source archive, corrected mapping ledger and business operations
 
-The Phase 6 disposable PostgreSQL 16 workflow [45643776748](https://github.com/Joshuaogri/saltwater/actions/runs/45643776748) passed on main commit `17d7f81dab331241399990c4432e81fc1c8ac0a9`. All 14 canonical gzip datasets are now archived losslessly and the relational import ledger records collection-level source counts, loaded counts and mapping status. The schema acceptance contract passed with 66 tables. Across the 14 inputs the source inventory contains 105 collections and 1,950,947 source records; 65 collections (1,277,945 source rows) currently have typed mappings, while 40 collections (673,002 source rows) remain archive-only. Seven of the fourteen datasets currently contribute typed operational rows; every dataset is nevertheless archived.
+The full disposable PostgreSQL 16 workflow [45646271478](https://github.com/Joshuaogri/saltwater/actions/runs/45646271478) passed on main commit `f9e18f63dff763134073050e3409432f82bd5c79`. The workflow applied proposals 0013–0019, passed source-identity unit tests, passed 68-table schema acceptance, imported all 14 gzip sources, passed the post-import ledger/business-schedule acceptance, and passed repeat-import storage/idempotency checks.
 
-The complete source package is 23,023,562 compressed bytes (21.96 MiB) and 559,420,873 uncompressed bytes (533.50 MiB). The disposable PostgreSQL database measured 550,149,143 bytes (524.66 MiB). The source archive relation measured 23,797,760 bytes. Cross-reference violations: zero. A second full import left database size exactly unchanged at 550,149,143 bytes; PostgreSQL reported no table insert, update or delete mutations during the repeat import. The largest relations are meter (195,067,904 bytes), access_zone (83,640,320), unit_space (58,318,848), premises_room (23,887,872) and source_dataset_archive (23,797,760).
+A correction was made after reviewing Phase 6's first mapping ledger: its collection keys used some relational target names rather than the original source collection names. The importer now retains each source collection identity directly while expanding columnar records. The corrected ledger reconciles all 105 source collections and 1,950,947 source records. **63 source collections (1,337,925 rows) are typed-mapped; 42 collections (613,022 rows) remain archive-only.** Six datasets are fully mapped, two are partially mapped (property world and tenure), and six are archive-only. All 14 source gzip datasets are retained losslessly regardless of mapping status.
 
-This is disposable benchmark evidence only. No Neon production schema, seed, import or upload was performed. The remaining 40 archive-only collections are the next mapping scope; prioritize business operating schedules and gameplay-relevant development, title/lifecycle, rights/access and claims records. Keep audit-only findings as evidence, not operational entities, and do not expand the property model with non-gameplay facilities-management detail.
+| Measure | Verified result |
+|---|---:|
+| Source datasets archived | 14 / 14 |
+| Source collections reconciled | 105 |
+| Total source records | 1,950,947 |
+| Typed-mapped source collections / rows | 63 / 1,337,925 |
+| Archive-only source collections / rows | 42 / 613,022 |
+| Compressed package | 23,023,562 bytes (21.96 MiB) |
+| Uncompressed source JSON | 559,420,873 bytes (533.50 MiB) |
+| Compressed source archive relation | 23,797,760 bytes |
+| Typed relational schema | 68 tables |
+| Business daily schedules | 70,000 |
+| Business weekly profiles | 10,000 |
+| Disposable PostgreSQL database | 577,395,735 bytes (550.65 MiB) |
+| Cross-reference violations | 0 |
+| Database size after repeat import | 577,395,735 bytes (unchanged) |
+| Repeat-import row mutations | 0 |
+
+The business schedule layer records each business's seven-day customer opening status, opening/closing times, service window, shift pattern, delivery window and emergency contact route. It is useful for time-aware dispatch, call-for-service context and scene access; it creates no employee, customer or resident person records. The repeat import produced zero inserts, updates or deletes. Largest measured relations include meter (195,067,904 bytes), access_zone (83,640,320), unit_space (58,318,848), business_daily_schedule (25,821,184), premises_room (23,887,872) and source_dataset_archive (23,797,760).
+
+The remaining archive-only sources are the existing development-control, facilities, insurance-claims, lifecycle/transactions, rights/boundaries and global-estate-audit datasets. Next, map only gameplay-relevant content: lawful-use and development restrictions where useful to investigations/scene access; title/lifecycle and rights evidence where relevant to disputes or property crime; and insurance claim/loss workflows for relevant incidents. Keep the global estate audit as evidence, and avoid expanding facilities-management systems without a direct police-gameplay need.
+
+This is disposable benchmark evidence only. No production Neon schema, seed, import or upload was performed.
