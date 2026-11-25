@@ -22,6 +22,7 @@ DATASETS = {
     "SW-BUSINESS-REGISTRY-V1": "data/business/saltwater-business-registry-v1.json.gz",
     "SW-PROPERTY-TENURE-V1": "data/property/saltwater-property-tenure-v1.json.gz",
     "SW-BUILDING-SERVICES-V1": "data/property/saltwater-building-services-v1.json.gz",
+    "SW-PROPERTY-MAINTENANCE-V1": "data/property/saltwater-property-maintenance-v1.json.gz",
 }
 
 def read_document(path: Path) -> tuple[dict, bytes]:
@@ -95,10 +96,18 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         counts[f"{dataset}.{table}"] = len(source_rows)
         batches.setdefault(table, []).extend(mapper(dataset, row) for row in source_rows)
 
+    def mapped(ds, row, columns, booleans=()):
+        result = {column: row.get(column) for column in columns}
+        for column in booleans:
+            result[column] = boolean_value(row.get(column))
+        result["source_dataset"] = ds
+        return result
+
     world = documents["SW-PROPERTY-WORLD-V1"]
     registry = documents["SW-BUSINESS-REGISTRY-V1"]
     tenure = documents["SW-PROPERTY-TENURE-V1"]
     services = documents["SW-BUILDING-SERVICES-V1"]
+    maintenance = documents["SW-PROPERTY-MAINTENANCE-V1"]
 
     # The tenure register is the superset: it already contains every property owner organisation plus historical owners and managers.
     add("organisation", "SW-PROPERTY-TENURE-V1", rows(tenure, "organisations"),
@@ -161,6 +170,28 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         lambda ds,r: {"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"primary_building_id":r.get("primary_building_id"),"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"connection_point_type":r.get("connection_point_type"),"connection_capacity_band":r.get("connection_capacity_band"),"supply_redundancy":r.get("supply_redundancy"),"connection_state":r.get("connection_state"),"is_live_game_connection":boolean_value(r["is_live_game_connection"]),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
     add("utility_provider_profile", "SW-BUILDING-SERVICES-V1", rows(services, "utility_providers"),
         lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"fictional_entity":boolean_value(r["fictional_entity"]),"service_area":r.get("service_area"),"source_dataset":ds})
+    # Phase 3: maintenance, defects, repairs and equipment lifecycle.
+    # Contractor organisations extend the canonical organisation registry.
+    add("organisation", "SW-PROPERTY-MAINTENANCE-V1", rows(maintenance, "maintenance_contractors"),
+        lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":None,"status":r.get("status"),"source_dataset":ds})
+    maintenance_maps = [
+      ("maintenance_contractor_profile","maintenance_contractors",["organisation_id","specialisms","status","fictional_entity"],["fictional_entity"]),
+      ("maintenance_plan","maintenance_plans",["maintenance_plan_id","property_id","building_id","responsible_organisation_id","plan_type","plan_status","review_interval_days","risk_profile","effective_tick"],[]),
+      ("maintenance_cycle","maintenance_cycles",["maintenance_cycle_id","maintenance_plan_id","property_id","building_id","cycle_type","interval_days","next_due_tick","priority"],[]),
+      ("maintenance_inspection","inspections",["inspection_id","property_id","building_id","building_system_id","inspection_type","inspection_scope","interval_days","last_completed_tick","next_due_tick","inspection_status","responsible_organisation_id","result"],[]),
+      ("maintenance_defect","defects",["defect_id","property_id","building_id","building_system_id","equipment_id","defect_location_type","severity","defect_category","discovery_source","discovered_tick","defect_status","operational_impact","safety_implication","root_cause_profile","repair_urgency","temporary_control","raised_work_request_id"],[]),
+      ("maintenance_work_request","work_requests",["work_request_id","property_id","building_id","building_system_id","equipment_id","defect_id","request_type","priority","requested_tick","request_status","raised_by_organisation_id","responsible_organisation_id","description_code"],[]),
+      ("maintenance_work_order","work_orders",["work_order_id","work_request_id","property_id","building_id","building_system_id","equipment_id","defect_id","maintenance_plan_id","work_type","priority","work_order_status","responsible_contractor_organisation_id","managing_organisation_id","required_trade","estimated_duration_hours_band","labour_costing","scheduled_tick","completion_tick","verification_required"],["verification_required"]),
+      ("maintenance_work_order_line","work_order_lines",["work_order_line_id","work_order_id","line_type","asset_id","description_code","quantity_band","trade"],[]),
+      ("maintenance_material_issue","material_issues",["material_issue_id","work_order_id","equipment_id","material_class","quantity_band","stock_source_profile","financial_posting_created"],["financial_posting_created"]),
+      ("maintenance_event","maintenance_events",["maintenance_event_id","work_order_id","equipment_id","property_id","building_id","event_type","event_tick","event_status","verification_state"],[]),
+      ("equipment_warranty","warranties",["warranty_id","equipment_id","property_id","building_id","warranty_provider_profile","start_year","end_year","warranty_state","terms_profile"],[]),
+      ("equipment_replacement_forecast","replacement_forecasts",["replacement_plan_id","equipment_id","property_id","building_id","building_system_id","replacement_reason","target_year","priority","capital_approval_state","financial_commitment_created"],["financial_commitment_created"]),
+      ("building_emergency_procedure","emergency_procedures",["procedure_id","property_id","building_id","procedure_scope","scenarios","first_response_organisation_id","continuity_arrangements","person_records_created"],[])
+    ]
+    for target, source, columns, booleans in maintenance_maps:
+        add(target, "SW-PROPERTY-MAINTENANCE-V1", rows(maintenance, source),
+            lambda ds,r,cols=columns,flags=booleans: mapped(ds,r,cols,flags))
     return batches, counts
 
 def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test") -> dict:
@@ -215,7 +246,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                        OR current.source_record_count IS DISTINCT FROM excluded.source_record_count
                        OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count""",
                     (release_id,dataset_id,info["source_path"],info["source_sha256"],info["compressed_bytes"],info["uncompressed_bytes"],collection_count,collection_count))
-            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility"]
+            table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility","maintenance_contractor_profile","maintenance_plan","maintenance_cycle","maintenance_inspection","maintenance_defect","maintenance_work_request","maintenance_work_order","maintenance_work_order_line","maintenance_material_issue","maintenance_event","equipment_warranty","equipment_replacement_forecast","building_emergency_procedure"]
             for table in table_order:
                 entries = batches.get(table, [])
                 if not entries:
@@ -225,9 +256,9 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                     raise ValueError(f"Inconsistent mapped columns for {table}")
                 placeholders = ",".join(["%s"] * len(columns))
                 col_sql = ",".join(f'"{c}"' for c in columns)
-                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id","building_system_id","utility_connection_id","organisation_id","utility_account_id","meter_id","equipment_id","inspection_id","service_responsibility_id"})
+                updates = ",".join(f'"{c}"=excluded."{c}"' for c in columns if c not in {"organisation_id","property_id","address_id","building_id","premises_id","unit_id","access_point_id","route_id","site_feature_id","component_id","room_id","ownership_interest_id","business_id","establishment_id","business_unit_link_id","agreement_id","occupancy_id","building_system_id","utility_connection_id","organisation_id","utility_account_id","meter_id","equipment_id","inspection_id","service_responsibility_id","maintenance_contractor_profile_id","maintenance_plan_id","maintenance_cycle_id","inspection_id","defect_id","work_request_id","work_order_id","work_order_line_id","material_issue_id","maintenance_event_id","warranty_id","replacement_plan_id","procedure_id"})
                 pk = {
-                    "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id","building_system":"building_system_id","utility_connection":"utility_connection_id","utility_provider_profile":"organisation_id","utility_account":"utility_account_id","meter":"meter_id","equipment_asset":"equipment_id","system_inspection":"inspection_id","business_utility_responsibility":"service_responsibility_id"
+                    "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id","building_system":"building_system_id","utility_connection":"utility_connection_id","utility_provider_profile":"organisation_id","utility_account":"utility_account_id","meter":"meter_id","equipment_asset":"equipment_id","system_inspection":"inspection_id","business_utility_responsibility":"service_responsibility_id", "maintenance_contractor_profile":"organisation_id","maintenance_plan":"maintenance_plan_id","maintenance_cycle":"maintenance_cycle_id","maintenance_inspection":"inspection_id","maintenance_defect":"defect_id","maintenance_work_request":"work_request_id","maintenance_work_order":"work_order_id","maintenance_work_order_line":"work_order_line_id","maintenance_material_issue":"material_issue_id","maintenance_event":"maintenance_event_id","equipment_warranty":"warranty_id","equipment_replacement_forecast":"replacement_plan_id","building_emergency_procedure":"procedure_id"
                 }[table]
                 compare_current = ",".join(f'current."{column}"' for column in columns if column != pk)
                 compare_excluded = ",".join(f'excluded."{column}"' for column in columns if column != pk)
