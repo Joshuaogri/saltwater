@@ -1,5 +1,5 @@
 -- BP04 phase 4: physical security, keys, zones and organisation access control.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.security_door (
  door_id text PRIMARY KEY, access_point_id text NOT NULL REFERENCES sw_property.access_point(access_point_id) DEFERRABLE INITIALLY DEFERRED,
