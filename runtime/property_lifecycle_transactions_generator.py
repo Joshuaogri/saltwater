@@ -55,7 +55,8 @@ def build_property_lifecycle(world, tenure, development):
         # Ownership changes remain authoritative in the tenure dataset. This table is
         # a transaction index referencing those source events, never a second event log.
         for event in sorted(events_by_property.get(pid, []), key=lambda x: (x.get("effective_year") or 0, x["ownership_event_id"])):
-            instrument_id = f"SWTI-{_slug(event['ownership_event_id'])}"
+            event_key = hashlib.sha256(event["ownership_event_id"].encode()).hexdigest()[:12]
+            instrument_id = f"SWTI-{event_key}"
             title_instruments.append({
                 "title_instrument_id": instrument_id, "property_id": pid,
                 "title_register_id": title_id, "ownership_event_id": event["ownership_event_id"],
@@ -68,7 +69,7 @@ def build_property_lifecycle(world, tenure, development):
                 "payment_or_settlement_record_created": False
             })
             transactions.append({
-                "property_transaction_id": f"SWPTX-{_slug(event['ownership_event_id'])}",
+                "property_transaction_id": f"SWPTX-{event_key}",
                 "property_id": pid, "title_register_id": title_id,
                 "transaction_type": event["event_type"], "ownership_event_id": event["ownership_event_id"],
                 "title_instrument_id": instrument_id,
