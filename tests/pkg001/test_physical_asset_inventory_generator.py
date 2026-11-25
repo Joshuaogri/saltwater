@@ -203,7 +203,8 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         for row in connectors:
             self.assertIn(row["access_point_candidate_id"], access_ids)
             self.assertEqual(row["geometry_type"], "LineString")
-            self.assertEqual(len(row["geometry_coordinates"]), 2)
+            self.assertGreaterEqual(len(row["geometry_coordinates"]), 2)
+            self.assertNotEqual(row["geometry_coordinates"][0], row["geometry_coordinates"][-1])
             self.assertGreaterEqual(row["length_m"], 0)
             self.assertEqual(row["geometry_status"], "UNREVIEWED_GEOMETRIC_LINE_ONLY")
             self.assertEqual(row["review_status"], "unreviewed_candidate")
