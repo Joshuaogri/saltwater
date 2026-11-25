@@ -9,6 +9,7 @@ DECLARE
   v_weekly integer;
   v_count bigint;
   v_status text;
+  v_development_rows bigint;
 BEGIN
   SELECT count(*) INTO v_datasets FROM sw_property.import_dataset;
   SELECT count(*), coalesce(sum(source_record_count),0), coalesce(sum(loaded_record_count),0)
@@ -36,6 +37,23 @@ BEGIN
   IF v_daily <> 70000 OR v_weekly <> 10000 THEN
     RAISE EXCEPTION 'business operations row counts incorrect: daily %, weekly %', v_daily, v_weekly;
   END IF;
+
+  SELECT mapping_status, loaded_record_count INTO v_status, v_development_rows
+  FROM sw_property.import_dataset WHERE dataset_id='SW-PROPERTY-DEVELOPMENT-CONTROL-V1';
+  IF v_status <> 'partially_mapped' OR v_development_rows <> 34332 THEN
+    RAISE EXCEPTION 'development-control mapping mismatch: status %, loaded %', v_status, v_development_rows;
+  END IF;
+  IF (SELECT count(*) FROM sw_property.lawful_use_certificate) <> 27730
+     OR (SELECT count(*) FROM sw_property.building_inspection_schedule) <> 1474
+     OR (SELECT count(*) FROM sw_property.development_project) <> 282 THEN
+    RAISE EXCEPTION 'development-control typed row counts incorrect';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM sw_property.lawful_use_certificate l
+    LEFT JOIN sw_property.premises p USING (premises_id)
+    LEFT JOIN sw_property.completion_certificate c USING (completion_certificate_id)
+    WHERE p.premises_id IS NULL OR c.completion_certificate_id IS NULL
+  ) THEN RAISE EXCEPTION 'lawful-use certificate cross-reference failure'; END IF;
 
   IF EXISTS (
     SELECT 1 FROM sw_property.business_daily_schedule s
