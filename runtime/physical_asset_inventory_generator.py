@@ -131,6 +131,72 @@ def _footprint(site: Polygon, land_use: str) -> Polygon | None:
                 return footprint
     return None
 
+
+def _campus_building_target_count(site_area_m2: float, land_use: str) -> int:
+    """Deterministic campus scale by site capacity and specialist land use."""
+    eligible = {
+        "residential", "mixed_use", "commercial", "civic", "education",
+        "industrial", "freight_logistics", "port_maritime", "waterfront",
+    }
+    if land_use not in eligible:
+        return 1
+    if site_area_m2 >= 30000:
+        return 4
+    if site_area_m2 >= 18000:
+        return 3
+    if site_area_m2 >= 10000:
+        return 2
+    return 1
+
+
+def _additional_campus_footprints(site: Polygon, land_use: str,
+                                  existing: list[Polygon], count: int) -> list[Polygon]:
+    """Place non-overlapping subsidiary buildings wholly inside one property site."""
+    if count <= 0:
+        return []
+    safe = site.buffer(-2.0)
+    if safe.is_empty:
+        return []
+    target = min(1200.0, max(200.0, site.area * 0.009))
+    base_width = (target * 1.35) ** 0.5
+    base_height = target / base_width
+    minx, miny, maxx, maxy = safe.bounds
+    centres = [
+        (minx + (maxx-minx) * (ix + 0.5) / 15,
+         miny + (maxy-miny) * (iy + 0.5) / 15)
+        for ix in range(15) for iy in range(15)
+    ]
+    # Prefer the parts of the site furthest from existing footprints; stable
+    # coordinate tie-breaks keep campus placement reproducible.
+    centres.sort(key=lambda xy: (
+        -min(poly.distance(Point(xy)) for poly in existing),
+        round(xy[0], 6), round(xy[1], 6),
+    ))
+    sizes = []
+    for scale in (1.0, 0.85, 0.7, 0.55, 0.4):
+        w, h = max(8.0, base_width*scale), max(8.0, base_height*scale)
+        sizes.extend(((w, h), (h, w)))
+    placed = []
+    occupied = list(existing)
+    for cx, cy in centres:
+        found = None
+        for w, h in sizes:
+            candidate = box(cx-w/2, cy-h/2, cx+w/2, cy+h/2)
+            if not safe.covers(candidate):
+                continue
+            if any(candidate.distance(other) < 4.0 or candidate.intersects(other)
+                   for other in occupied):
+                continue
+            found = candidate
+            break
+        if found is not None:
+            placed.append(found)
+            occupied.append(found)
+            if len(placed) >= count:
+                break
+    return placed
+
+
 def build_asset_inventory(source: dict, candidates: dict | None = None,
                           dossiers: dict | None = None) -> dict:
     candidates = candidates or build_candidates(source)
@@ -179,257 +245,265 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             geometries.append({"property": property_code, "building_count": 0})
             continue
 
-        building_code = f"SWB-STR-{slug}-B01"
-        building_name = _name("BUILDING", parcel_id, occupied)
-        storeys = _storey_count(land_use, parcel["source_district_id"], parcel_id)
-        footprint_area = footprint.area
-        gross_floor_area = footprint_area * storeys
-        building = {
-            "candidate_building_id": building_code, "display_name": building_name,
-            "property_id": property_code, "source_candidate_parcel_id": parcel_id,
-            "building_use": use_code, "building_form": ("high_rise" if storeys >= 20 else "mid_rise" if storeys >= 8 else "low_rise"),
-            "height_profile_code": "GLOBAL-ESTATE-VERTICAL-V1",
-            "structure_class": "unknown", "construction_system": "unknown",
-            "foundation_type": "unknown", "roof_form": "unknown",
-            "roof_covering": "unknown", "facade_system": "unknown",
-            "storeys_above": storeys, "storeys_below": 0,
-            "height_m": round(storeys * 3.6, 3), "height_basis": "generated_design_value",
-            "footprint_area_m2": round(footprint_area, 3),
-            "gross_floor_area_m2": round(gross_floor_area, 3),
-            "geometry": _rings(footprint),
-            "geometry_status": "GENERATED_DESIGN_FOOTPRINT_NOT_SURVEYED",
-            "source_ref": f"{SOURCE}:{parcel_id}:building-layout-v1",
-            "actor_ref": ACTOR, "confidence_code": "estimated",
-            "effective_from_tick": 0, "recorded_status": "generated_design_candidate",
-        }
-        buildings.append(building)
-
-        # One separately identified premises per designed floor. These are
-        # spatially subordinate spaces, not operator or occupancy assignments.
-        for floor in range(storeys):
-            premises_code = f"SWPR-{slug}-F{floor:02d}"
-            premises_name = _name("PREMISES", f"{parcel_id}:F{floor:02d}", occupied)
-            floor_area = footprint_area * 0.82
-            premises_type = {
-                "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
-                "civic": "civic_room", "education": "department", "industrial": "industrial_bay",
-                "freight_logistics": "warehouse", "port_maritime": "warehouse",
-                "waterfront": "suite", "utility": "plant_space",
-            }.get(land_use, "other")
-            premises.append({
-                "candidate_premises_id": premises_code, "display_name": premises_name,
-                "building_id": building_code,
-                "floor_order": floor, "floor_code": "G" if floor == 0 else f"L{floor}",
-                "premises_type": premises_type, "primary_function": use_code,
-                "floor_area_m2": round(floor_area, 3),
-                "fitout_standard": "unknown", "occupancy_suitability": "unknown",
-                "security_boundary": "unknown", "accessibility_state": "unknown",
-                "source_ref": f"{SOURCE}:{building_code}:floor:{floor}",
+        campus_target = _campus_building_target_count(site.area, land_use)
+        campus_footprints = [footprint]
+        campus_footprints.extend(_additional_campus_footprints(
+            site, land_use, [footprint], campus_target - 1
+        ))
+        for building_index, campus_footprint in enumerate(campus_footprints, start=1):
+            footprint = campus_footprint
+            building_suffix = f"B{building_index:02d}"
+            building_code = f"SWB-STR-{slug}-{building_suffix}"
+            building_name = _name("BUILDING", f"{parcel_id}:{building_suffix}", occupied)
+            storeys = _storey_count(land_use, parcel["source_district_id"], parcel_id if building_index == 1 else f"{parcel_id}:{building_suffix}")
+            footprint_area = footprint.area
+            gross_floor_area = footprint_area * storeys
+            building = {
+                "candidate_building_id": building_code, "display_name": building_name,
+                "property_id": property_code, "source_candidate_parcel_id": parcel_id,
+                "building_use": use_code, "building_form": ("high_rise" if storeys >= 20 else "mid_rise" if storeys >= 8 else "low_rise"),
+                "height_profile_code": "GLOBAL-ESTATE-VERTICAL-V1",
+                "structure_class": "unknown", "construction_system": "unknown",
+                "foundation_type": "unknown", "roof_form": "unknown",
+                "roof_covering": "unknown", "facade_system": "unknown",
+                "storeys_above": storeys, "storeys_below": 0,
+                "height_m": round(storeys * 3.6, 3), "height_basis": "generated_design_value",
+                "footprint_area_m2": round(footprint_area, 3),
+                "gross_floor_area_m2": round(gross_floor_area, 3),
+                "geometry": _rings(footprint),
+                "geometry_status": "GENERATED_DESIGN_FOOTPRINT_NOT_SURVEYED",
+                "source_ref": f"{SOURCE}:{parcel_id}:{building_suffix}:building-layout-v1",
                 "actor_ref": ACTOR, "confidence_code": "estimated",
-                "effective_from_tick": 0,
-            })
-            count = max(1, min(12, int(floor_area / unit_area)))
-            for unit_no in range(1, count + 1):
-                unit_code = f"SWU-{slug}-F{floor:02d}-U{unit_no:02d}"
-                unit_name = _name("UNIT", f"{parcel_id}:F{floor:02d}:U{unit_no:02d}", occupied)
-                units.append({
-                    "candidate_unit_id": unit_code, "display_name": unit_name,
-                    "premises_id": premises_code,
-                    "unit_class": {
-                        "residential": "dwelling", "mixed_use": "other",
-                        "commercial": "office", "civic": "room", "education": "room",
-                        "industrial": "workshop", "freight_logistics": "storage",
-                        "port_maritime": "storage", "waterfront": "other",
-                        "utility": "plant_space",
-                    }.get(land_use, "other"),
-                    "floor_level": "Ground" if floor == 0 else f"Level {floor}",
-                    "floor_area_m2": round(floor_area / count, 3),
-                    "room_count": 1 if land_use in ("industrial", "freight_logistics", "utility") else 2,
-                    "physical_capacity": None, "capacity_knowledge_state": "not_assessed",
-                    "suitability_state": "unknown", "fitout_state": "unknown",
-                    "accessibility_state": "unknown",
-                    "source_ref": f"{SOURCE}:{premises_code}:unit:{unit_no}",
+                "effective_from_tick": 0, "recorded_status": "generated_design_candidate",
+            }
+            buildings.append(building)
+    
+            # One separately identified premises per designed floor. These are
+            # spatially subordinate spaces, not operator or occupancy assignments.
+            for floor in range(storeys):
+                premises_code = f"SWPR-{slug}-F{floor:02d}" if building_index == 1 else f"SWPR-{slug}-{building_suffix}-F{floor:02d}"
+                premises_name = _name("PREMISES", f"{parcel_id}:{building_suffix}:F{floor:02d}", occupied)
+                floor_area = footprint_area * 0.82
+                premises_type = {
+                    "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
+                    "civic": "civic_room", "education": "department", "industrial": "industrial_bay",
+                    "freight_logistics": "warehouse", "port_maritime": "warehouse",
+                    "waterfront": "suite", "utility": "plant_space",
+                }.get(land_use, "other")
+                premises.append({
+                    "candidate_premises_id": premises_code, "display_name": premises_name,
+                    "building_id": building_code,
+                    "floor_order": floor, "floor_code": "G" if floor == 0 else f"L{floor}",
+                    "premises_type": premises_type, "primary_function": use_code,
+                    "floor_area_m2": round(floor_area, 3),
+                    "fitout_standard": "unknown", "occupancy_suitability": "unknown",
+                    "security_boundary": "unknown", "accessibility_state": "unknown",
+                    "source_ref": f"{SOURCE}:{building_code}:floor:{floor}",
                     "actor_ref": ACTOR, "confidence_code": "estimated",
                     "effective_from_tick": 0,
                 })
-
-        # Two distinct boundary access-location candidates per building. The
-        # points are geometric proposals, not confirmed doors or usable routes.
-        parcel_dossier = dossier_by_id[parcel_id]
-        frontage_candidates = parcel_dossier["access_candidates"]
-        frontage_points = [
-            (row, Point(row["candidate_x_m"], row["candidate_y_m"]))
-            for row in frontage_candidates
-        ]
-        first_access_boundary_point = None
-        for access_no, fraction in ((1, .25), (2, .75)):
-            if access_no == 1 and frontage_points:
-                # A01 selects the nearest boundary/frontage pair.
-                choices = []
-                for frontage_row, frontage_point in frontage_points:
-                    boundary_candidate = nearest_points(footprint.boundary, frontage_point)[0]
-                    gap = boundary_candidate.distance(frontage_point)
-                    choices.append((round(gap, 9), frontage_row["access_candidate_id"],
-                                    boundary_candidate, frontage_point))
-                _, linked_frontage_id, boundary_point, linked_frontage_point = min(
-                    choices, key=lambda item: (item[0], item[1])
-                )
-                first_access_boundary_point = boundary_point
-            elif access_no == 2 and frontage_points and first_access_boundary_point is not None:
-                # A02 searches deterministic samples around the footprint boundary.
-                # Reject any connector that enters the building interior or leaves
-                # the parent property. A minimum perimeter separation keeps A02
-                # distinct from A01 rather than duplicating its location.
-                boundary = footprint.boundary
-                perimeter = boundary.length
-                minimum_separation = max(5.0, perimeter * 0.10)
-                first_measure = boundary.project(first_access_boundary_point)
-                choices = []
-                for sample_no in range(128):
-                    measure = perimeter * sample_no / 128
-                    boundary_candidate = boundary.interpolate(measure)
-                    separation = abs(measure - first_measure)
-                    separation = min(separation, perimeter - separation)
-                    if separation < minimum_separation:
-                        continue
+                count = max(1, min(12, int(floor_area / unit_area)))
+                for unit_no in range(1, count + 1):
+                    unit_code = f"SWU-{slug}-F{floor:02d}-U{unit_no:02d}" if building_index == 1 else f"SWU-{slug}-{building_suffix}-F{floor:02d}-U{unit_no:02d}"
+                    unit_name = _name("UNIT", f"{parcel_id}:{building_suffix}:F{floor:02d}:U{unit_no:02d}", occupied)
+                    units.append({
+                        "candidate_unit_id": unit_code, "display_name": unit_name,
+                        "premises_id": premises_code,
+                        "unit_class": {
+                            "residential": "dwelling", "mixed_use": "other",
+                            "commercial": "office", "civic": "room", "education": "room",
+                            "industrial": "workshop", "freight_logistics": "storage",
+                            "port_maritime": "storage", "waterfront": "other",
+                            "utility": "plant_space",
+                        }.get(land_use, "other"),
+                        "floor_level": "Ground" if floor == 0 else f"Level {floor}",
+                        "floor_area_m2": round(floor_area / count, 3),
+                        "room_count": 1 if land_use in ("industrial", "freight_logistics", "utility") else 2,
+                        "physical_capacity": None, "capacity_knowledge_state": "not_assessed",
+                        "suitability_state": "unknown", "fitout_state": "unknown",
+                        "accessibility_state": "unknown",
+                        "source_ref": f"{SOURCE}:{premises_code}:unit:{unit_no}",
+                        "actor_ref": ACTOR, "confidence_code": "estimated",
+                        "effective_from_tick": 0,
+                    })
+    
+            # Two distinct boundary access-location candidates per building. The
+            # points are geometric proposals, not confirmed doors or usable routes.
+            parcel_dossier = dossier_by_id[parcel_id]
+            frontage_candidates = parcel_dossier["access_candidates"]
+            frontage_points = [
+                (row, Point(row["candidate_x_m"], row["candidate_y_m"]))
+                for row in frontage_candidates
+            ]
+            first_access_boundary_point = None
+            for access_no, fraction in ((1, .25), (2, .75)):
+                if access_no == 1 and frontage_points:
+                    # A01 selects the nearest boundary/frontage pair.
+                    choices = []
                     for frontage_row, frontage_point in frontage_points:
-                        connector = LineString([
-                            (boundary_candidate.x, boundary_candidate.y),
-                            (frontage_point.x, frontage_point.y),
-                        ])
-                        if not site.covers(connector):
-                            continue
-                        if footprint.intersection(connector).length > 0.01:
-                            continue
+                        boundary_candidate = nearest_points(footprint.boundary, frontage_point)[0]
                         gap = boundary_candidate.distance(frontage_point)
-                        choices.append((
-                            round(gap, 9), frontage_row["access_candidate_id"],
-                            sample_no, boundary_candidate, frontage_point,
-                        ))
-                if choices:
-                    _, linked_frontage_id, _, boundary_point, linked_frontage_point = min(
-                        choices, key=lambda item: (item[0], item[1], item[2])
+                        choices.append((round(gap, 9), frontage_row["access_candidate_id"],
+                                        boundary_candidate, frontage_point))
+                    _, linked_frontage_id, boundary_point, linked_frontage_point = min(
+                        choices, key=lambda item: (item[0], item[1])
                     )
+                    first_access_boundary_point = boundary_point
+                elif access_no == 2 and frontage_points and first_access_boundary_point is not None:
+                    # A02 searches deterministic samples around the footprint boundary.
+                    # Reject any connector that enters the building interior or leaves
+                    # the parent property. A minimum perimeter separation keeps A02
+                    # distinct from A01 rather than duplicating its location.
+                    boundary = footprint.boundary
+                    perimeter = boundary.length
+                    minimum_separation = max(5.0, perimeter * 0.10)
+                    first_measure = boundary.project(first_access_boundary_point)
+                    choices = []
+                    for sample_no in range(128):
+                        measure = perimeter * sample_no / 128
+                        boundary_candidate = boundary.interpolate(measure)
+                        separation = abs(measure - first_measure)
+                        separation = min(separation, perimeter - separation)
+                        if separation < minimum_separation:
+                            continue
+                        for frontage_row, frontage_point in frontage_points:
+                            connector = LineString([
+                                (boundary_candidate.x, boundary_candidate.y),
+                                (frontage_point.x, frontage_point.y),
+                            ])
+                            if not site.covers(connector):
+                                continue
+                            if footprint.intersection(connector).length > 0.01:
+                                continue
+                            gap = boundary_candidate.distance(frontage_point)
+                            choices.append((
+                                round(gap, 9), frontage_row["access_candidate_id"],
+                                sample_no, boundary_candidate, frontage_point,
+                            ))
+                    if choices:
+                        _, linked_frontage_id, _, boundary_point, linked_frontage_point = min(
+                            choices, key=lambda item: (item[0], item[1], item[2])
+                        )
+                    else:
+                        # Keep an explicit blocked candidate rather than inventing
+                        # a feasible access route when no sampled line is clear.
+                        boundary_point = boundary.interpolate(perimeter * fraction)
+                        nearest_row, linked_frontage_point = min(
+                            frontage_points,
+                            key=lambda item: (
+                                round(boundary_point.distance(item[1]), 9),
+                                item[0]["access_candidate_id"],
+                            ),
+                        )
+                        linked_frontage_id = nearest_row["access_candidate_id"]
                 else:
-                    # Keep an explicit blocked candidate rather than inventing
-                    # a feasible access route when no sampled line is clear.
-                    boundary_point = boundary.interpolate(perimeter * fraction)
-                    nearest_row, linked_frontage_point = min(
-                        frontage_points,
-                        key=lambda item: (
-                            round(boundary_point.distance(item[1]), 9),
-                            item[0]["access_candidate_id"],
-                        ),
+                    boundary_point = footprint.boundary.interpolate(
+                        footprint.boundary.length * fraction
                     )
-                    linked_frontage_id = nearest_row["access_candidate_id"]
-            else:
-                boundary_point = footprint.boundary.interpolate(
-                    footprint.boundary.length * fraction
+                    if frontage_points:
+                        nearest_row, linked_frontage_point = min(
+                            frontage_points,
+                            key=lambda item: (
+                                round(boundary_point.distance(item[1]), 9),
+                                item[0]["access_candidate_id"],
+                            ),
+                        )
+                        linked_frontage_id = nearest_row["access_candidate_id"]
+                    else:
+                        linked_frontage_id = None
+                        linked_frontage_point = None
+    
+                linked_candidate = next(
+                    (row for row in frontage_candidates
+                     if row["access_candidate_id"] == linked_frontage_id), None
                 )
-                if frontage_points:
-                    nearest_row, linked_frontage_point = min(
-                        frontage_points,
-                        key=lambda item: (
-                            round(boundary_point.distance(item[1]), 9),
-                            item[0]["access_candidate_id"],
-                        ),
-                    )
-                    linked_frontage_id = nearest_row["access_candidate_id"]
-                else:
-                    linked_frontage_id = None
-                    linked_frontage_point = None
-
-            linked_candidate = next(
-                (row for row in frontage_candidates
-                 if row["access_candidate_id"] == linked_frontage_id), None
-            )
-            link_distance = (boundary_point.distance(linked_frontage_point)
-                             if linked_frontage_point is not None else None)
-            proximity_link = bool(
-                linked_candidate
-                and linked_candidate.get("candidate_type") == "road_reserve_proximity_connection"
-            )
-            access_code = f"SWA-{slug}-B01-A{access_no:02d}"
-            access_name = _name("ACCESS_POINT", f"{parcel_id}:A{access_no:02d}", occupied)
-            access_points.append({
-                "candidate_access_point_id": access_code, "display_name": access_name,
-                "building_id": building_code,
-                "access_type": "unknown", "access_modes": [],
-                "directionality": "unknown", "control_type": "unknown",
-                "availability_state": "not_assessed", "accessibility_state": "not_assessed",
-                "emergency_egress_state": "not_assessed",
-                "loading_capability_state": "not_assessed",
-                "point_m": [round(boundary_point.x, 6), round(boundary_point.y, 6)],
-                "point_status": "UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE",
-                "road_link_candidate_id": linked_frontage_id,
-                "road_link_candidate_type": linked_candidate.get("candidate_type") if linked_candidate else None,
-                "road_link_road_id": linked_candidate.get("road_id") if linked_candidate else None,
-                "road_link_segment_ids": linked_candidate.get("road_segment_ids", []) if linked_candidate else [],
-                "road_link_contact_type": linked_candidate.get("contact_type") if linked_candidate else None,
-                "road_link_candidate_distance_m": round(link_distance, 3) if link_distance is not None else None,
-                "road_link_basis": (
-                    "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
-                    else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE" if linked_frontage_id
-                    else "NO_FRONTAGE_CANDIDATE"
-                ),
-                "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE" if linked_frontage_id else "UNRESOLVED_NO_FRONTAGE",
-                "source_ref": f"{SOURCE}:{building_code}:access:{access_no}",
-                "actor_ref": ACTOR, "confidence_code": "estimated",
-                "effective_from_tick": 0,
-            })
-
-            # Persist the geometric connector as its own typed candidate. Its
-            # geometry is not evidence of a constructed or legally usable route.
-            if linked_candidate is not None and linked_frontage_point is not None:
-                connector_type = (
-                    "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
-                    else "BUILDING_TO_FRONTAGE_CANDIDATE"
+                link_distance = (boundary_point.distance(linked_frontage_point)
+                                 if linked_frontage_point is not None else None)
+                proximity_link = bool(
+                    linked_candidate
+                    and linked_candidate.get("candidate_type") == "road_reserve_proximity_connection"
                 )
-                connector_id = f"SWAC-{slug}-B01-A{access_no:02d}-C01"
-                connector_geometry = [
-                    [round(boundary_point.x, 6), round(boundary_point.y, 6)],
-                    [round(linked_frontage_point.x, 6), round(linked_frontage_point.y, 6)],
-                ]
-                access_connectors.append({
-                    "candidate_connector_id": connector_id,
-                    "access_point_candidate_id": access_code,
-                    "road_access_candidate_id": linked_frontage_id,
-                    "frontage_candidate_id": linked_candidate.get("frontage_candidate_id"),
-                    "road_connection_candidate_id": linked_candidate.get("road_connection_candidate_id"),
-                    "road_id": linked_candidate.get("road_id"),
-                    "road_segment_ids": linked_candidate.get("road_segment_ids", []),
-                    "connector_type": connector_type,
-                    "contact_type": (
-                        linked_candidate.get("contact_type") if proximity_link
-                        else "FRONTAGE_CANDIDATE"
-                    ),
-                    "length_m": round(link_distance, 3),
-                    "coordinate_reference": CRS,
-                    "geometry_type": "LineString",
-                    "geometry_coordinates": connector_geometry,
-                    "geometry_status": "UNREVIEWED_GEOMETRIC_LINE_ONLY",
-                    "review_status": "unreviewed_candidate",
-                    "constructed_state": "unknown",
-                    "surface_code": "unknown",
-                    "slope_state": "not_assessed",
-                    "barrier_state": "not_assessed",
-                    "pedestrian_suitability": "not_assessed",
-                    "vehicle_suitability": "not_assessed",
-                    "accessibility_state": "not_assessed",
-                    "legal_access_state": "not_assessed",
-                    "public_access_state": "not_assessed",
+                access_code = f"SWA-{slug}-{building_suffix}-A{access_no:02d}"
+                access_name = _name("ACCESS_POINT", f"{parcel_id}:A{access_no:02d}", occupied)
+                access_points.append({
+                    "candidate_access_point_id": access_code, "display_name": access_name,
+                    "building_id": building_code,
+                    "access_type": "unknown", "access_modes": [],
+                    "directionality": "unknown", "control_type": "unknown",
+                    "availability_state": "not_assessed", "accessibility_state": "not_assessed",
                     "emergency_egress_state": "not_assessed",
-                    "source_ref": f"{SOURCE}:{building_code}:connector:{access_no}:v1",
-                    "actor_ref": ACTOR,
-                    "confidence_code": "estimated",
+                    "loading_capability_state": "not_assessed",
+                    "point_m": [round(boundary_point.x, 6), round(boundary_point.y, 6)],
+                    "point_status": "UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE",
+                    "road_link_candidate_id": linked_frontage_id,
+                    "road_link_candidate_type": linked_candidate.get("candidate_type") if linked_candidate else None,
+                    "road_link_road_id": linked_candidate.get("road_id") if linked_candidate else None,
+                    "road_link_segment_ids": linked_candidate.get("road_segment_ids", []) if linked_candidate else [],
+                    "road_link_contact_type": linked_candidate.get("contact_type") if linked_candidate else None,
+                    "road_link_candidate_distance_m": round(link_distance, 3) if link_distance is not None else None,
+                    "road_link_basis": (
+                        "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
+                        else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE" if linked_frontage_id
+                        else "NO_FRONTAGE_CANDIDATE"
+                    ),
+                    "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE" if linked_frontage_id else "UNRESOLVED_NO_FRONTAGE",
+                    "source_ref": f"{SOURCE}:{building_code}:access:{access_no}",
+                    "actor_ref": ACTOR, "confidence_code": "estimated",
                     "effective_from_tick": 0,
-                    "reason": "Straight-line geometry derived from generated building-boundary and parcel road-connection candidates; construction, legal access, surface, gradient and route usability are not assessed.",
                 })
-        geometries.append({
-            "property": property_code, "building": building_code,
-            "footprint_area_m2": round(footprint_area, 3),
-            "footprint_inside_property": bool(site.covers(footprint)),
-        })
+    
+                # Persist the geometric connector as its own typed candidate. Its
+                # geometry is not evidence of a constructed or legally usable route.
+                if linked_candidate is not None and linked_frontage_point is not None:
+                    connector_type = (
+                        "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity_link
+                        else "BUILDING_TO_FRONTAGE_CANDIDATE"
+                    )
+                    connector_id = f"SWAC-{slug}-{building_suffix}-A{access_no:02d}-C01"
+                    connector_geometry = [
+                        [round(boundary_point.x, 6), round(boundary_point.y, 6)],
+                        [round(linked_frontage_point.x, 6), round(linked_frontage_point.y, 6)],
+                    ]
+                    access_connectors.append({
+                        "candidate_connector_id": connector_id,
+                        "access_point_candidate_id": access_code,
+                        "road_access_candidate_id": linked_frontage_id,
+                        "frontage_candidate_id": linked_candidate.get("frontage_candidate_id"),
+                        "road_connection_candidate_id": linked_candidate.get("road_connection_candidate_id"),
+                        "road_id": linked_candidate.get("road_id"),
+                        "road_segment_ids": linked_candidate.get("road_segment_ids", []),
+                        "connector_type": connector_type,
+                        "contact_type": (
+                            linked_candidate.get("contact_type") if proximity_link
+                            else "FRONTAGE_CANDIDATE"
+                        ),
+                        "length_m": round(link_distance, 3),
+                        "coordinate_reference": CRS,
+                        "geometry_type": "LineString",
+                        "geometry_coordinates": connector_geometry,
+                        "geometry_status": "UNREVIEWED_GEOMETRIC_LINE_ONLY",
+                        "review_status": "unreviewed_candidate",
+                        "constructed_state": "unknown",
+                        "surface_code": "unknown",
+                        "slope_state": "not_assessed",
+                        "barrier_state": "not_assessed",
+                        "pedestrian_suitability": "not_assessed",
+                        "vehicle_suitability": "not_assessed",
+                        "accessibility_state": "not_assessed",
+                        "legal_access_state": "not_assessed",
+                        "public_access_state": "not_assessed",
+                        "emergency_egress_state": "not_assessed",
+                        "source_ref": f"{SOURCE}:{building_code}:connector:{access_no}:v1",
+                        "actor_ref": ACTOR,
+                        "confidence_code": "estimated",
+                        "effective_from_tick": 0,
+                        "reason": "Straight-line geometry derived from generated building-boundary and parcel road-connection candidates; construction, legal access, surface, gradient and route usability are not assessed.",
+                    })
+            geometries.append({
+                "property": property_code, "building": building_code,
+                "footprint_area_m2": round(footprint_area, 3),
+                "footprint_inside_property": bool(site.covers(footprint)),
+            })
 
     # Full BP04-02 profile and typed child-record layer. Design-derived values
     # are explicitly labelled; unavailable physical facts are not fabricated.
