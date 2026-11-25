@@ -243,7 +243,7 @@ def build_property_world(source: dict) -> dict:
         pid = building["property_id"]
         slug = _slug(bid)
         no = int(a["candidate_access_point_id"].split("-A")[-1])
-        prox = "PROXIMITY" in (a.get("road_link_candidate_type") or "")
+        prox = "PROXIMITY" in (a.get("road_link_candidate_type") or "").upper()
         access_type = "primary_entrance" if no == 1 else ("service_entrance" if building["building_use"] in ("industrial","warehouse","port_maritime") else "secondary_exit")
         if no == 2 and access_type == "secondary_exit":
             access_type = "emergency_exit"
@@ -275,7 +275,7 @@ def build_property_world(source: dict) -> dict:
             coords = connector["geometry_coordinates"]
             path_type = "shared_access_spur" if prox else ("service_drive" if "vehicle" in access["access_modes"] else "paved_pedestrian_path")
             route_rows.append({
-                "route_id": f"SWRTE-{_slug(access_id)}",
+                "route_id": f"SWRTE-{"".join(ch for ch in access_id.upper() if ch.isalnum())}",
                 "access_point_id": access_id, "property_id": pid,
                 "building_id": bid, "road_id": a.get("road_link_road_id"),
                 "road_segment_ids": a.get("road_link_segment_ids", []),
