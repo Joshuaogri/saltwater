@@ -98,7 +98,7 @@ def _rows(document: dict, collection_name: str) -> Iterable[dict]:
 
 
 class BP04Lookup:
-    """Build a read-only process-local index from the three core BP04 datasets.
+    """Build a read-only process-local index from the two core BP04 datasets.
 
     Construction reads each archive once, verifies its SHA-256 through the
     archive reader, and retains only identity/navigation fields. Recreate the
