@@ -19,6 +19,8 @@ on:
       - "tests/pkg001/test_bp04_property_stack_importer.py"
       - "runtime/bp04_archive_reader.py"
       - "tests/pkg001/test_bp04_archive_reader.py"
+      - "runtime/bp04_lookup.py"
+      - "tests/pkg001/test_bp04_lookup.py"
       - "tests/pkg001/bp04_archive_only_acceptance.sql"
       - "tests/pkg001/bp04_property_import_acceptance.sql"
       - ".github/workflows/bp04-property-schema-disposable.yml"
@@ -80,7 +82,7 @@ jobs:
       - name: Apply foundation and BP04 production migrations through the production migration runner
         run: python scripts/migrate.py --apply
       - name: Verify source collection identity and archive reader
-        run: python -m unittest tests.pkg001.test_bp04_property_stack_importer tests.pkg001.test_bp04_archive_reader -v
+        run: python -m unittest tests.pkg001.test_bp04_property_stack_importer tests.pkg001.test_bp04_archive_reader tests.pkg001.test_bp04_lookup -v
       - name: Verify explicit production importer guard
         run: |
           python runtime/bp04_property_stack_importer.py --help
