@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 41 THEN
-    RAISE EXCEPTION 'expected 41 BP04 phase-1+2+3 tables, found %', v_count;
+  IF v_count <> 53 THEN
+    RAISE EXCEPTION 'expected 53 BP04 phase-1+2+3+4 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -53,6 +53,26 @@ BEGIN
     SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
       AND conname='maintenance_work_order_work_request_id_fkey' AND condeferrable
   ) THEN RAISE EXCEPTION 'maintenance work-order lineage foreign key missing'; END IF;
+
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='security_door'
+      AND column_name='access_point_id' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='access_zone'
+      AND column_name='parent_zone_id' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='permission_zone_grant'
+      AND column_name='grant_id' AND data_type='text'
+  ) THEN RAISE EXCEPTION 'typed security door, zone or permission grant fields missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
+      AND conname='physical_key_check' AND convalidated
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE connamespace='sw_property'::regnamespace
+      AND conname='access_group_check' AND convalidated
+  ) THEN RAISE EXCEPTION 'person credential exclusion checks missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
