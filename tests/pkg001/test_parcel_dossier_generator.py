@@ -47,6 +47,8 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
                 self.assertGreater(len(frontage["road_segment_ids"]), 0)
                 self.assertGreater(frontage["contact_component_count"], 0)
             for access in row["access_candidates"]:
+                self.assertGreater(len(access["road_segment_ids"]), 0)
+                self.assertTrue(all(segment_id for segment_id in access["road_segment_ids"]))
                 if access["candidate_type"] == "road_reserve_proximity_connection":
                     self.assertIsNone(access["frontage_candidate_id"])
                     self.assertTrue(access["road_connection_candidate_id"])

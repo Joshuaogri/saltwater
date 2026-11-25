@@ -127,6 +127,7 @@ def build_parcel_dossiers(source: dict, candidate_manifest: dict | None = None) 
                 "access_candidate_id": f"PAC-{parcel['candidate_parcel_id']}-{road_id}",
                 "frontage_candidate_id": frontage_id,
                 "road_id": road_id,
+                "road_segment_ids": contributing_segments,
                 "candidate_x_m": round(point.x, 6),
                 "candidate_y_m": round(point.y, 6),
                 "candidate_type": "unclassified_access_location",

@@ -11,6 +11,7 @@ on:
       - "runtime/road_reserve_topology.py"
       - "data/geography/saltwater-geography-v1.json"
       - "tests/pkg001/test_physical_asset_inventory_generator.py"
+      - "tests/pkg001/test_parcel_dossier_generator.py"
       - ".github/workflows/bp04-03-stage-e-assets.yml"
   workflow_dispatch:
 

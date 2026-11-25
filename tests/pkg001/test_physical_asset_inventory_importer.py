@@ -92,6 +92,15 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "unknown|not_assessed|Unassessed"):
                 validate_manifests(tampered, self.candidates, self.dossiers)
 
+    def test_connector_candidate_must_retain_road_segment_lineage(self):
+        tampered = copy.deepcopy(self.inventory)
+        tampered["access_connectors"][0]["road_segment_ids"] = []
+        tampered["manifest_sha256"] = __import__(
+            "runtime.physical_asset_inventory_importer", fromlist=["_sha"]
+        )._sha(tampered)
+        with self.assertRaisesRegex(ValueError, "road-segment lineage"):
+            validate_manifests(tampered, self.candidates, self.dossiers)
+
     def test_connector_candidate_must_reference_existing_access_point(self):
         tampered = copy.deepcopy(self.inventory)
         tampered["access_connectors"][0]["access_point_candidate_id"] = "MISSING"

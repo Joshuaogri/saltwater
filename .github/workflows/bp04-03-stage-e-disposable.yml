@@ -14,6 +14,7 @@ on:
       - "runtime/physical_asset_inventory_generator.py"
       - "runtime/physical_asset_inventory_importer.py"
       - "tests/pkg001/test_physical_asset_inventory_importer.py"
+      - "tests/pkg001/test_parcel_dossier_generator.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/parcel_dossier_generator.py"
       - "runtime/parcel_candidate_importer.py"
@@ -67,6 +68,7 @@ jobs:
         run: |
           python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_generator.py" -v
           python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_importer.py" -v
+          python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_generator.py" -v
           python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_importer.py" -v
       - name: Apply approved foundations to disposable PostgreSQL 16
         run: |
