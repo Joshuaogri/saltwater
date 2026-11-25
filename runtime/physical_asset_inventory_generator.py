@@ -11,7 +11,7 @@ import hashlib
 import json
 import heapq
 from pathlib import Path
-from shapely.geometry import LineString, Point, Polygon, box
+from shapely.geometry import LineString, Point, Polygon, box, shape
 from shapely.ops import nearest_points, unary_union
 from shapely.strtree import STRtree
 
