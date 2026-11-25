@@ -102,6 +102,75 @@ CREATE TRIGGER career_episode_opening_event
 AFTER INSERT ON sw_police.career_episode
 FOR EACH ROW EXECUTE FUNCTION sw_police.record_career_episode_opening();
 
+CREATE FUNCTION sw_police.record_career_rank_assignment()
+RETURNS trigger LANGUAGE plpgsql AS $bp07$
+DECLARE
+  v_career sw_police.career_episode%ROWTYPE;
+BEGIN
+  SELECT * INTO v_career FROM sw_police.career_episode
+  WHERE career_id=NEW.career_id FOR SHARE;
+  IF NOT FOUND OR v_career.personnel_id<>NEW.personnel_id OR v_career.career_status<>'active' THEN
+    RAISE EXCEPTION 'rank assignment requires the matching active career episode';
+  END IF;
+  INSERT INTO sw_police.career_event(
+    event_id,career_id,personnel_id,event_kind,resulting_stage,resulting_status,
+    effective_tick,actor_ref,authority_ref,source_ref,reason
+  ) VALUES (
+    NEW.source_event_id,NEW.career_id,NEW.personnel_id,'rank_assigned',
+    v_career.career_stage,v_career.career_status,NEW.effective_from_tick,
+    coalesce(NEW.authorised_by_principal_id::text,'system:career-service'),
+    NEW.decision_ref,'BP07:rank-assignment:'||NEW.rank_assignment_id::text,
+    'Substantive or acting rank assignment recorded'
+  );
+  RETURN NEW;
+END
+$bp07$;
+CREATE TRIGGER career_rank_assignment_event
+AFTER INSERT ON sw_police.career_rank_assignment
+FOR EACH ROW EXECUTE FUNCTION sw_police.record_career_rank_assignment();
+
+CREATE FUNCTION sw_police.record_career_post_appointment()
+RETURNS trigger LANGUAGE plpgsql AS $bp07$
+DECLARE
+  v_career sw_police.career_episode%ROWTYPE;
+  v_post sw_police.authorised_post%ROWTYPE;
+BEGIN
+  SELECT * INTO v_career FROM sw_police.career_episode
+  WHERE career_id=NEW.career_id FOR SHARE;
+  IF NOT FOUND OR v_career.personnel_id<>NEW.personnel_id OR v_career.career_status<>'active' THEN
+    RAISE EXCEPTION 'post appointment requires the matching active career episode';
+  END IF;
+  SELECT * INTO v_post FROM sw_police.authorised_post
+  WHERE post_id=NEW.post_id FOR UPDATE;
+  IF NOT FOUND OR v_post.position_id<>NEW.position_id OR v_post.post_status<>'vacant' THEN
+    RAISE EXCEPTION 'post appointment requires a matching vacant authorised post';
+  END IF;
+  UPDATE sw_police.authorised_post SET post_status='filled' WHERE post_id=NEW.post_id;
+  INSERT INTO sw_police.authorised_post_event(
+    post_id,event_code,prior_status,new_status,effective_tick,
+    source_ref,actor_ref,reason
+  ) VALUES (
+    NEW.post_id,'filled','vacant','filled',NEW.effective_from_tick,
+    'BP07:post-appointment:'||NEW.position_appointment_id::text,
+    'domain:career-service','Authorised post occupied by recorded career appointment'
+  );
+  INSERT INTO sw_police.career_event(
+    event_id,career_id,personnel_id,event_kind,resulting_stage,resulting_status,
+    effective_tick,actor_ref,authority_ref,source_ref,reason
+  ) VALUES (
+    NEW.source_event_id,NEW.career_id,NEW.personnel_id,'post_appointed',
+    v_career.career_stage,v_career.career_status,NEW.effective_from_tick,
+    'domain:career-service',NEW.authority_ref,
+    'BP07:post-appointment:'||NEW.position_appointment_id::text,
+    'Authorised post appointment recorded'
+  );
+  RETURN NEW;
+END
+$bp07$;
+CREATE TRIGGER career_post_appointment_event
+AFTER INSERT ON sw_police.career_post_appointment
+FOR EACH ROW EXECUTE FUNCTION sw_police.record_career_post_appointment();
+
 CREATE VIEW sw_police.career_current_rank AS
 SELECT DISTINCT ON (career_id) career_id,personnel_id,rank_code,assignment_type,
        effective_from_tick,source_event_id,decision_ref
