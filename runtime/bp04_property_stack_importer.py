@@ -202,9 +202,9 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
             fk_violations = conn.execute("""
                 SELECT count(*) FROM (
                   SELECT u.unit_id FROM sw_property.unit_space u
-                  LEFT JOIN sw_property.premises p USING(premises_id)
-                  LEFT JOIN sw_property.building b USING(building_id)
-                  LEFT JOIN sw_property.property_site s USING(property_id)
+                  LEFT JOIN sw_property.premises p ON p.premises_id=u.premises_id
+                  LEFT JOIN sw_property.building b ON b.building_id=u.building_id
+                  LEFT JOIN sw_property.property_site s ON s.property_id=u.property_id
                   WHERE p.premises_id IS NULL OR s.property_id IS NULL OR (u.building_id IS NOT NULL AND b.building_id IS NULL)
                   UNION ALL
                   SELECT e.establishment_id FROM sw_property.establishment e
