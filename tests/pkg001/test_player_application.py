@@ -45,7 +45,7 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         recruitment_type.assert_called_once_with(connect)
         sessions_type.assert_called_once_with(connect)
         activation_type.assert_called_once_with(connect, sessions)
-        commands_type.assert_called_once_with(kernel, profile, recruitment)
+        commands_type.assert_called_once_with(kernel, profile, recruitment, None)
         self.assertIs(result.kernel, kernel)
         self.assertIs(result.recruitment, recruitment)
         self.assertIs(result.sessions, sessions)
@@ -85,6 +85,28 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
             expected_principal_id=principal_id,
         )
         commands.execute.assert_called_once_with("status")
+
+
+    def test_gateway_authorizes_property_lookup_before_player_interface_dispatch(self):
+        principal_id = uuid4()
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        commands.execute.return_value = CommandResult(True, "Address results")
+        authorization = Mock(spec=AuthorizationService)
+        authorization.decide.return_value = SimpleNamespace(allowed=True, principal_id=principal_id)
+        application = PostgresPlayerApplication(
+            kernel=object(), recruitment=object(), sessions=object(),
+            activation=object(), commands=commands,
+        )
+        gateway = bind_authorized_player_commands(application, authorization, principal_id)
+        result = gateway.execute("opaque-token", "find address Harbour Avenue")
+        self.assertTrue(result.ok)
+        authorization.decide.assert_called_once_with(
+            "opaque-token", action="player.command.find",
+            resource=f"player:{commands.profile.player_id}", purpose="gameplay",
+            expected_principal_id=principal_id,
+        )
+        commands.execute.assert_called_once_with("find address Harbour Avenue")
 
     def test_gateway_denies_invalid_session_or_wrong_principal_without_dispatch(self):
         principal_id = uuid4()
