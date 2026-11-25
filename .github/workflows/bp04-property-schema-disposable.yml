@@ -14,6 +14,7 @@ on:
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/test_bp04_property_stack_importer.py"
+      - "tests/pkg001/bp04_property_import_acceptance.sql"
       - ".github/workflows/bp04-property-schema-disposable.yml"
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json.gz"
@@ -85,6 +86,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Archive all 14 compressed sources; import mapped property, business, operating schedules, utility, maintenance, security, valuation and tax collections
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
+      - name: Verify source collection ledger and business schedule import
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
       - name: Verify second import is idempotent and storage-stable
         run: |
           BEFORE="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database());")"
