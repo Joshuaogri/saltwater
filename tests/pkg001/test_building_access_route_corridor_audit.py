@@ -5,7 +5,8 @@ from pathlib import Path
 
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.parcel_dossier_generator import build_parcel_dossiers
-from runtime.physical_asset_inventory_generator import build_asset_inventory
+from runtime.physical_asset_inventory_generator import build_asset_inventory, _visibility_path
+from shapely.geometry import Point, box
 from runtime.building_access_route_corridor_audit import build_route_corridor_candidates
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -38,6 +39,16 @@ class BuildingAccessRouteCorridorTests(unittest.TestCase):
         self.assertEqual(summary["mapped_water_intersection_count"], 0)
         self.assertEqual(summary["origin_building_interior_crossing_count"], 0)
         self.assertEqual(summary["road_reserve_overlap_count"], 0)
+
+    def test_visibility_path_routes_around_buffered_building_obstacle(self):
+        parcel = box(0, 0, 10, 10)
+        obstacle = box(4, 4, 6, 6)
+        path = _visibility_path(Point(2, 5), Point(8, 5), parcel, [obstacle])
+        self.assertIsNotNone(path)
+        self.assertGreater(len(path.coords), 2)
+        self.assertTrue(parcel.covers(path))
+        buffered_interior = obstacle.buffer(0.25).buffer(-1e-5)
+        self.assertLessEqual(path.intersection(buffered_interior).length, 1e-6)
 
     def test_width_gradient_and_surface_remain_unknown(self):
         for row in self.report["route_corridors"]:
