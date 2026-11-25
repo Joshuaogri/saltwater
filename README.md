@@ -67,6 +67,10 @@ Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22
 - BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP-04 business distribution remains a separate open design item.
 - The approved BP38-01 migration writes are complete; no operational geography import or simulation seed data has been authorised or performed.
 
+## BP04-03 — citywide terrain/obstacle survey coverage grid
+
+SW-TERRAIN-SURVEY-GRID-001 divides the fictional 12 km × 9 km city planning extent into 432 500 m coverage cells. Each cell carries district/neighbourhood lineage, generated property/building candidate references, road/route candidate coverage, terrain/water intersections and explicit evidence gaps for elevation and physical obstacles. Cells are coverage-planning units, not parcels or physical assets. No terrain or obstacle facts, survey priority, passability or access are inferred. Workflow: .github/workflows/bp04-03-terrain-obstacle-survey-coverage-grid.yml.
+
 ## BP04-03 — detailed terrain and physical-obstacle register
 
 The geometry-derived SW-TERRAIN-OBSTACLE-DETAIL-001 register (runtime/terrain_obstacle_detail_register.py) preserves source terrain polygons and adds planar area/perimeter, bounding boxes, centroids, boundary rings/edges, edge lengths/bearings, district/neighbourhood overlays and lineage-linked route-centreline intersections. Obstacle classes remain separately inventoried; classes without supplied source records are marked as coverage gaps, never asserted absent. No elevation, gradient, material, condition, passability, legal access or egress is inferred. Workflow: .github/workflows/bp04-03-terrain-obstacle-detail-register.yml. Generated artifact is read-only and is not an operational terrain/obstacle layer.

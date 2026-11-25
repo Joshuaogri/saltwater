@@ -1,0 +1,39 @@
+name: BP04-03 Terrain and Physical Obstacle Survey Coverage Grid
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/terrain_obstacle_survey_coverage_grid.py"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/building_access_route_corridor_audit.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "tests/pkg001/test_terrain_obstacle_survey_coverage_grid.py"
+      - ".github/workflows/bp04-03-terrain-obstacle-survey-coverage-grid.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  survey-coverage-grid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run survey-grid regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_terrain_obstacle_survey_coverage_grid.py" -v
+      - name: Generate read-only citywide coverage grid
+        run: python -m runtime.terrain_obstacle_survey_coverage_grid
+      - name: Upload coverage-grid manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp04-03-terrain-obstacle-survey-coverage-grid
+          path: bp04-03-terrain-obstacle-survey-coverage-grid.json
+          if-no-files-found: error
+          retention-days: 14
