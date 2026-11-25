@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from runtime.business_registry_generator import build_business_registry
+from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
 
 GENERATOR = "SW-BUSINESS-OPERATIONS-GENERATOR-001"
@@ -43,8 +44,8 @@ def _schedule(profile: str, sector: str, day: int, key: str) -> dict:
     end = max(start + 6, min(23, end + shift))
     return {"open": True, "opens_at": _time(start), "closes_at": _time(end), "service_window": "standard", "shift_pattern": "single_or_split_day"}
 
-def build_business_operations(source: dict) -> dict:
-    registry = build_business_registry(source)
+def build_business_operations(source: dict, registry: dict | None = None) -> dict:
+    registry = registry or build_business_registry(source)
     establishments = {x["business_id"]: x for x in registry["establishments"]}
     schedules = []
     for business in registry["businesses"]:
@@ -122,7 +123,9 @@ def build_business_operations(source: dict) -> dict:
 def main():
     root = Path(__file__).resolve().parents[1]
     source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-    result = build_business_operations(source)
+    registry_document = json.loads((root / "data/business/saltwater-business-registry-v1.json").read_text(encoding="utf-8"))
+    registry = _expand_columnar(registry_document)
+    result = build_business_operations(source, registry=registry)
     output = root / "data/business/saltwater-business-operations-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     document = to_columnar_document(result)
