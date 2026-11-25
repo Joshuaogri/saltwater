@@ -18,7 +18,7 @@ from runtime.player_host_adapter import (
 )
 
 _ALLOWED_KEYS = frozenset({"command_text", "request_reference"})
-_MAX_COMMAND_LENGTH = 32
+_MAX_COMMAND_LENGTH = 256
 _MAX_REQUEST_REFERENCE = 128
 
 
