@@ -13,7 +13,14 @@ def _n(key, lo, hi):
     return lo + int.from_bytes(d[:4],"big") % (hi-lo+1)
 
 def _pick(values,key): return values[_n(key,0,len(values)-1)]
-def _slug(v): return "".join(c for c in str(v).upper() if c.isalnum())[:24]
+def _slug(v):
+    raw = "".join(c for c in str(v).upper() if c.isalnum())
+    if len(raw) <= 24:
+        return raw
+    # Preserve a readable prefix while making IDs collision-resistant when
+    # source identifiers share the same first 24 characters.
+    digest = hashlib.sha256(str(v).encode("utf-8")).hexdigest()[:12].upper()
+    return raw[:12] + "-" + digest
 
 def build_property_maintenance(world, tenure, services):
     props={x["property_id"]:x for x in world["properties"]}
