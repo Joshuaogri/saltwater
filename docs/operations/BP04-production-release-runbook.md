@@ -75,3 +75,13 @@ The manual-only workflow `.github/workflows/neon-production-migrations.yml` now 
 ## Current production state
 
 Read-only Neon measurement on 2026-11-25: database size 9,306,112 bytes (9.306 MB); five user tables; no `sw_property` tables. No BP04 production schema or data has been applied. Estimated post-import database size is approximately 628.57 MB (599.45 MiB) using the PostgreSQL 18 benchmark. Against the 9,306,112-byte live baseline, the estimated incremental database growth is approximately 619,263,679 bytes (619.26 MB / 590.58 MiB), subject to production measurement.
+
+## Superseding compact-storage release procedure (2026-11-25)
+
+The typed-row import procedure and 628 MB PostgreSQL 18 benchmark above are historical. They describe the previous representation and must not be used to estimate or execute the selected production release. The production upload was subsequently rolled back to the preserved Neon snapshot. The live production branch is now `br-still-cloud-bdvaw8u4` (`production`), and the database is back at 9,306,112 bytes with five user tables, migration versions 1–2, and no `sw_property` schema.
+
+The selected BP04 release mode is now `--archive-only`. It stores the original 14 gzip datasets once and their provenance/count ledgers, without inserting any of the 1,422,202 mapped rows into the 92 domain tables. Runtime access uses `runtime/bp04_archive_reader.py`, which fetches one archived dataset, verifies its SHA-256, decompresses it in application memory, and expands the requested columnar collection. The original source archive remains lossless and authoritative. Domain tables stay empty for this static source import; dynamic gameplay state belongs in its own transactional records.
+
+Both `.github/workflows/bp04-property-schema-disposable.yml` and the manual-only `.github/workflows/neon-production-migrations.yml` now invoke `--archive-only` and use `tests/pkg001/bp04_archive_only_acceptance.sql`. The production workflow still requires an explicit `APPLY_BP04_TO_NEON` dispatch and a fresh restore-point reference. This code change does not itself authorise or execute a Neon write.
+
+The new storage target is the 29.43 MB compressed package plus PostgreSQL schema, TOAST, and provenance overhead. No projected final database size is to be stated as measured until the archive-only PG16/PG18 workflow completes. Production remains untouched at the 9.31 MB baseline.
