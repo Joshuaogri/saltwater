@@ -29,11 +29,12 @@ class ArchiveReaderTests(unittest.TestCase):
             decode_archive("SW-OTHER-V1", self.payload, self.digest)
 
     def test_collection_expansion(self):
+        payload, digest = self.payload, self.digest
         class FakeConnection:
             def execute(connection, _sql, _params):
                 class Result:
                     def fetchone(inner_self):
-                        return (self.payload, self.digest)
+                        return (payload, digest)
                 return Result()
         self.assertEqual(
             load_collection(FakeConnection(), self.dataset_id, "properties"),
@@ -41,11 +42,12 @@ class ArchiveReaderTests(unittest.TestCase):
         )
 
     def test_missing_collection_is_rejected(self):
+        payload, digest = self.payload, self.digest
         class FakeConnection:
             def execute(connection, _sql, _params):
                 class Result:
                     def fetchone(inner_self):
-                        return (self.payload, self.digest)
+                        return (payload, digest)
                 return Result()
         with self.assertRaisesRegex(KeyError, "Collection"):
             load_collection(FakeConnection(), self.dataset_id, "missing")
