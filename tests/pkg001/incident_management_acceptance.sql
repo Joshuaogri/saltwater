@@ -8,6 +8,7 @@ DECLARE
   v_incident_id integer;
   v_second_id integer;
   v_event_id bigint;
+  v_assessment_event_id bigint;
   v_status text;
   v_error text;
 BEGIN
@@ -39,6 +40,7 @@ BEGIN
     );
     SELECT status INTO v_status FROM sw_incident.incident WHERE incident_id=v_incident_id;
     IF v_status<>'RECEIVED'
+       OR (SELECT count(*) FROM sw_incident.incident_assessment WHERE incident_id=v_incident_id)<>1
        OR (SELECT count(*) FROM sw_incident.incident_event WHERE incident_id=v_incident_id)<>1
        OR (SELECT count(*) FROM sw_incident.incident_source_link WHERE incident_id=v_incident_id)<>1
        OR (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>1 THEN
@@ -50,12 +52,28 @@ BEGIN
       'moderate','Fictional test location','SWPS-TEST-LOCATION','raw','unknown',NULL
     );
     IF v_second_id<>v_incident_id THEN RAISE EXCEPTION 'incident create idempotency failed'; END IF;
+    v_assessment_event_id:=sw_incident.record_incident_assessment(
+      v_incident_id,'public_safety',2,'high','high',
+      'Test reassessment preserves source and prior assessment.',
+      'test:bp12','test-authority','BP12-ACCEPTANCE-ASSESS-001',NULL
+    );
+    IF (SELECT count(*) FROM sw_incident.incident_assessment WHERE incident_id=v_incident_id)<>2
+       OR (SELECT priority FROM sw_incident.incident WHERE incident_id=v_incident_id)<>2
+       OR (SELECT severity_code FROM sw_incident.incident WHERE incident_id=v_incident_id)<>'high'
+       OR (SELECT category_code FROM sw_incident.incident WHERE incident_id=v_incident_id)<>'public_safety' THEN
+      RAISE EXCEPTION 'BP12 assessment history and current projection do not reconcile';
+    END IF;
+    IF sw_incident.record_incident_assessment(
+      v_incident_id,'public_safety',2,'high','high',
+      'Test reassessment preserves source and prior assessment.',
+      'test:bp12','test-authority','BP12-ACCEPTANCE-ASSESS-001',NULL
+    )<>v_assessment_event_id THEN RAISE EXCEPTION 'incident assessment idempotency failed'; END IF;
     v_event_id:=sw_incident.transition_incident(
       v_incident_id,'AWAITING_TRIAGE','test:bp12','test-authority','Initial triage queue test',
       'BP12-ACCEPTANCE-TRANSITION-001'
     );
     IF (SELECT status FROM sw_incident.incident WHERE incident_id=v_incident_id)<>'AWAITING_TRIAGE'
-       OR (SELECT count(*) FROM sw_incident.incident_event WHERE incident_id=v_incident_id)<>2 THEN
+       OR (SELECT count(*) FROM sw_incident.incident_event WHERE incident_id=v_incident_id)<>3 THEN
       RAISE EXCEPTION 'BP12 state transition/event projection failed';
     END IF;
     IF sw_incident.transition_incident(
