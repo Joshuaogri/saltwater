@@ -128,20 +128,43 @@ def audit_parcel_dossiers(source: dict, candidates: dict | None = None,
                 frontage_errors.append(frontage_id)
         expected_frontages += len(expected_by_road)
         for access in row.get("access_candidates", []):
-            frontage = next((f for f in row.get("frontages", [])
-                             if f.get("frontage_candidate_id") == access.get("frontage_candidate_id")), None)
-            if frontage is None:
-                access_errors.append(access.get("access_candidate_id", parcel_id))
-                continue
-            point = Point(access["candidate_x_m"], access["candidate_y_m"])
-            frontage_point = Point(frontage["candidate_point_x_m"], frontage["candidate_point_y_m"])
-            if point.distance(frontage_point) > TOL or parcel_boundary.distance(point) > TOL:
-                access_errors.append(access.get("access_candidate_id"))
-            if access.get("review_status") != "UNREVIEWED_GEOMETRIC_CANDIDATE":
-                access_errors.append(access.get("access_candidate_id"))
-            if access.get("candidate_type") != "unclassified_access_location":
-                access_errors.append(access.get("access_candidate_id"))
-        if len(row.get("access_candidates", [])) != len(row.get("frontages", [])):
+            if access.get("candidate_type") == "road_reserve_proximity_connection":
+                segment_ids = access.get("road_segment_ids", [])
+                if (access.get("frontage_candidate_id") is not None or len(segment_ids) != 1
+                        or segment_ids[0] not in segment_by_id
+                        or access.get("road_id") != segment_by_id[segment_ids[0]]["road_id"]):
+                    access_errors.append(access.get("access_candidate_id", parcel_id))
+                    continue
+                segment_edge = segment_polygons[segment_ids[0]].boundary
+                parcel_point, road_point = __import__(
+                    "shapely.ops", fromlist=["nearest_points"]
+                ).nearest_points(parcel_boundary, segment_edge)
+                candidate_point = Point(access["candidate_x_m"], access["candidate_y_m"])
+                if (candidate_point.distance(road_point) > TOL
+                        or Point(access["parcel_boundary_x_m"], access["parcel_boundary_y_m"]).distance(parcel_point) > TOL
+                        or abs(parcel_point.distance(road_point) - access["distance_to_road_reserve_m"]) > TOL):
+                    access_errors.append(access.get("access_candidate_id"))
+                expected_contact = "POINT_CONTACT_ONLY" if parcel_point.distance(road_point) <= 0.01 else "NEAREST_EDGE_PROXIMITY_NOT_FRONTAGE"
+                if access.get("contact_type") != expected_contact:
+                    access_errors.append(access.get("access_candidate_id"))
+                if access.get("review_status") != "UNREVIEWED_ROAD_RESERVE_PROXIMITY_CANDIDATE":
+                    access_errors.append(access.get("access_candidate_id"))
+            else:
+                frontage = next((f for f in row.get("frontages", [])
+                                 if f.get("frontage_candidate_id") == access.get("frontage_candidate_id")), None)
+                if frontage is None:
+                    access_errors.append(access.get("access_candidate_id", parcel_id))
+                    continue
+                point = Point(access["candidate_x_m"], access["candidate_y_m"])
+                frontage_point = Point(frontage["candidate_point_x_m"], frontage["candidate_point_y_m"])
+                if point.distance(frontage_point) > TOL or parcel_boundary.distance(point) > TOL:
+                    access_errors.append(access.get("access_candidate_id"))
+                if access.get("review_status") != "UNREVIEWED_GEOMETRIC_CANDIDATE":
+                    access_errors.append(access.get("access_candidate_id"))
+                if access.get("candidate_type") != "unclassified_access_location":
+                    access_errors.append(access.get("access_candidate_id"))
+        expected_access_count = len(row.get("frontages", [])) + (1 if not row.get("frontages") else 0)
+        if len(row.get("access_candidates", [])) != expected_access_count:
             access_errors.append(parcel_id)
 
     water_errors = []
@@ -194,7 +217,7 @@ def audit_parcel_dossiers(source: dict, candidates: dict | None = None,
         "frontage_candidates_match_complete_road_edge_geometry": (
             not frontage_errors and actual_frontage_count == expected_frontages
         ),
-        "access_candidates_match_frontage_points_and_remain_unreviewed": (
+        "access_candidates_match_frontage_or_road_proximity_geometry_and_remain_unreviewed": (
             not access_errors and actual_access_count == actual_frontage_count
         ),
         "water_adjacencies_match_source_water_geometry": not water_errors,

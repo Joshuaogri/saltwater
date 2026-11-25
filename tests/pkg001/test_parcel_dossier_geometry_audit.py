@@ -32,7 +32,7 @@ class ParcelDossierGeometryAuditTests(unittest.TestCase):
         self.assertEqual(report["passed_checks"], 10)
         self.assertEqual(report["counts"]["candidate_parcels"], 420)
         self.assertEqual(report["counts"]["frontage_candidates"], 1374)
-        self.assertEqual(report["counts"]["access_location_candidates"], 1374)
+        self.assertEqual(report["counts"]["access_location_candidates"], 1376)
         self.assertEqual(report["measurements"]["parcel_interior_overlap_area_m2"], 0)
         self.assertFalse(report["operational_seed_eligible"])
 
@@ -74,7 +74,7 @@ class ParcelDossierGeometryAuditTests(unittest.TestCase):
         bad = json.loads(json.dumps(self.dossiers))
         bad["parcels"][0]["access_candidates"][0]["candidate_x_m"] += 20
         report = audit_parcel_dossiers(SOURCE, self.candidates, bad)
-        self.assertIn("access_candidates_match_frontage_points_and_remain_unreviewed", report["failed_checks"])
+        self.assertIn("access_candidates_match_frontage_or_road_proximity_geometry_and_remain_unreviewed", report["failed_checks"])
 
     def test_water_adjacency_must_match_source_geometry(self):
         bad = json.loads(json.dumps(self.dossiers))

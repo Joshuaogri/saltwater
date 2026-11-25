@@ -127,7 +127,7 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
                     or access.get("road_link_status") != "UNRESOLVED_NO_FRONTAGE"
                     or access.get("road_link_candidate_distance_m") is not None):
                 status_errors.append(access_id)
-        else:
+        elif linked_id in connection_points:
             linked_candidate = next(
                 row for row in connection_candidates
                 if row["access_candidate_id"] == linked_id

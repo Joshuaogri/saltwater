@@ -23,7 +23,8 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
         self.assertEqual(self.report["counts"]["property_site_candidates"], 420)
         self.assertEqual(self.report["counts"]["building_candidates"], 384)
         self.assertEqual(self.report["counts"]["building_boundary_access_candidates"], 768)
-        self.assertEqual(self.report["counts"].get("unlinked_building_access_candidates", 0), 0)
+        self.assertEqual(self.report["counts"]["access_candidates_without_parcel_frontage"], 0)
+        self.assertEqual(self.report["counts"]["point_contact_road_reserve_candidates"], 4)
         self.assertTrue(all(a["road_link_candidate_id"] for a in self.assets["access_points"]))
 
     def test_access_candidates_are_geometrically_valid(self):
