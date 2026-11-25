@@ -108,3 +108,23 @@ The 31.57 MB figure is incremental database growth, not the final total size. St
 
 
 **Safe default:** the importer now defaults to `compressed_archive_only` even when no storage flag is supplied. The previous expanded representation is available only through the explicit `--typed-relational` option for disposable benchmarking; the importer itself rejects typed-relational mode when the target database is `neondb`. The production workflow also explicitly passes `--archive-only`.
+
+
+## Actual Neon production deployment — 2026-11-25
+
+The manual production workflow [45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) completed successfully on `main` at commit `625a75612dd760a8de7ef1362df1b23f61b23db1`. Both jobs and every deployment step passed, including ordered migrations, archive-only import, production acceptance and repeat-import idempotency/storage stability.
+
+Read-only Neon verification after deployment:
+
+- Production branch: `br-still-cloud-bdvaw8u4`.
+- Migration ledger: versions 1–12; BP04 versions 3–12 all present.
+- BP04 schema: 92 base tables.
+- Archives: 14 datasets, 105 collections, 1,950,923 source records.
+- Compressed archive bytes: 29,434,820; uncompressed source bytes: 558,602,287.
+- Typed static source rows: 0; all 14 datasets and 105 collections have `archive_only` mapping status.
+- Live `pg_database_size`: 41,525,248 bytes (41.53 MB / 39.60 MiB).
+- Pre-release baseline: 9,306,112 bytes; measured increase: 32,219,136 bytes (32.22 MB).
+
+This supersedes the earlier statements in this runbook that production remained at baseline or that no BP04 production writes had occurred. The archive-only production release is complete. It does **not** establish full BP04 division acceptance: canonical BP-02 address binding, gameplay-facing indexed lookups, complete cross-register acceptance and authorised police-facing access remain outstanding. See [BP04 full acceptance audit](../implementation/test-evidence/BP04-full-acceptance-audit-2026-11-25.md).
+
+The archive-only release workflow is repeatable and storage-stable. Do not re-upload the package. No Neon writes were made during the audit or documentation update.
