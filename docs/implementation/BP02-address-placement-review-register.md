@@ -43,3 +43,22 @@ The 415 direct parcel-frontage road matches remain coherent. Building presence a
 ## Verification
 
 The dedicated BP04 player/police/geography workflow passed in [run 45688271976](https://github.com/Joshuaogri/saltwater/actions/runs/45688271976): 120 tests passed, and the complete 420-address reconciliation plus review-register generation succeeded. The review register is an audit aid only. It does not constitute BP-02 operational geography approval, canonical address promotion, Neon permission provisioning or BP04 full acceptance.
+## Geometry-based disposition of the five P1 exceptions
+
+The five exceptions were cross-checked against the actual SW-GEO-V1 road IDs, road classes, parcel frontage candidates and building-access candidate types:
+
+| Source address | Source road | Geometry candidate | Disposition |
+|---|---|---|---|
+| `SWADDR-BPCSWD03N301701` | Dock Street (`SWR-V16`) | North Coast Road (`SWR-H17`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
+| `SWADDR-BPCSWD03N301801` | Ropewalk Road (`SWR-V17`) | North Coast Road (`SWR-H17`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
+| `SWADDR-BPCSWD05N100201` | West Coast Road (`SWR-V01`) | South Coast Road (`SWR-H01`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
+| `SWADDR-BPCSWD04N100402` | Customs Bridge (`SWR-B2`) | Point-contact bridge-reserve proximity only | Not street frontage; requires an addressable-street connection/design resolution |
+| `SWADDR-BPCSWD08N101802` | Harbour Bridge (`SWR-B1`) | Point-contact bridge-reserve proximity only | Not street frontage; requires an addressable-street connection/design resolution |
+
+The first three are resolved to a unique geometric frontage candidate, not to a final address. The last two cannot be promoted as bridge-frontage addresses. All five original road references are retained. No canonical address or operational access point is approved.
+
+## Consolidated BP-02 audit
+
+`runtime/bp02_full_acceptance_audit.py` consolidates the existing independent geometry audits for city/neighbourhood/road topology, parcel polygons/frontages/adjacency, property/building/access-point hierarchy, connector topology and route-corridor candidates, then adds the BP04 address/property reconciliation and exception dispositions. CI runs the audit and publishes a JSON evidence artifact. Structural pass and operational release are separate outcomes. The operational gate remains blocked while SW-GEO-V1 is unapproved, canonical addresses are unmaterialised and no operational access points are approved.
+
+See `runtime/bp02_address_frontage_exception_resolution.py`, `runtime/bp02_full_acceptance_audit.py`, and `.github/workflows/bp02-full-acceptance-audit.yml`.
