@@ -54,3 +54,17 @@ The SQL proposal creates 17 domain tables plus a two-table immutable import-rele
 ## Next implementation slice
 
 Build a deterministic importer that reads plain JSON and gzip columnar documents through `runtime.dataset_io`, expands each collection without changing values, constructs the release manifest, inserts parent and child records in deterministic batches, and runs source-to-table count plus cross-reference reconciliation. Then exercise the proposal and importer in the existing disposable PostgreSQL 16 CI service, including second-run idempotency, invalid-reference rollback and storage measurement. This remains separate from production Neon.
+
+## Storage-efficient lossless archive design (supersedes per-row JSONB preservation)
+
+The initial candidate `0012` stored each full source row in JSONB alongside typed columns. The disposable benchmark showed 453.5 MiB for the three-dataset package, so that duplication is not the selected import design.
+
+The optimized candidate is `db/proposals/0013_bp04_compressed_source_archive.sql`. It stores each original gzip dataset exactly once in `sw_property.source_dataset_archive.compressed_payload` (bytea), keyed by its SHA-256. Every typed row retains its stable source primary key and `source_dataset`; the release manifest links the source file path, digest, compressed/uncompressed sizes and source collection counts. The compressed archive is the lossless source of record; typed tables are the indexed operational representation. This avoids repeating the full source object in every row while retaining exact recovery and provenance.
+
+The importer inserts the archive before release-dataset rows, enforces the archive hash foreign key, and applies all typed rows in one transaction. On conflict it updates only when mapped relational values actually differ. Re-import of the same release is tested to leave database size unchanged.
+
+### Verified disposable benchmark
+
+Workflow run [45630476765](https://github.com/Joshuaogri/saltwater/actions/runs/45630476765) passed on PostgreSQL 16. It loaded 402,658 records across all 17 typed tables with zero cross-reference violations. The three gzip source archives total 10,934,275 bytes; the uncompressed JSON totals 196,604,988 bytes. Measured final disposable database size: 135,257,111 bytes (128.99 MiB). Repeat import left size unchanged at 135,257,111 bytes.
+
+The 0013 schema and importer are still candidate/disposable-only. This benchmark covers property world, business registry and tenure only; all remaining property-domain registers must be added and benchmarked before the total property package can be sized. Production Neon remains untouched.
