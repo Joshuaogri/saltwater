@@ -14,6 +14,7 @@ class PropertyTenureTests(unittest.TestCase):
         world = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text()))
         registry = _expand_columnar(json.loads((ROOT / "data/business/saltwater-business-registry-v1.json").read_text()))
         cls.world = world
+        cls.registry = registry
         cls.data = build_property_tenure({}, property_world=world, registry=registry)
 
     def test_every_property_has_current_owner_and_chronology(self):
@@ -37,6 +38,11 @@ class PropertyTenureTests(unittest.TestCase):
             agreement = agreements[occ["agreement_id"]]
             self.assertEqual(agreement["unit_id"], occ["unit_id"])
             self.assertEqual(agreement["tenant_business_id"], occ["occupant_business_id"])
+
+    def test_business_occupancies_follow_current_registry_unit_links(self):
+        registry_links = {x["business_id"]: x["unit_id"] for x in self.registry["business_unit_links"]}
+        occupancy_links = {x["occupant_business_id"]: x["unit_id"] for x in self.data["occupancies"]}
+        self.assertEqual(occupancy_links, registry_links)
 
     def test_all_occupancy_references_resolve(self):
         d = self.data
