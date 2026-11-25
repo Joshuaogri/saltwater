@@ -12,9 +12,9 @@
     "command_text": {
       "type": "string",
       "minLength": 1,
-      "maxLength": 32,
-      "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit|home|workspaces|back|where|workspace (home|operations|cases|people|evidence-scenes|department|legal-custody|resources-finance|reports-notifications|system-status))$",
-      "description": "Exactly one canonical command token, or workspace followed by one exact workspace ID. No quoting, leading/trailing whitespace, scripts, SQL, shell or hidden-truth trigger."
+      "maxLength": 256,
+      "pattern": "^(help|status|profile|recruit|career|start|pause|resume|quit|home|workspaces|back|where|workspace (home|operations|cases|people|evidence-scenes|department|legal-custody|resources-finance|reports-notifications|system-status)|find (address|property|business) .{2,}|inspect (property|address|building|premises|unit|access_point|business|establishment) [A-Za-z0-9._-]+)$",
+      "description": "Exactly one canonical command, including bounded find/inspect lookup forms. Search text is plain text after the entity type; no leading/trailing whitespace, scripts, SQL, shell or hidden-truth trigger."
     },
     "request_reference": {
       "type": [
@@ -138,6 +138,22 @@
       "read_only",
       "player.command.where",
       "no arguments"
+    ],
+    [
+      "find",
+      "player.find.v1",
+      "BP-04 Property Lookup",
+      "read_only",
+      "player.command.find",
+      "address|property|business plus search text"
+    ],
+    [
+      "inspect",
+      "player.inspect.v1",
+      "BP-04 Property Lookup",
+      "read_only",
+      "player.command.inspect",
+      "one entity type and one stable ID"
     ]
   ],
   "x-response": {
