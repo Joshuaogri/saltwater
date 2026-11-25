@@ -30,6 +30,11 @@ on:
       - ".github/workflows/bp04-03-stage-e-disposable.yml"
   workflow_dispatch:
 
+# Keep one expensive full-estate acceptance run active per branch.
+concurrency:
+  group: bp04-03-stage-e-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
