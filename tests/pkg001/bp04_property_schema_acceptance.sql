@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 66 THEN
-    RAISE EXCEPTION 'expected 66 BP04 phase-1+2+3+4+5+6 tables, found %', v_count;
+  IF v_count <> 68 THEN
+    RAISE EXCEPTION 'expected 68 BP04 phase-1 through phase-7 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -95,6 +95,14 @@ BEGIN
   ) THEN RAISE EXCEPTION 'valuation and insurance lineage foreign keys missing'; END IF;
 
   IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='business_daily_schedule'
+      AND column_name='customer_open_time' AND data_type='time without time zone'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='business_weekly_profile'
+      AND column_name='has_continuous_service' AND data_type='boolean'
+  ) THEN RAISE EXCEPTION 'typed business operating schedule fields missing'; END IF;
+
+  IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='import_dataset'
       AND column_name='mapping_status' AND data_type='text'
   ) OR NOT EXISTS (
@@ -111,4 +119,4 @@ BEGIN
   ) THEN RAISE EXCEPTION 'import release ledger missing'; END IF;
 END $$;
 
-SELECT 'BP04 phase-1 schema acceptance passed' AS result;
+SELECT 'BP04 phase-1 through phase-7 schema acceptance passed' AS result;
