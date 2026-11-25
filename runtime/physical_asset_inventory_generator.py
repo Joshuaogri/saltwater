@@ -543,34 +543,64 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         property_geom = property_geometry_by_id[prop["candidate_property_id"]]
         own_id = building["candidate_building_id"]
         own_geom = building_geometry_by_id[own_id]
-        start = Point(access["point_m"])
+        original_start = Point(access["point_m"])
+        # A boundary point can also touch an adjacent building on a shared wall.
+        # Retain the original proposal where possible; otherwise test deterministic
+        # alternatives along this building's own boundary and preserve the original
+        # coordinate as provenance when a replacement is selected.
+        start_candidates = [(0, original_start)]
+        boundary = own_geom.boundary
+        perimeter = boundary.length
+        for sample_no in range(128):
+            sample = boundary.interpolate(perimeter * sample_no / 128)
+            if sample.distance(original_start) <= 0.01:
+                continue
+            start_candidates.append((sample_no + 1, sample))
         choices = []
-        for candidate in dossier.get("access_candidates", []):
-            end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
-            line = LineString([start, end])
-            if line.is_empty or not line.is_valid or line.length <= 0:
+        same_building_accesses = [
+            Point(row["point_m"]) for row in access_points
+            if row.get("building_id") == own_id
+            and row["candidate_access_point_id"] != access["candidate_access_point_id"]
+        ]
+        for start_order, start in start_candidates:
+            if any(start.distance(other) < 5.0 for other in same_building_accesses):
                 continue
-            if not property_geom.covers(line):
-                continue
-            if line.intersection(own_geom).length > 0.01:
-                continue
-            nearby_indexes = building_geometry_tree.query(line, predicate="intersects")
-            blocked = any(
+            point_indexes = building_geometry_tree.query(start, predicate="intersects")
+            if any(
                 building_geometry_ids[int(index)] != own_id
-                and line.intersects(building_geometry_values[int(index)])
-                for index in nearby_indexes
-            )
-            if blocked:
+                for index in point_indexes
+            ):
                 continue
-            choices.append((round(line.length, 9), candidate["access_candidate_id"],
-                            candidate, end, line))
+            for candidate in dossier.get("access_candidates", []):
+                end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
+                line = LineString([start, end])
+                if line.is_empty or not line.is_valid or line.length <= 0:
+                    continue
+                if not property_geom.covers(line):
+                    continue
+                if line.intersection(own_geom).length > 0.01:
+                    continue
+                nearby_indexes = building_geometry_tree.query(line, predicate="intersects")
+                blocked = any(
+                    building_geometry_ids[int(index)] != own_id
+                    and line.intersects(building_geometry_values[int(index)])
+                    for index in nearby_indexes
+                )
+                if blocked:
+                    continue
+                choices.append((round(line.length, 9), candidate["access_candidate_id"],
+                                start_order, candidate, start, end, line))
         if not choices:
             # Preserve the original candidate and its evidence. The independent
             # geometry audit will report it as blocked; never invent a reroute.
             continue
-        _, candidate_id, candidate, end, line = min(
-            choices, key=lambda item: (item[0], item[1])
+        _, candidate_id, start_order, candidate, start, end, line = min(
+            choices, key=lambda item: (item[0], item[1], item[2])
         )
+        if start.distance(original_start) > 0.01:
+            access["superseded_candidate_point_m"] = access["point_m"]
+            access["point_m"] = [round(start.x, 6), round(start.y, 6)]
+            access["point_status"] = "UNREVIEWED_RELOCATED_BUILDING_BOUNDARY_CANDIDATE"
         proximity = candidate.get("candidate_type") == "road_reserve_proximity_connection"
         access.update({
             "road_link_candidate_id": candidate_id,
