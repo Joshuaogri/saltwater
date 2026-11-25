@@ -2,7 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.property_world_generator import build_property_world
+from runtime.property_world_generator import build_property_world, to_columnar_document
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -106,6 +106,15 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         for rows, field in zip(groups, fields):
             values = [x[field] for x in rows]
             self.assertEqual(len(values), len(set(values)), field)
+
+    def test_textual_storage_format_is_columnar_and_lossless_for_counts(self):
+        document = to_columnar_document(self.world)
+        self.assertEqual(document["storage_format"], "textual_json_columnar_v1")
+        self.assertEqual(document["record_schema"], "saltwater-canonical-property-world/1.0")
+        self.assertEqual(len(document["tables"]["properties"]["rows"]), self.world["summary"]["property_count"])
+        self.assertEqual(len(document["tables"]["units"]["rows"]), self.world["summary"]["unit_count"])
+        self.assertIn("unit_id", document["tables"]["units"]["columns"])
+        self.assertIn("occupant_person_ids", document["tables"]["units"]["columns"])
 
     def test_summary_counts_match_records(self):
         w = self.world
