@@ -13,6 +13,7 @@ on:
       - "db/proposals/0019_bp04_business_operating_schedules.sql"
       - "db/proposals/0020_bp04_lawful_use_building_control.sql"
       - "db/proposals/0021_bp04_property_title_lifecycle.sql"
+      - "db/proposals/0022_bp04_property_rights_boundaries.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/test_bp04_property_stack_importer.py"
@@ -30,6 +31,7 @@ on:
       - "data/property/saltwater-property-facilities-operations-v1.json.gz"
       - "data/property/saltwater-property-insurance-claims-v1.json.gz"
       - "data/property/saltwater-property-lifecycle-transactions-v1.json.gz"
+      - "data/property/saltwater-property-rights-boundaries-v1.json.gz"
       - "data/property/saltwater-property-rights-boundaries-v1.json.gz"
       - "data/property/saltwater-global-estate-capacity-audit-v1.json.gz"
   workflow_dispatch:
@@ -86,11 +88,13 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0020_bp04_lawful_use_building_control.sql
       - name: Apply BP04 phase-9 property title and lifecycle schema
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0021_bp04_property_title_lifecycle.sql
+      - name: Apply BP04 phase-10 property rights and boundary schema
+        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0022_bp04_property_rights_boundaries.sql
       - name: Verify source collection identity handling
         run: python -m unittest tests.pkg001.test_bp04_property_stack_importer -v
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-      - name: Archive all 14 compressed sources; import mapped property, business, operating schedules, lawful-use, building-control, title/lifecycle, utility, maintenance, security, valuation and tax collections
+      - name: Archive all 14 compressed sources; import mapped property, business, operating schedules, lawful-use, building-control, title/lifecycle, rights, boundary and access, utility, maintenance, security, valuation and tax collections
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
       - name: Verify source collection ledger and business schedule import
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
