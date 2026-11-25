@@ -2,7 +2,7 @@
 
 **Result: NOT PASSED — BP04 is partially implemented and must not be marked COMPLETED.**
 
-**Audit source:** `main` at the integration release commit (see current GitHub file history)  
+**Audit source:** `main` at commit `881b9531aa609811bef5eb7fd306a4bc6be11145`  
 **Production release:** [GitHub Actions run 45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) — completed successfully  
 **Latest disposable archive-only validation:** [run 45672436619](https://github.com/Joshuaogri/saltwater/actions/runs/45672436619) — completed successfully  
 **Neon target:** project `misty-breeze-20463094`, production branch `br-still-cloud-bdvaw8u4`, database `neondb`.
@@ -71,7 +71,7 @@ The property-world generator regression verifies unique IDs within entity types,
 
 ## 4. Concrete blockers to full acceptance
 
-1. **Canonical BP-02 parcel/address identities:** the read-only reconciliation in [run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644) matched all 420 property-to-generated-candidate-parcel links, 420 property-to-address links, and 420 each of district, neighbourhood and road references to BP-02 `entity_code` values. It also confirmed that the current BP-02 identity map contains zero parcel and zero address identities. The 420 parcels remain unapproved candidates and the 420 BP04 addresses remain source-world labels. BP-02 must supply canonical parcel/address identities before BP04 can bind or promote them.
+1. **Canonical BP-02 parcel/address identities:** the read-only reconciliation in [run 45680995361](https://github.com/Joshuaogri/saltwater/actions/runs/45680995361) matched all 420 property-to-generated-candidate-parcel links, 420 property-to-address links, and 420 each of district, neighbourhood and road references to BP-02 `entity_code` values. It also confirmed that the current BP-02 identity map contains zero parcel and zero address identities. The 420 parcels remain unapproved candidates and the 420 BP04 addresses remain source-world labels. BP-02 must supply canonical parcel/address identities before BP04 can bind or promote them.
 2. **Gameplay lookup integration:** the bounded property/address/building/premises/unit/access-point/business/establishment API is implemented in `runtime/bp04_lookup.py`. The player interface now supports `find` and `inspect`; PKG-005 lazily loads the lookup only after the command gateway authorizes the action; PKG-006/007 host and ChatGPT contracts accept bounded lookup commands. See [lookup design](../BP04-gameplay-lookup.md) and [integration record](../BP04-player-police-geography-integration.md).
 3. **Police access integration:** `runtime/bp04_police_access.py` provides an officer-only adapter and a PostgreSQL composition factory using live grants and durable append-only audit. It denies non-officers and denies all ungranted requests. Approved `player.command.find/inspect` and `bp04.lookup.*` grants have not been provisioned in production; no Neon policy rows were changed. Dispatch, incident and investigation services still need to call this adapter.
 4. **Cross-register acceptance:** test uniqueness, parent/child references, temporal relationships, business-versus-establishment identity, 10,000-business quality, organisation/facility links and all 105 collection counts from the pinned source release.
