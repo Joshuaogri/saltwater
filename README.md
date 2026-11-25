@@ -597,3 +597,10 @@ This dated update supersedes earlier status statements above where they describe
 ### BP07 — career history foundation
 
 Added `db/proposals/0025_bp07_career_rank_and_post_history.sql`: append-only career episode events, separate rank assignments and authorised post appointments, current-rank/current-post projections, and registered career event types. Opening a career episode now records its event automatically. Rank and post assignments remain separate, and a recruit receives neither a substantive rank nor an occupied post automatically. The BP07 career-history acceptance and full PKG-001 disposable regression [run 45660272493](https://github.com/Joshuaogri/saltwater/actions/runs/45660272493) passed, including population-cap, concurrency, backup/restore and runtime checks.
+
+
+### BP08 — unit catalogue and deployment readiness foundation
+
+Added `db/proposals/0026_bp08_unit_deployment.sql`. All **31 operational/support units** now have canonical profiles, mandate boundaries, capability codes, crew thresholds and dispatchability classification. Their establishment view reconciles **480 unit posts**, all currently vacant. Unit membership is linked automatically to a BP07 post appointment in a unit; deployment and status histories are append-only. With no staffed memberships or verified status/resource records, all units correctly remain unavailable and none is dispatch-eligible. The schema deliberately does not fabricate crews, deployments, vehicles or radio readiness.
+
+BP08 disposable acceptance passed in [PKG-001 run 45661335150](https://github.com/Joshuaogri/saltwater/actions/runs/45661335150); the complete regression is continuing through the population-cap and backup/restore tests. BP09 resource readiness is the next dependency before real dispatch eligibility.
