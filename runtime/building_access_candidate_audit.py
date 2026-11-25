@@ -117,7 +117,7 @@ def audit_building_access_candidates(candidates: dict, dossiers: dict, assets: d
             position = access_id.rsplit("-", 1)[-1]
             distances_by_position.get(position, distances_by_position["OTHER"]).append(nearest_distance)
 
-        if access.get("point_status") != "UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE":
+        if access.get("point_status") not in ("UNREVIEWED_BUILDING_BOUNDARY_CANDIDATE", "UNREVIEWED_RELOCATED_BUILDING_BOUNDARY_CANDIDATE"):
             status_errors.append(access_id)
         if access.get("access_type") != "unknown" or access.get("access_modes") != []:
             status_errors.append(access_id)
