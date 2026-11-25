@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from runtime.business_registry_generator import build_business_registry
-from runtime.property_world_generator import build_property_world
+from runtime.property_tenure_generator import _expand_columnar
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -12,7 +12,8 @@ class BusinessRegistryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-        cls.property_world = build_property_world(source)
+        world_document = json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text(encoding="utf-8"))
+        cls.property_world = _expand_columnar(world_document)
         cls.registry = build_business_registry(source, property_world=cls.property_world)
 
     def test_registry_meets_ten_thousand_distinct_business_invariant(self):
