@@ -10,6 +10,7 @@ on:
       - "data/property/saltwater-property-tenure-v1.json"
       - "data/property/saltwater-building-services-v1.json"
       - "data/property/saltwater-property-maintenance-v1.json"
+      - "data/property/saltwater-property-development-control-v1.json"
       - "tests/pkg001/test_property_facilities_operations_generator.py"
       - ".github/workflows/saltwater-property-facilities-operations-build.yml"
   workflow_dispatch:
