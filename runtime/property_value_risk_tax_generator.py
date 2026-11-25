@@ -1,6 +1,7 @@
 """Generate property condition, valuation, insurance and tax assessment records."""
 from __future__ import annotations
 import hashlib,json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
@@ -89,7 +90,7 @@ def build_property_value_risk(world,tenure,services,maintenance,security):
  return body
 def main():
  root=Path(__file__).resolve().parents[1]
- def load(p): return _expand_columnar(json.loads((root/p).read_text(encoding="utf-8")))
+ def load(p): return _expand_columnar(load_json(root/p))
  data=build_property_value_risk(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-tenure-v1.json"),load("data/property/saltwater-building-services-v1.json"),load("data/property/saltwater-property-maintenance-v1.json"),load("data/property/saltwater-property-security-access-v1.json"))
  out=root/"data/property/saltwater-property-value-risk-tax-v1.json"; doc=to_columnar_document(data); doc["schema"]="saltwater-property-value-risk-tax-columnar/1.0"
  out.write_text(json.dumps(doc,sort_keys=True,separators=(",",":"),ensure_ascii=False)+"\n",encoding="utf-8")
