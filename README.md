@@ -225,3 +225,7 @@ The next built-world layer is a deterministic registry of **10,000 distinct Salt
 ### Current business registry baseline
 
 The generated registry now contains **10,000 distinct businesses**, **10,000 establishments** and **10,000 business-to-unit links** across **15 sectors**. The baseline comprises 9,400 active, 286 seasonal and 314 temporarily inactive businesses. All 10,000 establishments resolve through the property/building/premises/unit/address hierarchy. No staff or resident person records are created. The compact columnar textual JSON file is **8,025,670 bytes** (about 7.65 MiB). The build and its regression tests passed; the registry is committed on `main`.
+
+### Business operations and opening-hours records
+
+The next textual world layer adds a weekly operating schedule for every registered establishment. Each business has seven explicit weekday rows (70,000 daily records across 10,000 businesses), local customer opening and closing times, service windows, staff shift patterns, delivery windows, operational status and an access reference for dispatch. Seasonal and temporarily inactive businesses receive appropriate closure states. These schedules do not create employee, customer or resident person records and do not change the 10,000-person city cap. Source: `runtime/business_operations_generator.py`; output: `data/business/saltwater-business-operations-v1.json`; regression tests: `tests/pkg001/test_business_operations_generator.py`.
