@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from runtime.business_operations_generator import build_business_operations
+from runtime.property_tenure_generator import _expand_columnar
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -11,7 +12,9 @@ class CanonicalBusinessOperationsTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-        cls.operations = build_business_operations(source)
+        registry_document = json.loads((ROOT / "data/business/saltwater-business-registry-v1.json").read_text(encoding="utf-8"))
+        cls.registry = _expand_columnar(registry_document)
+        cls.operations = build_business_operations(source, registry=cls.registry)
 
     def test_every_business_has_seven_daily_schedules(self):
         o = self.operations
