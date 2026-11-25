@@ -1,9 +1,10 @@
-import json, unittest
+import unittest
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
+from runtime.dataset_io import load_json
 from runtime.property_lifecycle_transactions_generator import build_property_lifecycle
 ROOT = Path(__file__).resolve().parents[2]
-def load(p): return _expand_columnar(json.loads((ROOT / p).read_text()))
+def load(p): return _expand_columnar(load_json(ROOT / p))
 class PropertyLifecycleTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
@@ -49,6 +50,17 @@ class PropertyLifecycleTests(unittest.TestCase):
  def test_no_financial_or_person_records(self):
   s=self.data["summary"]
   for k in ("financial_postings_created","payments_created","person_records_created","population_records_created"): self.assertEqual(s[k],0)
+
+ def test_all_generated_identifiers_are_unique(self):
+  d=self.data
+  for collection, key in (
+   ("title_register","title_register_id"),("property_interests","property_interest_record_id"),
+   ("title_instruments","title_instrument_id"),("property_transactions","property_transaction_id"),
+   ("property_lifecycle_events","lifecycle_event_id"),("building_lifecycle_events","lifecycle_event_id"),
+   ("premises_lifecycle_events","lifecycle_event_id"),("encumbrance_register","encumbrance_register_id")
+  ):
+   values=[x[key] for x in d[collection]]
+   self.assertEqual(len(values),len(set(values)),f"duplicate {key} in {collection}")
  def test_deterministic(self):
   again=build_property_lifecycle(self.world,self.tenure,self.development)
   self.assertEqual(self.data["manifest_sha256"],again["manifest_sha256"])
