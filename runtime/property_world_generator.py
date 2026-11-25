@@ -331,6 +331,11 @@ def build_property_world(source: dict) -> dict:
             site_point, road_point = nearest_points(site.boundary, line)
             choices.append((round(site_point.distance(road_point), 6), segment["id"], segment, site_point, road_point))
         _, segment_id, segment, site_point, road_point = min(choices, key=lambda x: (x[0], x[1]))
+        property_road[pid] = segment["road_id"]
+        address = next(x for x in address_rows if x["property_id"] == pid)
+        address["road_id"] = segment["road_id"]
+        address["street_name"] = roads[segment["road_id"]]["name"]
+        address["address_label"] = f'{address["street_number"]} {address["street_name"]}, {address["neighbourhood_name"]}, Saltwater'
         access_id = f"SWA-{_slug(pid)}-SITE-A01"
         access_rows.append({
             "access_point_id": access_id, "property_id": pid,
