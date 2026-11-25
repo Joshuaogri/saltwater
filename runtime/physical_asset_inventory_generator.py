@@ -776,6 +776,10 @@ def main():
     # intentionally large; avoid materialising a second 1GB+ JSON string.
     with gzip.open(output, "wt", encoding="utf-8", compresslevel=6, newline="") as stream:
         json.dump(result, stream, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    compressed_digest = hashlib.sha256()
+    with output.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            compressed_digest.update(chunk)
     manifest = {
         "schema": result["schema"],
         "manifest_sha256": result["manifest_sha256"],
@@ -784,6 +788,7 @@ def main():
         "generation": result["generation"],
         "compressed_artifact": output.name,
         "compressed_artifact_bytes": output.stat().st_size,
+        "compressed_artifact_sha256": compressed_digest.hexdigest(),
     }
     Path("bp04-03-stage-e-physical-assets-manifest.json").write_text(
         json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n",
