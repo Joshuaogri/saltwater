@@ -16,12 +16,9 @@ class PropertyTenureTests(unittest.TestCase):
 
     def test_every_property_has_current_owner_and_chronology(self):
         d = self.data
-        properties = {x["property_id"] for x in d["ownership_events"]}
-        self.assertEqual(properties, {x["property_id"] for x in d["ownership_events"]})
-        current = {x["property_id"]: x["owner_organisation_id"] for x in
-                   __import__("runtime.property_world_generator", fromlist=["build_property_world"]).build_property_world(
-                       json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-                   )["ownership_interests"]}
+        current = {x["property_id"]: x["owner_organisation_id"] for x in d["current_ownership_interests"]}
+        self.assertEqual(len(current), 420)
+        self.assertEqual({x["property_id"] for x in d["ownership_events"]}, set(current))
         for pid in current:
             events = sorted((x for x in d["ownership_events"] if x["property_id"] == pid),
                             key=lambda x: x["effective_year"])
