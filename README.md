@@ -659,7 +659,7 @@ The manual production release workflow ran on `main` at commit `8854d66180a074f0
 - Pre-upload database size: **9,306,112 bytes (9.31 MB)**.
 - Before repeat-import test: **624,893,952 bytes (624.89 MB)**.
 - After repeat-import test as measured by the workflow: **625,033,216 bytes (625.03 MB)**, an increase of **139,264 bytes (0.139 MB)** during the repeat operation. The workflow's exact-size-equality guard therefore failed; do not record the repeat-import storage-stability check as passed.
-- Latest live read-only measurement after the run: **625,811,456 bytes (625.81 MB / 596.6 MiB)**. This is **616,505,344 bytes (616.51 MB)** above the original baseline.
+- Latest live read-only measurement after the run: **625,811,456 bytes (625.81 MB / 596.82 MiB)**. This is **616,505,344 bytes (616.51 MB)** above the original baseline.
 - All 14 dataset ledger rows and all 12 migration ledger rows are present in production.
 
 The BP04 release is present and accepted in Neon. The outstanding item is to explain the small database-size delta during the repeat import, confirm row-count idempotency independently, and adjust the workflow's storage assertion if PostgreSQL maintenance/operation-ledger writes explain the delta. Do not re-import the package merely to retry the size assertion. No rollback was performed; retain the pre-release restore snapshot.
