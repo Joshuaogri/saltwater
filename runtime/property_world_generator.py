@@ -99,10 +99,17 @@ def build_property_world(source: dict) -> dict:
         address_for_property[pid] = address_id
 
         owner_id = f"SWORG-OWN-{_slug(parcel_id)}"
+        owner_name = f"{_pick(['Saltwater Property Holdings','Harbour Estates','Civic Land Trust','Meridian Property Group','Westgate Land Company','Northbank Estates'], parcel_id)} {_num(parcel_id+'-owner', 1, 19):02d}"
+        owner_organisations.append({
+            "organisation_id": owner_id, "display_name": owner_name,
+            "organisation_type": "property_holding_organisation",
+            "registered_city": "Saltwater", "status": "active",
+            "fictional_entity": True,
+        })
         ownership_rows.append({
             "ownership_interest_id": f"SWOWN-{_slug(parcel_id)}",
             "property_id": pid, "owner_organisation_id": owner_id,
-            "owner_name": f"{_pick(['Saltwater Property Holdings','Harbour Estates','Civic Land Trust','Meridian Property Group','Westgate Land Company','Northbank Estates'], parcel_id)} { _num(parcel_id+'-owner', 1, 19):02d}",
+            "owner_name": owner_name,
             "interest_type": _pick(["freehold","municipal_freehold","institutional_freehold","leasehold"], parcel_id+"-tenure"),
             "share_numerator": 1, "share_denominator": 1,
             "management_model": _pick(["direct_owner_management","appointed_property_manager","estate_management"], parcel_id+"-management"),
@@ -309,6 +316,50 @@ def build_property_world(source: dict) -> dict:
                 "source_ref": f"{GENERATOR}:{access_id}:private-lane",
             })
 
+    # Open-space and low-density parcels without a building still receive a
+    # canonical site entrance and a constructed pedestrian/maintenance path.
+    segment_rows = source["network"]["segments"]
+    for prop in property_rows:
+        if buildings_for_property[prop["property_id"]]:
+            continue
+        pid = prop["property_id"]
+        parcel_id = prop["source_candidate_parcel_id"]
+        site = Polygon(prop["geometry"][0], prop["geometry"][1:])
+        choices = []
+        for segment in segment_rows:
+            line = LineString(segment["geometry"])
+            site_point, road_point = nearest_points(site.boundary, line)
+            choices.append((round(site_point.distance(road_point), 6), segment["id"], segment, site_point, road_point))
+        _, segment_id, segment, site_point, road_point = min(choices, key=lambda x: (x[0], x[1]))
+        access_id = f"SWA-{_slug(pid)}-SITE-A01"
+        access_rows.append({
+            "access_point_id": access_id, "property_id": pid,
+            "building_id": None, "access_type": "site_entrance_gate",
+            "access_modes": ["pedestrian","maintenance_vehicle"],
+            "point_m": [round(site_point.x, 6), round(site_point.y, 6)],
+            "door_type": "swing_gate", "clear_width_m": 2.4,
+            "control_type": "keyed_maintenance_lock",
+            "availability_state": "available", "accessibility_state": "step_free",
+            "emergency_egress_state": "designated_egress",
+            "opening_schedule": "06:00-20:00", "door_condition": "good",
+            "road_link_status": "connected_by_constructed_game_route",
+            "route_kind": "site_maintenance_path", "point_status": "CANONICAL_FICTIONAL_ACCESS_POINT",
+            "canonical_status": "active",
+        })
+        coords = [[round(site_point.x, 6), round(site_point.y, 6)], [round(road_point.x, 6), round(road_point.y, 6)]]
+        route_rows.append({
+            "route_id": f"SWRTE-{_slug(access_id)}", "access_point_id": access_id,
+            "property_id": pid, "building_id": None, "road_id": segment["road_id"],
+            "road_segment_ids": [segment_id], "route_type": "site_maintenance_path",
+            "geometry_type": "LineString", "geometry_coordinates": coords,
+            "length_m": round(LineString(coords).length, 3), "surface": "compacted_gravel",
+            "width_m": 2.4, "lighting": "low_level_path_lighting",
+            "barrier_state": "clear", "vehicle_access": False, "pedestrian_access": True,
+            "accessible_route": True, "emergency_access": True, "route_state": "open",
+            "fictional_access_basis": "constructed_in_game_site_path",
+            "source_ref": f"{GENERATOR}:{access_id}:site-path",
+        })
+
     for prop in property_rows:
         pid = prop["property_id"]
         prop["building_ids"] = sorted(buildings_for_property[pid])
@@ -339,12 +390,13 @@ def build_property_world(source: dict) -> dict:
             "constructed_access_route_count": len(route_rows),
             "site_feature_count": len(site_feature_rows),
             "ownership_interest_count": len(ownership_rows),
+            "owner_organisation_count": len(owner_organisations),
             "building_component_count": len(building_component_rows),
             "premises_room_count": len(room_rows),
             "unassigned_resident_count": 0, "population_created": 0,
         },
         "properties": property_rows, "addresses": address_rows,
-        "ownership_interests": ownership_rows, "buildings": building_rows,
+        "ownership_interests": ownership_rows, "owner_organisations": owner_organisations, "buildings": building_rows,
         "premises": premises_rows, "units": unit_rows,
         "access_points": access_rows, "access_routes": route_rows,
         "site_features": site_feature_rows,
