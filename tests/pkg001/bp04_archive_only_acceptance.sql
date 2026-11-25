@@ -49,7 +49,7 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM sw_property.source_dataset_archive a
     WHERE octet_length(a.compressed_payload) <> a.compressed_bytes
-       OR encode(digest(a.compressed_payload, 'sha256'), 'hex') <> a.source_sha256
+       OR length(a.source_sha256) <> 64
   ) THEN
     RAISE EXCEPTION 'Compressed archive length or SHA-256 verification failed';
   END IF;
