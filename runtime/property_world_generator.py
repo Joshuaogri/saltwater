@@ -437,14 +437,37 @@ def build_property_world(source: dict) -> dict:
     return body
 
 
+def to_columnar_document(body: dict) -> dict:
+    """Persist repeated entity fields once while retaining readable JSON text."""
+    metadata = {}
+    tables = {}
+    for key, value in body.items():
+        if isinstance(value, list) and value and all(isinstance(row, dict) for row in value):
+            columns = list(dict.fromkeys(field for row in value for field in row.keys()))
+            tables[key] = {
+                "columns": columns,
+                "rows": [[row.get(field) for field in columns] for row in value],
+            }
+        else:
+            metadata[key] = value
+    return {
+        "schema": "saltwater-canonical-property-world-columnar/1.0",
+        "record_schema": body["schema"],
+        "metadata": metadata,
+        "tables": tables,
+        "storage_format": "textual_json_columnar_v1",
+    }
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
     result = build_property_world(source)
     output = root / "data/property/saltwater-property-world-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n", encoding="utf-8")
-    print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"]}, indent=2, sort_keys=True))
+    document = to_columnar_document(result)
+    output.write_text(json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\\n", encoding="utf-8")
+    print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"], "storage_format": document["storage_format"], "output_bytes": output.stat().st_size}, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
