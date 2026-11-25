@@ -68,6 +68,20 @@ def numeric_value(value):
     except (TypeError, ValueError):
         return None
 
+
+def boolean_value(value):
+    if value is None or isinstance(value, bool):
+        return value
+    if value in (0, 1):
+        return bool(value)
+    if isinstance(value, str):
+        lowered = value.strip().lower()
+        if lowered in {"true", "t", "yes", "y", "1"}:
+            return True
+        if lowered in {"false", "f", "no", "n", "0"}:
+            return False
+    raise ValueError(f"Expected boolean-compatible source value, got {value!r}")
+
 def record(table: str, source_dataset: str, row: dict, values: dict) -> tuple:
     values["source_dataset"] = source_dataset
     values["source_record"] = Jsonb(row)
@@ -129,7 +143,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("building_system", "SW-BUILDING-SERVICES-V1", rows(services, "building_systems"),
         lambda ds,r: {"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"system_type":r["system_type"],"system_status":r.get("system_status"),"condition":r.get("condition"),"capacity_band":r.get("capacity_band"),"redundancy_profile":r.get("redundancy_profile"),"control_mode":r.get("control_mode"),"inspection_cycle_days":r.get("inspection_cycle_days"),"last_inspection_year":r.get("last_inspection_year"),"next_inspection_due_tick":r.get("next_inspection_due_tick"),"provider_organisation_id":r.get("provider_organisation_id"),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
     add("business_utility_responsibility", "SW-BUILDING-SERVICES-V1", rows(services, "business_utility_responsibilities"),
-        lambda ds,r: {"service_responsibility_id":r["service_responsibility_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r.get("unit_id"),"occupancy_id":r.get("occupancy_id"),"occupant_business_id":r.get("occupant_business_id"),"utility_scope":r["utility_scope"],"responsibility_profile":r.get("responsibility_profile"),"metering_basis":r.get("metering_basis"),"financial_postings_created":r["financial_postings_created"],"source_dataset":ds})
+        lambda ds,r: {"service_responsibility_id":r["service_responsibility_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r.get("unit_id"),"occupancy_id":r.get("occupancy_id"),"occupant_business_id":r.get("occupant_business_id"),"utility_scope":r["utility_scope"],"responsibility_profile":r.get("responsibility_profile"),"metering_basis":r.get("metering_basis"),"financial_postings_created":boolean_value(r["financial_postings_created"]),"source_dataset":ds})
     add("equipment_asset", "SW-BUILDING-SERVICES-V1", rows(services, "equipment_assets"),
         lambda ds,r: {"equipment_id":r["equipment_id"],"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"equipment_type":r["equipment_type"],"equipment_reference":r.get("equipment_reference"),"manufacturer_profile":r.get("manufacturer_profile"),"installation_year":r.get("installation_year"),"condition":r.get("condition"),"operational_state":r.get("operational_state"),"maintenance_class":r.get("maintenance_class"),"replacement_priority":r.get("replacement_priority"),"source_dataset":ds})
     add("meter", "SW-BUILDING-SERVICES-V1", rows(services, "meters"),
@@ -139,9 +153,9 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("utility_account", "SW-BUILDING-SERVICES-V1", rows(services, "utility_accounts"),
         lambda ds,r: {"utility_account_id":r["utility_account_id"],"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"account_holder_organisation_id":r.get("account_holder_organisation_id"),"property_manager_organisation_id":r.get("property_manager_organisation_id"),"account_scope":r.get("account_scope"),"billing_responsibility_profile":r.get("billing_responsibility_profile"),"metering_basis":r.get("metering_basis"),"account_status":r.get("account_status"),"financial_postings_created":r["financial_postings_created"],"source_dataset":ds})
     add("utility_connection", "SW-BUILDING-SERVICES-V1", rows(services, "utility_connections"),
-        lambda ds,r: {"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"primary_building_id":r.get("primary_building_id"),"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"connection_point_type":r.get("connection_point_type"),"connection_capacity_band":r.get("connection_capacity_band"),"supply_redundancy":r.get("supply_redundancy"),"connection_state":r.get("connection_state"),"is_live_game_connection":r["is_live_game_connection"],"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
+        lambda ds,r: {"utility_connection_id":r["utility_connection_id"],"property_id":r["property_id"],"primary_building_id":r.get("primary_building_id"),"utility_type":r["utility_type"],"provider_organisation_id":r.get("provider_organisation_id"),"connection_point_type":r.get("connection_point_type"),"connection_capacity_band":r.get("connection_capacity_band"),"supply_redundancy":r.get("supply_redundancy"),"connection_state":r.get("connection_state"),"is_live_game_connection":boolean_value(r["is_live_game_connection"]),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
     add("utility_provider_profile", "SW-BUILDING-SERVICES-V1", rows(services, "utility_providers"),
-        lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"fictional_entity":r["fictional_entity"],"service_area":r.get("service_area"),"source_dataset":ds})
+        lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"fictional_entity":boolean_value(r["fictional_entity"]),"service_area":r.get("service_area"),"source_dataset":ds})
     return batches, counts
 
 def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test") -> dict:
