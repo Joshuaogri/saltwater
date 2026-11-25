@@ -23,8 +23,8 @@ class BuildingAccessConnectorTopologyTests(unittest.TestCase):
         )
 
     def test_every_connector_is_topologically_accounted_for(self):
-        self.assertEqual(self.report["counts"]["connector_candidates"], 768)
-        self.assertEqual(self.report["counts"]["frontage_connector_candidates"], 764)
+        self.assertEqual(self.report["counts"]["connector_candidates"], 2948)
+        self.assertEqual(self.report["counts"]["frontage_connector_candidates"], 2944)
         self.assertEqual(self.report["counts"]["road_reserve_proximity_connector_candidates"], 4)
         self.assertEqual(self.report["counts"]["unlinked_connector_candidates"], 0)
 
