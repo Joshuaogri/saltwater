@@ -32,7 +32,6 @@ on:
       - "data/property/saltwater-property-insurance-claims-v1.json.gz"
       - "data/property/saltwater-property-lifecycle-transactions-v1.json.gz"
       - "data/property/saltwater-property-rights-boundaries-v1.json.gz"
-      - "data/property/saltwater-property-rights-boundaries-v1.json.gz"
       - "data/property/saltwater-global-estate-capacity-audit-v1.json.gz"
   workflow_dispatch:
 
@@ -92,6 +91,19 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f db/migrations/0012_bp04_property_rights_boundaries.sql
       - name: Verify source collection identity handling
         run: python -m unittest tests.pkg001.test_bp04_property_stack_importer -v
+      - name: Verify explicit production importer guard
+        run: |
+          python runtime/bp04_property_stack_importer.py --help
+          if python runtime/bp04_property_stack_importer.py --dsn "postgresql://unused:unused@localhost/neondb" --expected-database neondb >/tmp/bp04-prod-guard.log 2>&1; then
+            echo "ERROR: production import was allowed without --allow-production"
+            exit 1
+          fi
+          grep -q "pass --allow-production explicitly" /tmp/bp04-prod-guard.log
+          if python runtime/bp04_property_stack_importer.py --dsn "postgresql://unused:unused@localhost/saltwater_test" --expected-database saltwater_test --allow-production >/tmp/bp04-prod-target.log 2>&1; then
+            echo "ERROR: --allow-production accepted a non-production database target"
+            exit 1
+          fi
+          grep -q "valid only with --expected-database neondb" /tmp/bp04-prod-target.log
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Archive all 14 compressed sources; import mapped property, business, operating schedules, lawful-use, building-control, title/lifecycle, rights, boundary and access, utility, maintenance, security, valuation and tax collections
