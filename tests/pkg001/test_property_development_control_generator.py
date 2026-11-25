@@ -1,9 +1,10 @@
-import json,unittest
+import unittest
 from pathlib import Path
+from runtime.dataset_io import load_json
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_development_control_generator import build_development_control
 ROOT=Path(__file__).resolve().parents[2]
-def load(p): return _expand_columnar(json.loads((ROOT/p).read_text()))
+def load(p): return _expand_columnar(load_json(ROOT/p))
 class PropertyDevelopmentControlTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
