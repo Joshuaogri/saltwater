@@ -7,7 +7,7 @@ is a persistent game save.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Any, Callable
 from uuid import UUID
 
 from runtime.kernel import KernelError, Lifecycle, RuntimeKernel
@@ -47,10 +47,12 @@ class PlayerCommandInterface:
     """Small command router; domain mutations remain with their owning systems."""
 
     def __init__(self, kernel: RuntimeKernel, profile: PlayerProfile,
-                 recruitment: PostgresRecruitmentService | None = None):
+                 recruitment: PostgresRecruitmentService | None = None,
+                 bp04_lookup: Any | None = None):
         self.kernel = kernel
         self.profile = profile
         self.recruitment = recruitment
+        self.bp04_lookup = bp04_lookup
         self.workspace_navigation = WorkspaceNavigation()
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
@@ -76,6 +78,8 @@ class PlayerCommandInterface:
                 return CommandResult(True, error.message)
             return CommandResult(False, error.message)
         command = parsed.command
+        if command.token in {"find", "inspect"}:
+            return self._property_lookup(command.token, command.arguments)
         if command.token == "workspace":
             self.workspace_navigation = self.workspace_navigation.select(command.arguments[0])
             return CommandResult(True, f"Current workspace: {WORKSPACE_BY_ID[self.workspace_navigation.current].label}")
@@ -86,6 +90,102 @@ class PlayerCommandInterface:
             return handler()
         except KernelError as exc:
             return CommandResult(False, str(exc))
+
+
+    def _property_lookup(self, operation: str, arguments: tuple[str, ...]) -> CommandResult:
+        if self.bp04_lookup is None:
+            return CommandResult(False, "Property lookup service is not connected.")
+        try:
+            entity_type = arguments[0]
+            if operation == "find":
+                matches = self.bp04_lookup.search(entity_type, " ".join(arguments[1:]), limit=10)
+                if not matches:
+                    return CommandResult(True, f"No {entity_type} records matched that search.")
+                lines = [f"Matches: {len(matches)} (maximum 10)"]
+                for row in matches:
+                    if entity_type == "address":
+                        label = row.get("address_label") or row.get("address_id")
+                        lines.append(f"{row['address_id']} | {label} | property {row.get('property_id')}")
+                    elif entity_type == "business":
+                        label = row.get("trading_name") or row.get("registered_name") or row.get("business_id")
+                        lines.append(f"{row['business_id']} | {label} | {row.get('sector')}")
+                    else:
+                        lines.append(
+                            f"{row['property_id']} | {row.get('primary_use')} | "
+                            f"{row.get('source_district_id')} / {row.get('source_neighbourhood_id')}"
+                        )
+                return CommandResult(True, "\\n".join(lines))
+
+            identifier = arguments[1]
+            if entity_type == "property":
+                detail = self.bp04_lookup.property_detail(identifier)
+                if detail is None:
+                    return CommandResult(True, "Property not found.")
+                prop, address = detail["property"], detail["address"]
+                lines = [
+                    f"Property: {prop['property_id']}",
+                    f"Address: {(address or {}).get('address_label', 'not recorded')}",
+                    f"Use: {prop.get('primary_use')}",
+                    f"District / neighbourhood: {prop.get('source_district_id')} / {prop.get('source_neighbourhood_id')}",
+                    f"Buildings: {len(detail['buildings'])}",
+                    "Businesses: " + (", ".join(
+                        row.get("trading_name") or row.get("registered_name") or row["business_id"]
+                        for row in detail["businesses"]
+                    ) or "none linked"),
+                    f"Geography: {detail['geography_binding']}",
+                ]
+                return CommandResult(True, "\\n".join(lines))
+            if entity_type == "address":
+                detail = self.bp04_lookup.address_detail(identifier)
+                if detail is None:
+                    return CommandResult(True, "Address not found.")
+                address = detail["address"]
+                return CommandResult(True, "\\n".join((
+                    f"Address: {address['address_id']}",
+                    f"Label: {address.get('address_label')}",
+                    f"Property: {address.get('property_id')}",
+                    f"Road / district / neighbourhood: {address.get('road_id')} / {address.get('district_id')} / {address.get('neighbourhood_id')}",
+                    f"Geography: {detail['geography_binding']}",
+                )))
+            if entity_type == "business":
+                detail = self.bp04_lookup.business_detail(identifier)
+                if detail is None:
+                    return CommandResult(True, "Business not found.")
+                business = detail["business"]
+                lines = [
+                    f"Business: {business['business_id']}",
+                    f"Name: {business.get('trading_name') or business.get('registered_name')}",
+                    f"Sector: {business.get('sector')}",
+                    f"Status: {business.get('status')}",
+                    f"Establishments: {len(detail['establishments'])}",
+                ]
+                for row in detail["establishments"][:20]:
+                    address = row.get("address") or {}
+                    lines.append(
+                        f"{row['establishment_id']} | {row.get('establishment_name')} | "
+                        f"{address.get('address_label', 'address unavailable')} | "
+                        f"property {row.get('property_id')}"
+                    )
+                return CommandResult(True, "\\n".join(lines))
+
+            record = self.bp04_lookup.get(entity_type, identifier)
+            if record is None:
+                return CommandResult(True, f"{entity_type.replace('_', ' ').title()} not found.")
+            fields = (
+                "property_id", "building_id", "premises_id", "unit_id",
+                "access_point_id", "business_id", "establishment_id", "address_id",
+                "building_use", "primary_function", "unit_locator", "access_type",
+                "access_modes", "floor_name", "primary_use",
+            )
+            lines = [f"{entity_type.replace('_', ' ').title()}: {identifier}"]
+            for field in fields:
+                if field in record and record[field] is not None:
+                    lines.append(f"{field.replace('_', ' ').title()}: {record[field]}")
+            return CommandResult(True, "\\n".join(lines))
+        except (KeyError, ValueError) as exc:
+            return CommandResult(False, f"Property lookup unavailable: {exc}")
+        except Exception:
+            return CommandResult(False, "Property lookup unavailable.")
 
     def _home(self) -> CommandResult:
         return CommandResult(True, render_home(self.profile, self.kernel.status(), self.workspace_navigation))
