@@ -28,6 +28,20 @@ class DirectAccessConnectorAuditTests(unittest.TestCase):
         self.assertEqual(counts["direct_connector_candidates_tested"], 768)
         self.assertEqual(counts["unlinked_road_connection_candidate"], 0)
         self.assertEqual(counts["point_contact_road_reserve_candidates"], 4)
+        self.assertEqual(counts["point_contact_only_road_reserve_connections"], 4)
+        point_contacts = [
+            row for row in self.report["connector_candidates"]
+            if row["road_connection_contact_type"] == "POINT_CONTACT_ONLY"
+        ]
+        self.assertEqual(len(point_contacts), 4)
+        self.assertTrue(all(
+            row["road_connection_type"] == "road_reserve_proximity_connection"
+            for row in point_contacts
+        ))
+        self.assertTrue(all(
+            row["road_connection_contact_type"] != "FRONTAGE"
+            for row in point_contacts
+        ))
 
     def test_each_linked_connector_is_classified(self):
         counts = self.report["counts"]

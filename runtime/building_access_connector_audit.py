@@ -127,7 +127,7 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
     lengths.sort()
     median = lengths[len(lengths) // 2] if lengths else 0.0
     checks = {
-        "all_linked_candidates_have_valid_parent_and_frontage": (
+        "all_candidates_have_valid_parent_and_road_connection": (
             not errors["missing_parent"] and not errors["missing_road_connection_candidate"]
         ),
         "every_connector_is_inside_its_parent_property": not errors["outside_parent_property"],
@@ -160,6 +160,11 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
             "direct_geometry_feasible_unreviewed": status_counts["DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED"],
             "direct_geometry_blocked_unreviewed": status_counts["DIRECT_GEOMETRY_BLOCKED_UNREVIEWED"],
             "unlinked_road_connection_candidate": status_counts["NO_ROAD_CONNECTION_CANDIDATE"],
+            "point_contact_only_road_reserve_connections": sum(
+                1 for row in connectors
+                if row["road_connection_type"] == "road_reserve_proximity_connection"
+                and row["road_connection_contact_type"] == "POINT_CONTACT_ONLY"
+            ),
             "point_contact_road_reserve_candidates": sum(
                 1 for row in connectors if row["road_connection_contact_type"] == "POINT_CONTACT_ONLY"
             ),
@@ -174,7 +179,7 @@ def audit_direct_access_connectors(source: dict, candidates: dict,
         "failed_checks": [name for name, passed in checks.items() if not passed],
         "connector_candidates": connectors,
         "interpretation": (
-            "A feasible result means only that the straight geometric line is contained "
+            "Four former no-frontage candidates are now linked to point-contact-only road-reserve proximity candidates; these are not frontage edges. A feasible result means only that the straight geometric line is contained "
             "by the parent property and does not cross mapped building interiors or mapped "
             "water. It does not establish a constructed driveway, door, gate, legal access, "
             "surface condition, gradient, barrier-free route, vehicle suitability or emergency "
