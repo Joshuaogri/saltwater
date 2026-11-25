@@ -663,3 +663,14 @@ The manual production release workflow ran on `main` at commit `8854d66180a074f0
 - All 14 dataset ledger rows and all 12 migration ledger rows are present in production.
 
 The BP04 release is present and accepted in Neon. The outstanding item is to explain the small database-size delta during the repeat import, confirm row-count idempotency independently, and adjust the workflow's storage assertion if PostgreSQL maintenance/operation-ledger writes explain the delta. Do not re-import the package merely to retry the size assertion. No rollback was performed; retain the pre-release restore snapshot.
+
+
+## BP04 storage architecture update — compressed archive only (2026-11-25)
+
+The earlier BP04 Neon import was rolled back to its pre-release restore point at the user's request. Production is currently restored to **9,306,112 bytes (9.31 MB)**, with five original user tables, migration versions 1–2, and no BP04 schema or data. The restored production branch is `br-still-cloud-bdvaw8u4`.
+
+The prior typed-row design stored the 14 compressed source files (29.43 MB) and also expanded 1,422,202 mapped source records into 92 relational tables. That previous representation measured approximately 616.51 MB of incremental Neon database growth. It is superseded for production use.
+
+**Selected model:** store the 14 original gzip datasets exactly once in `sw_property.source_dataset_archive`, preserve release/dataset/collection provenance and exact source counts, and do not permanently materialise the 1.42 million typed rows. The dataset is decompressed and expanded in application memory only when requested through `runtime/bp04_archive_reader.py`; SHA-256 is verified before use. The original compressed archive remains the lossless source of truth. Domain tables remain empty for static BP04 source data; only genuinely changing game state should be stored as transactional records.
+
+The disposable PostgreSQL workflow and manual-only Neon release workflow now select `--archive-only` and the new archive-only acceptance checks. The target is storage close to the 29.43 MB compressed package plus PostgreSQL metadata, TOAST and provenance overhead. The actual archive-only database size is **not yet measured**; do not reuse the former 628 MB typed-row benchmark as the new estimate. No Neon production write has been made as part of this change. The manual Neon workflow still requires fresh explicit user authorisation and a restore point.
