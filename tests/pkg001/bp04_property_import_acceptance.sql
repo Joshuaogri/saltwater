@@ -80,5 +80,31 @@ BEGIN
     LEFT JOIN sw_property.property_title_register r USING(title_register_id)
     WHERE i.title_instrument_id IS NULL OR r.title_register_id IS NULL
   ) THEN RAISE EXCEPTION 'property transaction/title lineage failure'; END IF;
+
+  SELECT mapping_status, loaded_record_count INTO v_status, v_count
+  FROM sw_property.import_dataset WHERE dataset_id='SW-PROPERTY-RIGHTS-AND-BOUNDARIES-V1';
+  IF v_status <> 'fully_mapped' OR v_count <> 18013 THEN
+    RAISE EXCEPTION 'property rights mapping mismatch: status %, loaded %', v_status, v_count;
+  END IF;
+  IF (SELECT count(*) FROM sw_property.property_rights_schedule) <> 420
+     OR (SELECT count(*) FROM sw_property.contractual_rights_index) <> 12500
+     OR (SELECT count(*) FROM sw_property.boundary_evidence_register) <> 420
+     OR (SELECT count(*) FROM sw_property.physical_access_evidence_register) <> 2984
+     OR (SELECT count(*) FROM sw_property.utility_wayleave_requirement) <> 1680
+     OR (SELECT count(*) FROM sw_property.registered_property_instrument) <> 0
+     OR (SELECT count(*) FROM sw_property.future_instrument_template) <> 9 THEN
+    RAISE EXCEPTION 'property rights typed row counts incorrect';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM sw_property.contractual_rights_index r
+    LEFT JOIN sw_property.occupancy_agreement a USING(agreement_id)
+    WHERE a.agreement_id IS NULL
+  ) THEN RAISE EXCEPTION 'contractual rights agreement lineage failure'; END IF;
+  IF EXISTS (
+    SELECT 1 FROM sw_property.physical_access_evidence_register a
+    LEFT JOIN sw_property.access_point p USING(access_point_id)
+    LEFT JOIN sw_property.property_site s USING(property_id)
+    WHERE p.access_point_id IS NULL OR s.property_id IS NULL
+  ) THEN RAISE EXCEPTION 'physical access evidence linkage failure'; END IF;
 END $bp04$;
 SELECT 'BP04 imported source ledger and business operations acceptance passed' AS result;
