@@ -260,3 +260,23 @@ The output uses the same lossless textual columnar representation as the propert
 The weekly schedule layer is generated and committed at [`data/business/saltwater-business-operations-v1.json`](data/business/saltwater-business-operations-v1.json) (15,319,899 bytes; approximately 14.61 MiB). It contains 70,000 daily opening/service/shift/delivery schedule records (seven per establishment) and 10,000 weekly profiles. Build and regression workflow [45574250446](https://github.com/Joshuaogri/saltwater/actions/runs/45574250446) completed successfully. Schedules do not create staff, customers or resident person records.
 
 These datasets remain in GitHub only. No Neon upload or production seed write has occurred. Neon upload remains scheduled after the property-management layers are completed, with compact import packaging, a fresh live storage measurement, an incremental/projected storage estimate and explicit approval before any production write.
+
+
+## BP-04 — building systems, utilities and metering (SW-BUILDING-SERVICES-V1)
+
+The first building-services layer is generated, regression-tested and persisted on `main`. It consumes the existing compact property-world and tenure datasets and is stored as compact textual columnar JSON at [`data/property/saltwater-building-services-v1.json`](data/property/saltwater-building-services-v1.json) (16,961,533 bytes; approximately 16.18 MiB).
+
+The dataset contains:
+- Four citywide utility operators: electricity, potable water, wastewater and telecommunications.
+- 1,680 property utility connections and 1,680 linked master utility accounts across 420 property sites.
+- 32,078 meters: property master meters plus dedicated electricity and water submeters for all 15,199 units.
+- 2,862 building systems across 384 buildings, including electrical distribution, water distribution, wastewater/sanitary, HVAC, fire protection, security/access control, building controls and vertical transport where installed.
+- 6,431 equipment assets with installation year, condition, operational state, maintenance class and replacement priority.
+- 2,862 system inspection schedules with intervals, last inspection years and next-due simulation ticks.
+- 10,000 business utility-responsibility assignments linked to current occupancy records and dedicated unit submeters.
+
+The layer records service availability, capacity bands, redundancy, account responsibility, equipment condition and inspection schedules. It does not create bills, meter readings, balances, financial postings, residents, employees or other person records. BP-34 retains authority over financial transactions; the population ledger remains unchanged.
+
+Build and seven regression tests passed in workflow [45578689850](https://github.com/Joshuaogri/saltwater/actions/runs/45578689850). The final regression-test optimisation also passed the regenerated workflow [45578778424](https://github.com/Joshuaogri/saltwater/actions/runs/45578778424).
+
+This dataset remains in GitHub only. No Neon upload or production seed write has occurred. Neon preparation remains after the remaining property-management layers, with compact import packaging, a fresh live database storage measurement, projected incremental storage and explicit approval before production writes.
