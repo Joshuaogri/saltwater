@@ -17,6 +17,9 @@ from typing import Iterable
 from runtime.geography_identity_reconciliation import validate_identity_map
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.bp02_parcel_address_identity import build_identity_register
+from runtime.bp02_address_access_reconciliation import reconcile_building_access_roads
+from runtime.parcel_dossier_generator import build_parcel_dossiers
+from runtime.physical_asset_inventory_generator import build_asset_inventory
 
 ROOT = Path(__file__).resolve().parents[1]
 GEO_PATH = ROOT / "data/geography/saltwater-geography-v1.json"
@@ -169,6 +172,8 @@ def reconcile_collections(
 def build_reconciliation(geo: dict, identity_map: dict, property_document: dict) -> dict:
     identity_result = validate_identity_map(geo, identity_map)
     candidate_manifest = build_candidates(geo)
+    parcel_dossiers = build_parcel_dossiers(geo, candidate_manifest)
+    physical_assets = build_asset_inventory(geo, candidate_manifest, parcel_dossiers)
     candidate_ids = {
         row["candidate_parcel_id"] for row in candidate_manifest["parcels"]
     }
@@ -202,6 +207,9 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
         types.get("PARCEL", set()), types.get("ADDRESS", set()),
         parcel_map, address_map,
     )
+    building_access_reconciliation = reconcile_building_access_roads(
+        properties, addresses, parcel_dossiers, physical_assets
+    )
     frontage_counts = {}
     for address in identity_register["addresses"]:
         status = address["road_frontage_match_status"]
@@ -225,6 +233,18 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
         )
     ]
     result.update({
+        "building_access_road_candidate_status_counts": building_access_reconciliation["address_access_road_candidate_status_counts"],
+        "building_access_road_candidate_references_resolved": building_access_reconciliation["address_access_road_candidate_references_resolved"],
+        "building_access_candidate_unresolved_access_points": building_access_reconciliation["unresolved_building_access_point_count"],
+        "building_access_road_exceptions": [
+            row for row in building_access_reconciliation["address_access_road_results"]
+            if row["status"] != "SOURCE_ROAD_MATCHES_BUILDING_ACCESS_SET"
+        ],
+        "building_access_asset_counts": {
+            "properties": len(physical_assets.get("properties", [])),
+            "buildings": len(physical_assets.get("buildings", [])),
+            "building_boundary_access_candidates": len(physical_assets.get("access_points", [])),
+        },
         "address_road_frontage_candidate_status_counts": frontage_counts,
         "address_road_candidate_status_counts": road_candidate_counts,
         "address_road_candidate_references_resolved": sum(
