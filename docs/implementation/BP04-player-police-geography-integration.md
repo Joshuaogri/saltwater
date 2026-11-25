@@ -1,0 +1,114 @@
+# BP04 player, police and BP-02 geography integration
+
+**Status:** player command integration and officer-authorised adapter implemented on `main`; regression workflow passed on PostgreSQL-independent test fixtures. BP-02 canonical parcel/address binding remains blocked because no canonical parcel or address identities exist in the current BP-02 source map.
+
+## 1. Player command surface
+
+The canonical player command catalogue, parser, player interface, authenticated PKG-005 runtime, PKG-006 host adapter and PKG-007 ChatGPT tool contract now support:
+
+```text
+find address Harbour Avenue
+find business Harbour Bank
+find property SWPROP-...
+inspect property SWPROP-...
+inspect address SWADDR-...
+inspect business SWBIZ-...
+inspect building SWBLD-...
+inspect premises SWPRE-...
+inspect unit SWUNIT-...
+inspect access_point SWACC-...
+inspect establishment SWEST-...
+```
+
+`find` supports address, property and business searches. Search returns at most 10 player-facing results. `inspect` resolves one stable ID and returns a bounded dossier. The interface deliberately identifies the current BP04 geography as `source_geography_reference_only`; it does not call source address labels canonical BP-02 addresses.
+
+The authenticated path is:
+
+1. The trusted host supplies the opaque game-session credential.
+2. PKG-005 resolves the authoritative player identity from PostgreSQL.
+3. The existing command gateway re-verifies the session and checks the current `player.command.find` or `player.command.inspect` grant.
+4. Only after that grant succeeds does the command router invoke its lazy BP04 lookup provider.
+5. The process-local `BP04Lookup` loads and verifies the compressed BP04 archives once and reuses the selected identity/navigation index.
+
+The ChatGPT tool schema and handler now accept bounded lookup commands up to 256 characters. Model arguments still cannot provide player identity, credentials or host context. Lookup commands are read-only and do not advance simulation time.
+
+**Player policy requirement:** the active `sw_auth.permission_grant` policy must explicitly allow `player.command.find` and `player.command.inspect` for the intended player principal/role, resource `player:*`, purpose `gameplay`. No such grant was created by this implementation. The existing default-deny gateway therefore remains authoritative.
+
+## 2. Police workflow access
+
+`runtime/bp04_police_access.py` supplies a separate `BP04PoliceLookupAccess` facade:
+
+- `search(credential, entity_type, query, limit)`
+- `inspect(credential, entity_type, identifier)`
+- `resolve_address(credential, address_id)`
+
+It is not exposed through the public player command surface. Each operation:
+- requires the expected principal kind `OFFICER`;
+- checks the current permission grant for the exact BP04 action/resource and purpose `police_workflow`;
+- re-loads grants for each decision;
+- appends an authorization record through the configured audit sink;
+- fails closed on missing grants, invalid/revoked sessions or audit failure.
+
+`create_postgres_bp04_police_lookup_access(connect, lookup, principal_id)` composes the existing `PostgresSessionVerifier`, `PostgresGrantProvider` and `PostgresAuditSink`. The audit sink is durable and append-only. The factory creates no grants and runs no migration.
+
+### Required officer grant contract
+
+The active policy must explicitly provision the actions required by the workflow. Examples of action/resource/purpose tuples:
+
+| Action | Resource pattern | Purpose | Principal constraint |
+|---|---|---|---|
+| `bp04.lookup.search.address` | `bp04:address:search` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.search.property` | `bp04:property:search` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.search.business` | `bp04:business:search` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.address` | `bp04:address:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.property` | `bp04:property:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.business` | `bp04:business:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.building` | `bp04:building:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.premises` | `bp04:premises:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.unit` | `bp04:unit:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.access_point` | `bp04:access_point:*` | `police_workflow` | `OFFICER` plus approved role |
+| `bp04.lookup.inspect.establishment` | `bp04:establishment:*` | `police_workflow` | `OFFICER` plus approved role |
+
+These are policy requirements, not grants already present in production. No production policy rows were inserted or changed. Until a matching active grant exists, officer lookups are denied and audited.
+
+The adapter is ready for dispatch, incident and investigation services to call. Those service-level integrations remain future work because the corresponding complete police operational interfaces are not yet present in the runtime. This adapter does not bypass BP-42, evidence ownership, restricted-access policy or hidden-truth controls.
+
+## 3. BP04-to-BP-02 address reconciliation
+
+The read-only audit is implemented in `runtime/bp04_geography_reconciliation.py`. It regenerates the deterministic 420-parcel candidate set from SW-GEO-V1, reads the committed compressed BP04 property-world source, and reconciles every property/address relationship against the BP-02 source identity map.
+
+Verified on the real committed source package in [workflow run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644):
+
+| Reconciliation | Result |
+|---|---:|
+| BP04 property records | 420 |
+| BP04 address records | 420 |
+| Source property-to-generated-parcel-candidate links | 420/420 |
+| Primary property-to-address links | 420/420 |
+| District IDs matched to BP-02 `entity_code` | 420/420 |
+| Neighbourhood IDs matched to BP-02 `entity_code` | 420/420 |
+| Road IDs matched to BP-02 `entity_code` | 420/420 |
+| BP-02 canonical parcel identities in source map | 0 |
+| BP-02 canonical address identities in source map | 0 |
+| BP04 properties still awaiting canonical parcel binding | 420 |
+| BP04 addresses still awaiting canonical address binding | 420 |
+
+The 100-entry BP-02 identity map currently covers districts, neighbourhoods, roads, routes, landmarks and geographic zones. It does not contain parcel or address identity entries. The 420 parcel polygons are generated, unapproved design candidates; they have no BP-02 `spatial_id`. The BP04 `SWADDR-...` records are generated source-world address labels, not canonical BP-02 address entities.
+
+**Reconciliation outcome:** all current district/neighbourhood/road context and internal BP04 property/address links reconcile, but canonical parcel/address binding remains `BLOCKED_BP02_CANONICAL_PARCEL_AND_ADDRESS_IDENTITIES_ABSENT`. Do not assign disposable integer IDs, infer canonical IDs from generated labels, or promote candidate geometry to operational geography.
+
+## 4. Verification and write boundary
+
+The BP04 player/police/geography workflow passed on `main` in [run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644). It tests the typed command parser, player interface, authenticated player runtime, ChatGPT tool contract, trusted host boundary, officer-only grant enforcement, audit behaviour, BP04 lookup contracts and geography reconciliation.
+
+The geography audit reports `database_write_performed: false`. No Neon writes, policy-grant writes, migrations, address promotions or archive re-uploads were performed.
+
+## 5. Remaining BP04 acceptance work
+
+1. BP-02 must supply approved, stable parcel and canonical address identities, including geometry/version lineage and address scope/aliases.
+2. Re-run this reconciliation against those actual canonical IDs and resolve all 420 property/address links; only then may canonical binding be marked complete.
+3. Provision the approved player and officer permission grants through the controlled authorization-policy process. This implementation deliberately did not modify Neon.
+4. Wire `BP04PoliceLookupAccess` into actual dispatch, incident and investigation workflows when those owning services are implemented.
+5. Complete the remaining business, ownership/tenancy, organisation/facility, operational-interface and 10,000-business performance acceptance criteria in the full BP04 audit.
+
+**Decision:** player lookup commands are implemented and tested; the officer-authorised adapter is implemented and default-deny; source geography context is reconciled; canonical BP-02 parcel/address binding and full BP04 division acceptance are still incomplete.
