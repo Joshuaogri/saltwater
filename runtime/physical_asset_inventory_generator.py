@@ -602,14 +602,28 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             access["point_m"] = [round(start.x, 6), round(start.y, 6)]
             access["point_status"] = "UNREVIEWED_RELOCATED_BUILDING_BOUNDARY_CANDIDATE"
         proximity = candidate.get("candidate_type") == "road_reserve_proximity_connection"
+        # Keep the access-point's road-link evidence as the nearest geometric
+        # candidate. The connector separately records the selected obstacle-clear
+        # candidate, which may be farther away. This preserves both facts.
+        nearest_candidate = min(
+            dossier.get("access_candidates", []),
+            key=lambda item: (
+                round(start.distance(Point(item["candidate_x_m"], item["candidate_y_m"])), 9),
+                item["access_candidate_id"],
+            ),
+        )
+        nearest_distance = start.distance(Point(
+            nearest_candidate["candidate_x_m"], nearest_candidate["candidate_y_m"]
+        ))
+        nearest_proximity = nearest_candidate.get("candidate_type") == "road_reserve_proximity_connection"
         access.update({
-            "road_link_candidate_id": candidate_id,
-            "road_link_candidate_type": candidate.get("candidate_type"),
-            "road_link_road_id": candidate.get("road_id"),
-            "road_link_segment_ids": candidate.get("road_segment_ids", []),
-            "road_link_contact_type": candidate.get("contact_type"),
-            "road_link_candidate_distance_m": round(line.length, 3),
-            "road_link_basis": "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if proximity
+            "road_link_candidate_id": nearest_candidate["access_candidate_id"],
+            "road_link_candidate_type": nearest_candidate.get("candidate_type"),
+            "road_link_road_id": nearest_candidate.get("road_id"),
+            "road_link_segment_ids": nearest_candidate.get("road_segment_ids", []),
+            "road_link_contact_type": nearest_candidate.get("contact_type"),
+            "road_link_candidate_distance_m": round(nearest_distance, 3),
+            "road_link_basis": "NEAREST_ROAD_RESERVE_PROXIMITY_CANDIDATE" if nearest_proximity
                                else "NEAREST_STRAIGHT_LINE_FRONTAGE_CANDIDATE",
             "road_link_status": "UNREVIEWED_PROXIMITY_ONLY_NOT_A_CONFIRMED_ROUTE",
         })
