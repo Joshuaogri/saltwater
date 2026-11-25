@@ -18,11 +18,13 @@ on:
       - "db/proposals/0025_bp07_career_rank_and_post_history.sql"
       - "db/proposals/0026_bp08_unit_deployment.sql"
       - "db/proposals/0027_bp09_police_resource_readiness.sql"
+      - "db/proposals/0028_bp12_incident_management.sql"
       - "tests/pkg001/police_architecture_acceptance.sql"
       - "tests/pkg001/personnel_service_acceptance.sql"
       - "tests/pkg001/career_history_acceptance.sql"
       - "tests/pkg001/unit_deployment_acceptance.sql"
       - "tests/pkg001/resource_readiness_acceptance.sql"
+      - "tests/pkg001/incident_management_acceptance.sql"
       - "runtime/naming.py"
       - "runtime/name_generation.py"
       - "runtime/naming_inventory.py"
@@ -152,6 +154,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0025_bp07_career_rank_and_post_history.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0026_bp08_unit_deployment.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0027_bp09_police_resource_readiness.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0028_bp12_incident_management.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -184,6 +187,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/unit_deployment_acceptance.sql
       - name: Verify BP09 resource inventory and dispatch readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/resource_readiness_acceptance.sql
+      - name: Verify BP12 incident schema and runtime boundary
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/incident_management_acceptance.sql
       - name: Measure representative 1,000-person storage growth
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
