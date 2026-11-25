@@ -181,6 +181,32 @@ class PlayerCommandRuntimeTests(unittest.TestCase):
         )
         gateway.execute.assert_called_once_with("opaque-credential", "profile")
 
+
+    def test_authenticated_lookup_command_receives_lazy_shared_lookup_provider(self):
+        lookup = Mock()
+        gateway = Mock()
+        gateway.execute.return_value = CommandResult(True, "address results")
+        with patch(
+            "runtime.player_command_runtime.create_postgres_player_application",
+            return_value=object(),
+        ) as create_app, patch(
+            "runtime.player_command_runtime.bind_authorized_player_commands",
+            return_value=gateway,
+        ):
+            runtime = PostgresPlayerCommandRuntime(
+                self.connect, self.verifier, self.authorization,
+                bp04_lookup=lookup,
+            )
+            result = runtime.execute("opaque-credential", "find address Harbour Avenue")
+
+        self.assertTrue(result.ok)
+        provider = create_app.call_args.kwargs["bp04_lookup"]
+        self.assertTrue(callable(provider))
+        self.assertIs(provider(), lookup)
+        gateway.execute.assert_called_once_with(
+            "opaque-credential", "find address Harbour Avenue"
+        )
+
     def test_revoked_session_is_still_sent_to_gateway_for_audited_denial(self):
         self.verifier.session = make_session(status=SessionStatus.REVOKED)
         gateway = Mock()
