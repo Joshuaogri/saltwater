@@ -406,3 +406,29 @@ Unit identity reconciliation is exact across the property world, tenure occupanc
 The 10,000-person population hard cap is unchanged. No residents, workers, employees, police personnel or other person records were created. No Neon production writes were made.
 
 **Next physical-estate phase:** replace the single-building-per-property limitation with multi-building campuses and specialist megasites. This includes international port and bonded-logistics terminals, intermodal freight/passenger complexes, export-manufacturing estates, financial/corporate headquarters campuses and major international institutions. Every additional building must receive unique building, premises, unit and access identifiers, site-contained geometry, a connected constructed entrance/route and fully regenerated downstream property records. Existing site-only entrances and no-frontage access solutions must be preserved. The one-contiguous-city-state canon and 10,000-person cap remain binding.
+
+## SW-PROPERTY-ESTATE-V2 — expanded campus estate and regenerated property stack
+
+**Verified and persisted on `main` on 2026-11-25.** This section supersedes all earlier property-estate counts and dataset-size statements above where they describe the pre-campus or single-building estate. The sequential full-stack rebuild and all 13 validation stages passed in [workflow run 45623907617](https://github.com/Joshuaogri/saltwater/actions/runs/45623907617). All dependent registers were regenerated in dependency order, compressed, and persisted together in one consistent snapshot.
+
+### Canonical expanded physical estate
+
+- 420 property sites.
+- 1,474 buildings across multi-building campuses and specialist sites.
+- 27,730 premises.
+- 180,733 canonical units.
+- 110,920 named rooms.
+- 2,984 building/site access points and constructed access routes.
+- 36 sites without buildings retain site-level entrances and maintenance paths.
+- Existing shared access spurs continue to resolve the four original frontage-deficient cases.
+- No resident, worker, employee, police-personnel or other person records were generated. The distinct-person population cap remains 10,000.
+
+### Regenerated dependent registers
+
+The same expanded estate was used to regenerate business registry and weekly operations, ownership and occupancy, utility connections/meters/building systems/equipment, maintenance and defects, security and access control, condition/valuation/insurance/tax, development and lawful use, title/lifecycle/transactions, rights/boundary evidence, insurance exposure/claims controls, facilities operations, and the global estate-capacity audit. All 13 workflow validation stages passed, including exact canonical unit-identity reconciliation across the property world, tenure, utility submeters, development-control and facilities records.
+
+### Compressed source inventory
+
+All 14 property/business datasets are stored as deterministic gzip snapshots under `data/property/` and `data/business/`. Their combined GitHub blob size is **23,023,562 bytes (21.96 MiB)**. No uncompressed `.json` dataset files remain in those two folders. The canonical property-world snapshot is 8,924,278 bytes compressed; the building-services snapshot is 4,284,913 bytes compressed. These are source-repository compressed sizes, **not** PostgreSQL storage estimates.
+
+The full-stack workflow restores compressed inputs, rebuilds and validates the complete dependency stack, compresses every output and commits the consistent snapshot to `main`. No Neon production seed/import/upload or population write occurred. Before any proposed Neon import, the compact package must be prepared and benchmarked, the live PostgreSQL baseline remeasured, and projected database growth reported for explicit approval.
