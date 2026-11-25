@@ -125,7 +125,9 @@ A geometric road-frontage comparison now checks each BP04 source address road ag
 | Source road matches parcel frontage-road candidate | 415 |
 | Source road differs from parcel frontage-road candidate | 3 |
 | No parcel frontage-road candidate | 2 |
-| Single geometric frontage-road candidate reference available | 418/420 |
+| Exactly one frontage-road candidate (unambiguous candidate only) | 88/420 |
+| Multiple frontage-road candidates (requires address-side review) | 330/420 |
+| No frontage-road candidate | 2/420 |
 
 The three mismatches are explicitly preserved, not silently rewritten:
 - `SWADDR-BPCSWD03N301701`: source `SWR-V16`; candidate frontage road `SWR-H17`.
