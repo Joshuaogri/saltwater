@@ -98,6 +98,17 @@ def build_identity_register(
             frontage_match_status = "ADDRESS_ROAD_DIFFERS_FROM_PARCEL_FRONTAGE_CANDIDATE"
         else:
             frontage_match_status = "NO_PARCEL_FRONTAGE_CANDIDATE"
+        if not road_segment_to_road:
+            road_candidate_id, road_candidate_status = None, "NOT_EVALUATED"
+        elif road_id in frontage_roads:
+            road_candidate_id, road_candidate_status = road_id, "SOURCE_ROAD_MATCHES_FRONTAGE_SET"
+        elif len(frontage_roads) == 1:
+            road_candidate_id = next(iter(frontage_roads))
+            road_candidate_status = "SINGLE_ALTERNATIVE_FRONTAGE_ROAD_REQUIRES_REVIEW"
+        elif not frontage_roads:
+            road_candidate_id, road_candidate_status = None, "NO_FRONTAGE_ROAD_CANDIDATE"
+        else:
+            road_candidate_id, road_candidate_status = None, "MULTIPLE_FRONTAGE_ROADS_REQUIRE_REVIEW"
         district_id = source_address.get("district_id")
         neighbourhood_id = source_address.get("neighbourhood_id")
         for label, value in (("road", road_id), ("district", district_id), ("neighbourhood", neighbourhood_id)):
@@ -124,13 +135,8 @@ def build_identity_register(
             "frontage_status": "NOT_PROVEN_BY_IDENTITY_MAPPING",
             "road_frontage_match_status": frontage_match_status,
             "candidate_frontage_road_ids": sorted(frontage_roads),
-            "address_road_candidate_id": next(iter(frontage_roads)) if len(frontage_roads) == 1 else None,
-            "address_road_candidate_status": (
-                "SINGLE_GEOMETRIC_FRONTAGE_ROAD_CANDIDATE"
-                if len(frontage_roads) == 1
-                else "NO_FRONTAGE_ROAD_CANDIDATE" if not frontage_roads
-                else "MULTIPLE_FRONTAGE_ROADS_REQUIRE_REVIEW"
-            ),
+            "address_road_candidate_id": road_candidate_id,
+            "address_road_candidate_status": road_candidate_status,
             "operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
         })
 
