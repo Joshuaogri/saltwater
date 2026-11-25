@@ -297,7 +297,6 @@ CREATE TABLE sw_property.import_dataset (
   dataset_id text NOT NULL,
   source_path text NOT NULL,
   source_sha256 char(64) NOT NULL,
-  FOREIGN KEY(source_sha256) REFERENCES sw_property.source_dataset_archive(source_sha256),
   compressed_bytes bigint NOT NULL CHECK (compressed_bytes >= 0),
   uncompressed_bytes bigint NOT NULL CHECK (uncompressed_bytes >= 0),
   source_record_count bigint NOT NULL CHECK (source_record_count >= 0),
