@@ -20,7 +20,7 @@ class TerrainObstacleDetailRegisterTests(unittest.TestCase):
  def test_route_overlay_preserves_lineage(self):
   route={"candidate_route_corridor_id":"RC-1","source_connector_candidate_id":"C-1","centreline_geometry":{"type":"LineString","coordinates":[[3400,3000],[5900,6200]]}}
   hits=build_detail_register(self.source,[route])["terrain_records"][0]["route_corridor_intersections"]
-  self.assertEqual(len(hits),1); self.assertEqual(hits[0]["candidate_route_corridor_id"],"RC-1")
+  self.assertEqual(len(hits),1); self.assertEqual(hits[0]["route_corridor_candidate_id"],"RC-1")
  def test_duplicate_ids_rejected(self):
   f1={"id":"X","geometry":{"type":"Point","coordinates":[0,0]},"properties":{"entity_type":"wall"}}
   f2={"id":"X","geometry":{"type":"Point","coordinates":[1,1]},"properties":{"entity_type":"gate"}}
