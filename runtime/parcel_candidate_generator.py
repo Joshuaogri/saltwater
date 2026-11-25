@@ -161,7 +161,7 @@ def build_candidates(source: dict) -> dict:
                     if actual_road_edge_contact.length > 0.01:
                         for segment in corridors["segments"]:
                             seg_poly = Polygon(segment["reserve_polygon"][0])
-                            shared = boundary.intersection(seg_poly.boundary).intersection(road_edge_boundary)
+                            shared = boundary.intersection(seg_poly.boundary)
                             if shared.length > 0.01:
                                 frontage.append(segment["segment_id"])
                     parcel = {

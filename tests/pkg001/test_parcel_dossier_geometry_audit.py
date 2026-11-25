@@ -36,6 +36,24 @@ class ParcelDossierGeometryAuditTests(unittest.TestCase):
         self.assertEqual(report["measurements"]["parcel_interior_overlap_area_m2"], 0)
         self.assertFalse(report["operational_seed_eligible"])
 
+    def test_bridge_edge_parcels_retain_their_source_segment_frontages(self):
+        by_id = {
+            row["dossier"]["candidate_parcel_id"]: row
+            for row in self.dossiers["parcels"]
+        }
+        for parcel_id, expected_road in (
+            ("BPC-SWD04N1-004-02", "SWR-B2"),
+            ("BPC-SWD08N1-018-02", "SWR-B1"),
+        ):
+            row = by_id[parcel_id]
+            self.assertTrue(row["frontages"], parcel_id)
+            self.assertTrue(row["access_candidates"], parcel_id)
+            self.assertIn(expected_road, {f["road_id"] for f in row["frontages"]})
+            self.assertEqual(
+                row["dossier"]["frontage_status"],
+                "ROAD_RESERVE_EDGE_CONTACT_CANDIDATE",
+            )
+
     def test_frontage_cannot_reference_a_different_road(self):
         bad = json.loads(json.dumps(self.dossiers))
         bad["parcels"][0]["frontages"][0]["road_id"] = "SW-RD-MISSING"
