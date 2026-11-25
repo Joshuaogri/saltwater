@@ -33,6 +33,7 @@ class BP02AddressAccessReconciliationTests(unittest.TestCase):
             ],
             "access_points": [
                 {"candidate_access_point_id": "X1", "building_id": "B1", "road_link_candidate_id": "AC1"},
+                {"candidate_access_point_id": "X4", "building_id": "B1", "road_link_candidate_id": "AC2"},
                 {"candidate_access_point_id": "X2", "building_id": "B2", "road_link_candidate_id": "AC3"},
                 {"candidate_access_point_id": "X3", "building_id": "B3", "road_link_candidate_id": None},
             ],
