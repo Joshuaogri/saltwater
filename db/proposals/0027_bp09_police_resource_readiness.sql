@@ -95,7 +95,10 @@ BEGIN
   RAISE EXCEPTION '% is append-only; record a new resource event',TG_TABLE_NAME;
 END
 $bp09$;
-CREATE TRIGGER resource_asset_event_immutable\nBEFORE UPDATE OR DELETE ON sw_police.resource_asset_event\nFOR EACH ROW EXECUTE FUNCTION sw_police.reject_resource_history_mutation();\nCREATE TRIGGER resource_allocation_event_immutable
+CREATE TRIGGER resource_asset_event_immutable
+BEFORE UPDATE OR DELETE ON sw_police.resource_asset_event
+FOR EACH ROW EXECUTE FUNCTION sw_police.reject_resource_history_mutation();
+CREATE TRIGGER resource_allocation_event_immutable
 BEFORE UPDATE OR DELETE ON sw_police.resource_allocation_event
 FOR EACH ROW EXECUTE FUNCTION sw_police.reject_resource_history_mutation();
 
