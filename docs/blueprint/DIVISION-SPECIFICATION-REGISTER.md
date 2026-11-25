@@ -14,7 +14,7 @@
 | BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
 | BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
 | BP-03 | Population and Individual Simulation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
-| BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
+| BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | BLOCKED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
 | BP-06 | Police Personnel | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-06](divisions/BP-06-POLICE-PERSONNEL.md) |
 | BP-07 | Career System | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-07](divisions/BP-07-CAREER-SYSTEM.md) |
@@ -55,6 +55,8 @@
 | BP-42 | Security and Permissions | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-42](divisions/BP-42-SECURITY-AND-PERMISSIONS.md) |
 | BP-43 | Testing and Quality Assurance | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-43](divisions/BP-43-TESTING-AND-QUALITY-ASSURANCE.md) |
 | BP-44 | Configuration and Change Control | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-44](divisions/BP-44-CONFIGURATION-AND-CHANGE-CONTROL.md) |
+
+**BP-04 status note (2026-11-25):** The implementation and test statuses refer to the bounded property-world source generators, archive reader, 92-table schema, archive-only importer and successful production archive release. They do not mean the complete BP04 division has passed acceptance. Verification is `BLOCKED` pending the [full BP04 acceptance audit](../implementation/test-evidence/BP04-full-acceptance-audit-2026-11-25.md). The BP04 specification remains `DESIGNED_DRAFT`; master-blueprint approval does not by itself approve every division specification.
 
 ## Governing status rules
 
