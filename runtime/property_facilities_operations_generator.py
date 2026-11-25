@@ -64,19 +64,17 @@ def build_facilities_operations(world, tenure, services, maintenance):
         manager = managers.get(pid, {})
         managing_org = manager.get("manager_organisation_id") or manager.get("property_manager_organisation_id")
         for service, scope, frequency, window, metric, priority in SERVICES:
-            # Port and clinical streams are applied only to matching operational uses.
+            # Specialist providers are framework-callable; activation is determined by the
+            # property's actual use and is not inferred as a completed service.
             use = _class(p)
-            if service == "port_specialist" and not any(k in use for k in ("port","maritime","cargo","terminal","logistics","warehouse")):
-                continue
-            if service == "clinical_waste" and not any(k in use for k in ("health","hospital","clinic","medical","laboratory")):
-                continue
             cid = _id("SWFMC", pid + service)
             vendor = contractor_ids[index % len(contractor_ids)] if contractor_ids else None
             contracts.append({
               "facilities_contract_id": cid, "property_id": pid, "service_type": service,
               "service_scope": scope, "managing_organisation_id": managing_org,
               "service_provider_organisation_id": vendor,
-              "contract_state": "baseline_service_arrangement",
+              "contract_state": "baseline_framework_arrangement",
+              "activation_profile": "specialist_calloff_only" if service in ("port_specialist","clinical_waste") else "scheduled_baseline_service",
               "service_frequency": frequency, "service_window": window,
               "effective_from_tick": 0, "financial_terms": "not_modelled_bp34",
               "performance_actuals": "not_yet_recorded"
