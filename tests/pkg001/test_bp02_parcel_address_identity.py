@@ -68,6 +68,21 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
         second = next(row for row in result["parcels"] if row["source_candidate_parcel_id"] == "BPC-002")
         self.assertEqual(second["frontage_segment_ids"], [])
 
+    def test_multiple_frontage_roads_are_not_arbitrarily_selected(self):
+        candidates = {
+            "candidate_set_id": self.candidates["candidate_set_id"],
+            "parcels": [dict(row) for row in self.candidates["parcels"]],
+        }
+        candidates["parcels"][0]["road_frontage_segment_ids"] = ["SW-RSEG-1", "SW-RSEG-2"]
+        result = build_identity_register(
+            candidates, self.properties, self.addresses, self.codes,
+            {"SW-RSEG-1": "SW-R01", "SW-RSEG-2": "SW-R02"},
+        )
+        first = next(row for row in result["addresses"] if row["source_address_id"] == "SWADDR-1")
+        self.assertEqual(first["address_road_candidate_status"], "MULTIPLE_FRONTAGE_ROADS_REQUIRE_REVIEW")
+        self.assertIsNone(first["address_road_candidate_id"])
+        self.assertEqual(first["candidate_frontage_road_ids"], ["SW-R01", "SW-R02"])
+
     def test_unresolved_road_fails_closed(self):
         broken = [dict(row) for row in self.addresses]
         broken[0]["road_id"] = "NO-SUCH-ROAD"
