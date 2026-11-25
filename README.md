@@ -388,10 +388,21 @@ The facilities-operations generator now reads the corrected development-control 
 
 ## SW-GLOBAL-ESTATE-CAPACITY-AUDIT-001 — global-city estate scale review
 
-The initial audit identified that the 420-site/384-building opening estate was limited to six storeys and did not physically express Saltwater's global-city canon. That finding is the baseline diagnosis, not the target city form. The first vertical-intensification implementation is now on `main` under `GLOBAL-ESTATE-VERTICAL-V1`.
+The first vertical-intensification phase is now fully regenerated, regression-tested and persisted as one consistent property/business snapshot on `main`. Sequential rebuild workflow: [45611785956](https://github.com/Joshuaogri/saltwater/actions/runs/45611785956), completed successfully. Snapshot commit: `ed0b77e`.
 
-The deterministic profiles vary by land use and district: the Exchange/financial core (Central Market) receives the tallest commercial skyline; Civic Core and Northbank receive substantial corporate, institutional and university towers; East Harbour and Old Quays receive mid/high-rise waterfront and port-support development; Southworks retains lower-rise industrial and freight forms; and Greenfields retains a lower-density residential/open-space role. Commercial profiles reach 58 storeys, with district-specific variation rather than assigning one identical height to every building. Every generated building carries the vertical-profile code and an explicit low-, mid- or high-rise form classification.
+The deterministic district-specific `GLOBAL-ESTATE-VERTICAL-V1` profiles create commercial towers up to 58 storeys, with distinct financial, civic, university and harbour skylines. Industrial, freight, port-yard and utility assets retain appropriately lower-rise forms.
 
-The property hierarchy remains property site → building → premises → unit → access point. Existing building, premises, unit, address and access identifiers are preserved where their source entities remain the same. Storey-driven premises and unit registers will expand deterministically. No residents, workers, police personnel or other person records are created; the 10,000-person hard cap remains unchanged. Industrial, freight, port and utility assets remain appropriately lower-rise rather than being turned indiscriminately into towers.
+**Verified regenerated estate totals**
+- 420 property sites; 384 buildings; 6,954 premises; 80,965 canonical units.
+- 12,430,234.506 m² gross floor area; maximum height 58 storeys; mean building height 18.109 storeys.
+- 265 buildings have at least 10 storeys; 146 have at least 20 storeys.
+- 10,000 businesses and 10,000 establishments.
+- 163,610 utility meters; 6,815 equipment assets; 3,054 building systems.
+- 90,223 access-control zones; 804 canonical access points and 804 constructed access routes.
+- Facilities schedules and service zones have been regenerated against the same canonical unit set.
 
-The vertical-profile source, regression tests and audit logic have been committed to `main`. The canonical property-world regeneration and its dependent property registers are now running; until those workflows finish successfully, the persisted property-world and downstream counts are considered stale and are not reported as completed. The next physical-estate phase after vertical regeneration is multi-building campuses and specialised port, bonded-logistics, intermodal, export-manufacturing, corporate and international-institution estates. No Neon production writes are part of this work.
+Unit identity reconciliation is exact across the property world, tenure occupancy, utility submeters, development-control use records and facilities operations: **80,965 unique unit IDs in each register, with no missing or extra IDs**. All sequential rebuild test groups passed, including the final insurance, facilities and estate-capacity audit regression suites.
+
+The 10,000-person population hard cap is unchanged. No residents, workers, employees, police personnel or other person records were created. No Neon production writes were made.
+
+**Next physical-estate phase:** replace the single-building-per-property limitation with multi-building campuses and specialist megasites. This includes international port and bonded-logistics terminals, intermodal freight/passenger complexes, export-manufacturing estates, financial/corporate headquarters campuses and major international institutions. Every additional building must receive unique building, premises, unit and access identifiers, site-contained geometry, a connected constructed entrance/route and fully regenerated downstream property records. Existing site-only entrances and no-frontage access solutions must be preserved. The one-contiguous-city-state canon and 10,000-person cap remain binding.
