@@ -36,20 +36,28 @@ jobs:
       - name: Validate generated manifest and publish concise counts
         run: |
           python - <<'PY'
-          import hashlib, json
+          import gzip, hashlib, json
           from pathlib import Path
-          p=Path("bp04-03-stage-e-physical-assets.json")
-          data=json.loads(p.read_text())
-          claimed=data.pop("manifest_sha256")
-          actual=hashlib.sha256(json.dumps(data,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
-          assert claimed==actual
+          manifest_path=Path("bp04-03-stage-e-physical-assets-manifest.json")
+          data=json.loads(manifest_path.read_text())
+          p=Path(data["compressed_artifact"])
+          digest=hashlib.sha256(p.read_bytes()).hexdigest()
+          assert digest==data["compressed_artifact_sha256"]
           assert data["operational_approval"] is False
           assert data["generation"]["property_count"]==420
+          assert data["generation"]["properties_without_buildings"] >= 0
           assert data["generation"]["canonical_addresses_created"]==0
           assert data["generation"]["operational_access_points_created"]==0
+          uncompressed_bytes=0
+          with gzip.open(p,"rb") as stream:
+            while True:
+              chunk=stream.read(1024*1024)
+              if not chunk: break
+              uncompressed_bytes += len(chunk)
           print(json.dumps({
-            "artifact_source_bytes":p.stat().st_size,
-            "manifest_sha256":claimed,
+            "compressed_artifact_bytes":p.stat().st_size,
+            "uncompressed_artifact_bytes":uncompressed_bytes,
+            "manifest_sha256":data["manifest_sha256"],
             **data["generation"]
           },indent=2,sort_keys=True))
           PY
@@ -57,6 +65,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bp04-03-stage-e-physical-assets-${{ github.run_id }}
-          path: bp04-03-stage-e-physical-assets.json
+          path: |
+            bp04-03-stage-e-physical-assets.json.gz
+            bp04-03-stage-e-physical-assets-manifest.json
           if-no-files-found: error
           retention-days: 14
