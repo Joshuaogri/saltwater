@@ -1,0 +1,34 @@
+name: BP04-03 Independent Access Connector Road Topology
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/building_access_connector_topology_audit.py"
+      - "tests/pkg001/test_building_access_connector_topology_audit.py"
+      - ".github/workflows/bp04-03-access-connector-road-topology.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  connector-road-topology:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run independent connector-to-road topology tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_building_access_connector_topology_audit.py" -v
+      - name: Emit read-only independent connector topology audit
+        run: python -m runtime.building_access_connector_topology_audit
