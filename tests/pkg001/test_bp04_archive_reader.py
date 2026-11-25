@@ -30,7 +30,7 @@ class ArchiveReaderTests(unittest.TestCase):
 
     def test_collection_expansion(self):
         class FakeConnection:
-            def execute(self, _sql, _params):
+            def execute(connection, _sql, _params):
                 class Result:
                     def fetchone(inner_self):
                         return (self.payload, self.digest)
