@@ -69,7 +69,7 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
 
     def test_connector_candidates_are_complete_and_non_operational(self):
         connectors = self.inventory["access_connectors"]
-        self.assertEqual(len(connectors), 768)
+        self.assertEqual(len(connectors), 2948)
         validate_manifests(self.inventory, self.candidates, self.dossiers)
         proximity = [row for row in connectors
                      if row["connector_type"] == "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE"]
