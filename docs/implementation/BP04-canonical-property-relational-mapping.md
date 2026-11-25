@@ -89,24 +89,32 @@ The inventory exposed the actual canonical source ID `SW-PROPERTY-RIGHTS-AND-BOU
 This inventory is not a database import and does not imply that all 105 collections have typed relational mappings. The existing phase-one importer still relationally maps only property world, business registry and tenure. Next, map remaining operational collections into typed tables with explicit key/reference rules, while retaining each original gzip source exactly once in the compressed archive. Keep the global capacity audit as a validation/evidence source unless a specific operational need requires otherwise. Then run complete disposable PostgreSQL 16 reconciliation, idempotency, rollback and storage tests. No Neon production changes.
 
 
-## Phase 6 — complete source archiving and per-collection mapping ledger
+## Corrected source-collection mapping ledger and business operations — Phase 7
 
-Workflow [45643776748](https://github.com/Joshuaogri/saltwater/actions/runs/45643776748) passed against main commit `17d7f81dab331241399990c4432e81fc1c8ac0a9`. Migration `0018_bp04_source_collection_mapping.sql` extends the import ledger with `mapping_status` and adds one `source_dataset_collection` row per source collection. All 14 original gzip inputs are archived once, keyed by SHA-256. Typed mapping and archive-only preservation are tracked separately, so the ledger no longer falsely requires every source row to become a typed operational row.
+The first Phase 6 ledger implementation exposed a provenance defect: the importer sometimes recorded relational target-table names instead of the original columnar source collection names. This could classify collections incorrectly even though the typed relational rows themselves had imported. The importer now wraps expanded rows with their original collection identity and uses that exact identity for the collection ledger. The test `tests/pkg001/test_bp04_property_stack_importer.py` specifically verifies a source collection named `properties` remains `properties` when mapped to the relational table `property_site`.
+
+Workflow [45646271478](https://github.com/Joshuaogri/saltwater/actions/runs/45646271478) passed on main commit `f9e18f63dff763134073050e3409432f82bd5c79`. It applied migrations 0013–0019, passed schema acceptance with 68 tables, imported all 14 compressed source archives, passed the post-import collection-ledger/business-operations acceptance, and verified a repeat import.
 
 | Measure | Verified result |
 |---|---:|
-| Source datasets archived | 14 / 14 |
-| Source collections inventoried | 105 |
+| Source datasets archived | 14 |
+| Source collections | 105 |
 | Total source records | 1,950,947 |
-| Collections with typed mappings | 65 |
-| Typed-mapped source rows | 1,277,945 |
-| Archive-only collections | 40 |
-| Archive-only source rows | 673,002 |
-| Compressed package | 23,023,562 bytes (21.96 MiB) |
+| Typed-mapped source collections | 63 |
+| Typed-mapped source rows | 1,337,925 |
+| Archive-only source collections | 42 |
+| Archive-only source rows | 613,022 |
+| Fully mapped datasets | 6 |
+| Partially mapped datasets | 2 |
+| Archive-only datasets | 6 |
+| Compressed source package | 23,023,562 bytes (21.96 MiB) |
 | Uncompressed source JSON | 559,420,873 bytes (533.50 MiB) |
-| Source archive relation | 23,797,760 bytes |
-| Disposable database after import | 550,149,143 bytes (524.66 MiB) |
+| Compressed archive relation | 23,797,760 bytes |
+| Disposable PostgreSQL database | 577,395,735 bytes (550.65 MiB) |
 | Cross-reference violations | 0 |
-| Database size after repeat import | 550,149,143 bytes (unchanged) |
+| Repeat-import database size | 577,395,735 bytes (unchanged) |
+| Repeat-import row mutations | 0 |
 
-The repeated import produced zero table insert/update/delete mutations. This proves idempotency for the current package and importer; it does not mean all source collections are operationally mapped. The remaining 40 collections are preserved exactly in the source archives and must be mapped selectively where they support police-simulation gameplay. Prioritize business operating schedules, development/use controls, title and lifecycle, rights/access evidence and claims/loss workflows. Keep the global estate capacity audit as evidence. Avoid adding facilities-management complexity without a gameplay requirement. No Neon production schema or data changes have occurred.
+Phase 7 adds two typed tables for the already-generated business operations source: `business_weekly_profile` (10,000 rows) and `business_daily_schedule` (70,000 rows). These records support time-aware business availability, dispatch context, scene access and delivery activity. No person records are generated. The complete database contains 68 tables. The largest relations include `meter` (195,067,904 bytes), `access_zone` (83,640,320), `unit_space` (58,318,848), `business_daily_schedule` (25,821,184), `premises_room` (23,887,872) and `source_dataset_archive` (23,797,760).
+
+The remaining archive-only inputs are existing source datasets, not requests to create additional property systems. Prioritize only police-gameplay-relevant records from development control, lifecycle/title, rights/boundaries and insurance claims. Facilities schedules and global estate audit remain archived unless a concrete gameplay requirement warrants further mapping. No Neon production changes occurred.
