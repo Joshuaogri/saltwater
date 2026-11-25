@@ -229,3 +229,12 @@ The generated registry now contains **10,000 distinct businesses**, **10,000 est
 ### Business operations and opening-hours records
 
 The next textual world layer adds a weekly operating schedule for every registered establishment. Each business has seven explicit weekday rows (70,000 daily records across 10,000 businesses), local customer opening and closing times, service windows, staff shift patterns, delivery windows, operational status and an access reference for dispatch. Seasonal and temporarily inactive businesses receive appropriate closure states. These schedules do not create employee, customer or resident person records and do not change the 10,000-person city cap. Source: `runtime/business_operations_generator.py`; output: `data/business/saltwater-business-operations-v1.json`; regression tests: `tests/pkg001/test_business_operations_generator.py`.
+
+
+## SW-CANON-002 — primate city and global international hub
+
+**Adopted 2026-11-25 as binding canon across all 44 blueprint divisions.** Saltwater is the country's single primate city and dominant national and international metropolis: the highest national and international levels of government, diplomacy, corporate headquarters, banking and finance, entertainment, media, technology, healthcare, education, hospitality, professional services, trade and culture are concentrated here. Saltwater is also a world-leading maritime transit, export, transshipment and logistics exchange hub, comparable in strategic role to the Suez Canal and the world's major port, financial and commercial centres. It must never be modelled as an ordinary small city.
+
+The 10,000-person permanent population cap remains in force, but it does not limit corporate scale, subsidiaries, establishments, institutional capacity, cargo throughput, vessel movements, passenger flows, international reach or economic activity. Transient people must continue to be counted under the existing population rules; this canon does not authorise bypassing the person cap. The existing 10,000-business registry is an initial baseline, not a ceiling on global corporate presence or a claim that all businesses are small. Future property, business, transport, port, airport, institutional, economic and police systems must reflect this global primate-city role.
+
+- [Read SW-CANON-002 — Primate City and Global International Hub](docs/blueprint/decisions/SW-CANON-002-primate-city-global-hub.md)
