@@ -458,3 +458,17 @@ The PostgreSQL 16 disposable workflow passed using this design: [BP04 compressed
 The three compressed source archives total **10,934,275 bytes (10.43 MiB)**; their uncompressed JSON totals **196,604,988 bytes (187.45 MiB)**. The measured disposable PostgreSQL database is **135,257,111 bytes (128.99 MiB)**, including typed rows, indexes and the compressed source archives. Re-importing the same release left database size unchanged (**135,257,111 bytes before and after**) and all row-count checks passed. This is a **71.6% reduction** against the initial row-level-JSONB design.
 
 This remains a partial import benchmark: only property world, business registry and property tenure are included. The other dependent property registers still need typed mappings and a complete combined benchmark. The 128.99 MiB figure is not a final Neon projection. **No production Neon schema or data writes have occurred.**
+
+
+## BP04 — complete compressed property-source inventory
+
+The read-only source inventory is implemented in `runtime/bp04_source_inventory.py`, with regression tests in `tests/pkg001/test_bp04_source_inventory.py` and CI workflow `.github/workflows/bp04-source-inventory.yml`. Successful inventory run: [45633081533](https://github.com/Joshuaogri/saltwater/actions/runs/45633081533).
+
+- 14 compressed property/business source datasets.
+- 105 columnar collections.
+- 1,950,947 source records.
+- 23,023,562 compressed bytes (21.96 MiB).
+- 559,420,873 uncompressed bytes (533.5 MiB).
+- Every collection was checked for valid columnar structure and row-width consistency; inventory records column names, row counts, candidate identity columns, compressed/uncompressed sizes and SHA-256 source digests.
+- Canonical dataset IDs are read from source metadata rather than inferred from filenames.
+- This is source-package inventory only. It is not a relational import, Neon storage estimate or production upload. The phase-one PostgreSQL benchmark remains limited to the three mapped datasets; typed mapping and full disposable benchmarking of the remaining registers are next.
