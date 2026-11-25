@@ -65,10 +65,11 @@ CREATE TABLE sw_property.permission_set (
  effective_from_tick bigint, revocable boolean NOT NULL, source_dataset text NOT NULL
 );
 CREATE TABLE sw_property.permission_zone_grant (
+ grant_id text PRIMARY KEY,
  permission_set_id text NOT NULL REFERENCES sw_property.permission_set(permission_set_id) DEFERRABLE INITIALLY DEFERRED,
  access_zone_id text NOT NULL REFERENCES sw_property.access_zone(access_zone_id) DEFERRABLE INITIALLY DEFERRED,
  grant_order integer NOT NULL, source_dataset text NOT NULL,
- PRIMARY KEY(permission_set_id,access_zone_id)
+ UNIQUE(permission_set_id,access_zone_id)
 );
 CREATE TABLE sw_property.organisation_access_assignment (
  access_assignment_id text PRIMARY KEY, access_group_id text NOT NULL REFERENCES sw_property.access_group(access_group_id) DEFERRABLE INITIALLY DEFERRED,
