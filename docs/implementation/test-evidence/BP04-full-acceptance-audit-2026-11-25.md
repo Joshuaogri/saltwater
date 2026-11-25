@@ -71,8 +71,8 @@ The property-world generator regression verifies unique IDs within entity types,
 
 ## 4. Concrete blockers to full acceptance
 
-1. **Canonical geography binding:** reconcile each property/address reference with BP-02's authoritative parcel/address IDs and spatial identity. Keep unresolved cases explicit; do not treat a generated address label as proof of a BP-02 canonical address.
-2. **Gameplay lookup layer:** implement and test lightweight lookups by stable property, address, building, premises, unit, business, organisation and establishment IDs. Use the compressed archive reader and derived in-memory indexes; do not duplicate the static estate into Neon typed rows.
+1. **Canonical geography binding:** reconcile each property/address reference with BP-02's authoritative parcel/address IDs and spatial identity. The lookup deliberately labels current references `source_geography_reference_only`; do not treat a generated address label as proof of a BP-02 canonical address.
+2. **Gameplay lookup layer:** the bounded property/address/building/premises/unit/access-point/business/establishment lookup API is now implemented in `runtime/bp04_lookup.py`, documented in [BP04 gameplay lookup](../BP04-gameplay-lookup.md), and its synthetic contract tests passed on PostgreSQL 16 and 18 in [run 45678245109](https://github.com/Joshuaogri/saltwater/actions/runs/45678245109). The actual imported archive integration check is running in [run 45678573423](https://github.com/Joshuaogri/saltwater/actions/runs/45678573423). The lookup remains process-local and does not duplicate static rows in Neon. It is not yet wired into the player command dispatcher or an authorised police-facing adapter.
 3. **Cross-register acceptance:** test uniqueness, parent/child references, temporal relationships, business-versus-establishment identity, 10,000-business quality, organisation/facility links and all 105 collection counts from the pinned source release.
 4. **Police-facing access contract:** expose relevant property/business facts to police workflows through an authorised adapter, preserving provenance and uncertainty and respecting restricted keys, locks, layouts and sensitive records. Do not bypass BP-42 or evidence ownership.
 5. **Operational interfaces and regression:** verify the applicable healthcare, transport, utility, business-schedule, lifecycle and disruption interfaces; add representative lookup-performance, failure/rollback and recovery tests.
@@ -82,6 +82,6 @@ The property-world generator regression verifies unique IDs within entity types,
 **BP04 production archive release: COMPLETED and VERIFIED.**  
 **BP04 full division acceptance: NOT COMPLETED.**
 
-Do not mark the entire BP04 division `COMPLETED` yet. The next bounded implementation task is the canonical property/business lookup layer plus BP-02 identity reconciliation and its acceptance tests. This can be developed on GitHub `main` and tested on disposable PostgreSQL without any further Neon write.
+Do not mark the entire BP04 division `COMPLETED` yet. The next bounded implementation tasks are BP-02 identity reconciliation, player/police integration of the lookup API, and their acceptance tests. This can be developed on GitHub `main` and tested on disposable PostgreSQL without any further Neon write.
 
 No Neon writes were made during this audit.
