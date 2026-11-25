@@ -1,7 +1,7 @@
 # BP-02 address placement review register
 
 **Date:** 2026-11-25  
-**Status:** Implemented; deterministic tests pending CI execution  
+**Status:** IMPLEMENTED AND TESTED — dedicated GitHub Actions run 45688271976 passed  
 **Scope:** Read-only GitHub source and disposable CI validation. No Neon writes.
 
 ## Purpose
@@ -33,10 +33,13 @@ The current source reconciliation baseline has 420 addresses:
 - 415 source-road/frontage candidate matches.
 - 3 source-road/frontage conflicts, each with a single alternative candidate retained for review.
 - 2 addresses with no parcel frontage candidate.
-- Building-access evidence resolves the source road for 384 addresses; 36 properties have no building on the property site. Those 36 are classified separately and are not automatically treated as incorrect addresses.
+- Building-access evidence covers 1,474 building candidates and 2,948 building-boundary access candidates. It resolves a source-road match for 384/420 property sites with building candidates; 36 sites have no generated building candidates and are classified separately.
+- The three frontage-road conflicts occur on sites with no generated building candidates. Their single alternative frontage candidates are preserved for review: `SWR-H17` for two addresses and `SWR-H01` for one.
+- The two parcels without boundary-frontage candidates do have building-access road-reserve proximity candidates matching their source roads: `SWR-B2` and `SWR-B1`. Both are `POINT_CONTACT_ONLY`, so they do not establish a driveway, traversable route or legal/operational access.
+- The review queue contains 5 P1 records (3 road-reference conflicts and 2 no-frontage cases), 33 P2 records (no-building observations not already classified P1), and 382 P3 source-context-coherent candidates. The 36 no-building sites include the three P1 road conflicts.
 
-The P1 queue therefore contains five address/frontage exceptions. The other 415 have coherent parcel-frontage source context, while building presence/access remains a separate review dimension.
+The 415 direct parcel-frontage road matches remain coherent. Building presence and access evidence are tracked independently; the two no-frontage cases have separate proximity-only building access candidates.
 
 ## Verification
 
-The dedicated BP04 player/police/geography workflow runs the new unit suite and emits the expanded reconciliation report. The review register is an audit aid only. It does not constitute BP-02 operational geography approval, canonical address promotion, Neon permission provisioning or BP04 full acceptance.
+The dedicated BP04 player/police/geography workflow passed in [run 45688271976](https://github.com/Joshuaogri/saltwater/actions/runs/45688271976): 120 tests passed, and the complete 420-address reconciliation plus review-register generation succeeded. The review register is an audit aid only. It does not constitute BP-02 operational geography approval, canonical address promotion, Neon permission provisioning or BP04 full acceptance.
