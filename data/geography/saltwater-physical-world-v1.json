@@ -1,0 +1,1556 @@
+{
+  "schema": "saltwater-physical-world/1.0",
+  "dataset_id": "SW-PHYS-V1",
+  "canon_status": "CANONICAL_FICTIONAL_GAME_WORLD",
+  "created": "2026-11-25",
+  "coordinate_reference": {
+    "id": "SW-LOCAL-01",
+    "units": "metres",
+    "extent": [
+      0,
+      0,
+      12000,
+      9000
+    ],
+    "real_world_coordinates": false
+  },
+  "design_note": "All measurements and conditions in this dataset are authored fictional game facts. Elevations use the local fictional datum SW-VERT-01; they are not real-world survey claims.",
+  "vertical_datum": {
+    "id": "SW-VERT-01",
+    "name": "Saltwater Local Vertical Datum",
+    "zero_reference": "fictional harbour chart datum",
+    "units": "metres"
+  },
+  "terrain_zones": [
+    {
+      "terrain_zone_id": "SWTZ-001",
+      "name": "Westgate Coastal Shelf",
+      "district_id": "SW-D01",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              3000,
+              0
+            ],
+            [
+              3000,
+              4500
+            ],
+            [
+              0,
+              4500
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 4,
+        "maximum_m": 9,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "gently_rolling",
+      "substrate": "sandy_silt_over_compact_clay",
+      "ground_condition": "stable",
+      "description": "West-facing low shelf with shallow rises and broad residential streets.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-002",
+      "name": "Northbank Tableland",
+      "district_id": "SW-D02",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              3000,
+              4500
+            ],
+            [
+              6000,
+              4500
+            ],
+            [
+              6000,
+              9000
+            ],
+            [
+              3000,
+              9000
+            ],
+            [
+              3000,
+              4500
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 8,
+        "maximum_m": 16,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "gently_undulating",
+      "substrate": "weathered_sandstone_and_clay",
+      "ground_condition": "stable",
+      "description": "Higher northern tableland with broad institutional and residential plateaux.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-003",
+      "name": "Civic Terrace",
+      "district_id": "SW-D03",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              6000,
+              4500
+            ],
+            [
+              9000,
+              4500
+            ],
+            [
+              9000,
+              9000
+            ],
+            [
+              6000,
+              9000
+            ],
+            [
+              6000,
+              4500
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 7,
+        "maximum_m": 14,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "terraced_gentle_slope",
+      "substrate": "compacted_sand_and_silt",
+      "ground_condition": "stable",
+      "description": "Civic plateau stepping down toward the central market.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-004",
+      "name": "Eastern Harbour Flats",
+      "district_id": "SW-D04",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              9000,
+              4500
+            ],
+            [
+              12000,
+              4500
+            ],
+            [
+              12000,
+              9000
+            ],
+            [
+              9000,
+              9000
+            ],
+            [
+              9000,
+              4500
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 2,
+        "maximum_m": 7,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "flat_to_gently_sloping",
+      "substrate": "marine_silt_engineered_fill",
+      "ground_condition": "managed",
+      "description": "Low harbour flats with engineered port and customs ground.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-005",
+      "name": "Greenfields Lowland",
+      "district_id": "SW-D05",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              0,
+              0
+            ],
+            [
+              3000,
+              0
+            ],
+            [
+              3000,
+              4500
+            ],
+            [
+              0,
+              4500
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 3,
+        "maximum_m": 11,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "gently_rolling",
+      "substrate": "sandy_loam_and_clay",
+      "ground_condition": "stable",
+      "description": "Open parkland and reservoir catchment with shallow local depressions.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-006",
+      "name": "Southworks Industrial Bench",
+      "district_id": "SW-D06",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              3000,
+              0
+            ],
+            [
+              6000,
+              0
+            ],
+            [
+              6000,
+              4500
+            ],
+            [
+              3000,
+              4500
+            ],
+            [
+              3000,
+              0
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 2,
+        "maximum_m": 8,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "flat_engineered_bench",
+      "substrate": "engineered_gravel_and_clay",
+      "ground_condition": "managed",
+      "description": "Constructed industrial and rail bench with drainage falls toward the canal basin.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-007",
+      "name": "Central Market Plain",
+      "district_id": "SW-D07",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              6000,
+              0
+            ],
+            [
+              9000,
+              0
+            ],
+            [
+              9000,
+              4500
+            ],
+            [
+              6000,
+              4500
+            ],
+            [
+              6000,
+              0
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 3,
+        "maximum_m": 9,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "gently_sloping_plain",
+      "substrate": "alluvial_silt_and_compacted_fill",
+      "ground_condition": "stable",
+      "description": "Dense commercial plain with shallow falls toward the southern waterfront.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-008",
+      "name": "Old Quays Waterfront",
+      "district_id": "SW-D08",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              9000,
+              0
+            ],
+            [
+              12000,
+              0
+            ],
+            [
+              12000,
+              4500
+            ],
+            [
+              9000,
+              4500
+            ],
+            [
+              9000,
+              0
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 1,
+        "maximum_m": 6,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "low_coastal_terrace",
+      "substrate": "marine_silt_and_old_quay_fill",
+      "ground_condition": "managed",
+      "description": "Historic quay shelf with stepped waterfront edges and reclaimed dock plots.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    },
+    {
+      "terrain_zone_id": "SWTZ-009",
+      "name": "Central-Western Ridge",
+      "district_id": "SW-D01",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              1800,
+              2500
+            ],
+            [
+              4200,
+              2500
+            ],
+            [
+              4200,
+              6500
+            ],
+            [
+              1800,
+              6500
+            ],
+            [
+              1800,
+              2500
+            ]
+          ]
+        ]
+      },
+      "elevation": {
+        "minimum_m": 18,
+        "maximum_m": 42,
+        "vertical_datum": "SW-VERT-01",
+        "fictional_profile": "authored_zone_range"
+      },
+      "landform": "ridge_and_rolling_slope",
+      "substrate": "weathered_sandstone_with_clay_pockets",
+      "ground_condition": "stable",
+      "description": "Low elongated ridge crossing the western-central urban fabric; local crest and saddle variations.",
+      "gameplay": {
+        "foot_travel": "normal_unless_local_feature_overrides",
+        "vehicle_travel": "use_road_network",
+        "drainage": "see_local_drainage_assets"
+      }
+    }
+  ],
+  "physical_features": [
+    {
+      "physical_feature_id": "SWPF-001",
+      "name": "Ridge Crest Retaining Wall",
+      "feature_type": "retaining_wall",
+      "neighbourhood_id": "SW-D01-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            2600,
+            3900
+          ],
+          [
+            3100,
+            4200
+          ],
+          [
+            3600,
+            4550
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.4,
+        "width_m": 0.45
+      },
+      "construction": {
+        "material": "reinforced_concrete",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "retains cut slope beside ridge access road"
+    },
+    {
+      "physical_feature_id": "SWPF-002",
+      "name": "Foundry Slope Stone Wall",
+      "feature_type": "wall",
+      "neighbourhood_id": "SW-D01-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1750,
+            5000
+          ],
+          [
+            1750,
+            5650
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.6,
+        "width_m": 0.55
+      },
+      "construction": {
+        "material": "dressed_stone",
+        "condition": "weathered",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "historic boundary wall along upper Foundry Quarter"
+    },
+    {
+      "physical_feature_id": "SWPF-003",
+      "name": "Westgate Park Rail Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D01-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            250,
+            5200
+          ],
+          [
+            250,
+            6100
+          ],
+          [
+            700,
+            6100
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.8,
+        "width_m": 0.08
+      },
+      "construction": {
+        "material": "black_steel_rail",
+        "condition": "good",
+        "continuity": "continuous_with_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "public park boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-004",
+      "name": "Westgate Park Service Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D01-N1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          700,
+          6100
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.1,
+        "width_m": 0.12
+      },
+      "construction": {
+        "material": "steel",
+        "condition": "good",
+        "continuity": "single_leaf"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "maintenance access in park fence"
+    },
+    {
+      "physical_feature_id": "SWPF-005",
+      "name": "Northbank Campus Perimeter Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D02-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            5200,
+            5200
+          ],
+          [
+            5850,
+            5200
+          ],
+          [
+            5850,
+            5850
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2,
+        "width_m": 0.08
+      },
+      "construction": {
+        "material": "welded_mesh_steel",
+        "condition": "good",
+        "continuity": "continuous_with_gates"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "university campus perimeter"
+    },
+    {
+      "physical_feature_id": "SWPF-006",
+      "name": "University East Vehicle Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D02-N3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5850,
+          5500
+        ]
+      },
+      "dimensions": {
+        "height_m": 2,
+        "width_m": 0.16
+      },
+      "construction": {
+        "material": "sliding_steel",
+        "condition": "good",
+        "continuity": "vehicle_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "controlled service vehicle entrance"
+    },
+    {
+      "physical_feature_id": "SWPF-007",
+      "name": "Assembly Quarter Garden Wall",
+      "feature_type": "wall",
+      "neighbourhood_id": "SW-D03-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6300,
+            6100
+          ],
+          [
+            6800,
+            6100
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.1,
+        "width_m": 0.4
+      },
+      "construction": {
+        "material": "limestone_block",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "formal civic garden boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-008",
+      "name": "Civic Terrace Stair Retaining Wall",
+      "feature_type": "retaining_wall",
+      "neighbourhood_id": "SW-D03-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7350,
+            5000
+          ],
+          [
+            7800,
+            5000
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 3.2,
+        "width_m": 0.6
+      },
+      "construction": {
+        "material": "reinforced_concrete",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "retains upper civic terrace; public stair passage nearby"
+    },
+    {
+      "physical_feature_id": "SWPF-009",
+      "name": "Museum Garden Perimeter Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D03-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8200,
+            5200
+          ],
+          [
+            8800,
+            5200
+          ],
+          [
+            8800,
+            5750
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.5,
+        "width_m": 0.07
+      },
+      "construction": {
+        "material": "ornamental_iron",
+        "condition": "good",
+        "continuity": "continuous_with_gates"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "museum garden boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-010",
+      "name": "Port Security Perimeter Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D04-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9300,
+            5200
+          ],
+          [
+            10500,
+            5200
+          ],
+          [
+            10500,
+            6100
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.8,
+        "width_m": 0.1
+      },
+      "construction": {
+        "material": "anti_climb_mesh",
+        "condition": "good",
+        "continuity": "continuous_with_gates"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "secure terminal boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-011",
+      "name": "Container Terminal Vehicle Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D04-N1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9800,
+          5200
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.6,
+        "width_m": 0.2
+      },
+      "construction": {
+        "material": "powered_sliding_steel",
+        "condition": "good",
+        "continuity": "vehicle_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "main controlled freight entrance"
+    },
+    {
+      "physical_feature_id": "SWPF-012",
+      "name": "Customs Yard Boundary Wall",
+      "feature_type": "wall",
+      "neighbourhood_id": "SW-D04-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10200,
+            6800
+          ],
+          [
+            10900,
+            6800
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.2,
+        "width_m": 0.5
+      },
+      "construction": {
+        "material": "reinforced_concrete",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "separates customs yard from public street"
+    },
+    {
+      "physical_feature_id": "SWPF-013",
+      "name": "Reservoir Embankment",
+      "feature_type": "embankment",
+      "neighbourhood_id": "SW-D05-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1200,
+            800
+          ],
+          [
+            1850,
+            800
+          ],
+          [
+            1850,
+            1450
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 4.5,
+        "width_m": 12
+      },
+      "construction": {
+        "material": "compacted_earth_and_clay",
+        "condition": "maintained",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "raised reservoir containment embankment"
+    },
+    {
+      "physical_feature_id": "SWPF-014",
+      "name": "Reservoir Security Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D05-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            1050,
+            650
+          ],
+          [
+            1950,
+            650
+          ],
+          [
+            1950,
+            1600
+          ],
+          [
+            1050,
+            1600
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2,
+        "width_m": 0.08
+      },
+      "construction": {
+        "material": "galvanised_steel_mesh",
+        "condition": "good",
+        "continuity": "continuous_with_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "restricted utility compound boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-015",
+      "name": "Reservoir Maintenance Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D05-N2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1500,
+          650
+        ]
+      },
+      "dimensions": {
+        "height_m": 2,
+        "width_m": 0.15
+      },
+      "construction": {
+        "material": "steel_double_leaf",
+        "condition": "good",
+        "continuity": "vehicle_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "utility maintenance access"
+    },
+    {
+      "physical_feature_id": "SWPF-016",
+      "name": "Parkside Creek Culvert",
+      "feature_type": "drainage_structure",
+      "neighbourhood_id": "SW-D05-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            400,
+            900
+          ],
+          [
+            850,
+            900
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.4,
+        "width_m": 2.2
+      },
+      "construction": {
+        "material": "precast_concrete",
+        "condition": "good",
+        "continuity": "culvert"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "stormwater culvert beneath park service track"
+    },
+    {
+      "physical_feature_id": "SWPF-017",
+      "name": "Southworks Rail Yard Security Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D06-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4100,
+            500
+          ],
+          [
+            4900,
+            500
+          ],
+          [
+            4900,
+            2100
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.4,
+        "width_m": 0.1
+      },
+      "construction": {
+        "material": "welded_steel_mesh",
+        "condition": "good",
+        "continuity": "continuous_with_gates"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "rail yard security boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-018",
+      "name": "Rail Yard Freight Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D06-N2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4500,
+          500
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.5,
+        "width_m": 0.2
+      },
+      "construction": {
+        "material": "sliding_steel",
+        "condition": "good",
+        "continuity": "rail_vehicle_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "controlled rail maintenance entrance"
+    },
+    {
+      "physical_feature_id": "SWPF-019",
+      "name": "Canal Basin Quay Wall",
+      "feature_type": "retaining_wall",
+      "neighbourhood_id": "SW-D06-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            5200,
+            400
+          ],
+          [
+            5900,
+            400
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 5,
+        "width_m": 1.2
+      },
+      "construction": {
+        "material": "mass_concrete",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "vertical quay retaining wall at freight basin"
+    },
+    {
+      "physical_feature_id": "SWPF-020",
+      "name": "Industrial Drainage Channel",
+      "feature_type": "drainage_channel",
+      "neighbourhood_id": "SW-D06-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3300,
+            700
+          ],
+          [
+            3800,
+            700
+          ],
+          [
+            4300,
+            900
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 0.9,
+        "width_m": 2.5
+      },
+      "construction": {
+        "material": "lined_concrete",
+        "condition": "maintained",
+        "continuity": "open_channel"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "open stormwater channel draining toward canal basin"
+    },
+    {
+      "physical_feature_id": "SWPF-021",
+      "name": "Grand Market Arcade Service Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D07-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6200,
+            650
+          ],
+          [
+            6800,
+            650
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.4,
+        "width_m": 0.06
+      },
+      "construction": {
+        "material": "painted_steel",
+        "condition": "good",
+        "continuity": "continuous_with_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "service-yard boundary behind market arcade"
+    },
+    {
+      "physical_feature_id": "SWPF-022",
+      "name": "Market Service Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D07-N1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6500,
+          650
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.6,
+        "width_m": 0.12
+      },
+      "construction": {
+        "material": "steel_double_leaf",
+        "condition": "good",
+        "continuity": "pedestrian_and_service_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "rear market service access"
+    },
+    {
+      "physical_feature_id": "SWPF-023",
+      "name": "Exchange Ward Flood Wall",
+      "feature_type": "flood_wall",
+      "neighbourhood_id": "SW-D07-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7400,
+            200
+          ],
+          [
+            8000,
+            200
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.8,
+        "width_m": 0.7
+      },
+      "construction": {
+        "material": "reinforced_concrete",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "low flood protection wall along southern edge of exchange ward"
+    },
+    {
+      "physical_feature_id": "SWPF-024",
+      "name": "Theatre Quarter Garden Railings",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D07-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8200,
+            900
+          ],
+          [
+            8800,
+            900
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.2,
+        "width_m": 0.05
+      },
+      "construction": {
+        "material": "wrought_iron",
+        "condition": "good",
+        "continuity": "continuous_with_gates"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "public garden railings"
+    },
+    {
+      "physical_feature_id": "SWPF-025",
+      "name": "Old Quays Historic Seawall",
+      "feature_type": "seawall",
+      "neighbourhood_id": "SW-D08-N1",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            9300,
+            250
+          ],
+          [
+            9900,
+            250
+          ],
+          [
+            10500,
+            250
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 3.8,
+        "width_m": 1.5
+      },
+      "construction": {
+        "material": "granite_block_and_masonry",
+        "condition": "weathered",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "historic stepped seawall with public quay walk"
+    },
+    {
+      "physical_feature_id": "SWPF-026",
+      "name": "Ropewalk Dock Edge Wall",
+      "feature_type": "quay_wall",
+      "neighbourhood_id": "SW-D08-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            10100,
+            1800
+          ],
+          [
+            10900,
+            1800
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 4.2,
+        "width_m": 1.1
+      },
+      "construction": {
+        "material": "masonry_and_concrete",
+        "condition": "weathered",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "retains historic dock edge"
+    },
+    {
+      "physical_feature_id": "SWPF-027",
+      "name": "Dockside Service Yard Fence",
+      "feature_type": "fence",
+      "neighbourhood_id": "SW-D08-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            11200,
+            700
+          ],
+          [
+            11700,
+            700
+          ],
+          [
+            11700,
+            1300
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 2.1,
+        "width_m": 0.08
+      },
+      "construction": {
+        "material": "steel_mesh",
+        "condition": "fair",
+        "continuity": "continuous_with_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "commercial service-yard boundary"
+    },
+    {
+      "physical_feature_id": "SWPF-028",
+      "name": "Dockside Service Gate",
+      "feature_type": "gate",
+      "neighbourhood_id": "SW-D08-N3",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11450,
+          700
+        ]
+      },
+      "dimensions": {
+        "height_m": 2,
+        "width_m": 0.15
+      },
+      "construction": {
+        "material": "steel_sliding",
+        "condition": "fair",
+        "continuity": "vehicle_gate"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "service yard vehicle access"
+    },
+    {
+      "physical_feature_id": "SWPF-029",
+      "name": "Old Quays Tide Drain Outfall",
+      "feature_type": "drainage_structure",
+      "neighbourhood_id": "SW-D08-N1",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9600,
+          450
+        ]
+      },
+      "dimensions": {
+        "height_m": 0.8,
+        "width_m": 1
+      },
+      "construction": {
+        "material": "masonry_and_iron_grille",
+        "condition": "weathered",
+        "continuity": "outfall"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "tidal drainage outfall with flap gate"
+    },
+    {
+      "physical_feature_id": "SWPF-030",
+      "name": "Civic Core Surface Drain",
+      "feature_type": "drainage_channel",
+      "neighbourhood_id": "SW-D03-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            7100,
+            4700
+          ],
+          [
+            7600,
+            4700
+          ],
+          [
+            8100,
+            4700
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 0.35,
+        "width_m": 0.6
+      },
+      "construction": {
+        "material": "covered_concrete_channel",
+        "condition": "good",
+        "continuity": "covered_channel"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "covered surface drainage channel along civic terrace road"
+    },
+    {
+      "physical_feature_id": "SWPF-031",
+      "name": "Westgate Ridge Footpath Cut",
+      "feature_type": "retaining_wall",
+      "neighbourhood_id": "SW-D01-N3",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            2300,
+            4500
+          ],
+          [
+            2700,
+            4750
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 1.9,
+        "width_m": 0.4
+      },
+      "construction": {
+        "material": "dry_stone_masonry",
+        "condition": "weathered",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "retains footpath cut through ridge shoulder"
+    },
+    {
+      "physical_feature_id": "SWPF-032",
+      "name": "Northbank Transit Noise Barrier",
+      "feature_type": "wall",
+      "neighbourhood_id": "SW-D02-N2",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            4200,
+            7000
+          ],
+          [
+            4700,
+            7000
+          ]
+        ]
+      },
+      "dimensions": {
+        "height_m": 3,
+        "width_m": 0.25
+      },
+      "construction": {
+        "material": "acoustic_concrete_panel",
+        "condition": "good",
+        "continuity": "continuous"
+      },
+      "traversal": {
+        "pedestrian": "feature_specific",
+        "vehicle": "feature_specific",
+        "accessibility": "feature_specific"
+      },
+      "description": "noise barrier along transit interchange edge"
+    }
+  ],
+  "gameplay_rules": {
+    "gates": "A gate is a real access control object with an operating state and access schedule; its existence does not imply it is open.",
+    "walls_and_fences": "Walls and fences obstruct direct movement unless a mapped gate, opening, or designated crossing exists.",
+    "drainage": "Open channels and culverts are movement hazards; covered channels do not obstruct surface movement.",
+    "retaining_structures": "Retaining walls separate elevation bands; designated stairs or ramps are required for pedestrian traversal.",
+    "road_network": "Roads remain the default vehicle network. Off-road vehicle travel is not permitted unless an asset explicitly allows it."
+  },
+  "default_dynamic_state": {
+    "gate_state": "closed_unlocked_when_unstaffed",
+    "gate_schedule": "see individual asset schedule when supplied; otherwise normal daytime access 06:00-20:00",
+    "condition_change": "only through simulation events",
+    "inspection_cycle_days": 90
+  }
+}
