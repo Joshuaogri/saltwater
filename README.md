@@ -472,3 +472,12 @@ The read-only source inventory is implemented in `runtime/bp04_source_inventory.
 - Every collection was checked for valid columnar structure and row-width consistency; inventory records column names, row counts, candidate identity columns, compressed/uncompressed sizes and SHA-256 source digests.
 - Canonical dataset IDs are read from source metadata rather than inferred from filenames.
 - This is source-package inventory only. It is not a relational import, Neon storage estimate or production upload. The phase-one PostgreSQL benchmark remains limited to the three mapped datasets; typed mapping and full disposable benchmarking of the remaining registers are next.
+
+
+## BP04 — building services and utilities relational phase 2
+
+The candidate schema `db/proposals/0014_bp04_building_services_utilities.sql` and importer mappings now cover all eight collections in the compressed building-services source: **426,399 records** across building systems, utility connections, utility provider profiles, utility accounts, meters, equipment assets, system inspections and business utility responsibilities. The importer preserves the original gzip dataset once in the source archive and writes typed operational columns with stable source IDs and explicit links to canonical property, building, unit, organisation, business and occupancy records.
+
+The disposable PostgreSQL workflow applies proposals 0013 and 0014 in order and checks the 28-table schema before import. It then verifies source/table counts, cross-register constraints, repeat-import idempotency and database storage stability. A first import attempt exposed source boolean flags encoded as 0/1 integers; the importer now normalizes those values explicitly. The latest benchmark run is [45635002711](https://github.com/Joshuaogri/saltwater/actions/runs/45635002711); its final import, reconciliation and storage result must be checked before treating phase 2 as accepted.
+
+This remains disposable-only. No Neon production schema or data writes have occurred.
