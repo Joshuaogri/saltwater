@@ -176,8 +176,8 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 pk = {
                     "organisation":"organisation_id","property_site":"property_id","street_address":"address_id","building":"building_id","premises":"premises_id","unit_space":"unit_id","access_point":"access_point_id","access_route":"route_id","site_feature":"site_feature_id","building_component":"component_id","premises_room":"room_id","ownership_interest":"ownership_interest_id","business":"business_id","establishment":"establishment_id","business_unit_link":"business_unit_link_id","occupancy_agreement":"agreement_id","occupancy":"occupancy_id"
                 }[table]
-                action = f"DO UPDATE SET {updates}" if updates else "DO NOTHING"
-                sql = f'INSERT INTO sw_property."{table}" ({col_sql}) VALUES ({placeholders}) ON CONFLICT ("{pk}") {action}'
+                action = f"DO UPDATE SET {updates} WHERE current.source_record IS DISTINCT FROM excluded.source_record OR current.source_dataset IS DISTINCT FROM excluded.source_dataset" if updates else "DO NOTHING"
+                sql = f'INSERT INTO sw_property."{table}" AS current ({col_sql}) VALUES ({placeholders}) ON CONFLICT ("{pk}") {action}'
                 values = [tuple(Jsonb(entry[c]) if c == "source_record" else entry[c] for c in columns) for entry in entries]
                 with conn.cursor() as cur:
                     cur.executemany(sql, values)
