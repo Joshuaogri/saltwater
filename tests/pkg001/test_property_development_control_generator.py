@@ -24,6 +24,9 @@ class PropertyDevelopmentControlTests(unittest.TestCase):
   self.assertEqual({x["building_id"] for x in self.world["buildings"]},{x["building_id"] for x in d["completion_certificates"]})
   self.assertEqual({x["premises_id"] for x in self.world["premises"]},{x["premises_id"] for x in d["lawful_use_certificates"]})
   self.assertEqual({x["unit_id"] for x in self.world["units"]},{x["unit_id"] for x in d["unit_use_compliance"]})
+  self.assertEqual(len(d["unit_use_compliance"]),len(self.world["units"]))
+  self.assertEqual(len({x["unit_id"] for x in d["unit_use_compliance"]}),len(d["unit_use_compliance"]))
+  self.assertEqual(d["summary"]["unit_use_compliance_count"],len(self.world["units"]))
  def test_all_references_resolve(self):
   d=self.data
   permissions={x["planning_permission_id"] for x in d["planning_permissions"]}
