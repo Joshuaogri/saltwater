@@ -97,6 +97,27 @@ The 100-entry BP-02 identity map currently covers districts, neighbourhoods, roa
 
 **Reconciliation outcome:** all current district/neighbourhood/road context and internal BP04 property/address links reconcile, but canonical parcel/address binding remains `BLOCKED_BP02_CANONICAL_PARCEL_AND_ADDRESS_IDENTITIES_ABSENT`. Do not assign disposable integer IDs, infer canonical IDs from generated labels, or promote candidate geometry to operational geography.
 
+### BP-02 stable parcel/address design identities — 2026-11-25
+
+A new source-only identity layer, `runtime/bp02_parcel_address_identity.py`, now generates deterministic portable identities from the verified BP04 property/address source and BP04-03 parcel candidate geometry:
+
+- Parcel IDs use `SWP-` plus 16 uppercase SHA-256 hex characters derived from the immutable parcel candidate ID.
+- Address IDs use `SWA-` plus 16 uppercase SHA-256 hex characters derived from the immutable BP04 source address ID.
+- Each of the 420 parcels retains its candidate geometry, source cell lineage, district/neighbourhood, area and road-frontage candidate references.
+- Each of the 420 address identities links to its property, parcel identity, road, district and neighbourhood; original address attributes are preserved without fabricating missing numbers or entrances.
+- Rebuilding from identical source inputs is deterministic. Duplicate IDs, orphan links, conflicting administrative context and unresolved road references fail closed.
+- No PostgreSQL sequence values, production writes or operational seed approvals are embedded.
+
+This closes the **portable design-identity mapping**: 420/420 properties map to stable parcel IDs and 420/420 primary addresses map to stable address IDs. It does not convert candidate geometry into an approved cadastral fabric. Parcel geometry remains `candidate_unreviewed`; frontage is not legal/usable frontage proof; source street labels/numbers remain unverified; the source geography remains unapproved for operational seed.
+
+The reconciliation now reports separate measures:
+- BP-02 design parcel identity matches: 420/420.
+- BP-02 design address identity matches: 420/420.
+- Operational canonical parcel/address release: still blocked (420/420 remain unapproved).
+- Neon writes and address promotion: none.
+
+The stable design IDs are source identities, not environment-specific `spatial_id` surrogates. Operational activation, geometry/address quality acceptance and later database materialisation remain separate release decisions.
+
 ## 4. Verification and write boundary
 
 The BP04 player/police/geography workflow passed on `main` in [run 45680995361](https://github.com/Joshuaogri/saltwater/actions/runs/45680995361), with 89 tests passing across the command, ChatGPT host, authorization/police and lookup/geography suites. The authenticated player application composition test also passed in the Python-kernel job of [run 45681404048](https://github.com/Joshuaogri/saltwater/actions/runs/45681404048). The separate disposable-PostgreSQL job in that PKG-001 run remains blocked by an unrelated syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; it is not a failure of the BP04 lookup tests.
@@ -105,8 +126,8 @@ The geography audit reports `database_write_performed: false`. No Neon writes, p
 
 ## 5. Remaining BP04 acceptance work
 
-1. BP-02 must supply approved, stable parcel and canonical address identities, including geometry/version lineage and address scope/aliases.
-2. Re-run this reconciliation against those actual canonical IDs and resolve all 420 property/address links; only then may canonical binding be marked complete.
+1. Complete BP-02 operational geography release: review the 420 candidate parcel geometries, prove/resolve frontage and address placement, confirm address scope/aliases and version lineage, and explicitly approve the operational geography version.
+2. Promote the stable SWP/SWA design identities only through that release gate; then bind operational BP02 entity IDs and resolve database-specific spatial_id values by entity_code where materialised.
 3. Provision the approved player and officer permission grants through the controlled authorization-policy process. This implementation deliberately did not modify Neon.
 4. Wire `BP04PoliceLookupAccess` into actual dispatch, incident and investigation workflows when those owning services are implemented.
 5. Complete the remaining business, ownership/tenancy, organisation/facility, operational-interface and 10,000-business performance acceptance criteria in the full BP04 audit.
