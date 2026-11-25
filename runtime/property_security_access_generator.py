@@ -41,6 +41,7 @@ def build_property_security(world,tenure,services):
  # zones for building, premises and unit boundaries
  for bid,b in sorted(buildings.items()):
   pid=b["property_id"]
+  zones.append({"access_zone_id":f"SWZ-{_slug(bid)}-ENTRY","property_id":pid,"building_id":bid,"premises_id":None,"unit_id":None,"zone_type":"building_entry_control","security_level":"controlled","zone_state":"active","parent_zone_id":None})
   for ztype in ("public_reception","staff_only","plant_and_utilities","restricted_security","emergency_egress"):
    zid=f"SWZ-{_slug(bid)}-{ztype.upper()}"
    zones.append({"access_zone_id":zid,"property_id":pid,"building_id":bid,"premises_id":None,"unit_id":None,"zone_type":ztype,"security_level":_pick(["open","controlled","restricted","critical"],zid),"zone_state":"active","parent_zone_id":f"SWZ-{_slug(bid)}-ENTRY"})
