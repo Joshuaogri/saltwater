@@ -110,6 +110,8 @@ _DEFINITIONS: Final[tuple[PlayerCommandDefinition, ...]] = (
     _definition("workspace", "Select an exact workspace ID", "BP-40 Interface", CommandClass.PRESENTATION_STATE, "one exact workspace ID"),
     _definition("back", "Return to the previous workspace", "BP-40 Interface", CommandClass.PRESENTATION_STATE),
     _definition("where", "Show current workspace and selected-record state", "BP-40 Interface", CommandClass.READ_ONLY),
+    _definition("find", "Search public property, address or business records", "BP-04 Property Lookup", CommandClass.READ_ONLY, "address|property|business plus search text"),
+    _definition("inspect", "Inspect one property, address, building, premises, unit, access point, business or establishment", "BP-04 Property Lookup", CommandClass.READ_ONLY, "one entity type and one stable ID"),
 )
 
 COMMAND_CATALOGUE: Final[tuple[PlayerCommandDefinition, ...]] = _DEFINITIONS
@@ -125,7 +127,7 @@ def render_command_help() -> str:
     """Render the human help text from the canonical command definitions."""
     lines = ["Saltwater commands"]
     for item in COMMAND_CATALOGUE:
-        suffix = " <id>" if item.token == "workspace" else ""
+        suffix = " <id>" if item.token == "workspace" else " <type> <query>" if item.token == "find" else " <type> <id>" if item.token == "inspect" else ""
         lines.append(f"  {item.token}{suffix}  {item.purpose}")
     return "\n".join(lines)
 
@@ -184,6 +186,39 @@ def parse_player_command(
         if args[0] not in WORKSPACE_BY_ID:
             return CommandParseResult(error=CommandParseError(
                 ParseErrorCode.INVALID_VALUE, f"Unknown workspace ID: {args[0]}",
+                supplied_token=supplied,
+            ))
+    elif definition.token == "find":
+        if len(args) < 3:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.MISSING_ARGUMENT,
+                "Use find address|property|business <search text>.",
+                supplied_token=supplied,
+            ))
+        if args[0] not in {"address", "property", "business"}:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.INVALID_VALUE,
+                "find supports address, property or business.",
+                supplied_token=supplied,
+            ))
+        if len(" ".join(args[1:]).strip()) < 2:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.INVALID_VALUE, "Search text must contain at least two characters.",
+                supplied_token=supplied,
+            ))
+    elif definition.token == "inspect":
+        if len(args) != 2:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.INVALID_ARGUMENT_COUNT,
+                "Use inspect <entity-type> <stable-id>.",
+                supplied_token=supplied,
+            ))
+        if args[0] not in {
+            "property", "address", "building", "premises", "unit",
+            "access_point", "business", "establishment",
+        }:
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.INVALID_VALUE, "Unsupported BP04 entity type.",
                 supplied_token=supplied,
             ))
     elif args:
