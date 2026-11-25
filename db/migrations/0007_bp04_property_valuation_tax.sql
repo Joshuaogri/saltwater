@@ -1,5 +1,5 @@
 -- BP04 phase 5: condition, valuation, insurance exposure and property tax assessment.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.property_condition_assessment (
  condition_assessment_id text PRIMARY KEY, property_id text NOT NULL REFERENCES sw_property.property_site(property_id) DEFERRABLE INITIALLY DEFERRED,
