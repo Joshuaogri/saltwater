@@ -202,9 +202,12 @@ def build_property_world(source: dict) -> dict:
             })
             address["building_ids"].append(bid)
 
-            for component in ["foundation","frame","external_walls","internal_walls","floor_structure","roof","facade","windows","main_stair","electrical_distribution","water_distribution","fire_detection","security"]:
+            for component_index, component in enumerate(["foundation","frame","external_walls","internal_walls","floor_structure","roof","facade","windows","main_stair","electrical_distribution","water_distribution","fire_detection","security"], 1):
+                # Hash the complete canonical building ID: punctuation-stripped route slugs
+                # can collide across long campus parcel identifiers.
+                building_key = hashlib.sha256(bid.encode("utf-8")).hexdigest()[:12].upper()
                 building_component_rows.append({
-                    "component_id": f"SWBC-{_route_slug(bid)}-{_slug(component)}",
+                    "component_id": f"SWBC-{building_key}-{component_index:02d}",
                     "building_id": bid, "component_type": component,
                     "material": _pick(["reinforced_concrete","masonry","structural_steel","aluminium_and_glass","timber"], bid+component),
                     "condition": _pick(["good","fair","maintained"], bid+component+"-cond"),
