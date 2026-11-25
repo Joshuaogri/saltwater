@@ -1,6 +1,7 @@
 """Build integrated facilities and property-operations schedules."""
 from __future__ import annotations
 import hashlib, json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
@@ -182,7 +183,7 @@ def build_facilities_operations(world, tenure, services, maintenance, developmen
 
 def main():
     root=Path(__file__).resolve().parents[1]
-    def load(path): return _expand_columnar(json.loads((root/path).read_text(encoding="utf-8")))
+    def load(path): return _expand_columnar(load_json(root/path))
     data=build_facilities_operations(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-tenure-v1.json"),load("data/property/saltwater-building-services-v1.json"),load("data/property/saltwater-property-maintenance-v1.json"),load("data/property/saltwater-property-development-control-v1.json"))
     out=root/"data/property/saltwater-property-facilities-operations-v1.json"
     doc=to_columnar_document(data);doc["schema"]="saltwater-property-facilities-operations-columnar/1.0"
