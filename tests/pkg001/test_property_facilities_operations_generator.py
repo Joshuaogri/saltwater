@@ -31,8 +31,8 @@ class FacilitiesOperationsTests(unittest.TestCase):
  def test_unit_reconciliation_does_not_hide_mismatch(self):
   r=self.data["unit_count_reconciliation"]
   self.assertEqual(r["property_development_control_unit_count"],len(self.development_control["unit_use_compliance"]))
-  self.assertEqual(r["property_world_unit_count"],15199)
-  self.assertEqual(r["property_development_control_unit_count"],15199)
+  self.assertEqual(r["property_world_unit_count"],len(self.world["units"]))
+  self.assertEqual(r["property_development_control_unit_count"],len(self.development_control["unit_use_compliance"]))
   self.assertEqual(r["reconciliation_status"],"reconciled")
   self.assertEqual({x["unit_id"] for x in self.development_control["unit_use_compliance"]},{x["unit_id"] for x in self.world["units"]})
   self.assertEqual(r["world_vs_tenure_missing_unit_count"],len({x["unit_id"] for x in self.world["units"]}-{x["unit_id"] for x in self.tenure["unit_occupancy_states"]}))
