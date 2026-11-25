@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 from shapely.geometry import LineString, Point, Polygon, box
 from shapely.ops import nearest_points
+from shapely.strtree import STRtree
 
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.parcel_dossier_generator import build_parcel_dossiers
@@ -518,6 +519,12 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         row["candidate_property_id"]: Polygon(row["geometry"][0], row["geometry"][1:])
         for row in properties
     }
+    property_by_parcel = {
+        row["source_candidate_parcel_id"]: row for row in properties
+    }
+    building_geometry_ids = list(building_geometry_by_id)
+    building_geometry_values = [building_geometry_by_id[key] for key in building_geometry_ids]
+    building_geometry_tree = STRtree(building_geometry_values)
     access_by_id = {row["candidate_access_point_id"]: row for row in access_points}
     building_by_id = {row["candidate_building_id"]: row for row in buildings}
     dossier_by_parcel = {
@@ -529,8 +536,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         if not access or not building:
             continue
         parcel_id = building["source_candidate_parcel_id"]
-        prop = next((row for row in properties
-                     if row["source_candidate_parcel_id"] == parcel_id), None)
+        prop = property_by_parcel.get(parcel_id)
         dossier = dossier_by_parcel.get(parcel_id)
         if prop is None or dossier is None:
             continue
@@ -548,13 +554,12 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 continue
             if line.intersection(own_geom).length > 0.01:
                 continue
-            blocked = False
-            for other_id, other_geom in building_geometry_by_id.items():
-                if other_id == own_id:
-                    continue
-                if line.intersection(other_geom).length > 0.01:
-                    blocked = True
-                    break
+            nearby_indexes = building_geometry_tree.query(line, predicate="intersects")
+            blocked = any(
+                building_geometry_ids[int(index)] != own_id
+                and line.intersection(building_geometry_values[int(index)]).length > 0.01
+                for index in nearby_indexes
+            )
             if blocked:
                 continue
             choices.append((round(line.length, 9), candidate["access_candidate_id"],
