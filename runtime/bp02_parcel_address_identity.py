@@ -124,6 +124,13 @@ def build_identity_register(
             "frontage_status": "NOT_PROVEN_BY_IDENTITY_MAPPING",
             "road_frontage_match_status": frontage_match_status,
             "candidate_frontage_road_ids": sorted(frontage_roads),
+            "address_road_candidate_id": next(iter(frontage_roads)) if len(frontage_roads) == 1 else None,
+            "address_road_candidate_status": (
+                "SINGLE_GEOMETRIC_FRONTAGE_ROAD_CANDIDATE"
+                if len(frontage_roads) == 1
+                else "NO_FRONTAGE_ROAD_CANDIDATE" if not frontage_roads
+                else "MULTIPLE_FRONTAGE_ROADS_REQUIRE_REVIEW"
+            ),
             "operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
         })
 
