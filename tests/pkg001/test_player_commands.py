@@ -46,7 +46,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         second = [(x.token, x.command_id) for x in COMMAND_CATALOGUE]
         self.assertEqual(first, second)
         self.assertEqual(first[0], ("help", "player.help.v1"))
-        self.assertEqual(first[-1], ("where", "player.where.v1"))
+        self.assertEqual(first[-1], ("inspect", "player.inspect.v1"))
 
     def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
         expected = {
