@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from runtime.dataset_io import load_json
 from pathlib import Path
 
 from runtime.property_world_generator import build_property_world, to_columnar_document
@@ -191,7 +192,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
 def main():
     root = Path(__file__).resolve().parents[1]
     source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-    world_document = json.loads((root / "data/property/saltwater-property-world-v1.json").read_text(encoding="utf-8"))
+    world_document = load_json(root / "data/property/saltwater-property-world-v1.json")
     property_world = _expand_columnar(world_document)
     result = build_business_registry(source, property_world=property_world)
     output = root / "data/business/saltwater-business-registry-v1.json"
