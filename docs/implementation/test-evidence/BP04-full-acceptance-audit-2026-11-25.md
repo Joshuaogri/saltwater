@@ -77,14 +77,33 @@ The property-world generator regression verifies unique IDs within entity types,
 4. **Cross-register acceptance:** test uniqueness, parent/child references, temporal relationships, business-versus-establishment identity, 10,000-business quality, organisation/facility links and all 105 collection counts from the pinned source release.
 5. **Operational interfaces and regression:** verify the applicable healthcare, transport, utility, business-schedule, lifecycle and disruption interfaces; add representative lookup-performance, failure/rollback and recovery tests.
 
+### BP-02 identity-layer update — 2026-11-25
+
+The source-only `runtime/bp02_parcel_address_identity.py` now assigns stable portable design IDs to every BP04 parcel candidate and primary address:
+
+| Measure | Result |
+|---|---:|
+| Stable parcel design identities | 420 |
+| Stable address design identities | 420 |
+| Property-to-parcel design identity links | 420/420 |
+| Property-to-primary-address links | 420/420 |
+| Address-to-parcel design identity links | 420/420 |
+| Operationally approved parcel identities | 0 |
+| Operationally approved canonical address identities | 0 |
+| Neon writes / seed rows | 0 |
+
+Parcel IDs are deterministic SHA-256-derived `SWP-` identifiers; address IDs are deterministic SHA-256-derived `SWA-` identifiers. The register preserves candidate geometry and source address attributes, records lineage, rejects broken/duplicate links and does not invent missing numbers, entrances or frontage. It does not promote candidate polygons or addresses into an operational cadastral/address authority.
+
+The updated BP04-to-BP02 reconciliation therefore distinguishes design identity coverage (420/420) from operational canonical release (still blocked). The source geography is still marked not approved for operational seed. This is a genuine source identity layer, not a Neon upload.
+
 ## 5. Final decision
 
 **BP04 production archive release: COMPLETED and VERIFIED.**  
 **Player command lookup integration: IMPLEMENTED AND TESTED.**  
 **Officer lookup adapter: IMPLEMENTED; production access remains default-deny pending policy grants and police-service integration.**  
-**BP04-to-BP02 source-context reconciliation: PASSED; canonical parcel/address binding: BLOCKED.**  
+**BP04-to-BP02 design identity binding: 420/420 parcels and 420/420 addresses; operational canonical geography release: BLOCKED.**  
 **BP04 full division acceptance: NOT COMPLETED.**
 
-Do not mark the entire BP04 division `COMPLETED` yet. The next prerequisite is BP-02's canonical parcel/address identity layer and approval. After those identities exist, bind the 420 properties and 420 addresses, provision the approved access grants through the controlled policy process, wire the officer adapter into police operational services, and complete the remaining cross-register acceptance. These tasks remain on GitHub `main`; no further Neon write is required for the source reconciliation or player lookup implementation.
+Do not mark the entire BP04 division `COMPLETED` yet. The next geography prerequisite is operational release of the BP-02 parcel/address design identity layer: review candidate geometries, prove frontage/address placement, confirm address scope/aliases and version lineage, then approve the geography version. Separately, provision approved access grants, wire the officer adapter into police operational services, and complete remaining cross-register acceptance. These tasks remain on GitHub `main`; no further Neon write is required for the source reconciliation or player lookup implementation.
 
 No Neon writes were made during this audit.
