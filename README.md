@@ -67,6 +67,10 @@ Provider-reported logical-size metadata (approximately 33.6 MB in the 2026-11-22
 - BP-02 and BP-03 updated; SW-DB-001 now references the adopted canon. BP-04 business distribution remains a separate open design item.
 - The approved BP38-01 migration writes are complete; no operational geography import or simulation seed data has been authorised or performed.
 
+## BP04-03 — terrain, elevation and physical-obstacle source model
+
+The read-only source model [SW-TERRAIN-OBSTACLE-001](runtime/terrain_obstacle_source_model.py) inventories terrain and physical-obstacle evidence without inventing missing facts. It recognises elevation surfaces, contours, spot elevations, terrain features, retaining structures, walls, fences, gates, drainage structures and natural/other barriers. Current SW-GEO-V1 supplies one terrain polygon (Central-Western Ridge) and no elevation surfaces, contours, spot elevations or mapped physical-obstacle records. This is a source-coverage statement, not proof that absent features do not exist. Elevation, vertical datum, gradient, obstacle dimensions/material/condition, traversal, accessibility, legal access and emergency egress remain null, unknown or not assessed. The 47 existing route-centreline/ridge intersections remain contextual only. No operational terrain/obstacle records, route approvals or Neon writes are created. Regression workflow: [BP04-03 Terrain and Physical Obstacle Source Inventory](.github/workflows/bp04-03-terrain-obstacle-source-inventory.yml).
+
 ## Detailed map and road network — SW-GEO-V1
 
 - [Open the master Saltwater map (SVG)](docs/maps/saltwater-master-map-v1.svg)

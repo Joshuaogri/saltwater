@@ -1,0 +1,24 @@
+name: BP04-03 Terrain and Physical Obstacle Source Inventory
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "runtime/terrain_obstacle_source_model.py"
+      - "tests/pkg001/test_terrain_obstacle_source_model.py"
+      - ".github/workflows/bp04-03-terrain-obstacle-source-inventory.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  terrain-obstacle-source-inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run source-model regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_terrain_obstacle_source_model.py" -v
+      - name: Generate read-only source inventory
+        run: python -m runtime.terrain_obstacle_source_model
