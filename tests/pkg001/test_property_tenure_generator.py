@@ -2,7 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.property_tenure_generator import build_property_tenure
+from runtime.property_tenure_generator import build_property_tenure, _expand_columnar
 from runtime.property_world_generator import to_columnar_document
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -11,8 +11,9 @@ ROOT = Path(__file__).resolve().parents[2]
 class PropertyTenureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
-        cls.data = build_property_tenure(source)
+        world = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text()))
+        registry = _expand_columnar(json.loads((ROOT / "data/business/saltwater-business-registry-v1.json").read_text()))
+        cls.data = build_property_tenure({}, property_world=world, registry=registry)
 
     def test_every_property_has_current_owner_and_chronology(self):
         d = self.data
