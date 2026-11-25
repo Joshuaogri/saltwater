@@ -35,9 +35,9 @@ def _slug(value):
     raw = "".join(c for c in value.upper() if c.isalnum())
     parts = value.upper().split("-")
     # Retain campus/building/floor/unit suffixes inside fixed-width child IDs.
-    if len(parts) >= 6 and parts[-3].startswith("B") and parts[-2].startswith("F") and parts[-1].startswith("U"):
+    if len(parts) >= 5 and parts[-3].startswith("B") and parts[-2].startswith("F") and parts[-1].startswith("U"):
         return raw[:13] + raw[-9:]
-    if len(parts) >= 5 and parts[-2].startswith("B") and parts[-1].startswith("F"):
+    if len(parts) >= 4 and parts[-2].startswith("B") and parts[-1].startswith("F"):
         return raw[:15] + raw[-7:]
     if len(parts) >= 4 and parts[-1].startswith("B") and parts[-1][1:].isdigit():
         return raw[:19] + raw[-3:]
