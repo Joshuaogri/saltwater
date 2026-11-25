@@ -1,7 +1,7 @@
 -- BP04 phase 9: property title, ownership index and asset lifecycle.
 -- Ownership-event facts remain authoritative in SW-PROPERTY-TENURE-V1.
 -- Original source collections remain losslessly retained in the gzip archive.
--- Disposable PostgreSQL benchmark only; never apply to production Neon.
+-- Production migration candidate; validate on disposable PostgreSQL before production application.
 BEGIN;
 CREATE TABLE sw_property.property_title_register (
  title_register_id text PRIMARY KEY, property_id text NOT NULL UNIQUE REFERENCES sw_property.property_site(property_id) DEFERRABLE INITIALLY DEFERRED,
