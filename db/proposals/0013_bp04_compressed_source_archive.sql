@@ -10,7 +10,7 @@ CREATE TABLE sw_property.organisation (
   organisation_type text NOT NULL,
   registered_city text,
   status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 
 CREATE TABLE sw_property.property_site (
@@ -22,7 +22,7 @@ CREATE TABLE sw_property.property_site (
   site_area_m2 numeric,
   use_class text,
   lifecycle_status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE TABLE sw_property.street_address (
   address_id text PRIMARY KEY,
@@ -32,7 +32,7 @@ CREATE TABLE sw_property.street_address (
   road_id text,
   house_number text,
   postcode text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 ALTER TABLE sw_property.property_site ADD CONSTRAINT property_site_address_fk
   FOREIGN KEY(address_id) REFERENCES sw_property.street_address(address_id)
@@ -48,7 +48,7 @@ CREATE TABLE sw_property.building (
   gross_floor_area_m2 numeric CHECK (gross_floor_area_m2 IS NULL OR gross_floor_area_m2 >= 0),
   construction_year integer,
   lifecycle_status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX building_property_idx ON sw_property.building(property_id);
 
@@ -82,7 +82,7 @@ CREATE TABLE sw_property.unit_space (
   floor_order integer,
   floor_area_m2 numeric CHECK (floor_area_m2 IS NULL OR floor_area_m2 >= 0),
   lifecycle_status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX unit_property_idx ON sw_property.unit_space(property_id);
 CREATE INDEX unit_building_idx ON sw_property.unit_space(building_id);
@@ -116,7 +116,7 @@ CREATE TABLE sw_property.access_route (
   route_type text,
   access_modes text[],
   route_status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX access_route_access_point_idx ON sw_property.access_route(access_point_id);
 
@@ -126,7 +126,7 @@ CREATE TABLE sw_property.site_feature (
     DEFERRABLE INITIALLY DEFERRED,
   feature_type text,
   display_name text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX site_feature_property_idx ON sw_property.site_feature(property_id);
 
@@ -136,7 +136,7 @@ CREATE TABLE sw_property.building_component (
     DEFERRABLE INITIALLY DEFERRED,
   component_type text,
   display_name text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX building_component_building_idx ON sw_property.building_component(building_id);
 
@@ -147,7 +147,7 @@ CREATE TABLE sw_property.premises_room (
   display_name text NOT NULL,
   room_type text,
   floor_name text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX premises_room_parent_idx ON sw_property.premises_room(premises_id);
 
@@ -159,7 +159,7 @@ CREATE TABLE sw_property.ownership_interest (
     DEFERRABLE INITIALLY DEFERRED,
   management_model text,
   interest_type text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX ownership_interest_owner_idx ON sw_property.ownership_interest(owner_organisation_id);
 
@@ -172,7 +172,7 @@ CREATE TABLE sw_property.business (
   parent_business_id text REFERENCES sw_property.business(business_id)
     DEFERRABLE INITIALLY DEFERRED,
   primary_establishment_id text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX business_sector_status_idx ON sw_property.business(sector,status);
 
@@ -191,7 +191,7 @@ CREATE TABLE sw_property.establishment (
   display_name text NOT NULL,
   establishment_type text,
   status text,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX establishment_business_idx ON sw_property.establishment(business_id);
 CREATE INDEX establishment_unit_idx ON sw_property.establishment(unit_id);
@@ -244,7 +244,7 @@ CREATE TABLE sw_property.occupancy_agreement (
   commencement_year integer,
   expiry_year integer,
   agreement_status text NOT NULL,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX occupancy_agreement_unit_idx ON sw_property.occupancy_agreement(unit_id);
 CREATE INDEX occupancy_agreement_tenant_idx ON sw_property.occupancy_agreement(tenant_business_id);
@@ -269,7 +269,7 @@ CREATE TABLE sw_property.occupancy (
   occupancy_status text NOT NULL,
   effective_from_year integer,
   effective_to_year integer,
-  source_dataset text NOT NULL,
+  source_dataset text NOT NULL
 );
 CREATE INDEX occupancy_unit_idx ON sw_property.occupancy(unit_id);
 CREATE INDEX occupancy_business_idx ON sw_property.occupancy(occupant_business_id);
@@ -297,6 +297,7 @@ CREATE TABLE sw_property.import_dataset (
   dataset_id text NOT NULL,
   source_path text NOT NULL,
   source_sha256 char(64) NOT NULL,
+  FOREIGN KEY(source_sha256) REFERENCES sw_property.source_dataset_archive(source_sha256),
   compressed_bytes bigint NOT NULL CHECK (compressed_bytes >= 0),
   uncompressed_bytes bigint NOT NULL CHECK (uncompressed_bytes >= 0),
   source_record_count bigint NOT NULL CHECK (source_record_count >= 0),
