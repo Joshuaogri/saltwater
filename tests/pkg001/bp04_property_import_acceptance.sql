@@ -97,7 +97,7 @@ BEGIN
   END IF;
   IF EXISTS (
     SELECT 1 FROM sw_property.contractual_rights_index r
-    LEFT JOIN sw_property.occupancy_agreement a USING(agreement_id)
+    LEFT JOIN sw_property.occupancy_agreement a ON a.agreement_id=r.source_agreement_id
     WHERE a.agreement_id IS NULL
   ) THEN RAISE EXCEPTION 'contractual rights agreement lineage failure'; END IF;
   IF EXISTS (
