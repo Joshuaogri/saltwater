@@ -8,16 +8,16 @@ BEGIN
   SELECT count(*) INTO n FROM sw_property.property_asset;
   IF n<>420 THEN RAISE EXCEPTION 'Expected 420 property identities, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.building;
-  IF n<>384 THEN RAISE EXCEPTION 'Expected 384 building identities, got %',n; END IF;
+  IF n<>1474 THEN RAISE EXCEPTION 'Expected 1474 building identities, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.premises;
-  IF n<>1327 THEN RAISE EXCEPTION 'Expected 1327 premises identities, got %',n; END IF;
+  IF n<>27730 THEN RAISE EXCEPTION 'Expected 27730 premises identities, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.unit_space;
-  IF n<>15199 THEN RAISE EXCEPTION 'Expected 15199 unit identities, got %',n; END IF;
+  IF n<>180733 THEN RAISE EXCEPTION 'Expected 180733 unit identities, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.access_point;
-  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 access-point candidate identities, got %',n; END IF;
+  IF n<>2948 THEN RAISE EXCEPTION 'Expected 2948 access-point candidate identities, got %',n; END IF;
 
   SELECT count(*) INTO n FROM sw_property.access_connector_candidate;
-  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 persistent access connector candidates, got %',n; END IF;
+  IF n<>2948 THEN RAISE EXCEPTION 'Expected 768 persistent access connector candidates, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.access_connector_candidate
    WHERE connector_type='BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE'
      AND contact_type='POINT_CONTACT_ONLY'
@@ -37,7 +37,7 @@ BEGIN
   SELECT count(*) INTO n FROM sw_property.property_candidate_site;
   IF n<>420 THEN RAISE EXCEPTION 'Property candidate-site lineage count mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate;
-  IF n<>1572 THEN RAISE EXCEPTION 'Asset geometry candidate count mismatch: %',n; END IF;
+  IF n<>4842 THEN RAISE EXCEPTION 'Asset geometry candidate count mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_generation_batch;
   IF n<>1 THEN RAISE EXCEPTION 'Expected one immutable generation batch, got %',n; END IF;
   SELECT unresolved_source_mapping_count INTO n FROM sw_property.asset_generation_batch;
@@ -46,13 +46,13 @@ BEGIN
   SELECT count(*) INTO n FROM sw_property.property_profile;
   IF n<>420 THEN RAISE EXCEPTION 'Property profile coverage mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.building_profile;
-  IF n<>384 THEN RAISE EXCEPTION 'Building profile coverage mismatch: %',n; END IF;
+  IF n<>1474 THEN RAISE EXCEPTION 'Building profile coverage mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.premises_profile;
-  IF n<>1327 THEN RAISE EXCEPTION 'Premises profile coverage mismatch: %',n; END IF;
+  IF n<>27730 THEN RAISE EXCEPTION 'Premises profile coverage mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.unit_profile;
-  IF n<>15199 THEN RAISE EXCEPTION 'Unit profile coverage mismatch: %',n; END IF;
+  IF n<>180733 THEN RAISE EXCEPTION 'Unit profile coverage mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.access_point_profile;
-  IF n<>768 THEN RAISE EXCEPTION 'Access-point profile coverage mismatch: %',n; END IF;
+  IF n<>2948 THEN RAISE EXCEPTION 'Access-point profile coverage mismatch: %',n; END IF;
 
   SELECT count(*) INTO n FROM sw_property.physical_measurement;
   IF n=0 THEN RAISE EXCEPTION 'Physical measurements were not imported'; END IF;
@@ -91,17 +91,17 @@ BEGIN
   IF n<>0 THEN RAISE EXCEPTION 'Generated knowledge-state assertions are inconsistent'; END IF;
 
   SELECT count(*) INTO n FROM sw_property.property_building;
-  IF n<>384 THEN RAISE EXCEPTION 'Property-building relationships mismatch: %',n; END IF;
+  IF n<>1474 THEN RAISE EXCEPTION 'Property-building relationships mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.building_premises;
-  IF n<>1327 THEN RAISE EXCEPTION 'Building-premises relationships mismatch: %',n; END IF;
+  IF n<>27730 THEN RAISE EXCEPTION 'Building-premises relationships mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.premises_unit;
-  IF n<>15199 THEN RAISE EXCEPTION 'Premises-unit relationships mismatch: %',n; END IF;
+  IF n<>180733 THEN RAISE EXCEPTION 'Premises-unit relationships mismatch: %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate g
    WHERE g.geometry_type='Polygon' AND g.geometry_payload->>'type'='Polygon';
-  IF n<>804 THEN RAISE EXCEPTION 'Expected 804 property/building polygon geometries, got %',n; END IF;
+  IF n<>1894 THEN RAISE EXCEPTION 'Expected 1894 property/building polygon geometries, got %',n; END IF;
   SELECT count(*) INTO n FROM sw_property.asset_geometry_candidate g
    WHERE g.geometry_type='Point' AND g.geometry_payload->>'type'='Point';
-  IF n<>768 THEN RAISE EXCEPTION 'Expected 768 access-location points, got %',n; END IF;
+  IF n<>2948 THEN RAISE EXCEPTION 'Expected 2948 access-location points, got %',n; END IF;
 END
 $$;
 
