@@ -24,9 +24,9 @@ class BuildingAccessRouteCorridorTests(unittest.TestCase):
 
     def test_all_connectors_have_route_corridor_centreline_candidates(self):
         summary = self.report["summary"]
-        self.assertEqual(summary["connector_candidate_count"], 768)
-        self.assertEqual(summary["route_corridor_centreline_candidate_count"], 768)
-        self.assertEqual(summary["frontage_centreline_candidate_count"], 764)
+        self.assertEqual(summary["connector_candidate_count"], 2948)
+        self.assertEqual(summary["route_corridor_centreline_candidate_count"], 2948)
+        self.assertEqual(summary["frontage_centreline_candidate_count"], 2944)
         self.assertEqual(summary["point_contact_or_proximity_centreline_candidate_count"], 4)
         self.assertEqual(summary["unresolved_connector_count"], 0)
 
