@@ -25,6 +25,9 @@ def reconcile_building_access_roads(
         property_by_id[key] = row
 
     buildings = {row["candidate_building_id"]: row for row in assets.get("buildings", [])}
+    parcels_with_buildings = {
+        row.get("source_candidate_parcel_id") for row in assets.get("buildings", [])
+    }
     dossier_by_parcel = {
         row["dossier"]["candidate_parcel_id"]: row for row in dossiers.get("parcels", [])
     }
@@ -78,8 +81,10 @@ def reconcile_building_access_roads(
             candidate_road, status = candidate_roads[0], "SINGLE_ALTERNATIVE_BUILDING_ACCESS_ROAD_REQUIRES_REVIEW"
         elif len(candidate_roads) > 1:
             candidate_road, status = None, "MULTIPLE_BUILDING_ACCESS_ROADS_REQUIRE_REVIEW"
+        elif parcel_id not in parcels_with_buildings:
+            candidate_road, status = None, "NO_BUILDING_ON_PROPERTY_SITE"
         else:
-            candidate_road, status = None, "NO_BUILDING_ACCESS_ROAD_CANDIDATE"
+            candidate_road, status = None, "BUILDING_ACCESS_ROAD_CANDIDATE_UNRESOLVED"
         if candidate_road:
             resolved += 1
         status_counts[status] += 1
@@ -97,6 +102,11 @@ def reconcile_building_access_roads(
         "address_count": len(addresses),
         "address_access_road_candidate_references_resolved": resolved,
         "address_access_road_candidate_status_counts": dict(sorted(status_counts.items())),
+        "property_sites_with_buildings": len(parcels_with_buildings),
+        "property_sites_without_buildings": len({
+            property_by_id[row["property_id"]]["source_candidate_parcel_id"]
+            for row in addresses
+        } - parcels_with_buildings),
         "unresolved_building_access_point_count": len(unresolved_access_points),
         "unresolved_building_access_point_ids": sorted(unresolved_access_points),
         "address_access_road_results": results,
