@@ -139,6 +139,11 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     add("occupancy", "SW-PROPERTY-TENURE-V1", rows(tenure, "occupancies"),
         lambda ds,r: {"occupancy_id":r["occupancy_id"],"property_id":r["property_id"],"building_id":r.get("building_id"),"premises_id":r.get("premises_id"),"unit_id":r["unit_id"],"occupant_business_id":r.get("occupant_business_id"),"establishment_id":r.get("establishment_id"),"agreement_id":r.get("agreement_id"),"occupant_type":r["occupant_type"],"occupancy_status":r["occupancy_status"],"effective_from_year":r.get("effective_from_year"),"effective_to_year":r.get("effective_to_year"),"source_dataset":ds})
 
+    # Utility providers extend the canonical organisation registry; do not assume
+    # every service provider was already present in the property-tenure register.
+    add("organisation", "SW-BUILDING-SERVICES-V1", rows(services, "utility_providers"),
+        lambda ds,r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"source_dataset":ds})
+
     # Phase 2: typed building systems and utility/service relationships.
     add("building_system", "SW-BUILDING-SERVICES-V1", rows(services, "building_systems"),
         lambda ds,r: {"building_system_id":r["building_system_id"],"property_id":r["property_id"],"building_id":r["building_id"],"system_type":r["system_type"],"system_status":r.get("system_status"),"condition":r.get("condition"),"capacity_band":r.get("capacity_band"),"redundancy_profile":r.get("redundancy_profile"),"control_mode":r.get("control_mode"),"inspection_cycle_days":r.get("inspection_cycle_days"),"last_inspection_year":r.get("last_inspection_year"),"next_inspection_due_tick":r.get("next_inspection_due_tick"),"provider_organisation_id":r.get("provider_organisation_id"),"effective_from_tick":r.get("effective_from_tick"),"source_dataset":ds})
