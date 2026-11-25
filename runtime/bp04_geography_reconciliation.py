@@ -206,8 +206,22 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     for address in identity_register["addresses"]:
         status = address["road_frontage_match_status"]
         frontage_counts[status] = frontage_counts.get(status, 0) + 1
+    frontage_exceptions = [
+        {
+            "source_address_id": row["source_address_id"],
+            "source_candidate_parcel_id": row["source_candidate_parcel_id"],
+            "source_road_id": row["road_id"],
+            "candidate_frontage_road_ids": row["candidate_frontage_road_ids"],
+            "status": row["road_frontage_match_status"],
+        }
+        for row in identity_register["addresses"]
+        if row["road_frontage_match_status"] not in (
+            "ROAD_MATCHES_PARCEL_FRONTAGE_CANDIDATE", "NOT_EVALUATED"
+        )
+    ]
     result.update({
         "address_road_frontage_candidate_status_counts": frontage_counts,
+        "address_road_frontage_exceptions": frontage_exceptions,
         "bp02_design_parcel_identity_count": identity_register["parcel_identity_count"],
         "bp02_design_address_identity_count": identity_register["address_identity_count"],
         "bp02_design_identity_register": identity_register["register_id"],
