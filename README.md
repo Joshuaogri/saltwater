@@ -182,3 +182,10 @@ The disposable PostgreSQL import added 130,973,696 bytes (130.97 MB decimal), in
 ### BP04-03 independent access connector road topology
 
 The new independent topology audit [45519989730](https://github.com/Joshuaogri/saltwater/actions/runs/45519989730) passed all 9 checks and 6 regression tests. It verifies all 768 connector candidates against their building/property/parcel lineage, source road and segment identity, endpoint coordinates, measured length, parent-property containment and road-reserve geometry. It confirms 764 frontage connectors, four distinct point-contact-only road-reserve connectors, and zero unlinked connectors or topology exceptions. This remains geometric QA only; no built or legally usable access route is inferred and no Neon writes occur. See [independent topology audit evidence](docs/implementation/test-evidence/BP04-03-independent-access-connector-road-topology-run-0001.md).
+
+
+### BP04-03 route-corridor centreline candidates — validated
+
+[Route-corridor audit 45520905232](https://github.com/Joshuaogri/saltwater/actions/runs/45520905232) passed all 7 checks and 6 regression tests. The generated CI artifact contains 768 traceable two-dimensional centreline candidates: 764 frontage-linked and four point-contact/proximity-linked. There are zero unresolved connectors, mapped building intersections, mapped water intersections, originating-building interior crossings or road-reserve overlaps. Forty-seven centrelines intersect the mapped Central-Western Ridge terrain feature; this is recorded as context, not as an impassable obstacle. Other-building separation ranges from 31.894 m to 480.755 m, which is not available route width or a safety clearance.
+
+No corridor width, available width, gradient, surface, barriers, accessibility, legal/public access or emergency-egress state is inferred: these remain null, unknown or not assessed. The artifact is CI-only; no production database write or operational access activation occurred. See [route-corridor candidate evidence](docs/implementation/test-evidence/BP04-03-route-corridor-centreline-candidates-run-0001.md).
