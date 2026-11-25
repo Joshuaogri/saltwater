@@ -1,6 +1,7 @@
 """Build property rights, easements, wayleaves and boundary evidence registers."""
 from __future__ import annotations
 import hashlib, json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
@@ -150,7 +151,7 @@ def build_property_rights(world, tenure, lifecycle, services, security):
 
 def main():
     root=Path(__file__).resolve().parents[1]
-    def load(path): return _expand_columnar(json.loads((root/path).read_text(encoding="utf-8")))
+    def load(path): return _expand_columnar(load_json(root/path))
     data=build_property_rights(
         load("data/property/saltwater-property-world-v1.json"),
         load("data/property/saltwater-property-tenure-v1.json"),
