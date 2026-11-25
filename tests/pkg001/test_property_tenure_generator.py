@@ -40,7 +40,7 @@ class PropertyTenureTests(unittest.TestCase):
     def test_all_occupancy_references_resolve(self):
         d = self.data
         unit_states = d["unit_occupancy_states"]
-        self.assertEqual(len(unit_states), 15199)
+        self.assertEqual(len(unit_states), len(self.world["units"]))
         self.assertEqual(len({x["unit_id"] for x in unit_states}), len(unit_states))
         self.assertTrue(all(not x["person_ids"] for x in unit_states))
         self.assertEqual(d["summary"]["person_records_created"], 0)
@@ -66,7 +66,7 @@ class PropertyTenureTests(unittest.TestCase):
         doc["schema"] = "saltwater-property-tenure-columnar/1.0"
         self.assertEqual(doc["storage_format"], "textual_json_columnar_v1")
         self.assertEqual(len(doc["tables"]["occupancies"]["rows"]), 10000)
-        self.assertEqual(len(doc["tables"]["unit_occupancy_states"]["rows"]), 15199)
+        self.assertEqual(len(doc["tables"]["unit_occupancy_states"]["rows"]), len(self.data["unit_occupancy_states"]))
         self.assertEqual(doc["metadata"]["summary"]["ownership_event_count"], len(self.data["ownership_events"]))
 
 
