@@ -557,7 +557,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             nearby_indexes = building_geometry_tree.query(line, predicate="intersects")
             blocked = any(
                 building_geometry_ids[int(index)] != own_id
-                and line.intersection(building_geometry_values[int(index)]).length > 0.01
+                and line.intersects(building_geometry_values[int(index)])
                 for index in nearby_indexes
             )
             if blocked:
