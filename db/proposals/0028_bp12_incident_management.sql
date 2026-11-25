@@ -170,6 +170,38 @@ INSERT INTO sw_core.event_type(event_code,description) VALUES
  ('INCIDENT_REOPENED','Resolved or closed incident reopened')
 ON CONFLICT(event_code) DO NOTHING;
 
+CREATE FUNCTION sw_incident.guard_incident_update() RETURNS trigger
+LANGUAGE plpgsql AS $bp12$
+DECLARE v_event sw_core.simulation_event%ROWTYPE;
+        v_code text;
+BEGIN
+  IF NEW.incident_id<>OLD.incident_id
+     OR NEW.incident_ref<>OLD.incident_ref
+     OR NEW.created_event_id<>OLD.created_event_id
+     OR NEW.created_tick<>OLD.created_tick
+     OR NEW.source_type<>OLD.source_type
+     OR NEW.source_record_id<>OLD.source_record_id
+     OR NEW.original_report_text<>OLD.original_report_text
+     OR NEW.idempotency_key<>OLD.idempotency_key THEN
+    RAISE EXCEPTION 'incident source and identity fields are immutable';
+  END IF;
+  IF NEW.status IS NOT DISTINCT FROM OLD.status
+     OR NEW.record_version<>OLD.record_version+1
+     OR NEW.last_event_id IS NOT DISTINCT FROM OLD.last_event_id THEN
+    RAISE EXCEPTION 'incident changes require a validated state-transition event';
+  END IF;
+  SELECT * INTO v_event FROM sw_core.simulation_event WHERE event_id=NEW.last_event_id;
+  SELECT event_code INTO v_code FROM sw_core.event_type WHERE event_type_id=v_event.event_type_id;
+  IF v_code<>'INCIDENT_STATE_CHANGED' OR v_event.subject_kind<>'incident'
+     OR v_event.subject_id<>OLD.incident_id OR v_event.world_tick<>NEW.updated_tick THEN
+    RAISE EXCEPTION 'incident projection update does not match its committed transition event';
+  END IF;
+  RETURN NEW;
+END
+$bp12$;
+CREATE TRIGGER incident_projection_guard BEFORE UPDATE ON sw_incident.incident
+FOR EACH ROW EXECUTE FUNCTION sw_incident.guard_incident_update();
+
 CREATE FUNCTION sw_incident.create_incident(
   p_source_type text,
   p_source_record_id text,
@@ -197,19 +229,36 @@ DECLARE
   v_received_tick bigint;
   v_source_type text;
 BEGIN
-  IF p_source_type NOT IN ('communications_contact','police_call','cad_event','officer_report','alarm','interagency','system','other')
+  IF p_source_type IS NULL OR p_source_type NOT IN ('communications_contact','police_call','cad_event','officer_report','alarm','interagency','system','other')
      OR p_source_record_id IS NULL OR length(trim(p_source_record_id))=0
      OR p_original_report_text IS NULL OR length(trim(p_original_report_text))=0
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
      OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$'
-     OR p_caller_identity_state NOT IN ('known','claimed','anonymous','withheld','unknown','not_applicable')
+     OR p_caller_identity_state IS NULL OR p_caller_identity_state NOT IN ('known','claimed','anonymous','withheld','unknown','not_applicable')
+     OR p_category_code IS NULL OR p_category_code=''
      OR p_priority IS NOT NULL AND p_priority NOT BETWEEN 1 AND 5
-     OR p_severity_code NOT IN ('critical','high','moderate','low','unassessed') THEN
+     OR p_severity_code IS NULL OR p_severity_code NOT IN ('critical','high','moderate','low','unassessed') THEN
     RAISE EXCEPTION 'invalid incident intake data';
   END IF;
 
   SELECT * INTO v_prior FROM sw_incident.incident WHERE idempotency_key=p_idempotency_key;
-  IF FOUND THEN RETURN v_prior.incident_id; END IF;
+  IF FOUND THEN
+    IF v_prior.source_type<>p_source_type OR v_prior.source_record_id<>p_source_record_id
+       OR v_prior.original_report_text<>p_original_report_text
+       OR v_prior.category_code<>p_category_code
+       OR v_prior.priority IS DISTINCT FROM p_priority
+       OR v_prior.severity_code<>p_severity_code THEN
+      RAISE EXCEPTION 'incident idempotency key conflicts with prior intake definition';
+    END IF;
+    RETURN v_prior.incident_id;
+  END IF;
+  SELECT i.incident_id INTO v_incident_id
+  FROM sw_incident.incident_source_link l
+  JOIN sw_incident.incident i USING(incident_id)
+  WHERE l.source_type=p_source_type AND l.source_record_id=p_source_record_id
+    AND l.link_type='origin'
+  ORDER BY l.incident_source_link_id LIMIT 1;
+  IF FOUND THEN RETURN v_incident_id; END IF;
 
   SELECT * INTO v_runtime FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
   IF NOT FOUND OR v_runtime.state<>2 OR NOT v_runtime.player_present THEN
@@ -304,8 +353,19 @@ BEGIN
      OR p_new_status IN ('CLOSED','CANCELLED') AND length(trim(p_reason))=0 THEN
     RAISE EXCEPTION 'invalid incident transition request';
   END IF;
-  SELECT event_id INTO v_event_id FROM sw_core.simulation_event WHERE idempotency_key=p_idempotency_key;
-  IF FOUND THEN RETURN v_event_id; END IF;
+  SELECT se.event_id INTO v_event_id
+  FROM sw_core.simulation_event se
+  JOIN sw_core.event_type et USING(event_type_id)
+  WHERE se.idempotency_key=p_idempotency_key;
+  IF FOUND THEN
+    IF NOT EXISTS(SELECT 1 FROM sw_core.simulation_event
+      WHERE event_id=v_event_id AND subject_kind='incident'
+        AND subject_id=p_incident_id AND event_type_id IN
+          (SELECT event_type_id FROM sw_core.event_type WHERE event_code='INCIDENT_STATE_CHANGED')) THEN
+      RAISE EXCEPTION 'incident transition idempotency key conflicts with another event';
+    END IF;
+    RETURN v_event_id;
+  END IF;
 
   SELECT * INTO v_runtime FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
   IF NOT FOUND OR v_runtime.state<>2 OR NOT v_runtime.player_present THEN
@@ -359,6 +419,15 @@ BEGIN
       closure_reason=CASE WHEN p_new_status IN ('CLOSED','CANCELLED') THEN p_reason
                           WHEN p_new_status='REOPENED' THEN NULL ELSE closure_reason END
   WHERE incident_id=p_incident_id;
+
+  IF p_new_status='DUPLICATE_LINKED' THEN
+    INSERT INTO sw_incident.incident_source_link(
+      incident_id,source_type,source_record_id,link_type,linked_tick,source_event_id,source_ref
+    ) VALUES (
+      p_incident_id,'system','incident:'||p_duplicate_of_incident_id::text,'duplicate',
+      v_runtime.world_tick,v_event_id,'incident-duplicate:'||p_incident_id::text
+    );
+  END IF;
 
   INSERT INTO sw_incident.incident_event(
     incident_id,source_event_id,event_kind,prior_status,resulting_status,
