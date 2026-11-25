@@ -67,6 +67,16 @@ CREATE UNIQUE INDEX career_one_active_occupant_per_post
 CREATE INDEX career_post_person_history_idx
   ON sw_police.career_post_appointment(personnel_id,effective_from_tick DESC);
 
+INSERT INTO sw_core.event_type(event_code,description) VALUES
+ ('CAREER_RANK_ASSIGNED','Substantive or acting career rank assignment recorded'),
+ ('CAREER_POST_APPOINTED','Personnel appointed to an authorised organisational post'),
+ ('CAREER_PROMOTION_CASE_OPENED','Career progression or promotion case opened'),
+ ('CAREER_PROMOTION_DECIDED','Career progression decision recorded'),
+ ('CAREER_ACTING_APPOINTED','Temporary acting appointment begins'),
+ ('CAREER_SECONDMENT_STARTED','Career secondment begins'),
+ ('CAREER_SERVICE_CREDIT_ADJUSTED','Authorised police service-credit adjustment recorded')
+ON CONFLICT (event_code) DO NOTHING;
+
 CREATE FUNCTION sw_police.reject_career_history_mutation() RETURNS trigger
 LANGUAGE plpgsql AS $bp07$
 BEGIN
