@@ -15,6 +15,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: saltwater-property-world-main
+  cancel-in-progress: true
 jobs:
   build-and-persist:
     runs-on: ubuntu-latest
@@ -43,4 +46,6 @@ jobs:
             exit 0
           fi
           git commit -m "Generate canonical Saltwater property world"
+          git fetch origin main
+          git rebase origin/main
           git push origin HEAD:main
