@@ -127,33 +127,35 @@ BEGIN
     'BP06:service-number:'||NEW.personnel_id::text
   );
 
-  SELECT p.personnel_id INTO v_supervisor_personnel_id
-  FROM sw_police.personnel p
-  WHERE p.person_id=NEW.supervisor_person_id
-    AND p.service_status='active'
-    AND p.service_standing='established';
-  IF v_supervisor_personnel_id IS NULL THEN
-    RAISE EXCEPTION 'recruit appointment requires one active established personnel supervisor';
+  IF NEW.service_standing='recruit' THEN
+    SELECT p.personnel_id INTO v_supervisor_personnel_id
+    FROM sw_police.personnel p
+    WHERE p.person_id=NEW.supervisor_person_id
+      AND p.service_status='active'
+      AND p.service_standing='established';
+    IF v_supervisor_personnel_id IS NULL THEN
+      RAISE EXCEPTION 'recruit appointment requires one active established personnel supervisor';
+    END IF;
+
+    SELECT a.authorised_by_principal_id,a.authority_source
+      INTO v_authorised_by,v_authority_source
+    FROM sw_police.recruit_supervisor_authorisation a
+    WHERE a.person_id=NEW.supervisor_person_id;
+
+    IF v_authorised_by IS NULL THEN
+      RAISE EXCEPTION 'recruit supervisor authorisation is missing';
+    END IF;
+
+    INSERT INTO sw_police.personnel_supervision_link(
+      supervision_link_id,supervisor_personnel_id,supervisee_personnel_id,
+      relationship_type,effective_from_tick,authority_source,
+      authorised_by_principal_id,source_ref
+    ) VALUES (
+      'SWPS-SUP-'||NEW.personnel_id::text,v_supervisor_personnel_id,NEW.personnel_id,
+      'recruit_supervisor',NEW.appointment_tick,v_authority_source,
+      v_authorised_by,'BP06:recruit-supervision:'||NEW.personnel_id::text
+    );
   END IF;
-
-  SELECT a.authorised_by_principal_id,a.authority_source
-    INTO v_authorised_by,v_authority_source
-  FROM sw_police.recruit_supervisor_authorisation a
-  WHERE a.person_id=NEW.supervisor_person_id;
-
-  IF v_authorised_by IS NULL THEN
-    RAISE EXCEPTION 'recruit supervisor authorisation is missing';
-  END IF;
-
-  INSERT INTO sw_police.personnel_supervision_link(
-    supervision_link_id,supervisor_personnel_id,supervisee_personnel_id,
-    relationship_type,effective_from_tick,authority_source,
-    authorised_by_principal_id,source_ref
-  ) VALUES (
-    'SWPS-SUP-'||NEW.personnel_id::text,v_supervisor_personnel_id,NEW.personnel_id,
-    'recruit_supervisor',NEW.appointment_tick,v_authority_source,
-    v_authorised_by,'BP06:recruit-supervision:'||NEW.personnel_id::text
-  );
   RETURN NEW;
 END
 $bp06$;
