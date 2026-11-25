@@ -60,10 +60,15 @@ jobs:
       - name: Verify second import is idempotent and storage-stable
         run: |
           BEFORE="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database());")"
+          psql -v ON_ERROR_STOP=1 -c "SELECT pg_stat_reset();"
           python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL"
           AFTER="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database());")"
           echo "database_bytes_before=$BEFORE"
           echo "database_bytes_after=$AFTER"
+          echo "repeat_import_table_mutations:"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname, n_tup_ins, n_tup_upd, n_tup_del FROM pg_stat_user_tables WHERE schemaname='sw_property' AND (n_tup_ins+n_tup_upd+n_tup_del)>0 ORDER BY (n_tup_ins+n_tup_upd+n_tup_del) DESC, relname;"
+          echo "largest_relation_sizes_after_repeat:"
+          psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(relid) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY total_bytes DESC LIMIT 12;"
           test "$BEFORE" = "$AFTER"
       - name: Report disposable PostgreSQL storage and table sizes
         run: |
