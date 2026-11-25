@@ -19,6 +19,19 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         cls.dossiers = build_parcel_dossiers(source, cls.candidates)
         cls.manifest = build_asset_inventory(source, cls.candidates, cls.dossiers)
 
+    def test_global_hub_vertical_profiles_are_deterministic_and_use_sensitive(self):
+        from runtime.physical_asset_inventory_generator import _storey_count
+        for parcel in self.candidates["parcels"]:
+            first = _storey_count(parcel["land_use_code"], parcel["source_district_id"], parcel["candidate_parcel_id"])
+            second = _storey_count(parcel["land_use_code"], parcel["source_district_id"], parcel["candidate_parcel_id"])
+            self.assertEqual(first, second)
+            self.assertGreaterEqual(first, 1)
+            self.assertLessEqual(first, 58)
+        commercial = [row for row in self.manifest["buildings"] if row["building_use"] == "office"]
+        self.assertTrue(commercial)
+        self.assertGreaterEqual(max(row["storeys_above"] for row in commercial), 42)
+        self.assertTrue(all(row["height_profile_code"] == "GLOBAL-ESTATE-VERTICAL-V1" for row in self.manifest["buildings"]))
+
     def test_all_parcel_candidates_have_a_property_site(self):
         self.assertEqual(self.manifest["generation"]["property_count"], 420)
         self.assertEqual(
