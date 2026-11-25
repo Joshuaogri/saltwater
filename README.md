@@ -436,3 +436,9 @@ The full-stack workflow restores compressed inputs, rebuilds and validates the c
 ## Canonical property-stack import preparation
 
 The expanded 14-dataset property/business stack is persisted and validated on `main`. The next database phase is governed by [BP04 canonical property-stack import and disposable benchmark plan](docs/implementation/BP04-canonical-property-stack-import-plan.md). Existing BP04-01/BP04-02 schema proposals and the BP04-03 Stage E importer are disposable-only candidate assets, not the canonical property-world importer. The production property schema and lossless relational import pipeline must be built and benchmarked in isolated PostgreSQL 16 first. The live Neon database remains unchanged; no property seed rows or production property tables have been written.
+
+### BP04 canonical property relational schema — phase 1
+
+The first typed relational import model is now committed on `main` for isolated PostgreSQL 16 validation. Candidate SQL: `db/proposals/0012_bp04_canonical_property_stack.sql`. The mapping and integrity contract is documented in [BP04 canonical property relational mapping](docs/implementation/BP04-canonical-property-relational-mapping.md). It establishes stable source-ID primary keys and typed property, building, premises, unit, access, room/component, ownership, business, establishment and occupancy tables, with explicit foreign keys, provenance and a deterministic import-release ledger. Original source objects are retained per typed row for lossless round-trip verification; this is not a single opaque JSONB store.
+
+This is a disposable-only schema proposal. It has not been applied to Neon. The deterministic importer, full phase-2 register coverage and PostgreSQL 16 benchmark are the next implementation tasks. No production schema or data writes have occurred.
