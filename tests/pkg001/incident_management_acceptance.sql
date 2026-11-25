@@ -88,4 +88,9 @@ BEGIN
 END
 $bp12$;
 ROLLBACK;
-DO $bp12$\nBEGIN\n  IF (SELECT count(*) FROM sw_incident.incident)<>0 THEN RAISE EXCEPTION 'BP12 acceptance transaction leaked a test incident'; END IF;\nEND\n$bp12$;\nSELECT 'BP12 incident schema and runtime-boundary acceptance passed' AS result;
+DO $bp12$
+BEGIN
+  IF (SELECT count(*) FROM sw_incident.incident)<>0 THEN RAISE EXCEPTION 'BP12 acceptance transaction leaked a test incident'; END IF;
+END
+$bp12$;
+SELECT 'BP12 incident schema and runtime-boundary acceptance passed' AS result;
