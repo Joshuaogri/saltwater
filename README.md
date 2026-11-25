@@ -580,7 +580,7 @@ Full Python and disposable PostgreSQL regression [PKG-001 workflow run 456583505
 
 Added `db/proposals/0024_bp06_personnel_service_records.sql` and a PostgreSQL-backed dossier model for service engagements, immutable service events, service-number history and effective-dated supervision. Every personnel appointment now creates its service engagement and history in the same transaction. Recruit appointments additionally require an active established supervisor and create the formal supervision link; established personnel do not need a recruit-supervisor relationship. The schema preserves canonical BP-03 person identity and does not create duplicate people, ranks or post occupancy.
 
-The dedicated BP06 disposable acceptance step passed in [PKG-001 run 45659232002](https://github.com/Joshuaogri/saltwater/actions/runs/45659232002). It verifies dossier/event/service-number completeness, living population linkage, recruit supervision and no automatic filling of the 500 vacant posts. The full 10,000-person cap, backup/restore and regression workflow is still running.
+The dedicated BP06 acceptance and complete PKG-001 disposable regression [run 45659232002](https://github.com/Joshuaogri/saltwater/actions/runs/45659232002) passed, including the 10,000-person cap, concurrency, backup/restore and runtime checks. It verifies dossier/event/service-number completeness, living population linkage, recruit supervision and no automatic filling of the 500 vacant posts.
 
 ## Current implementation update — 2026-11-25
 
@@ -592,3 +592,8 @@ This dated update supersedes earlier status statements above where they describe
 - **Population/runtime:** the disposable regression suite filled the population to exactly 10,000, verified that concurrent admission at 9,999 permits exactly one final admission, and verified that an additional living person is rejected. Backup/restore reproduced 10,000 people, population states, histories, events and name-registry records exactly. The checkpoint validator explicitly leaves business-minimum, player-absence-freeze and permission/hidden-truth gates unexecuted; these are not claimed as passed.
 - **Production boundary:** all of the above database work is disposable PostgreSQL validation. No BP04 property import or BP05/BP06 schema proposal has been applied to production Neon. The live Neon baseline remains a separate read-only measurement. No production seed data has been written.
 - **Execution approach:** fictional canon, NPCs, organisations and gameplay systems are developed directly on GitHub `main` using established engineering and simulation standards. Routine fictional work does not require repeated user approval. Production Neon writes remain separate from fictional design and disposable testing.
+
+
+### BP07 — career history foundation
+
+Added `db/proposals/0025_bp07_career_rank_and_post_history.sql`: append-only career episode events, separate rank assignments and authorised post appointments, current-rank/current-post projections, and registered career event types. Opening a career episode now records its event automatically. Rank and post assignments remain separate, and a recruit receives neither a substantive rank nor an occupied post automatically. The BP07 acceptance verifies career-opening event lineage and the recruit boundary. Full disposable regression is running in [run 45660272493](https://github.com/Joshuaogri/saltwater/actions/runs/45660272493).
