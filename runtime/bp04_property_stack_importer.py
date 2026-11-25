@@ -178,7 +178,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 }[table]
                 action = f"DO UPDATE SET {updates}" if updates else "DO NOTHING"
                 sql = f'INSERT INTO sw_property."{table}" ({col_sql}) VALUES ({placeholders}) ON CONFLICT ("{pk}") {action}'
-                values = [tuple(entry[c] for c in columns) for entry in entries]
+                values = [tuple(Jsonb(entry[c]) if c == "source_record" else entry[c] for c in columns) for entry in entries]
                 with conn.cursor() as cur:
                     cur.executemany(sql, values)
 
