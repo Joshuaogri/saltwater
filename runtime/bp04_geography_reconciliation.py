@@ -210,6 +210,25 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     building_access_reconciliation = reconcile_building_access_roads(
         properties, addresses, parcel_dossiers, physical_assets
     )
+    building_access_by_address = {
+        row["source_address_id"]: row
+        for row in building_access_reconciliation["address_access_road_results"]
+    }
+    frontage_exception_crosscheck = []
+    for row in frontage_exceptions:
+        access_row = building_access_by_address.get(row["source_address_id"])
+        frontage_exception_crosscheck.append({
+            **row,
+            "building_access_road_candidate_status": (
+                access_row["status"] if access_row else "NOT_FOUND"
+            ),
+            "building_access_road_candidate_id": (
+                access_row["address_access_road_candidate_id"] if access_row else None
+            ),
+            "building_access_road_candidate_ids": (
+                access_row["candidate_access_road_ids"] if access_row else []
+            ),
+        })
     frontage_counts = {}
     for address in identity_register["addresses"]:
         status = address["road_frontage_match_status"]
@@ -251,6 +270,7 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
             1 for row in identity_register["addresses"] if row["address_road_candidate_id"]
         ),
         "address_road_frontage_exceptions": frontage_exceptions,
+        "address_frontage_exceptions_building_access_crosscheck": frontage_exception_crosscheck,
         "bp02_design_parcel_identity_count": identity_register["parcel_identity_count"],
         "bp02_design_address_identity_count": identity_register["address_identity_count"],
         "bp02_design_identity_register": identity_register["register_id"],
