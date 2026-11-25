@@ -1,0 +1,46 @@
+name: BP04 canonical property schema — disposable PostgreSQL 16
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "db/proposals/0012_bp04_canonical_property_stack.sql"
+      - "tests/pkg001/bp04_property_schema_acceptance.sql"
+      - ".github/workflows/bp04-property-schema-disposable.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  schema-acceptance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: saltwater_test
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply BP04 phase-1 proposal to disposable database only
+        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
+      - name: Verify typed table inventory and integrity contracts
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
+      - name: Record disposable database size
+        run: |
+          psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database()) AS disposable_schema_bytes;"
