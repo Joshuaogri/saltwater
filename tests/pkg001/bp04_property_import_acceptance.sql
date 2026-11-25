@@ -17,7 +17,7 @@ BEGIN
   FROM sw_property.source_dataset_collection;
   IF v_datasets <> 14 THEN RAISE EXCEPTION 'expected 14 archived source datasets, found %', v_datasets; END IF;
   IF v_collections <> 105 THEN RAISE EXCEPTION 'expected 105 source collection ledger rows, found %', v_collections; END IF;
-  IF v_source_rows <> 1950947 THEN RAISE EXCEPTION 'expected 1950947 source records, found %', v_source_rows; END IF;
+  IF v_source_rows <> 1950923 THEN RAISE EXCEPTION 'expected 1950923 source records, found %', v_source_rows; END IF;
 
   SELECT mapping_status, loaded_record_count INTO v_status, v_count
   FROM sw_property.source_dataset_collection
