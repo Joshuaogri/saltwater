@@ -204,7 +204,7 @@ def build_property_world(source: dict) -> dict:
 
             for component in ["foundation","frame","external_walls","internal_walls","floor_structure","roof","facade","windows","main_stair","electrical_distribution","water_distribution","fire_detection","security"]:
                 building_component_rows.append({
-                    "component_id": f"SWBC-{_slug(bid)}-{_slug(component)}",
+                    "component_id": f"SWBC-{_route_slug(bid)}-{_slug(component)}",
                     "building_id": bid, "component_type": component,
                     "material": _pick(["reinforced_concrete","masonry","structural_steel","aluminium_and_glass","timber"], bid+component),
                     "condition": _pick(["good","fair","maintained"], bid+component+"-cond"),
