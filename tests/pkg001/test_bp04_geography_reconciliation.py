@@ -51,6 +51,23 @@ class BP04GeographyReconciliationTests(unittest.TestCase):
         self.assertFalse(result["address_promotion_performed"])
         self.assertFalse(result["database_write_performed"])
 
+    def test_stable_design_ids_bind_without_claiming_operational_canonical_release(self):
+        result = reconcile_collections(
+            self.properties, self.addresses, {"SWPAR-1", "SWPAR-2"}, self.codes,
+            canonical_parcel_by_candidate={"SWPAR-1": "SWP-A", "SWPAR-2": "SWP-B"},
+            canonical_address_by_source={"SWADDR-1": "SWA-A", "SWADDR-2": "SWA-B"},
+        )
+        self.assertEqual(result["bp02_design_parcel_identity_matches"], 2)
+        self.assertEqual(result["bp02_design_address_identity_matches"], 2)
+        self.assertEqual(result["canonical_parcel_identity_matches"], 0)
+        self.assertEqual(result["canonical_address_identity_matches"], 0)
+        self.assertEqual(result["properties_still_awaiting_bp02_parcel_binding"], 2)
+        self.assertEqual(result["addresses_still_awaiting_bp02_address_binding"], 2)
+        self.assertEqual(result["canonical_binding_status"],
+                         "DESIGN_IDENTITIES_BOUND_OPERATIONAL_RELEASE_BLOCKED")
+        self.assertFalse(result["operational_approval"])
+        self.assertFalse(result["database_write_performed")
+
     def test_missing_candidate_parcel_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "source parcel candidate is unresolved"):
             reconcile_collections(
