@@ -1,6 +1,6 @@
 """Load the phased Saltwater property/business/maintenance stack into disposable PostgreSQL.
 
-The release includes property, business, tenure, building-services and maintenance sources.
+The release includes property, business, tenure, building-services, maintenance, security, valuation, insurance and tax sources.
 Production use is deliberately blocked. The command accepts only the disposable
 saltwater_test database unless an explicit future implementation changes this
 guard through reviewed code. It imports compressed columnar JSON losslessly.
