@@ -567,3 +567,10 @@ The full 14-source package was imported into disposable PostgreSQL 16 using the 
 - No production Neon schema or data writes have been made.
 
 The 19 archive-only collections remain losslessly retained in their compressed source datasets; they are not fabricated into gameplay records. The mapped collections provide typed relational access for the core property, business, tenure, operating-hours, building-services, maintenance, security, lawful-use, title/lifecycle, rights and access relationships.
+
+
+### BP05 — Saltwater Police Service architecture
+
+Implemented the initial fictional police organisation on `main` in `db/proposals/0023_bp05_police_architecture.sql`. The Saltwater Police Service now has **48 canonical components**: one department, four command portfolios, 12 divisions and 31 operational/support units. The structure includes nine substantive ranks (Recruit remains a service standing, not a rank), 24 position definitions and an **authorised establishment of 500 vacant posts** distributed across the service. All 47 parent reporting relationships are recorded. The seed creates no personnel or person records; those are generated and linked in the personnel stage, preserving the 10,000-person cap and avoiding fictitious filled posts.
+
+Disposable PostgreSQL acceptance is included in [PKG-001 workflow run 45658350599](https://github.com/Joshuaogri/saltwater/actions/runs/45658350599). It verified component hierarchy, rank/position separation, 500-post count, initial vacancy status, append-only post authorisation history and zero personnel created by the structure seed. The full regression workflow is still running.
