@@ -188,7 +188,7 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 existing = True
                 batch_id = batch[0]
                 if progress_callback:
-                    progress_callback("geometry_and_candidate_links", round((time.perf_counter()-started)*1000, 3))
+                    progress_callback("existing_batch_detected", round((time.perf_counter()-started)*1000, 3))
 
                 inserted = {"identities": 0, "relationships": 0, "profiles": 0,
                             "details": 0, "geometry": 0, "candidate_site_links": 0, "access_connector_candidates": 0}
@@ -515,6 +515,9 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 """, [(batch_id,kind,ident,payload["type"],inventory["coordinate_reference"],
                        Jsonb(payload),_geometry_hash(payload),inventory_sha,row_ref,ACTOR,REASON)
                       for kind,ident,payload,row_ref in geometry_rows])
+
+                if progress_callback:
+                    progress_callback("geometry_and_candidate_links", round((time.perf_counter()-started)*1000, 3))
 
                 inserted = {
                     "identities": sum(expected.values()),
