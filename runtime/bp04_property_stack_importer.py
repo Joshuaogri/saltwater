@@ -458,7 +458,8 @@ def main():
     parser.add_argument("--root",type=Path,default=Path(__file__).resolve().parents[1])
     parser.add_argument("--dsn",default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--expected-database",default="saltwater_test")
-    parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")\n    parser.add_argument("--archive-only",action="store_true",help="Store the lossless compressed source datasets and provenance ledgers only; do not materialise typed rows.")
+    parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")
+    parser.add_argument("--archive-only",action="store_true",help="Store the lossless compressed source datasets and provenance ledgers only; do not materialise typed rows.")
     args=parser.parse_args()
     if not args.dsn:
         parser.error("Set DATABASE_URL to the target PostgreSQL connection.")
