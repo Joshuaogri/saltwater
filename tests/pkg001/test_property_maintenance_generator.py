@@ -30,6 +30,7 @@ class PropertyMaintenanceTests(unittest.TestCase):
   requests={x["work_request_id"] for x in d["work_requests"]}
   orders={x["work_order_id"] for x in d["work_orders"]}
   self.assertTrue(all(x["equipment_id"] in eq for x in d["defects"]))
+  self.assertTrue(all(x["equipment_id"] in eq for x in d["warranties"]+d["replacement_forecasts"]))
   self.assertTrue(all(x["defect_id"] in defects for x in d["work_requests"]))
   self.assertTrue(all(x["work_request_id"] in requests for x in d["work_orders"]))
   self.assertTrue(all(x["work_order_id"] in orders for x in d["work_order_lines"]+d["material_issues"]))
