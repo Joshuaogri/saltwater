@@ -6,6 +6,7 @@ ownership, tenancy, occupancy, business assignments or production records.
 """
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -701,6 +702,11 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         for attribute in ("access_mode", "emergency_egress", "loading_capability", "public_access"):
             assertion("ACCESS_POINT", aid, attribute, "not_assessed", ref)
 
+    properties_with_buildings = {row["property_id"] for row in buildings}
+    properties_without_buildings = sum(
+        1 for row in properties
+        if row["candidate_property_id"] not in properties_with_buildings
+    )
     body = {
         "schema": "saltwater-bp04-03-stage-e-physical-asset-candidates/1.0",
         "inventory_set_id": "BP04-03-STAGE-E-ASSET-INVENTORY-001",
@@ -722,7 +728,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "utility_system_count": len(utility_systems), "physical_feature_count": len(physical_features),
             "condition_assessment_count": len(condition_assessments),
             "physical_defect_count": len(physical_defects), "asset_assertion_count": len(asset_assertions),
-            "properties_without_buildings": len(properties)-len(buildings),
+            "properties_without_buildings": properties_without_buildings,
             "resolved_source_entity_code_mappings": 100,
             "unresolved_source_entity_code_mappings": 0,
             "unresolved_source_spatial_mappings": 0,
@@ -754,21 +760,36 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "All 100 source records resolve to stable entity_code values; production spatial_id surrogate values are database-generated and remain unassigned until operational geography activation. Resolve them by entity_code in the target database.",
         ],
     }
-    canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
-    body["manifest_sha256"] = hashlib.sha256(canonical).hexdigest()
+    encoder = json.JSONEncoder(sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    digest = hashlib.sha256()
+    for chunk in encoder.iterencode(body):
+        digest.update(chunk.encode("utf-8"))
+    body["manifest_sha256"] = digest.hexdigest()
     return body
 
 def main():
     root = Path(__file__).resolve().parents[1]
     source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
     result = build_asset_inventory(source)
-    Path("bp04-03-stage-e-physical-assets.json").write_text(
-        json.dumps(result, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n",
-        encoding="utf-8")
-    print(json.dumps(result["generation"] | {
+    output = Path("bp04-03-stage-e-physical-assets.json.gz")
+    # Stream canonical JSON directly into gzip. The full candidate inventory is
+    # intentionally large; avoid materialising a second 1GB+ JSON string.
+    with gzip.open(output, "wt", encoding="utf-8", compresslevel=6, newline="") as stream:
+        json.dump(result, stream, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    manifest = {
+        "schema": result["schema"],
         "manifest_sha256": result["manifest_sha256"],
         "candidate_manifest_sha256": result["candidate_manifest_sha256"],
-    }, indent=2, sort_keys=True))
+        "operational_approval": result["operational_approval"],
+        "generation": result["generation"],
+        "compressed_artifact": output.name,
+        "compressed_artifact_bytes": output.stat().st_size,
+    }
+    Path("bp04-03-stage-e-physical-assets-manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps(manifest, indent=2, sort_keys=True))
 
 if __name__ == "__main__":
     main()
