@@ -26,6 +26,13 @@ DATASETS = {
     "SW-PROPERTY-MAINTENANCE-V1": "data/property/saltwater-property-maintenance-v1.json.gz",
     "SW-PROPERTY-SECURITY-ACCESS-V1": "data/property/saltwater-property-security-access-v1.json.gz",
     "SW-PROPERTY-VALUE-RISK-TAX-V1": "data/property/saltwater-property-value-risk-tax-v1.json.gz",
+    "SW-BUSINESS-OPERATIONS-V1": "data/business/saltwater-business-operations-v1.json.gz",
+    "SW-PROPERTY-DEVELOPMENT-CONTROL-V1": "data/property/saltwater-property-development-control-v1.json.gz",
+    "SW-PROPERTY-FACILITIES-OPERATIONS-V1": "data/property/saltwater-property-facilities-operations-v1.json.gz",
+    "SW-PROPERTY-INSURANCE-CLAIMS-V1": "data/property/saltwater-property-insurance-claims-v1.json.gz",
+    "SW-PROPERTY-LIFECYCLE-TRANSACTIONS-V1": "data/property/saltwater-property-lifecycle-transactions-v1.json.gz",
+    "SW-PROPERTY-RIGHTS-AND-BOUNDARIES-V1": "data/property/saltwater-property-rights-boundaries-v1.json.gz",
+    "SW-GLOBAL-ESTATE-CAPACITY-AUDIT-V1": "data/property/saltwater-global-estate-capacity-audit-v1.json.gz",
 }
 
 def read_document(path: Path) -> tuple[dict, bytes]:
@@ -293,21 +300,41 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                     (source_sha256,dataset_id,source_path,compressed_bytes,uncompressed_bytes,compressed_payload)
                     VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT(source_sha256) DO NOTHING""",
                     (info["source_sha256"],dataset_id,info["source_path"],info["compressed_bytes"],info["uncompressed_bytes"],payload))
-                collection_count = sum(v for k,v in source_counts.items() if k.startswith(dataset_id+"."))
+                source_doc = documents[dataset_id]
+                source_collections = source_doc["tables"]
+                source_collection_counts = {name: len(table["rows"]) for name, table in source_collections.items()}
+                mapped_collection_names = {key.split(".",1)[1] for key in source_counts if key.startswith(dataset_id+".") and key.split(".",1)[1] in source_collections}
+                source_record_count = sum(source_collection_counts.values())
+                loaded_record_count = sum(source_collection_counts[name] for name in mapped_collection_names)
+                mapping_status = "archive_only" if not mapped_collection_names else ("fully_mapped" if len(mapped_collection_names) == len(source_collections) else "partially_mapped")
                 conn.execute("""INSERT INTO sw_property.import_dataset AS current
-                    (release_id,dataset_id,source_path,source_sha256,compressed_bytes,uncompressed_bytes,source_record_count,loaded_record_count)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                    (release_id,dataset_id,source_path,source_sha256,compressed_bytes,uncompressed_bytes,source_record_count,loaded_record_count,mapping_status)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
                     ON CONFLICT(release_id,dataset_id) DO UPDATE SET source_path=excluded.source_path,
                     source_sha256=excluded.source_sha256,compressed_bytes=excluded.compressed_bytes,
                     uncompressed_bytes=excluded.uncompressed_bytes,source_record_count=excluded.source_record_count,
-                    loaded_record_count=excluded.loaded_record_count
+                    loaded_record_count=excluded.loaded_record_count,mapping_status=excluded.mapping_status
                     WHERE current.source_sha256 IS DISTINCT FROM excluded.source_sha256
                        OR current.source_path IS DISTINCT FROM excluded.source_path
                        OR current.compressed_bytes IS DISTINCT FROM excluded.compressed_bytes
                        OR current.uncompressed_bytes IS DISTINCT FROM excluded.uncompressed_bytes
                        OR current.source_record_count IS DISTINCT FROM excluded.source_record_count
-                       OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count""",
-                    (release_id,dataset_id,info["source_path"],info["source_sha256"],info["compressed_bytes"],info["uncompressed_bytes"],collection_count,collection_count))
+                       OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count
+                       OR current.mapping_status IS DISTINCT FROM excluded.mapping_status""",
+                    (release_id,dataset_id,info["source_path"],info["source_sha256"],info["compressed_bytes"],info["uncompressed_bytes"],source_record_count,loaded_record_count,mapping_status))
+                for collection_name, collection_rows in source_collection_counts.items():
+                    collection_loaded = collection_rows if collection_name in mapped_collection_names else 0
+                    collection_status = "mapped" if collection_name in mapped_collection_names else "archive_only"
+                    conn.execute("""INSERT INTO sw_property.source_dataset_collection AS current
+                        (release_id,dataset_id,collection_name,source_record_count,loaded_record_count,mapping_status)
+                        VALUES (%s,%s,%s,%s,%s,%s)
+                        ON CONFLICT(release_id,dataset_id,collection_name) DO UPDATE SET
+                        source_record_count=excluded.source_record_count,loaded_record_count=excluded.loaded_record_count,
+                        mapping_status=excluded.mapping_status
+                        WHERE current.source_record_count IS DISTINCT FROM excluded.source_record_count
+                           OR current.loaded_record_count IS DISTINCT FROM excluded.loaded_record_count
+                           OR current.mapping_status IS DISTINCT FROM excluded.mapping_status""",
+                        (release_id,dataset_id,collection_name,collection_rows,collection_loaded,collection_status))
             table_order = ["organisation","property_site","street_address","building","premises","unit_space","access_point","access_route","site_feature","building_component","premises_room","ownership_interest","business","establishment","business_unit_link","occupancy_agreement","occupancy","building_system","utility_connection","utility_provider_profile","utility_account","meter","equipment_asset","system_inspection","business_utility_responsibility","maintenance_contractor_profile","maintenance_plan","maintenance_cycle","maintenance_inspection","maintenance_defect","maintenance_work_request","maintenance_work_order","maintenance_work_order_line","maintenance_material_issue","maintenance_event","equipment_warranty","equipment_replacement_forecast","building_emergency_procedure","security_door","security_lock","key_cylinder","physical_key","security_device","access_zone","access_group","permission_set","permission_zone_grant","organisation_access_assignment","key_cabinet","access_policy","insurer_profile","property_condition_assessment","land_valuation","improvement_valuation","asset_valuation","premises_valuation","insurance_policy","insurance_coverage","property_risk","property_tax_assessment","tax_exemption_review","property_tax_rule"]
             for table in table_order:
                 entries = batches.get(table, [])
