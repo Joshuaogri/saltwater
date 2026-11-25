@@ -34,6 +34,32 @@ USE = {
     "open_space": ("open_space", "open_space", 1, 1, 150.0),
 }
 
+# Deterministic global-city vertical profiles. District-specific ranges create
+# distinct financial, civic, university and harbour skylines while industrial,
+# port-yard and utility assets retain appropriate low-rise forms.
+STOREY_RANGES = {
+    "residential": {"default": (10, 20), "SW-D05": (6, 12), "SW-D07": (14, 24)},
+    "mixed_use": {"default": (16, 30), "SW-D03": (20, 34), "SW-D07": (26, 40)},
+    "commercial": {"default": (18, 36), "SW-D02": (24, 40), "SW-D03": (30, 48), "SW-D07": (42, 58)},
+    "civic": {"default": (7, 16), "SW-D03": (12, 24)},
+    "education": {"default": (7, 16), "SW-D02": (12, 22)},
+    "industrial": {"default": (3, 7), "SW-D06": (4, 9)},
+    "freight_logistics": {"default": (3, 8), "SW-D04": (4, 10), "SW-D06": (4, 10), "SW-D08": (4, 10)},
+    "port_maritime": {"default": (3, 8), "SW-D04": (4, 10), "SW-D08": (4, 9)},
+    "waterfront": {"default": (12, 24), "SW-D04": (16, 30), "SW-D07": (18, 30), "SW-D08": (16, 28)},
+    "utility": {"default": (1, 3)},
+    "open_space": {"default": (1, 1)},
+}
+
+def _storey_count(land_use: str, district_id: str, parcel_id: str) -> int:
+    profile = STOREY_RANGES[land_use]
+    low, high = profile.get(district_id, profile["default"])
+    digest = hashlib.sha256(
+        f"saltwater:GLOBAL-ESTATE-VERTICAL-V1:{district_id}:{land_use}:{parcel_id}".encode()
+    ).digest()
+    return low + int.from_bytes(digest[:4], "big") % (high - low + 1)
+
+
 SYLLABLES = (
     ("ba", "be", "bi", "bo", "bu", "ca", "ce", "ci", "co", "cu",
      "da", "de", "di", "do", "du", "fa", "fe", "fi", "fo", "fu",
@@ -127,7 +153,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         land_use = parcel["land_use_code"]
         if land_use not in USE:
             raise ValueError(f"Unsupported generated land use: {land_use}")
-        property_class, use_code, floors, spaces_per_floor, unit_area = USE[land_use]
+        property_class, use_code, _, spaces_per_floor, unit_area = USE[land_use]
         property_code = f"SWP-{slug}"
         property_name = _name("PROPERTY", parcel_id, occupied)
         properties.append({
@@ -155,13 +181,14 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
 
         building_code = f"SWB-STR-{slug}-B01"
         building_name = _name("BUILDING", parcel_id, occupied)
-        storeys = floors
+        storeys = _storey_count(land_use, parcel["source_district_id"], parcel_id)
         footprint_area = footprint.area
         gross_floor_area = footprint_area * storeys
         building = {
             "candidate_building_id": building_code, "display_name": building_name,
             "property_id": property_code, "source_candidate_parcel_id": parcel_id,
-            "building_use": use_code, "building_form": "other",
+            "building_use": use_code, "building_form": ("high_rise" if storeys >= 20 else "mid_rise" if storeys >= 8 else "low_rise"),
+            "height_profile_code": "GLOBAL-ESTATE-VERTICAL-V1",
             "structure_class": "unknown", "construction_system": "unknown",
             "foundation_type": "unknown", "roof_form": "unknown",
             "roof_covering": "unknown", "facade_system": "unknown",
