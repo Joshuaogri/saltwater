@@ -2,6 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
+from runtime.dataset_io import load_json
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.building_services_generator import build_building_services
 from runtime.property_world_generator import to_columnar_document
@@ -12,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 class BuildingServicesTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        world = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text()))
-        tenure = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-tenure-v1.json").read_text()))
+        world = _expand_columnar(load_json(ROOT / "data/property/saltwater-property-world-v1.json"))
+        tenure = _expand_columnar(load_json(ROOT / "data/property/saltwater-property-tenure-v1.json"))
         cls.data = build_building_services(world, tenure)
         cls.world = world
         cls.tenure = tenure
