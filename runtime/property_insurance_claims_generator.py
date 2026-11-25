@@ -1,6 +1,7 @@
 """Build property insurance exposure, loss-event and claims-control registers."""
 from __future__ import annotations
 import hashlib,json
+from runtime.dataset_io import load_json
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_world_generator import to_columnar_document
@@ -161,7 +162,7 @@ def build_insurance_claims(world,insurance,services,maintenance,development,righ
     return body
 def main():
     root=Path(__file__).resolve().parents[1]
-    def load(p): return _expand_columnar(json.loads((root/p).read_text(encoding="utf-8")))
+    def load(p): return _expand_columnar(load_json(root/p))
     data=build_insurance_claims(load("data/property/saltwater-property-world-v1.json"),load("data/property/saltwater-property-value-risk-tax-v1.json"),load("data/property/saltwater-building-services-v1.json"),load("data/property/saltwater-property-maintenance-v1.json"),load("data/property/saltwater-property-development-control-v1.json"),load("data/property/saltwater-property-rights-boundaries-v1.json"))
     out=root/"data/property/saltwater-property-insurance-claims-v1.json"
     doc=to_columnar_document(data);doc["schema"]="saltwater-property-insurance-claims-columnar/1.0"
