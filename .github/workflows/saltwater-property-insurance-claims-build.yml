@@ -1,0 +1,53 @@
+name: Saltwater Property Insurance and Claims Build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/property_insurance_claims_generator.py"
+      - "runtime/property_tenure_generator.py"
+      - "runtime/property_world_generator.py"
+      - "data/property/saltwater-property-world-v1.json"
+      - "data/property/saltwater-property-value-risk-tax-v1.json"
+      - "data/property/saltwater-property-maintenance-v1.json"
+      - "data/property/saltwater-building-services-v1.json"
+      - "data/property/saltwater-property-development-control-v1.json"
+      - "data/property/saltwater-property-rights-boundaries-v1.json"
+      - "tests/pkg001/test_property_insurance_claims_generator.py"
+      - ".github/workflows/saltwater-property-insurance-claims-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: saltwater-property-insurance-claims-main
+  cancel-in-progress: true
+jobs:
+  build-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry dependency
+        run: python -m pip install "shapely==2.1.2"
+      - name: Generate insurance exposure and claims controls
+        run: python -m runtime.property_insurance_claims_generator
+      - name: Run insurance and claims regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_property_insurance_claims_generator.py" -v
+      - name: Persist compact insurance dataset on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/property/saltwater-property-insurance-claims-v1.json
+          if git diff --cached --quiet; then
+            echo "Insurance dataset is unchanged."
+            exit 0
+          fi
+          git commit -m "Generate Saltwater property insurance and claims registers"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
