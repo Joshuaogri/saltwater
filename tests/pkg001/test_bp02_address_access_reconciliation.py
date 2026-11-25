@@ -29,13 +29,11 @@ class BP02AddressAccessReconciliationTests(unittest.TestCase):
             "buildings": [
                 {"candidate_building_id": "B1", "source_candidate_parcel_id": "C1"},
                 {"candidate_building_id": "B2", "source_candidate_parcel_id": "C2"},
-                {"candidate_building_id": "B3", "source_candidate_parcel_id": "C3"},
             ],
             "access_points": [
                 {"candidate_access_point_id": "X1", "building_id": "B1", "road_link_candidate_id": "AC1"},
                 {"candidate_access_point_id": "X4", "building_id": "B1", "road_link_candidate_id": "AC2"},
                 {"candidate_access_point_id": "X2", "building_id": "B2", "road_link_candidate_id": "AC3"},
-                {"candidate_access_point_id": "X3", "building_id": "B3", "road_link_candidate_id": None},
             ],
         }
 
@@ -57,7 +55,21 @@ class BP02AddressAccessReconciliationTests(unittest.TestCase):
         result = reconcile_building_access_roads(self.properties, self.addresses, self.dossiers, self.assets)
         row = result["address_access_road_results"][2]
         self.assertIsNone(row["address_access_road_candidate_id"])
-        self.assertEqual(row["status"], "NO_BUILDING_ACCESS_ROAD_CANDIDATE")
+        self.assertEqual(row["status"], "NO_BUILDING_ON_PROPERTY_SITE")
+        self.assertEqual(result["property_sites_without_buildings"], 1)
+
+    def test_existing_building_without_road_candidate_is_distinguished(self):
+        assets = {
+            "buildings": self.assets["buildings"] + [
+                {"candidate_building_id": "B3", "source_candidate_parcel_id": "C3"}
+            ],
+            "access_points": self.assets["access_points"] + [
+                {"candidate_access_point_id": "X3", "building_id": "B3", "road_link_candidate_id": None}
+            ],
+        }
+        result = reconcile_building_access_roads(self.properties, self.addresses, self.dossiers, assets)
+        row = result["address_access_road_results"][2]
+        self.assertEqual(row["status"], "BUILDING_ACCESS_ROAD_CANDIDATE_UNRESOLVED")
         self.assertEqual(result["unresolved_building_access_point_count"], 1)
 
     def test_missing_candidate_reference_fails_closed(self):
