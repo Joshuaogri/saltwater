@@ -1,14 +1,14 @@
 # BP04 production release runbook
 
-**Status:** production migration package prepared; production import not yet executed.
-**Target:** Neon project `misty-breeze-20463094`, branch `br-bitter-rain-bdz9ddid`, database `neondb`.
+**Status:** archive-only release validated on disposable PostgreSQL 16 and 18; production remains restored to its pre-release baseline.
+**Target:** Neon project `misty-breeze-20463094`, current production branch `br-still-cloud-bdvaw8u4`, database `neondb`.
 **Source of truth:** this repository's `main` branch only.
 
 ## Release contents
 
 The BP04 production schema is now represented by ordered migrations `0003`–`0012` under `db/migrations/`. The original `db/proposals/0013`–`0022` files remain as design/benchmark provenance. The disposable benchmark workflow applies the production migration files, not the proposals.
 
-The importer `runtime/bp04_property_stack_importer.py` defaults to the disposable `saltwater_test` database. Targeting `neondb` requires the explicit `--allow-production` flag and `--expected-database neondb`. The importer stores each original compressed source once and inserts typed relational rows in one transaction. Its release ID is tied to the GitHub commit and package digest.
+The importer `runtime/bp04_property_stack_importer.py` defaults to compressed archive-only mode. Targeting `neondb` requires the explicit `--allow-production` flag and `--expected-database neondb`; production typed-row expansion is explicitly rejected. The importer stores each original compressed source once and records its release and collection provenance. Its release ID is tied to the GitHub commit and package digest.
 
 ## Current verified source package benchmark
 
