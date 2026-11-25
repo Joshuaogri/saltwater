@@ -322,3 +322,13 @@ Generation and seven regression tests passed in [workflow 45579877325](https://g
 - [Build workflow](.github/workflows/saltwater-property-security-access-build.yml)
 
 No Neon upload or production seed write has occurred.
+
+## BP-04 — property condition, valuation, insurance and taxation (SW-PROPERTY-VALUE-RISK-TAX-V1)
+
+Implemented on `main` and generated from the persisted property, tenure, building-services, maintenance and security datasets. The deterministic compact columnar dataset contains 804 site/building condition assessments; 420 land valuations; 384 building-improvement valuations; 804 whole-property/building asset valuations; 1,327 premises valuations; 420 property insurance policies with 1,260 coverage records; 420 property risk profiles; 420 annual 2026 property-tax assessments; 420 exemption-screening records; five fictional insurer organisations; and one annual property-tax rule. Valuations use fictional SWC simulation units and replacement-cost/land-assessment profiles, not real market quotes. Condition records reference the existing defect and building-system baseline. Tax assessments remain assessed-not-billed; exemption is not presumed. No insurance claims, premiums, tax bills, invoices, payments, financial postings, residents or other person records were created. BP-34 retains transaction authority. Seven regression tests passed and the dataset was persisted in [run 45601885026](https://github.com/Joshuaogri/saltwater/actions/runs/45601885026). Output size: 1,309,420 bytes (~1.25 MiB); manifest SHA-256: `921a3dd9274d74a53e8113c78099224a9a4a5b103532edcb672a21a7c8eb165e`.
+
+- [Property valuation, insurance and tax dataset](data/property/saltwater-property-value-risk-tax-v1.json)
+- [Deterministic generator](runtime/property_value_risk_tax_generator.py)
+- [Regression tests](tests/pkg001/test_property_value_risk_tax_generator.py)
+- [Build workflow](.github/workflows/saltwater-property-value-risk-tax-build.yml)
+
