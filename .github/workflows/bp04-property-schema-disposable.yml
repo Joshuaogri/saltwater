@@ -1,4 +1,4 @@
-name: BP04 canonical property schema — disposable PostgreSQL 16
+name: BP04 canonical property schema phases 1–9 — disposable PostgreSQL 16
 
 on:
   push:
