@@ -118,6 +118,26 @@ The reconciliation now reports separate measures:
 
 The stable design IDs are source identities, not environment-specific `spatial_id` surrogates. Operational activation, geometry/address quality acceptance and later database materialisation remain separate release decisions.
 
+A geometric road-frontage comparison now checks each BP04 source address road against the road IDs owning the parcel candidate's actual shared-boundary frontage segments. The latest real-source run found:
+
+| Check | Count |
+|---|---:|
+| Source road matches parcel frontage-road candidate | 415 |
+| Source road differs from parcel frontage-road candidate | 3 |
+| No parcel frontage-road candidate | 2 |
+| Single geometric frontage-road candidate reference available | 418/420 |
+
+The three mismatches are explicitly preserved, not silently rewritten:
+- `SWADDR-BPCSWD03N301701`: source `SWR-V16`; candidate frontage road `SWR-H17`.
+- `SWADDR-BPCSWD03N301801`: source `SWR-V17`; candidate frontage road `SWR-H17`.
+- `SWADDR-BPCSWD05N100201`: source `SWR-V01`; candidate frontage road `SWR-H01`.
+
+Two addresses have no frontage-road candidate:
+- `SWADDR-BPCSWD04N100402`: source road `SWR-B2`.
+- `SWADDR-BPCSWD08N101802`: source road `SWR-B1`.
+
+For a single frontage-road candidate, the register exposes a separate `address_road_candidate_id`; the original source road remains unchanged. This is a geometric design candidate only, not a canonical road correction, legal frontage, entrance or proof of access. The five exceptions remain open for BP-02 spatial/address review.
+
 ## 4. Verification and write boundary
 
 The BP04 player/police/geography workflow passed on `main` in [run 45680995361](https://github.com/Joshuaogri/saltwater/actions/runs/45680995361), with 89 tests passing across the command, ChatGPT host, authorization/police and lookup/geography suites. The authenticated player application composition test also passed in the Python-kernel job of [run 45681404048](https://github.com/Joshuaogri/saltwater/actions/runs/45681404048). The separate disposable-PostgreSQL job in that PKG-001 run remains blocked by an unrelated syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; it is not a failure of the BP04 lookup tests.
