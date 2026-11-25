@@ -61,6 +61,7 @@ class AuthorizedPlayerCommandGateway:
 def create_postgres_player_application(
     connect: Callable[[], Any],
     profile: PlayerProfile,
+    bp04_lookup=None,
 ) -> PostgresPlayerApplication:
     """Build the durable application using one trusted connection factory.
 
@@ -78,7 +79,7 @@ def create_postgres_player_application(
     recruitment = PostgresRecruitmentService(connect)
     sessions = PostgresSessionLifecycle(connect)
     activation = PostgresPlayerActivationService(connect, sessions)
-    commands = PlayerCommandInterface(kernel, profile, recruitment)
+    commands = PlayerCommandInterface(kernel, profile, recruitment, bp04_lookup)
     return PostgresPlayerApplication(
         kernel=kernel,
         recruitment=recruitment,
