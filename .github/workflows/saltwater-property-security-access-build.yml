@@ -1,0 +1,50 @@
+name: Saltwater Property Security and Access Control Build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/property_security_access_generator.py"
+      - "runtime/property_world_generator.py"
+      - "runtime/property_tenure_generator.py"
+      - "data/property/saltwater-property-world-v1.json"
+      - "data/property/saltwater-property-tenure-v1.json"
+      - "data/property/saltwater-building-services-v1.json"
+      - "tests/pkg001/test_property_security_access_generator.py"
+      - ".github/workflows/saltwater-property-security-access-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: saltwater-property-security-access-main
+  cancel-in-progress: true
+jobs:
+  build-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry dependency
+        run: python -m pip install "shapely==2.1.2"
+      - name: Generate property security and access records
+        run: python -m runtime.property_security_access_generator
+      - name: Run property security and access regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_property_security_access_generator.py" -v
+      - name: Persist compact property security dataset on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/property/saltwater-property-security-access-v1.json
+          if git diff --cached --quiet; then
+            echo "Property security dataset is unchanged."
+            exit 0
+          fi
+          git commit -m "Generate Saltwater property security and access controls"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
