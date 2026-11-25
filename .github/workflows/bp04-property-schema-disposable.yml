@@ -94,6 +94,11 @@ jobs:
             exit 1
           fi
           grep -q "valid only with --expected-database neondb" /tmp/bp04-prod-target.log
+          if python runtime/bp04_property_stack_importer.py --dsn "postgresql://unused:unused@localhost/neondb" --expected-database neondb --allow-production --typed-relational >/tmp/bp04-prod-storage.log 2>&1; then
+            echo "ERROR: production accepted typed-relational storage mode"
+            exit 1
+          fi
+          grep -q "Production Neon imports are restricted to --archive-only mode" /tmp/bp04-prod-storage.log
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Store all 14 compressed source datasets without typed-row expansion
