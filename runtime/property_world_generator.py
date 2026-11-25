@@ -1,6 +1,6 @@
 """Generate Saltwater's canonical, playable fictional property world.
 
-The source parcel and asset generators supply deterministic design geometry.
+The source parcel and asset generators supply deterministic design geometry and district-specific global-hub vertical profiles.
 This module turns that geometry into in-game canon: addressed properties,
 constructed buildings, premises, units, entrances/exits, access lanes and site
 features. Every generated fact is fictional game canon, not a real-world claim.
