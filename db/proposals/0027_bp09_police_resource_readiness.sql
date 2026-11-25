@@ -33,6 +33,26 @@ CREATE TABLE sw_police.resource_asset (
 CREATE INDEX resource_asset_model_state_idx
   ON sw_police.resource_asset(resource_model_id,lifecycle_state,serviceability_state);
 
+CREATE TABLE sw_police.resource_asset_event (
+  asset_event_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  asset_id text NOT NULL REFERENCES sw_police.resource_asset(asset_id),
+  event_kind text NOT NULL CHECK(event_kind IN
+    ('registered','lifecycle_changed','serviceability_changed','moved','inspection_recorded',
+     'maintenance_started','maintenance_completed','lost','recovered','retired')),
+  prior_lifecycle_state text,
+  resulting_lifecycle_state text NOT NULL,
+  prior_serviceability_state text,
+  resulting_serviceability_state text NOT NULL,
+  effective_tick bigint NOT NULL CHECK(effective_tick>=0),
+  source_event_id bigint REFERENCES sw_core.simulation_event(event_id),
+  actor_ref text NOT NULL,
+  reason text NOT NULL,
+  source_ref text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX resource_asset_event_history_idx
+  ON sw_police.resource_asset_event(asset_id,asset_event_id);
+
 CREATE TABLE sw_police.unit_resource_requirement (
   unit_id text NOT NULL REFERENCES sw_police.unit_profile(unit_id),
   resource_model_id text NOT NULL REFERENCES sw_police.resource_model(resource_model_id),
@@ -75,7 +95,7 @@ BEGIN
   RAISE EXCEPTION '% is append-only; record a new resource event',TG_TABLE_NAME;
 END
 $bp09$;
-CREATE TRIGGER resource_allocation_event_immutable
+CREATE TRIGGER resource_asset_event_immutable\nBEFORE UPDATE OR DELETE ON sw_police.resource_asset_event\nFOR EACH ROW EXECUTE FUNCTION sw_police.reject_resource_history_mutation();\nCREATE TRIGGER resource_allocation_event_immutable
 BEFORE UPDATE OR DELETE ON sw_police.resource_allocation_event
 FOR EACH ROW EXECUTE FUNCTION sw_police.reject_resource_history_mutation();
 
@@ -118,6 +138,15 @@ SELECT 'SWPS-ASSET-'||m.tag_prefix||'-'||lpad(g.n::text,3,'0'),
        'available','serviceable','good','SWPS-DEP-001',
        'SWPS-CENTRAL-RESOURCE-STORE',0,'SWPS-RESOURCE-BASELINE-V1'
 FROM models m CROSS JOIN LATERAL generate_series(1,m.asset_count) AS g(n);
+
+INSERT INTO sw_police.resource_asset_event(
+ asset_id,event_kind,resulting_lifecycle_state,resulting_serviceability_state,
+ effective_tick,actor_ref,reason,source_ref
+)
+SELECT asset_id,'registered',lifecycle_state,serviceability_state,0,
+       'system:resource-baseline','Initial fictional police resource asset registered.',
+       'SWPS-RESOURCE-BASELINE-V1'
+FROM sw_police.resource_asset;
 
 WITH plan(resource_model_id,unit_id,first_no,quantity) AS (
  VALUES
