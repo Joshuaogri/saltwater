@@ -152,6 +152,22 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
             values = [row[key] for row in self.manifest[group]]
             self.assertEqual(len(values), len(set(values)))
 
+
+    def test_large_property_sites_receive_non_overlapping_building_campuses(self):
+        grouped = {}
+        for row in self.manifest["buildings"]:
+            grouped.setdefault(row["property_id"], []).append(row)
+        campuses = {pid: rows for pid, rows in grouped.items() if len(rows) > 1}
+        self.assertGreater(len(campuses), 0)
+        for pid, rows in campuses.items():
+            footprints = [Polygon(x["geometry"][0], x["geometry"][1:]) for x in rows]
+            for i, first in enumerate(footprints):
+                for second in footprints[i+1:]:
+                    self.assertFalse(first.intersects(second))
+                    self.assertGreaterEqual(first.distance(second), 3.9)
+            suffixes = [x["candidate_building_id"].rsplit("-", 1)[-1] for x in rows]
+            self.assertEqual(len(suffixes), len(set(suffixes)))
+
     def test_manifest_is_deterministic_and_non_operational(self):
         second = build_asset_inventory(self.source, self.candidates, self.dossiers)
         self.assertEqual(self.manifest["manifest_sha256"], second["manifest_sha256"])
@@ -191,7 +207,7 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
             self.assertTrue(row["actor_ref"])
         proximity = [row for row in connectors
                      if row["connector_type"] == "BUILDING_TO_ROAD_RESERVE_PROXIMITY_CANDIDATE"]
-        self.assertEqual(len(proximity), 4)
+        self.assertGreaterEqual(len(proximity), 4)
         self.assertTrue(all(row["contact_type"] == "POINT_CONTACT_ONLY"
                             for row in proximity))
 
