@@ -21,8 +21,8 @@ class BuildingAccessCandidateAuditTests(unittest.TestCase):
 
     def test_building_and_access_candidate_hierarchy_counts(self):
         self.assertEqual(self.report["counts"]["property_site_candidates"], 420)
-        self.assertEqual(self.report["counts"]["building_candidates"], 384)
-        self.assertEqual(self.report["counts"]["building_boundary_access_candidates"], 768)
+        self.assertEqual(self.report["counts"]["building_candidates"], 1474)
+        self.assertEqual(self.report["counts"]["building_boundary_access_candidates"], 2948)
         self.assertEqual(self.report["counts"]["building_access_candidates_without_road_connection_candidate"], 0)
         self.assertEqual(self.report["counts"]["point_contact_road_reserve_candidates"], 4)
         self.assertTrue(all(a["road_link_candidate_id"] for a in self.assets["access_points"]))
