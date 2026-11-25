@@ -1,0 +1,27 @@
+name: BP04-03 Diagnose Unlinked Building Road Candidates
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/diagnose_unlinked_building_road_candidates.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/road_corridor_audit.py"
+      - "runtime/road_reserve_topology.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - ".github/workflows/bp04-03-diagnose-unlinked-building-road-candidates.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install "shapely==2.1.2"
+      - name: Diagnose every building access candidate without a frontage link
+        run: python -m runtime.diagnose_unlinked_building_road_candidates
