@@ -510,3 +510,23 @@ PostgreSQL `spatial_id` is a GENERATED ALWAYS AS IDENTITY surrogate, so its inte
 
 
 **Disposable database materialisation proof:** the existing PKG-001 geography identity SQL fixture has now materialised all 100 `sw_geo.entity` rows and their database-generated `spatial_id` values, with all 100 version/parent/name relationships and naming-registry activations accepted. The materialisation step passed in [workflow run 45508321133](https://github.com/Joshuaogri/saltwater/actions/runs/45508321133). These integers belong to that disposable database only; production IDs remain unassigned and will be generated/looked up by `entity_code` when the operational geography version is activated.
+
+
+## 10. Operational execution policy update — 2026-11-25
+
+This section supersedes earlier routine division/package approval language for fictional Saltwater development.
+
+- Saltwater is wholly fictional game content. Continue implementation directly on `main` without requesting approval for fictional institutions, ranks, posts, NPCs, organisations, incidents, calls, cases, evidence, locations, records, rules or simulation events.
+- Use established database and software-engineering practices where they help: PostgreSQL constraints and transactions, stable identifiers, append-only event history, idempotency, provenance, deterministic simulation ticks, automated regression tests and measured storage.
+- Do not create unnecessary approval packages, review loops, extra buildings/property systems or duplicate design documents. Implement the next dependency-ready gameplay function and verify it.
+- Do not use Work/Cowork mode. Keep the interface text-first.
+- The **only standing approval exception** is a write to the production Neon database (schema migration, data seed/import, bulk write, or production configuration change). Continue all code, disposable PostgreSQL work, tests and source-data preparation without waiting. Keep production Neon read-only until explicit write approval.
+- Preserve Saltwater canon: one sovereign city-state/one primate city, 10,000 living-person hard cap including police, approximately 500 police establishment, 10,000-business initial baseline, no offline world progression and exact `bingo` hidden-truth gate.
+
+## 11. Current implementation position
+
+### Completed property data foundation
+The complete 14-source, 92-table disposable import benchmark passed in [run 45656098435](https://github.com/Joshuaogri/saltwater/actions/runs/45656098435): 29,434,820 compressed bytes (28.07 MiB), 1,950,923 source rows, 1,422,202 typed mapped rows across 86 collections, 19 archive-only collections, zero cross-reference violations, 627,792,919-byte database size, and a repeat import with zero row mutations and unchanged database size. The current live Neon baseline is 9,306,112 bytes; no production write has occurred.
+
+### Police architecture underway
+BP05 proposal `db/proposals/0023_bp05_police_architecture.sql` establishes Saltwater Police Service, 48 organisation components, nine ranks, 24 positions and 500 vacant authorised posts. The initial disposable acceptance is integrated into [PKG-001 run 45658350599](https://github.com/Joshuaogri/saltwater/actions/runs/45658350599); full regression is running. Next dependency work is BP06 personnel identity/service records, BP07 career/rank history, BP08 unit membership/deployment, and BP09 dispatchable resource readiness. Then deliver the first BP11/BP12 public-call → CAD → incident → dispatch operational loop and connect BP10 field response. Do not expand property systems further unless a police gameplay dependency requires it.
