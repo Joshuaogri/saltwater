@@ -22,3 +22,17 @@ Elevation, vertical datum, slope/gradient, slope direction, ground surface, mate
 ## Acceptance boundary
 
 The detail register is a read-only derived candidate artifact. No operational terrain or obstacle assets, addresses, access points or approved paths are created. No Neon connection, migration, import or write is performed.
+
+## Executed result — 2026-11-25
+
+- Terrain records: 1; obstacle source records: 0.
+- Terrain planar area: 5,100,000.000 m²; planar perimeter: derived from the nine source boundary edges.
+- Boundary edge records: 9, all positive length; one closed exterior ring.
+- Positive-area neighbourhood overlays: 5; overlay areas reconcile to the terrain polygon area.
+- Route-corridor centreline candidates supplied: 768; terrain geometry intersections: 47, each retained with route-candidate and source-connector lineage.
+- Elevation/gradient/traversability/obstacle-condition assessments: 0.
+- Operational obstacle records: 0; operational seed eligibility: false.
+- Regression tests: 5 passed. All 7 register checks passed.
+- GitHub Actions: [detail-register workflow run 45566205681](https://github.com/Joshuaogri/saltwater/actions/runs/45566205681).
+- Read-only artifact: [bp04-03-terrain-obstacle-detail-register](https://github.com/Joshuaogri/saltwater/actions/runs/45566205681/artifacts/15000356249), uploaded size 3,319 bytes; ZIP SHA-256 f8d2a4622f025d44c87963521f554a92d07e1d0e7351f5c4ee89edc36086195a.
+- Database migration validation: [run 45566205655 passed](https://github.com/Joshuaogri/saltwater/actions/runs/45566205655). The separate PKG-001 disposable PostgreSQL validation was still running at evidence capture.
