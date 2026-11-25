@@ -10,7 +10,11 @@ GENERATOR="SW-PROPERTY-VALUATION-RISK-TAX-001"
 def _n(k,lo,hi):
  d=hashlib.sha256(k.encode()).digest()
  return lo+int.from_bytes(d[:4],"big")%(hi-lo+1)
-def _slug(v): return "".join(c for c in str(v).upper() if c.isalnum())[:24]
+def _slug(v):
+ raw = "".join(c for c in str(v).upper() if c.isalnum())
+ if len(raw) <= 24: return raw
+ digest = hashlib.sha256(str(v).encode("utf-8")).hexdigest()[:12].upper()
+ return raw[:12] + "-" + digest
 def _pick(v,k): return v[_n(k,0,len(v)-1)]
 def _band(v):
  if v<5_000_000:return "under_5m"
