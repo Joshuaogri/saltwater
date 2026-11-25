@@ -238,3 +238,25 @@ The next textual world layer adds a weekly operating schedule for every register
 The 10,000-person permanent population cap remains in force, but it does not limit corporate scale, subsidiaries, establishments, institutional capacity, cargo throughput, vessel movements, passenger flows, international reach or economic activity. Transient people must continue to be counted under the existing population rules; this canon does not authorise bypassing the person cap. The existing 10,000-business registry is an initial baseline, not a ceiling on global corporate presence or a claim that all businesses are small. Future property, business, transport, port, airport, institutional, economic and police systems must reflect this global primate-city role.
 
 - [Read SW-CANON-002 — Primate City and Global International Hub](docs/blueprint/decisions/SW-CANON-002-primate-city-global-hub.md)
+
+
+## BP-04 — property ownership, tenancy and occupancy (SW-PROPERTY-TENURE-V1)
+
+The first property tenure layer is generated and committed on `main`. The deterministic generator consumes the existing compact property-world and business-registry datasets rather than rebuilding geometry, and writes a compact columnar JSON dataset at [`data/property/saltwater-property-tenure-v1.json`](data/property/saltwater-property-tenure-v1.json) (10,833,623 bytes; approximately 10.33 MiB).
+
+The dataset contains:
+- 420 current property ownership interests, with chronological fictional acquisition and transfer events and resolvable historical owner organisations.
+- 420 current property-management appointments, with separate property-management organisations where appointed.
+- 10,000 current commercial leases, licences or operating concessions, each linked to its landlord, business, establishment, property, building, premises and unit.
+- 2,500 expired historical agreement records, retained alongside current agreements.
+- 10,000 current business occupancy records.
+- 15,199 unit occupancy-state records. Residential units remain unallocated for the separate population-allocation process; no resident or other person records are created.
+- Contractual rent bands and repair/renewal terms are references only. Rent postings, balances and accounting remain BP-34.
+
+The output uses the same lossless textual columnar representation as the property-world baseline. The build reuses persisted canonical property and business datasets, avoiding duplicate geometry generation. Regression workflow [45577532056](https://github.com/Joshuaogri/saltwater/actions/runs/45577532056) completed successfully, including generation, six tenure regression tests and persistence to `main`.
+
+## BP-04 — weekly business operating schedules (SW-BUSINESS-OPERATIONS-V1)
+
+The weekly schedule layer is generated and committed at [`data/business/saltwater-business-operations-v1.json`](data/business/saltwater-business-operations-v1.json) (15,319,899 bytes; approximately 14.61 MiB). It contains 70,000 daily opening/service/shift/delivery schedule records (seven per establishment) and 10,000 weekly profiles. Build and regression workflow [45574250446](https://github.com/Joshuaogri/saltwater/actions/runs/45574250446) completed successfully. Schedules do not create staff, customers or resident person records.
+
+These datasets remain in GitHub only. No Neon upload or production seed write has occurred. Neon upload remains scheduled after the property-management layers are completed, with compact import packaging, a fresh live storage measurement, an incremental/projected storage estimate and explicit approval before any production write.
