@@ -21,7 +21,7 @@ def build_property_rights(world, tenure, lifecycle, services, security):
     access={x["access_point_id"]:x for x in world["access_points"]}
     routes={x["access_point_id"]:x for x in world["access_routes"]}
     connections={pid:[] for pid in props}
-    for row in services["property_utility_connections"]:
+    for row in services["utility_connections"]:
         connections.setdefault(row["property_id"],[]).append(row)
     # Contractual occupancy rights are indexes to existing agreements, not new grants.
     agreement_rights=[]
@@ -88,7 +88,7 @@ def build_property_rights(world, tenure, lifecycle, services, security):
                 "utility_wayleave_requirement_id":f"SWWLR-{_key(c['utility_connection_id'])}",
                 "property_id":pid,"utility_connection_id":c["utility_connection_id"],
                 "utility_type":c["utility_type"],"provider_organisation_id":c["provider_organisation_id"],
-                "connection_status":c.get("connection_status","recorded_connection"),
+                "connection_status":c.get("connection_state","recorded_connection"),
                 "wayleave_or_easement_instrument_id":None,
                 "legal_route_right_status":"not_evidenced",
                 "operational_connection_is_not_proof_of_property_right":True
