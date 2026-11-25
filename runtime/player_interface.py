@@ -96,9 +96,15 @@ class PlayerCommandInterface:
         if self.bp04_lookup is None:
             return CommandResult(False, "Property lookup service is not connected.")
         try:
+            lookup = self.bp04_lookup
+            if callable(lookup) and not callable(getattr(lookup, "search", None)):
+                lookup = lookup()
+                if lookup is None:
+                    return CommandResult(False, "Property lookup service is not connected.")
+                self.bp04_lookup = lookup
             entity_type = arguments[0]
             if operation == "find":
-                matches = self.bp04_lookup.search(entity_type, " ".join(arguments[1:]), limit=10)
+                matches = lookup.search(entity_type, " ".join(arguments[1:]), limit=10)
                 if not matches:
                     return CommandResult(True, f"No {entity_type} records matched that search.")
                 lines = [f"Matches: {len(matches)} (maximum 10)"]
@@ -118,7 +124,7 @@ class PlayerCommandInterface:
 
             identifier = arguments[1]
             if entity_type == "property":
-                detail = self.bp04_lookup.property_detail(identifier)
+                detail = lookup.property_detail(identifier)
                 if detail is None:
                     return CommandResult(True, "Property not found.")
                 prop, address = detail["property"], detail["address"]
@@ -136,7 +142,7 @@ class PlayerCommandInterface:
                 ]
                 return CommandResult(True, "\\n".join(lines))
             if entity_type == "address":
-                detail = self.bp04_lookup.address_detail(identifier)
+                detail = lookup.address_detail(identifier)
                 if detail is None:
                     return CommandResult(True, "Address not found.")
                 address = detail["address"]
@@ -148,7 +154,7 @@ class PlayerCommandInterface:
                     f"Geography: {detail['geography_binding']}",
                 )))
             if entity_type == "business":
-                detail = self.bp04_lookup.business_detail(identifier)
+                detail = lookup.business_detail(identifier)
                 if detail is None:
                     return CommandResult(True, "Business not found.")
                 business = detail["business"]
@@ -168,7 +174,7 @@ class PlayerCommandInterface:
                     )
                 return CommandResult(True, "\\n".join(lines))
 
-            record = self.bp04_lookup.get(entity_type, identifier)
+            record = lookup.get(entity_type, identifier)
             if record is None:
                 return CommandResult(True, f"{entity_type.replace('_', ' ').title()} not found.")
             fields = (
