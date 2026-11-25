@@ -77,7 +77,7 @@ The adapter is ready for dispatch, incident and investigation services to call. 
 
 The read-only audit is implemented in `runtime/bp04_geography_reconciliation.py`. It regenerates the deterministic 420-parcel candidate set from SW-GEO-V1, reads the committed compressed BP04 property-world source, and reconciles every property/address relationship against the BP-02 source identity map.
 
-Verified on the real committed source package in [workflow run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644):
+Verified on the real committed source package in [workflow run 45680995361](https://github.com/Joshuaogri/saltwater/actions/runs/45680995361):
 
 | Reconciliation | Result |
 |---|---:|
@@ -99,7 +99,7 @@ The 100-entry BP-02 identity map currently covers districts, neighbourhoods, roa
 
 ## 4. Verification and write boundary
 
-The BP04 player/police/geography workflow passed on `main` in [run 45680801644](https://github.com/Joshuaogri/saltwater/actions/runs/45680801644). It tests the typed command parser, player interface, authenticated player runtime, ChatGPT tool contract, trusted host boundary, officer-only grant enforcement, audit behaviour, BP04 lookup contracts and geography reconciliation.
+The BP04 player/police/geography workflow passed on `main` in [run 45680995361](https://github.com/Joshuaogri/saltwater/actions/runs/45680995361), with 89 tests passing across the command, ChatGPT host, authorization/police and lookup/geography suites. The authenticated player application composition test also passed in the Python-kernel job of [run 45681404048](https://github.com/Joshuaogri/saltwater/actions/runs/45681404048). The separate disposable-PostgreSQL job in that PKG-001 run remains blocked by an unrelated syntax error in `db/proposals/0028_bp12_incident_management.sql` at line 420; it is not a failure of the BP04 lookup tests.
 
 The geography audit reports `database_write_performed: false`. No Neon writes, policy-grant writes, migrations, address promotions or archive re-uploads were performed.
 
