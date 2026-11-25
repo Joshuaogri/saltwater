@@ -330,4 +330,12 @@ LEFT JOIN LATERAL (
 ) m ON true
 LEFT JOIN sw_police.unit_resource_readiness r USING(unit_id);
 
+INSERT INTO sw_core.event_type(event_code,description) VALUES
+ ('RESOURCE_ASSET_REGISTERED','Police resource asset registered'),
+ ('RESOURCE_ASSET_STATE_CHANGED','Police resource asset lifecycle or serviceability changed'),
+ ('RESOURCE_ASSET_MOVED','Police resource asset location changed'),
+ ('RESOURCE_ALLOCATION_CREATED','Police resource allocated to a unit or custodian'),
+ ('RESOURCE_ALLOCATION_RELEASED','Police resource allocation released')
+ON CONFLICT (event_code) DO NOTHING;
+
 COMMIT;
