@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from runtime.dataset_io import load_json
 from pathlib import Path
 
 from runtime.property_tenure_generator import _expand_columnar
@@ -274,7 +275,7 @@ def build_building_services(world: dict, tenure: dict) -> dict:
 
 def main():
     root = Path(__file__).resolve().parents[1]
-    world_doc = json.loads((root / "data/property/saltwater-property-world-v1.json").read_text(encoding="utf-8"))
+    world_doc = load_json(root / "data/property/saltwater-property-world-v1.json")
     tenure_doc = json.loads((root / "data/property/saltwater-property-tenure-v1.json").read_text(encoding="utf-8"))
     world = _expand_columnar(world_doc)
     tenure = _expand_columnar(tenure_doc)
