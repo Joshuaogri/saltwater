@@ -79,7 +79,7 @@ def audit_connector_topology(source: dict, candidates: dict, dossiers: dict,
             exceptions["road_or_segment_mismatch"].append(cid)
 
         coords = row.get("geometry_coordinates", [])
-        if len(coords) != 2:
+        if len(coords) < 2:
             exceptions["road_candidate_endpoint_mismatch"].append(cid)
             continue
         line = LineString(coords)
