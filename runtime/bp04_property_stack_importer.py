@@ -84,8 +84,7 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
     registry = documents["SW-BUSINESS-REGISTRY-V1"]
     tenure = documents["SW-PROPERTY-TENURE-V1"]
 
-    add("organisation", "SW-PROPERTY-WORLD-V1", rows(world, "owner_organisations"),
-        lambda ds, r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"source_dataset":ds,"source_record":r})
+    # The tenure register is the superset: it already contains every property owner organisation plus historical owners and managers.
     add("organisation", "SW-PROPERTY-TENURE-V1", rows(tenure, "organisations"),
         lambda ds, r: {"organisation_id":r["organisation_id"],"display_name":r["display_name"],"organisation_type":r["organisation_type"],"registered_city":r.get("registered_city"),"status":r.get("status"),"source_dataset":ds,"source_record":r})
 
