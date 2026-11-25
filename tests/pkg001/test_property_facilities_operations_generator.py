@@ -11,7 +11,8 @@ class FacilitiesOperationsTests(unittest.TestCase):
   cls.tenure=load("data/property/saltwater-property-tenure-v1.json")
   cls.services=load("data/property/saltwater-building-services-v1.json")
   cls.maintenance=load("data/property/saltwater-property-maintenance-v1.json")
-  cls.data=build_facilities_operations(cls.world,cls.tenure,cls.services,cls.maintenance)
+  cls.development_control=load("data/property/saltwater-property-development-control-v1.json")
+  cls.data=build_facilities_operations(cls.world,cls.tenure,cls.services,cls.maintenance,cls.development_control)
  def test_all_properties_have_facilities_contracts(self):
   expected={x["property_id"] for x in self.world["properties"]}
   actual={x["property_id"] for x in self.data["facilities_contracts"]}
@@ -29,8 +30,11 @@ class FacilitiesOperationsTests(unittest.TestCase):
   self.assertTrue(all(x["service_contract_id"] in c for x in self.data["service_schedules"]))
  def test_unit_reconciliation_does_not_hide_mismatch(self):
   r=self.data["unit_count_reconciliation"]
-  self.assertEqual(r["property_development_control_unit_count"],62585)
-  self.assertIn(r["reconciliation_status"],("reconciled","mismatch_preserved_for_reconciliation"))
+  self.assertEqual(r["property_development_control_unit_count"],len(self.development_control["unit_use_compliance"]))
+  self.assertEqual(r["property_world_unit_count"],15199)
+  self.assertEqual(r["property_development_control_unit_count"],15199)
+  self.assertEqual(r["reconciliation_status"],"reconciled")
+  self.assertEqual({x["unit_id"] for x in self.development_control["unit_use_compliance"]},{x["unit_id"] for x in self.world["units"]})
   self.assertEqual(r["world_vs_tenure_missing_unit_count"],len({x["unit_id"] for x in self.world["units"]}-{x["unit_id"] for x in self.tenure["unit_occupancy_states"]}))
  def test_no_fabricated_visits_requests_or_finance(self):
   d=self.data
@@ -40,6 +44,6 @@ class FacilitiesOperationsTests(unittest.TestCase):
   for key in ("service_request_count","completed_service_visit_count","measured_sla_actual_count","invoice_count","payment_count","financial_postings_created","person_records_created","population_records_created"):
    self.assertEqual(d["summary"][key],0)
  def test_deterministic(self):
-  other=build_facilities_operations(self.world,self.tenure,self.services,self.maintenance)
+  other=build_facilities_operations(self.world,self.tenure,self.services,self.maintenance,self.development_control)
   self.assertEqual(self.data["manifest_sha256"],other["manifest_sha256"])
 if __name__=="__main__": unittest.main()
