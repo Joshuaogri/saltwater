@@ -91,3 +91,31 @@ class BP04PoliceLookupAccess:
     def resolve_address(self, credential: str, address_id: str) -> dict | None:
         """Resolve a dispatch/investigation address through an audited read."""
         return self.inspect(credential, "address", address_id)
+
+
+
+def create_postgres_bp04_police_lookup_access(
+    connect,
+    lookup: Any,
+    principal_id: UUID,
+) -> BP04PoliceLookupAccess:
+    """Compose officer access with live PostgreSQL grants and durable audit.
+
+    This factory creates no grants and performs no migration. Every attempted
+    read verifies the opaque session, reloads current grants and appends an
+    authorization decision through PostgresAuditSink. The caller must provide
+    the trusted database connection factory and the already-built shared
+    process-local BP04Lookup instance.
+    """
+    from runtime.postgres_security import (
+        PostgresAuditSink,
+        PostgresGrantProvider,
+        PostgresSessionVerifier,
+    )
+
+    authorization = AuthorizationService(
+        PostgresSessionVerifier(connect),
+        PostgresAuditSink(connect),
+        PostgresGrantProvider(connect),
+    )
+    return BP04PoliceLookupAccess(lookup, authorization, principal_id)
