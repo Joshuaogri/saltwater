@@ -18,6 +18,7 @@ from runtime.geography_identity_reconciliation import validate_identity_map
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.bp02_parcel_address_identity import build_identity_register
 from runtime.bp02_address_access_reconciliation import reconcile_building_access_roads
+from runtime.bp02_address_review_register import build_address_review_register
 from runtime.parcel_dossier_generator import build_parcel_dossiers
 from runtime.physical_asset_inventory_generator import build_asset_inventory
 
@@ -210,6 +211,9 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     building_access_reconciliation = reconcile_building_access_roads(
         properties, addresses, parcel_dossiers, physical_assets
     )
+    address_review_register = build_address_review_register(
+        identity_register, building_access_reconciliation
+    )
     frontage_counts = {}
     for address in identity_register["addresses"]:
         status = address["road_frontage_match_status"]
@@ -255,6 +259,7 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
             ),
         })
     result.update({
+        "bp02_address_placement_review_register": address_review_register,
         "building_access_road_candidate_status_counts": building_access_reconciliation["address_access_road_candidate_status_counts"],
         "building_access_road_candidate_references_resolved": building_access_reconciliation["address_access_road_candidate_references_resolved"],
         "building_access_candidate_unresolved_access_points": building_access_reconciliation["unresolved_building_access_point_count"],
