@@ -192,7 +192,7 @@ BEFORE UPDATE OR DELETE ON sw_police.unit_deployment_event
 FOR EACH ROW EXECUTE FUNCTION sw_police.reject_unit_history_mutation();
 
 CREATE VIEW sw_police.unit_establishment AS
-SELECT u.unit_id,u.official_name,count(p.post_id)::integer AS authorised_posts,
+SELECT u.unit_id,c.official_name,count(p.post_id)::integer AS authorised_posts,
        count(p.post_id) FILTER(WHERE p.post_status='vacant')::integer AS vacant_posts,
        count(p.post_id) FILTER(WHERE p.post_status='filled')::integer AS filled_posts
 FROM sw_police.unit_profile u
