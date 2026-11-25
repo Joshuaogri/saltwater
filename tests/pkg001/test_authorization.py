@@ -76,6 +76,21 @@ class AuthorizationTests(unittest.TestCase):
         self.assertFalse(self.audit.records[-1].allowed)
         self.assertEqual(self.audit.records[-1].reason, "principal_mismatch")
 
+
+    def test_expected_principal_kind_is_enforced_and_audited(self):
+        decision = self.auth.decide(
+            "opaque-valid-session",
+            action="read_case",
+            resource="case/SM-TEST-1",
+            purpose="active_play",
+            now=self.now,
+            expected_principal_kind=PrincipalKind.OFFICER,
+        )
+        self.assertFalse(decision.allowed)
+        self.assertEqual(decision.reason, "principal_kind_mismatch")
+        self.assertFalse(self.audit.records[-1].allowed)
+        self.assertEqual(self.audit.records[-1].reason, "principal_kind_mismatch")
+
     def test_default_deny(self):
         decision = self.decide(action="export_case")
         self.assertFalse(decision.allowed)
