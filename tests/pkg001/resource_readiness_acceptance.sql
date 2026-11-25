@@ -37,8 +37,8 @@ BEGIN
      OR (SELECT count(*) FROM sw_police.unit_readiness WHERE staffing_eligible)<>0 THEN
     RAISE EXCEPTION 'resource readiness must not override unavailable or unstaffed unit state';
   END IF;
-  IF (SELECT count(*) FROM sw_police.personnel)<>1 THEN
-    RAISE EXCEPTION 'resource baseline must not create personnel identities';
+  IF (SELECT count(*) FROM sw_police.unit_membership)<>0 THEN
+    RAISE EXCEPTION 'resource baseline must not create unit personnel memberships';
   END IF;
   IF (SELECT count(*) FROM sw_police.authorised_post WHERE post_status='vacant')<>500 THEN
     RAISE EXCEPTION 'resource allocation must not fill personnel establishment posts';
