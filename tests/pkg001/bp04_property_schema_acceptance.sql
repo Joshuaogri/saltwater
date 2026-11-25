@@ -6,15 +6,19 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 19 THEN
-    RAISE EXCEPTION 'expected 19 BP04 phase-1 tables, found %', v_count;
+  IF v_count <> 20 THEN
+    RAISE EXCEPTION 'expected 20 BP04 phase-1 tables, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema='sw_property' AND table_name='property_site'
-      AND column_name='source_record' AND data_type='jsonb'
-  ) THEN RAISE EXCEPTION 'property source-record preservation missing'; END IF;
+      AND column_name='source_dataset' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='sw_property' AND table_name='source_dataset_archive'
+      AND column_name='compressed_payload' AND data_type='bytea'
+  ) THEN RAISE EXCEPTION 'compressed source archive preservation missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM pg_constraint
