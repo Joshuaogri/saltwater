@@ -261,7 +261,10 @@ SELECT u.unit_id,c.official_name,u.unit_type_code,u.functional_domain,u.dispatch
        (u.lifecycle_state='active' AND u.dispatchable
          AND s.operational_status='available'
          AND coalesce(m.active_members,0)>=u.minimum_crew_size) AS staffing_eligible,
-       coalesce(r.resources_ready,false) AS dispatch_eligible,
+       (u.lifecycle_state='active' AND u.dispatchable
+         AND s.operational_status='available'
+         AND coalesce(m.active_members,0)>=u.minimum_crew_size
+         AND coalesce(r.resources_ready,false)) AS dispatch_eligible,
        CASE
          WHEN u.lifecycle_state<>'active' THEN 'unit_not_active'
          WHEN NOT u.dispatchable THEN 'not_a_dispatch_unit'
