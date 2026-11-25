@@ -332,11 +332,13 @@ def build_batches(documents: dict[str, dict]) -> tuple[dict[str, list[dict]], di
         lambda ds,r: {"tax_rule_id":r["tax_rule_id"],"tax_year":r["tax_year"],"rule_type":r.get("rule_type"),"currency":r["currency"],"collection_cycle":r.get("collection_cycle"),"billing_and_payment_authority":r.get("billing_and_payment_authority"),"effective_tick":r.get("effective_tick"),"fictional_rule":boolean_value(r.get("fictional_rule")),"source_dataset":ds})
     return batches, counts
 
-def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test", archive_only: bool = False) -> dict:
+def import_package(root: Path, dsn: str, expected_database: str = "saltwater_test", archive_only: bool = True) -> dict:
     with psycopg.connect(dsn) as conn:
         dbname = conn.execute("select current_database()").fetchone()[0]
         if dbname != expected_database:
             raise RuntimeError(f"Refusing non-disposable database {dbname!r}; expected {expected_database!r}")
+        if expected_database == "neondb" and not archive_only:
+            raise RuntimeError("Production Neon imports are restricted to compressed archive-only mode.")
         documents, manifest_files, archive_payloads = {}, {}, {}
         for dataset_id, relative in DATASETS.items():
             path = root / relative
@@ -461,12 +463,16 @@ def main():
     parser.add_argument("--dsn",default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--expected-database",default="saltwater_test")
     parser.add_argument("--allow-production",action="store_true",help="Explicitly permit writes to the canonical Neon database named neondb.")
-    parser.add_argument("--archive-only",action="store_true",help="Store the lossless compressed source datasets and provenance ledgers only; do not materialise typed rows.")
+    storage = parser.add_mutually_exclusive_group()
+    storage.add_argument("--archive-only",dest="archive_only",action="store_true",default=True,help="Store compressed datasets and provenance only (default and only permitted production mode).")
+    storage.add_argument("--typed-relational",dest="archive_only",action="store_false",help="Legacy disposable benchmark only: materialise mapped rows into relational tables.")
     args=parser.parse_args()
     if not args.dsn:
         parser.error("Set DATABASE_URL to the target PostgreSQL connection.")
     if args.expected_database == "neondb" and not args.allow_production:
         parser.error("Production import refused: pass --allow-production explicitly after the production release gate.")
+    if args.expected_database == "neondb" and not args.archive_only:
+        parser.error("Production Neon imports are restricted to --archive-only mode.")
     if args.allow_production and args.expected_database != "neondb":
         parser.error("--allow-production is valid only with --expected-database neondb.")
     print(json.dumps(import_package(args.root,args.dsn,args.expected_database,args.archive_only),indent=2,sort_keys=True))
