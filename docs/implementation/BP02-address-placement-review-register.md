@@ -88,3 +88,21 @@ The successful run's acceptance artifact confirms the structural result and pres
 - Operational release remains blocked because SW-GEO-V1 has not been approved as operational geography, canonical parcels/addresses are not materialised, no operational access points are approved, and bridge entrance engineering/operational validation is outstanding.
 
 The run published the JSON evidence artifact `bp02-full-parcel-address-access-acceptance` (45,291-byte ZIP; artifact SHA-256 `d8a19a4098891a06dadcbc857b5c22037545371c28bb6251ed8e84b2626d6aaa`). This is CI evidence only. No production database or Neon writes were performed.
+
+## Review of the 36 sites without generated building candidates — 2026-11-26
+
+The 36-site observation has been reviewed against the Stage E generator contract and the available generated inventory evidence. It is **not possible to classify these sites as vacant, undeveloped, open space, reserved, under construction or otherwise unoccupied from the present records**.
+
+The generator records each site's `site_state` as `unknown`, its boundary as `unverified`, and its geometry as a non-operational parcel candidate. A site receives no building candidate when the deterministic footprint search returns no feasible footprint, or when the generated land-use class is `open_space`. The current generated summary reports the total of 36 but does not preserve a per-site reason code that distinguishes those two paths. Nor does it establish real site condition, construction, occupancy, ownership, access or intended use.
+
+Accordingly:
+
+- The 36 records remain **NO_BUILDING_CANDIDATE — CAUSE UNCLASSIFIED**.
+- No site is relabelled vacant or undeveloped.
+- No building, premises, unit, room, business, occupancy or physical asset is created to fill the gap.
+- No source land-use, site-state or address value is changed.
+- The three road-conflict addresses already included in the five resolved geometric exception dispositions remain separate address-provenance matters; the 36-site count is not an additional address-road exception count.
+- A future classification requires a source-backed site-use/state field or an explicitly authored fictional world-state decision, not inference from the absence of a generated footprint.
+
+This closes the current evidence review without expanding the frozen BP04 inventory. It does not change the BP02 structural pass or the operational geography release blocker. No database or Neon write, canonical promotion, operational access approval or permission grant was performed.
+
