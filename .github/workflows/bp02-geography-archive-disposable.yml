@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "db/migrations/0003_bp02_source_archive.sql"
+      - "db/migrations/0013_bp02_source_archive.sql"
       - "runtime/bp02_geography_archive_importer.py"
       - "runtime/geography_identity_reconciliation.py"
       - "data/geography/saltwater-geography-v1.json"
