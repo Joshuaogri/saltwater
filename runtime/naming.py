@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import random
 import re
+from functools import lru_cache
 import unicodedata
 from dataclasses import dataclass, field
 from difflib import SequenceMatcher
@@ -61,22 +62,19 @@ def normalize_name(value: str, *, road_suffixes: Mapping[str, str] | None = None
     return " ".join(tokens)
 
 
+@lru_cache(maxsize=50000)
+def _pg_trigrams(normalized_value: str) -> frozenset[str]:
+    result: set[str] = set()
+    for word in re.findall(r"\w+", normalized_value.casefold(), flags=re.UNICODE):
+        padded = f"  {word} "
+        result.update(padded[index:index + 3] for index in range(len(padded) - 2))
+    return frozenset(result)
+
+
 def pg_trgm_similarity(left: str, right: str) -> float:
-    """Match PostgreSQL pg_trgm similarity for already-normalized name keys.
-
-    PostgreSQL pads each alphanumeric word with two leading spaces and one
-    trailing space, forms unique trigrams, and divides the common trigram
-    count by the larger trigram-set size.
-    """
-    def trigrams(value: str) -> set[str]:
-        result: set[str] = set()
-        for word in re.findall(r"\w+", value.casefold(), flags=re.UNICODE):
-            padded = f"  {word} "
-            result.update(padded[index:index + 3] for index in range(len(padded) - 2))
-        return result
-
-    left_trigrams = trigrams(normalize_name(left))
-    right_trigrams = trigrams(normalize_name(right))
+    """Match PostgreSQL pg_trgm Jaccard similarity for normalized name keys."""
+    left_trigrams = _pg_trigrams(normalize_name(left))
+    right_trigrams = _pg_trigrams(normalize_name(right))
     if not left_trigrams or not right_trigrams:
         return 0.0
     common = len(left_trigrams & right_trigrams)
