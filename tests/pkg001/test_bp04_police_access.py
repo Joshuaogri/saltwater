@@ -397,6 +397,73 @@ class BP04PoliceAccessTests(unittest.TestCase):
             "bp04.lookup.inspect.address",
         ])
 
+    def test_dispatch_location_update_is_event_writer_handoff_with_provenance(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.location.record", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp11.dispatch.location.resolve", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.location", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {
+                "incident_id": incident_id, "incident_ref": "SWI-42",
+                "source_type": "call", "source_record_id": "CALL-9",
+            },
+        )
+        captured = {}
+        result = resolver.record_dispatch_address_location(
+            "officer-session", 42, "SWADDR-1",
+            dispatch_ref="CAD-88", location_writer=lambda **kw: (
+                captured.update(kw) or 902
+            ),
+            actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
+            idempotency_key="CAD-88-LOC-1",
+            raw_description="Dispatcher confirms caller's reported entrance",
+            confidence="medium",
+        )
+        self.assertTrue(result["persisted"])
+        self.assertEqual(result["incident_location_id"], 902)
+        self.assertEqual(result["dispatch_ref"], "CAD-88")
+        self.assertEqual(captured["p_source_ref"], "dispatch:CAD-88")
+        self.assertEqual(captured["p_address_source_ref"], "bp04-address:SWADDR-1")
+        self.assertEqual(captured["p_actor_ref"], "dispatcher:4")
+        self.assertEqual(captured["p_authority_ref"], "dispatch-grant:9")
+        self.assertEqual(captured["p_confidence"], "medium")
+        self.assertEqual(captured["p_idempotency_key"], "CAD-88-LOC-1")
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp11.dispatch.location.record", "bp11.dispatch.location.resolve",
+             "bp12.incident.inspect.location", "bp04.lookup.inspect.address"],
+        )
+
+    def test_dispatch_location_update_denies_before_writer_without_record_grant(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.location.resolve", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.location", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: self.fail("incident read"))
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_dispatch_address_location(
+                "officer-session", 42, "SWADDR-1",
+                dispatch_ref="CAD-88", location_writer=lambda **_kw: self.fail("writer"),
+                actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
+                idempotency_key="CAD-88-LOC-1", raw_description="Dispatch update",
+            )
+        self.assertEqual(self.audit.records[-1].action, "bp11.dispatch.location.record")
+        self.assertFalse(self.audit.records[-1].allowed)
+
     def test_investigation_handoff_requires_investigation_and_bp12_history_grants(self):
         grants = self.grants + (
             Grant("bp16.investigation.inspect.case", "case:*",
