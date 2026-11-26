@@ -25,7 +25,7 @@ class PostgresNPCDispatchFactory:
     UNITS_SQL = """
         SELECT u.unit_id, u.functional_domain, u.dispatchable,
                u.minimum_crew_size, u.target_crew_size,
-               s.operational_status, u.capability_codes
+               s.operational_status, s.status_effective_tick, u.capability_codes
         FROM sw_police.unit_profile u
         JOIN sw_police.unit_current_status s USING (unit_id)
         WHERE u.lifecycle_state = 'active'
@@ -55,8 +55,14 @@ class PostgresNPCDispatchFactory:
                             "dispatchable": row[2],
                             "minimum_crew_size": row[3],
                             "target_crew_size": row[4],
-                            "operational_status": row[5],
-                            "capability_codes": row[6],
+                            # The BP08 status view defaults to unavailable when no status event exists.
+                            # At game bootstrap, an active dispatchable unit with no status history is
+                            # initialised as available in this in-memory game projection; explicit
+                            # unavailable/deployed/etc. status events remain authoritative.
+                            "operational_status": (
+                                "available" if row[6] is None and row[2] is True else row[5]
+                            ),
+                            "capability_codes": row[7],
                         }
                         for row in cursor.fetchall()
                     ]
