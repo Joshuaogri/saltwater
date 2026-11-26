@@ -11,6 +11,8 @@ DECLARE
   v_assessment_event_id bigint;
   v_location_id bigint;
   v_second_location_id bigint;
+  v_operational_event_id bigint;
+  v_operational_replay_id bigint;
   v_status text;
   v_error text;
 BEGIN
@@ -104,6 +106,54 @@ BEGIN
     EXCEPTION WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
       IF v_error<>'canonical spatial location requires a spatial entity ID' THEN RAISE; END IF;
+    END;
+    v_operational_event_id:=sw_incident.record_operational_timeline_event(
+      v_incident_id,'DISPATCH_ACKNOWLEDGED','dispatcher:4','dispatch-authority:9',
+      'dispatch-ack:ACK-TEST-1','CAD-TEST-88',NULL,NULL,NULL,
+      'Fictional unit acknowledged dispatch','BP12-ACCEPTANCE-DISPATCH-ACK-001'
+    );
+    v_operational_replay_id:=sw_incident.record_operational_timeline_event(
+      v_incident_id,'DISPATCH_ACKNOWLEDGED','dispatcher:4','dispatch-authority:9',
+      'dispatch-ack:ACK-TEST-1','CAD-TEST-88',NULL,NULL,NULL,
+      'Fictional unit acknowledged dispatch','BP12-ACCEPTANCE-DISPATCH-ACK-001'
+    );
+    IF v_operational_replay_id<>v_operational_event_id
+       OR (SELECT count(*) FROM sw_incident.operational_timeline(v_incident_id)
+           WHERE event_code='DISPATCH_ACKNOWLEDGED')<>1
+       OR NOT EXISTS(
+         SELECT 1 FROM sw_incident.operational_timeline(v_incident_id)
+         WHERE event_id=v_operational_event_id
+           AND attributes->>'dispatch_ref'='CAD-TEST-88'
+           AND attributes->>'actor_ref'='dispatcher:4'
+       ) THEN
+      RAISE EXCEPTION 'dispatch acknowledgement timeline/idempotency failed';
+    END IF;
+    v_operational_event_id:=sw_incident.record_operational_timeline_event(
+      v_incident_id,'UNIT_ARRIVED','officer:12','patrol-order:5',
+      'bp10-arrival:PATROL-ACT-19',NULL,'UNIT-7','DEP-4','PATROL-ACT-19',
+      'Fictional unit arrived at incident','BP12-ACCEPTANCE-UNIT-ARRIVAL-001'
+    );
+    IF (SELECT count(*) FROM sw_incident.operational_timeline(v_incident_id)
+        WHERE event_code='UNIT_ARRIVED')<>1
+       OR NOT EXISTS(
+         SELECT 1 FROM sw_incident.operational_timeline(v_incident_id)
+         WHERE event_id=v_operational_event_id
+           AND attributes->>'unit_ref'='UNIT-7'
+           AND attributes->>'assignment_ref'='DEP-4'
+           AND attributes->>'field_activity_ref'='PATROL-ACT-19'
+       ) THEN
+      RAISE EXCEPTION 'field unit arrival timeline provenance failed';
+    END IF;
+    BEGIN
+      PERFORM sw_incident.record_operational_timeline_event(
+        v_incident_id,'UNIT_ARRIVED','officer:12','patrol-order:5',
+        'bp10-arrival:PATROL-ACT-20',NULL,'UNIT-7','DEP-4',NULL,
+        'Missing BP10 field activity reference','BP12-ACCEPTANCE-INVALID-ARRIVAL'
+      );
+      RAISE EXCEPTION 'unit arrival without field activity reference was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error<>'unit arrival requires unit, deployment and field activity references' THEN RAISE; END IF;
     END;
     v_second_id:=sw_incident.create_incident(
       'system','BP12-ACCEPTANCE-001','Fictional test incident; no real occurrence.',
