@@ -692,6 +692,34 @@ BEGIN
 END
 $bp12$;
 
+CREATE FUNCTION sw_incident.incident_location_history(p_incident_id integer)
+RETURNS TABLE (
+  incident_location_id bigint,
+  incident_id integer,
+  location_role text,
+  location_type text,
+  spatial_id integer,
+  location_ref text,
+  raw_description text,
+  confidence text,
+  effective_tick bigint,
+  source_event_id bigint,
+  source_ref text,
+  event_occurred_at timestamptz,
+  event_source_ref text,
+  event_attributes jsonb
+)
+LANGUAGE sql STABLE AS $bp12$
+  SELECT l.incident_location_id,l.incident_id,l.location_role,l.location_type,
+         l.spatial_id,l.location_ref,l.raw_description,l.confidence,
+         l.effective_tick,l.source_event_id,l.source_ref,
+         se.occurred_at,se.source_ref,se.attributes
+  FROM sw_incident.incident_location l
+  JOIN sw_core.simulation_event se ON se.event_id=l.source_event_id
+  WHERE l.incident_id=p_incident_id
+  ORDER BY l.effective_tick,l.incident_location_id
+$bp12$;
+
 CREATE VIEW sw_incident.incident_current AS
 SELECT i.*,
        (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
