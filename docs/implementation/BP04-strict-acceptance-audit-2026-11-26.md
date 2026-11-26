@@ -1,6 +1,6 @@
 # BP04 strict acceptance audit — 2026-11-26
 
-**Decision: NOT COMPLETE.** This audit supersedes the premature closure wording in `BP04-completion-record-2026-11-26.md`. It evaluates the current BP-04 draft specification's 48 explicit acceptance criteria (AC-A01 through AC-G07) against evidence available on `main`. A successful workflow, source archive deployment or implemented adapter is not treated as proof of an entire criterion unless the test covers the stated requirement.
+**Decision: NOT COMPLETE.** A confirmed business-name quality defect also fails AC-A04. This audit supersedes the premature closure wording in `BP04-completion-record-2026-11-26.md`. It evaluates the current BP-04 draft specification's 48 explicit acceptance criteria (AC-A01 through AC-G07) against evidence available on `main`. A successful workflow, source archive deployment or implemented adapter is not treated as proof of an entire criterion unless the test covers the stated requirement.
 
 **Specification authority:** `docs/blueprint/divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md` (still `DESIGNED_DRAFT`; eight open design decisions remain).  
 **Status register:** `docs/blueprint/DIVISION-SPECIFICATION-REGISTER.md` records BP04 as IMPLEMENTED / TESTED / BLOCKED.  
@@ -13,6 +13,7 @@
 - **PARTIAL** — meaningful implementation exists, but one or more explicit parts of the criterion lack evidence.
 - **BLOCKED** — a known prerequisite prevents operational acceptance.
 - **NOT VERIFIED** — available evidence does not establish the criterion; this is not a claim that no related code exists.
+- **FAIL** — inspected implementation directly contradicts the criterion.
 
 ## A. Registry and business minimum
 
@@ -21,7 +22,7 @@
 | AC-A01 — at least 10,000 distinct valid local businesses | PASS | The source registry contains 10,000 business identities and 10,000 establishments. Archive integrity and business hierarchy validation exist. |
 | AC-A02 — branches, establishments, brands and aliases not miscounted | PARTIAL | Business/establishment hierarchy and parent references are validated; a full adversarial branch/brand/alias anti-inflation acceptance report is not present. |
 | AC-A03 — every business has unique ID, plausible identity, sector, local scope, lifecycle status and provenance | PARTIAL | Stable identities, sector and source provenance exist; a full record-by-record plausibility/local-scope/lifecycle audit with exception report is not linked. |
-| AC-A04 — duplicates, placeholders and off-map entities cannot inflate local minimum | NOT VERIFIED | No complete duplicate/placeholder/off-map anti-inflation acceptance artifact is linked. |
+| AC-A04 — duplicates, placeholders and off-map entities cannot inflate local minimum | FAIL | `runtime/business_registry_generator.py` appends the sequential index (`{sequence:05d}`) to every trading name and registered name. These sequence-generated labels are not independently plausible business identities; they are being used to make the 10,000 names unique. The generator also does not reserve candidates through the mandatory shared SW-UNS-001 registry. The current 10,000 count therefore cannot be accepted as 10,000 valid distinct identities. |
 | AC-A05 — total registry and active operating counts distinguished | NOT VERIFIED | The required reconciled count report separating all lifecycle classes is not evidenced. |
 | AC-A06 — business records do not create people | PASS | BP04 source generation/import boundary does not create person records; population is separately owned. |
 | AC-A07 — staffing and visitors respect the 10,000-person cap | NOT VERIFIED | Global population-cap tests pass in PKG-001, but the BP04 staff/visitor reference interaction is not demonstrated end-to-end. |
@@ -104,8 +105,8 @@
 | PASS | 6 |
 | PARTIAL | 17 |
 | BLOCKED | 3 |
-| NOT VERIFIED | 22 |
-| **Total** | **48** |
+| NOT VERIFIED | 21 |
+| FAIL | 1 |\n| **Total** | **48** |
 
 A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot be declared complete while any required criterion remains PARTIAL, BLOCKED or NOT VERIFIED.
 
@@ -124,3 +125,12 @@ A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot b
 ## Write boundary
 
 This is a source/documentation audit only. No production Neon writes, grants, canonical address promotions, operational access-point approvals, or property inventory expansion occurred. Work remains on GitHub `main`.
+
+
+## Confirmed business-name quality defect — 2026-11-26
+
+The registry generator currently builds each trading name as `<prefix> <root> <five-digit sequence>` and uses that as the basis for the registered name. The numeric sequence is an identity-disambiguation device, not a natural business naming method. This directly conflicts with BP04 AC-A04's prohibition on numbered placeholder names and SW-UNS-001's requirement that names be proposed and reserved through the shared canonical namespace.
+
+**Consequence:** the 10,000-record source count is real, but it is not yet accepted as 10,000 valid distinct business identities. AC-A01's raw count passes; AC-A04 fails and AC-A03 remains partial. Do not claim the minimum valid-business invariant is satisfied until all names are regenerated as plausible names, the existing adopted global names are checked, candidate uniqueness/near-duplicate rules are applied, and the names are reserved under the shared naming authority. The business and establishment stable IDs remain unchanged by any future rename.
+
+**Next implementation task:** replace the sequence-suffixed naming in `runtime/business_registry_generator.py` with a deterministic, sufficiently large candidate vocabulary using the shared SW-UNS generator and authoritative reservation workflow; create regression tests proving no sequence-number placeholders, no within-registry normalized duplicates, no known adopted-name collisions, and deterministic regeneration. Do not apply naming-registry writes to production Neon as part of this task.
