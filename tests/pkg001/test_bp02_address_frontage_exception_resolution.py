@@ -24,7 +24,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         }
         self.reconciliation = {"address_frontage_exceptions_building_access_crosscheck": [
             {
-                "source_address_id": "A1", "source_candidate_parcel_id": "P1",
+                "source_address_id": "A1", "property_id": "PROP-ALPHA", "source_candidate_parcel_id": "P1",
                 "source_road_id": "R-SRC", "candidate_frontage_road_ids": ["R-ALT"],
                 "building_access_road_candidate_status": "NO_BUILDING_ON_PROPERTY_SITE",
                 "building_access_road_candidate_ids": [],
@@ -32,7 +32,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
                 "status": "ADDRESS_ROAD_DIFFERS_FROM_PARCEL_FRONTAGE_CANDIDATE",
             },
             {
-                "source_address_id": "A2", "source_candidate_parcel_id": "P2",
+                "source_address_id": "A2", "property_id": "PROPERTY-EXPLICIT-42", "source_candidate_parcel_id": "P2",
                 "source_road_id": "R-BRIDGE", "candidate_frontage_road_ids": [],
                 "building_access_road_candidate_status": "SOURCE_ROAD_MATCHES_BUILDING_ACCESS_SET",
                 "building_access_road_candidate_ids": ["R-BRIDGE"],
@@ -47,7 +47,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
     def _connector_report(self):
         return {"connector_candidates": [
             {
-                "property_id": "SWP-A2",
+                "property_id": "PROPERTY-EXPLICIT-42",
                 "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
@@ -94,6 +94,21 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         self.assertTrue(row["address_road_association_resolved"])
         self.assertEqual(row["verified_geometric_connector_candidate_count"], 2)
         self.assertFalse(row["operational_access_approved"])
+
+    def test_bridge_resolution_uses_explicit_property_link_not_address_id_pattern(self):
+        result = resolve_address_frontage_exceptions(
+            self.reconciliation, self.geo, self._connector_report()
+        )
+        self.assertEqual(
+            result["records"][1]["geometry_disposition"],
+            "BRIDGE_ACCESS_CONNECTOR_CANDIDATE_TO_CONNECTED_PUBLIC_ROAD_NETWORK",
+        )
+        broken = {"address_frontage_exceptions_building_access_crosscheck": [
+            dict(self.reconciliation["address_frontage_exceptions_building_access_crosscheck"][1],
+                 property_id=None)
+        ]}
+        result = resolve_address_frontage_exceptions(broken, self.geo, self._connector_report())
+        self.assertFalse(result["records"][0]["address_road_association_resolved"])
 
     def test_bridge_point_contact_without_connector_evidence_remains_unresolved(self):
         result = resolve_address_frontage_exceptions(self.reconciliation, self.geo)
