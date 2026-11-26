@@ -401,6 +401,8 @@ class BP04PoliceAccessTests(unittest.TestCase):
         grants = self.grants + (
             Grant("bp11.dispatch.location.record", "incident:*", "police_workflow",
                   Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp11.dispatch.inspect.assignment", "dispatch:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
             Grant("bp11.dispatch.location.resolve", "incident:*", "police_workflow",
                   Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
             Grant("bp12.incident.inspect.location", "incident:*", "police_workflow",
@@ -419,9 +421,11 @@ class BP04PoliceAccessTests(unittest.TestCase):
         captured = {}
         result = resolver.record_dispatch_address_location(
             "officer-session", 42, "SWADDR-1",
-            dispatch_ref="CAD-88", location_writer=lambda **kw: (
-                captured.update(kw) or 902
+            dispatch_ref="CAD-88",
+            dispatch_incident_verifier=lambda ref, incident_id: (
+                ref == "CAD-88" and incident_id == 42
             ),
+            location_writer=lambda **kw: (captured.update(kw) or 902),
             actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
             idempotency_key="CAD-88-LOC-1",
             raw_description="Dispatcher confirms caller's reported entrance",
@@ -438,8 +442,38 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(captured["p_idempotency_key"], "CAD-88-LOC-1")
         self.assertEqual(
             [row.action for row in self.audit.records],
-            ["bp11.dispatch.location.record", "bp11.dispatch.location.resolve",
+            ["bp11.dispatch.location.record", "bp11.dispatch.inspect.assignment",
+             "bp11.dispatch.location.resolve",
              "bp12.incident.inspect.location", "bp04.lookup.inspect.address"],
+        )
+
+    def test_dispatch_location_update_rejects_dispatch_linked_to_another_incident(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.location.record", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp11.dispatch.inspect.assignment", "dispatch:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda _id: self.fail("incident should not be read")
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_dispatch_address_location(
+                "officer-session", 42, "SWADDR-1",
+                dispatch_ref="CAD-OTHER",
+                dispatch_incident_verifier=lambda _ref, _incident: False,
+                location_writer=lambda **_kw: self.fail("BP12 writer must not run"),
+                actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
+                idempotency_key="CAD-OTHER-LOC-1",
+                raw_description="Mismatched dispatch reference",
+            )
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp11.dispatch.location.record", "bp11.dispatch.inspect.assignment"],
         )
 
     def test_dispatch_location_update_denies_before_writer_without_record_grant(self):
