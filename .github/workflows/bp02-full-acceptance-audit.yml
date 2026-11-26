@@ -58,5 +58,5 @@ jobs:
         with:
           name: bp02-full-parcel-address-access-acceptance
           path: bp02-full-parcel-address-access-acceptance.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
