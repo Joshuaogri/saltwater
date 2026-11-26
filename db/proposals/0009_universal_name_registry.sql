@@ -484,7 +484,12 @@ DECLARE
   v_prior text;
   v_new_id bigint;
   v_old_id bigint;
+  v_generation_batch_id bigint;
 BEGIN
+  -- A controlled import may set this transaction-local context before inserting
+  -- people. The AFTER trigger creates the canonical reservation, so provenance
+  -- must be supplied here rather than in a later idempotent reserve_name call.
+  v_generation_batch_id := NULLIF(current_setting('sw_names.generation_batch_id', true), '')::bigint;
   IF NEW.given_name IS NULL OR btrim(NEW.given_name)=''
      OR NEW.family_name IS NULL OR btrim(NEW.family_name)='' THEN
     RAISE EXCEPTION 'every canonical person requires given and family names';
@@ -501,7 +506,7 @@ BEGIN
     'PERSON',NEW.person_id,'canonical',v_full_name,
     COALESCE(NEW.source_ref,'person:'||NEW.person_id::text),
     'domain-trigger',CASE WHEN TG_OP='INSERT' THEN 'person creation' ELSE 'person profile change' END,
-    v_tick
+    v_tick,v_generation_batch_id
   );
 
   IF TG_OP='UPDATE' AND sw_names.normalize_name(v_prior) <> sw_names.normalize_name(v_full_name) THEN
