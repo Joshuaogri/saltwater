@@ -1489,3 +1489,8 @@ The disposable SQL acceptance test now explicitly activates the test runtime ins
 ## BP04 completion direction — 2026-11-26
 
 BP04 source inventory is frozen for completion work. No further property/building/premises/unit/room/physical-asset expansion is planned unless a concrete gameplay requirement proves it necessary. Remaining effort is directed to authenticated player lookup, authorised police workflow call sites, bounded operational reference interfaces with real consumers, and one consolidated BP04 acceptance audit. Existing BP11/BP08/BP10/BP12/BP16 handoff adapters are integration contracts, not a claim that full CAD, patrol or investigation applications already exist. BP02 operational parcel/address approval remains a separate dependency. See [BP04 completion plan](docs/implementation/BP04-player-police-geography-integration.md#bp04-completion-plan--integration-and-acceptance-only). No production Neon changes are authorised by this work.
+
+
+### BP04 player command integration — 2026-11-26
+
+The PostgreSQL 16/18 BP04 disposable workflow now includes a real-archive player-command integration test. It drives the player `find` and `inspect` interface against the compressed BP04 archives imported into disposable PostgreSQL, covering all supported inspect entity types, missing/malformed records and no world-time advancement. The test has been added and wired into CI; its first workflow result is pending. This does not change the frozen property inventory or write to production Neon. See [BP04 player/police integration](docs/implementation/BP04-player-police-geography-integration.md).
