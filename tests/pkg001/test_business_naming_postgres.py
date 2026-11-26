@@ -186,6 +186,20 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     effective_tick=0,
                     generation_batch_id=self.batch_id,
                 )
+                if offset == 0:
+                    with conn.cursor() as cur:
+                        cur.execute(
+                            """SELECT count(*) FROM pg_locks
+                               WHERE pid=pg_backend_pid() AND locktype='advisory' AND granted"""
+                        )
+                        self.assertGreaterEqual(cur.fetchone()[0], 1)
+                        cur.execute(
+                            """SELECT count(*) FROM pg_locks
+                               WHERE pid=pg_backend_pid()
+                                 AND relation='sw_names.name_reservation'::regclass
+                                 AND mode='ShareRowExclusiveLock'"""
+                        )
+                        self.assertEqual(cur.fetchone()[0], 0)
                 conn.commit()
             self.assertEqual(reservation_count, 20000)
             with conn.cursor() as cur:
