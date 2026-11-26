@@ -60,6 +60,7 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
                     "source_address_id": f"ADDR-{i}",
                     "property_id": "PROP-SWR-B1" if i == 0 else "PROP-SWR-B2" if i == 1 else f"PROP-{i}",
                     "parcel_id": f"SWP-{i:016X}",
+                    "source_candidate_parcel_id": "PARCEL-SWR-B1" if i == 0 else "PARCEL-SWR-B2" if i == 1 else f"PC-{i}",
                     "road_id": "SWR-SOURCE",
                     "address_road_candidate_id": "SWR-01",
                 }
@@ -105,6 +106,7 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
         self.assertEqual(result["addresses"][0]["road_id"], "SWR-B1")
         self.assertEqual(result["addresses"][0]["source_road_id"], "SWR-SOURCE")
         self.assertEqual(len(result["addresses"][0]["access_connector_assessment_ids"]), 2)
+        self.assertEqual(len(result["addresses"][1]["access_connector_assessment_ids"]), 2)
         self.assertTrue(all(row["canonical"] for row in result["parcels"]))
         self.assertTrue(all(row["canonical"] for row in result["addresses"]))
 
