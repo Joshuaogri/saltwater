@@ -1,8 +1,19 @@
 {
   "schema": "saltwater-geography/1.0",
   "dataset_id": "SW-GEO-V1",
-  "status": "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
+  "status": "APPROVED_FOR_OPERATIONAL_USE",
   "created": "2026-11-24",
+  "operational_release": {
+    "release_id": "SW-BP02-GAMEPLAY-RELEASE-2026-11-26",
+    "released_at": "2026-11-26",
+    "release_type": "FICTIONAL_GAME_WORLD_CANON",
+    "fictional_world": true,
+    "canonical_parcels": 420,
+    "canonical_addresses": 420,
+    "bridge_connector_assessments": 4,
+    "operational_access_points": "GENERATED_FROM_CANONICAL_BUILDING_INVENTORY",
+    "source_commit": "BP02 fictional geography release"
+  },
   "coordinate_reference": {
     "id": "SW-LOCAL-01",
     "units": "metres",
