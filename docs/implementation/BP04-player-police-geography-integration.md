@@ -191,3 +191,6 @@ The read-only `SW-BP02-ADDRESS-PLACEMENT-REVIEW-V1` register now consolidates ea
 ## Dispatch and investigation location handoffs
 
 `BP04IncidentLocationResolver.prepare_dispatch_address_candidate` now provides BP11 with a minimal address reference and confidence/provenance fields; it does not copy the full BP04 address record into dispatch state. Access requires the dedicated `bp11.dispatch.location.resolve` grant, followed by the existing BP12 incident-inspection and BP04 address-inspection checks. `read_investigation_location_history` requires both the BP16 investigation-history grant and the BP12 incident-history grant before returning the event-backed chronology. Each decision is independently audited. These are cross-domain read adapters only: BP11 remains owner of dispatch/CAD, BP12 remains owner of incidents, and BP16 remains owner of investigative work.
+
+
+The production read path is backed by `runtime/bp12_incident_location_history.py` (`PostgresIncidentLocationHistoryReader`). It calls the BP12 history function using a parameterised incident ID, returns the event-joined chronology as named fields, rejects invalid IDs and fails with a sanitised unavailable error. It performs no writes. The dispatch and investigation adapters accept this trusted reader's `read` method.
