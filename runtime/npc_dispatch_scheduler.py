@@ -2,11 +2,7 @@
 from __future__ import annotations
 
 from runtime.npc_dispatch_console import NPCDispatchConsole
-from runtime.scheduling import (
-    ScheduleDefinition,
-    ScheduleExecutionResult,
-    TickScheduler,
-)
+from runtime.scheduling import ScheduleDefinition, ScheduleExecutionResult, TickScheduler
 
 
 class NPCDispatchScheduleHandler:
@@ -40,14 +36,25 @@ class NPCDispatchScheduleHandler:
 
 def register_npc_dispatch_schedule(
     scheduler: TickScheduler,
+    console: NPCDispatchConsole,
     *,
     interval_ticks: int = 1,
     max_assignments_per_tick: int | None = None,
 ) -> tuple[int, NPCDispatchScheduleHandler]:
-    """Register a recurring police dispatch decision on the game clock."""
+    """Attach the police owner handler and register its recurring game-clock job."""
     if type(interval_ticks) is not int or interval_ticks < 1:
         raise ValueError("interval_ticks must be a positive integer")
     handler = NPCDispatchScheduleHandler(
-        scheduler.handlers.get("police_console")  # deliberately rejected below
+        console, max_assignments_per_tick=max_assignments_per_tick
     )
-    return 0, handler
+    scheduler.handlers["police"] = handler
+    current_tick = scheduler.kernel.status().world_tick
+    schedule_id = scheduler.register(ScheduleDefinition(
+        owner_domain="police",
+        subject_ref="npc-dispatch",
+        due_tick=current_tick + interval_ticks,
+        idempotency_key="saltwater:npc-dispatch:recurring-v1",
+        interval_ticks=interval_ticks,
+        priority=100,
+    ))
+    return schedule_id, handler
