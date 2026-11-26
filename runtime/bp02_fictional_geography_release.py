@@ -105,6 +105,18 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
                                         engineering_register: dict,
                                         exception_resolution: dict | None = None) -> dict:
     """Promote stable identities and resolved fictional access decisions into gameplay canon."""
+    # Validate exception closure before connector materialisation so a blocked
+    # address release reports its primary acceptance failure deterministically.
+    exception_by_address = {
+        row["source_address_id"]: row
+        for row in (exception_resolution or {}).get("records", [])
+    }
+    if exception_resolution is not None:
+        if exception_resolution.get("unresolved_exception_count") != 0:
+            raise ValueError("Address/access exceptions must be resolved before canonical release")
+        if not exception_resolution.get("all_source_addresses_preserved"):
+            raise ValueError("Source address provenance must be preserved")
+
     parcels = [
         {
             **row,
@@ -115,10 +127,6 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
         for row in identity_register.get("parcels", [])
     ]
 
-    exception_by_address = {
-        row["source_address_id"]: row
-        for row in (exception_resolution or {}).get("records", [])
-    }
     assessments_by_parcel = {}
     approved_by_candidate = {}
     for assessment in engineering_register["records"]:
@@ -200,10 +208,6 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
         })
 
     if exception_resolution is not None:
-        if exception_resolution.get("unresolved_exception_count") != 0:
-            raise ValueError("Address/access exceptions must be resolved before canonical release")
-        if not exception_resolution.get("all_source_addresses_preserved"):
-            raise ValueError("Source address provenance must be preserved")
         if set(exception_by_address) - {row["source_address_id"] for row in addresses}:
             raise ValueError("An exception references an address outside the canonical register")
 
