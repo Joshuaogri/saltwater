@@ -91,6 +91,13 @@ def _generate_business_names_report(source: dict) -> dict:
     geography = inventory_geography_names(source)
     geography_names = tuple(item.display_name for item in geography.candidates)
     reserved = {normalize_name(name) for name in geography_names}
+    # PostgreSQL's registry rejects high-similarity collisions against every
+    # already adopted global name, not merely exact geography-key collisions.
+    # Hold these candidates before assigning stable business IDs.
+    reserved_near_duplicate_keys = {
+        normalize_name(name)
+        for name in geography_names
+    }
 
     adjective_vocab = tuple(dict.fromkeys(root.split(" ", 1)[0] for root in config.business_roots))
     noun_vocab = tuple(dict.fromkeys(root.split(" ", 1)[1] for root in config.business_roots))
@@ -111,6 +118,7 @@ def _generate_business_names_report(source: dict) -> dict:
     accepted_public_keys: set[str] = set()
     held_near_duplicates = 0
     held_exact_collisions = 0
+    held_geography_near_duplicates = 0
 
     for candidate in candidates:
         adjective, noun, *_ = candidate.split()
@@ -125,6 +133,16 @@ def _generate_business_names_report(source: dict) -> dict:
             key in reserved or key in accepted_public_keys for key in public_keys
         ):
             held_exact_collisions += 1
+            continue
+
+        geography_near_duplicate = any(
+            pg_trgm_similarity(public_name, geography_name) > 0.90
+            for public_name in public_names
+            for geography_name in geography_names
+        )
+        if geography_near_duplicate:
+            held_near_duplicates += 1
+            held_geography_near_duplicates += 1
             continue
 
         near_duplicate = False
@@ -165,6 +183,7 @@ def _generate_business_names_report(source: dict) -> dict:
         "candidate_pool_count": candidate_pool_count,
         "near_duplicate_candidates_held": held_near_duplicates,
         "exact_collision_candidates_held": held_exact_collisions,
+        "geography_near_duplicate_candidates_held": held_geography_near_duplicates,
         "near_duplicate_threshold": 0.90,
         "similarity_algorithm": "POSTGRES_PG_TRGM_COMPATIBLE",
         "geography_names_checked": len(geography_names),
