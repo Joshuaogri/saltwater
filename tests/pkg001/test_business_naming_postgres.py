@@ -7,6 +7,8 @@ from pathlib import Path
 
 import psycopg
 
+from runtime.naming import pg_trgm_similarity
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -116,6 +118,26 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     (self.rows[0]["trading_name"],),
                 )
                 self.assertEqual(cur.fetchone()[0], 1)
+
+    def test_python_similarity_matches_postgresql_pg_trgm(self):
+        pairs = (
+            ("Cobalt Harbour Logistics Review", "Cobalt Harbour Logistics Reviews"),
+            ("Amber Meridian Trading", "Amber Meridian Trading Limited"),
+            ("Northbank Civic Services", "Northbank Civic Service"),
+            ("Quayside Orchard House", "Quayside Orchard House"),
+        )
+        with connect() as conn:
+            with conn.cursor() as cur:
+                for left, right in pairs:
+                    cur.execute(
+                        "SELECT similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
+                        (left, right),
+                    )
+                    database_similarity = cur.fetchone()[0]
+                    self.assertAlmostEqual(
+                        pg_trgm_similarity(left, right), database_similarity, places=6,
+                        msg=f"similarity mismatch for {left!r} / {right!r}",
+                    )
 
     def test_unknown_business_identity_fails_closed(self):
         with self.assertRaises(psycopg.Error):
