@@ -78,6 +78,12 @@ class NPCDispatchSimulator:
             }
             self._unit_state[unit_id] = str(profile.get("operational_status") or "available")
 
+    def rotate_shift(self) -> str:
+        """Move to the next NPC shift group without disturbing deployed crews."""
+        shifts = ("Alpha", "Bravo", "Charlie", "Delta")
+        self.current_shift = shifts[(shifts.index(self.current_shift) + 1) % len(shifts)]
+        return self.current_shift
+
     def available_units(self) -> list[dict]:
         result = []
         for unit_id, profile in sorted(self._units.items()):
