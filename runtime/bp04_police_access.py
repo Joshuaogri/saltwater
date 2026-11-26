@@ -44,7 +44,7 @@ class BP04PoliceLookupAccess:
         self._principal_id = principal_id
         self._purpose = purpose
 
-    def _require(self, credential: str, action: str, resource: str) -> None:
+    def _require(self, credential: str, action: str, resource: str):
         decision = self._authorization.decide(
             credential,
             action=action,
@@ -55,6 +55,7 @@ class BP04PoliceLookupAccess:
         )
         if not decision.allowed:
             raise PermissionError("Access denied.")
+        return decision
 
     def search(
         self, credential: str, entity_type: str, query: str, limit: int = 20
@@ -103,13 +104,19 @@ class BP04IncidentLocationResolver:
     command; this resolver cannot mutate incident history.
     """
 
-    def __init__(self, police_access: BP04PoliceLookupAccess, incident_reader):
+    def __init__(
+        self, police_access: BP04PoliceLookupAccess, incident_reader, *,
+        officer_ref_verifier=None,
+    ):
+        if officer_ref_verifier is not None and not callable(officer_ref_verifier):
+            raise TypeError("officer_ref_verifier must be a trusted callable")
         if not isinstance(police_access, BP04PoliceLookupAccess):
             raise TypeError("police_access must be BP04PoliceLookupAccess")
         if not callable(incident_reader):
             raise TypeError("incident_reader must be a trusted callable")
         self._access = police_access
         self._incident_reader = incident_reader
+        self._officer_ref_verifier = officer_ref_verifier
 
     def prepare_address_candidate(
         self, credential: str, incident_id: int, address_id: str, *,
@@ -477,10 +484,18 @@ class BP04IncidentLocationResolver:
             raise TypeError("A trusted BP12 command handover writer is required.")
         if not isinstance(idempotency_key, str) or not idempotency_key.strip():
             raise ValueError("A handover idempotency key is required.")
-        self._access._require(
+        decision = self._access._require(
             credential, "bp12.incident.record.command_handover",
             f"incident:{incident_id}",
         )
+        person_id = decision.active_person_id
+        prepared_by_ref = handover_fields.get("prepared_by_ref")
+        if type(person_id) is not int or person_id < 1:
+            raise PermissionError("Access denied.")
+        if self._officer_ref_verifier is None or self._officer_ref_verifier(
+            person_id, prepared_by_ref
+        ) is not True:
+            raise PermissionError("Access denied.")
         reconciliation = self.build_authorised_command_handover(
             credential, incident_id,
             assignment_snapshot_reader=assignment_snapshot_reader,
