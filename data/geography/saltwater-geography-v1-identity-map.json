@@ -3,7 +3,7 @@
   "dataset_id": "SW-GEO-V1",
   "source_dataset_status": "APPROVED_FOR_OPERATIONAL_USE",
   "mapping_status": "SOURCE_IDENTITY_MAPPINGS_RESOLVED_AND_GAMEPLAY_RELEASED",
-  "operational_seed_approved": true,
+  "operational_seed_approved": false,
   "root_entities": [
     {
       "source_id": "saltwater-state",
