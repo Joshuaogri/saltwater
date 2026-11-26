@@ -1465,3 +1465,6 @@ The operational chronology now has a compact read-only projection for dispatcher
 
 
 Command handover reconciliation now compares authorised BP08 deployment-assignment snapshots with BP12's incident event chronology. It identifies active assignments without arrival records, arrivals without current assignments, unit-reference mismatches, arrival/state conflicts and active assignments remaining on terminal incidents. It uses canonical BP12 incident statuses, requires snapshot provenance and world-tick context, and reports `handover_ready` only when no unresolved assignments or discrepancies remain. The reconciliation is read-only; callers must obtain each source snapshot through its owning system's authorised reader.
+
+
+`BP04IncidentLocationResolver.build_authorised_command_handover` now orchestrates the command handover using separate audited permissions for incident inspection, BP08 deployment-assignment inspection and BP12 operational chronology. It calls trusted owner readers only after the corresponding grants pass, then applies the read-only reconciliation. The dispatcher/incident-commander projection cannot independently grant access or bypass owner-system authorisation.
