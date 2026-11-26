@@ -52,7 +52,7 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 3. Prove player questions and information-only commands do not mutate authoritative world state across the full command gateway. A focused player-interface regression now checks the read-only command set against runtime state and event history.
 4. Prove player choices are never silently selected or auto-completed, including investigation direction and consequential decisions.
 5. Complete the BP15/BP16 case-owned hidden-truth reveal provider and verify that all outward channels preserve the reveal gate.
-6. Provision the opening 500 police-subset person identities as canonical BP06 personnel service records without creating duplicate people. The new BP06 opening-cohort provisioner is implemented and has disposable acceptance coverage; the actual 500-person BP03 seed manifest, BP07 career/post appointments and BP08 unit memberships remain to be connected.
+6. Provision the opening 500 police-subset person identities as canonical BP06 personnel service records without creating duplicate people. The new BP06 opening-cohort provisioner is implemented and its first disposable PostgreSQL acceptance passed in PKG-001 run 45868150806; the actual 500-person BP03 seed manifest, BP07 career/post appointments and BP08 unit memberships remain to be connected.
 7. Wire the recurring NPC dispatch schedule into the actual game-session host, persist and restore NPC deployment/crew state, and prove scheduled work runs while the player is present and freezes during absence.
 8. Run the relevant Python and disposable PostgreSQL acceptance suites against the current main commit and retain reproducible evidence.
 9. Reconcile every BP-01 acceptance ID to its owner implementation, test and evidence reference; no criterion is marked verified from documentation alone.
@@ -60,6 +60,8 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning services. BP-01 defines the invariant; it must not duplicate those divisions' substantive data models or algorithms.
 
 ## 5. BP06 opening cohort provisioning increment
+
+The first disposable acceptance passed in [run 45868150806](../test-evidence/BP06-opening-personnel-cohort-run-0001.md). This is a step-level result, not a full PKG-001 workflow pass.
 
 `db/proposals/0033_bp06_opening_personnel_cohort.sql` adds a one-time, idempotent 500-person linkage from existing BP03 identities to BP06 personnel dossiers. It does not create people, alter population counts, fill authorised posts, or create BP07/BP08 assignments. The disposable acceptance fixture is `tests/pkg001/opening_personnel_cohort_acceptance.sql`; CI applies the proposal only to disposable PostgreSQL. The actual BP03 opening identity manifest remains to be generated and connected.
 
