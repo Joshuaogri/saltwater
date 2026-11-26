@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import Any, Callable
+from datetime import date, datetime
 
 
 class PostgresIncidentOperationalEventWriter:
@@ -486,7 +487,14 @@ class PostgresIncidentCommandHandoverWriter:
                             document["outgoing_commander_ref"], document["incoming_commander_ref"],
                             document["prepared_by_ref"], document["authority_ref"],
                             document["source_ref"], document["effective_world_tick"],
-                            __import__("json").dumps(document, separators=(",", ":"), sort_keys=True),
+                            __import__("json").dumps(
+                                document, separators=(",", ":"), sort_keys=True,
+                                default=lambda value: value.isoformat()
+                                if isinstance(value, (date, datetime))
+                                else (_ for _ in ()).throw(TypeError(
+                                    f"Unsupported command handover JSON value: {type(value).__name__}"
+                                )),
+                            ),
                             idempotency_key,
                         ),
                     )
