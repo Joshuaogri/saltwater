@@ -19,7 +19,7 @@
 
 | Criterion | Status | Evidence / gap |
 |---|---|---|
-| AC-A01 — at least 10,000 distinct valid local businesses | PASS | The source registry contains 10,000 business identities and 10,000 establishments. Archive integrity and business hierarchy validation exist. |
+| AC-A01 — at least 10,000 distinct valid local businesses | PARTIAL | The raw source contains 10,000 business and establishment records, but the sequence-suffixed names fail the valid-identity quality requirement; the raw count is not accepted as 10,000 valid businesses until AC-A04 is remediated. |
 | AC-A02 — branches, establishments, brands and aliases not miscounted | PARTIAL | Business/establishment hierarchy and parent references are validated; a full adversarial branch/brand/alias anti-inflation acceptance report is not present. |
 | AC-A03 — every business has unique ID, plausible identity, sector, local scope, lifecycle status and provenance | PARTIAL | Stable identities, sector and source provenance exist; a full record-by-record plausibility/local-scope/lifecycle audit with exception report is not linked. |
 | AC-A04 — duplicates, placeholders and off-map entities cannot inflate local minimum | FAIL | `runtime/business_registry_generator.py` appends the sequential index (`{sequence:05d}`) to every trading name and registered name. These sequence-generated labels are not independently plausible business identities; they are being used to make the 10,000 names unique. The generator also does not reserve candidates through the mandatory shared SW-UNS-001 registry. The current 10,000 count therefore cannot be accepted as 10,000 valid distinct identities. |
@@ -102,8 +102,8 @@
 
 | Result | Count |
 |---|---:|
-| PASS | 6 |
-| PARTIAL | 17 |
+| PASS | 5 |
+| PARTIAL | 18 |
 | BLOCKED | 3 |
 | NOT VERIFIED | 21 |
 | FAIL | 1 |\n| **Total** | **48** |
