@@ -5,6 +5,12 @@ from typing import Any, Callable
 from datetime import date, datetime
 
 
+def _handover_json_default(value: Any) -> str:
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
+    raise TypeError(f"Unsupported command handover JSON value: {type(value).__name__}")
+
+
 class PostgresIncidentOperationalEventWriter:
     """Append dispatch/arrival event mirrors without owning BP11/BP10 state."""
 
@@ -489,11 +495,7 @@ class PostgresIncidentCommandHandoverWriter:
                             document["source_ref"], document["effective_world_tick"],
                             __import__("json").dumps(
                                 document, separators=(",", ":"), sort_keys=True,
-                                default=lambda value: value.isoformat()
-                                if isinstance(value, (date, datetime))
-                                else (_ for _ in ()).throw(TypeError(
-                                    f"Unsupported command handover JSON value: {type(value).__name__}"
-                                )),
+                                default=_handover_json_default,
                             ),
                             idempotency_key,
                         ),
