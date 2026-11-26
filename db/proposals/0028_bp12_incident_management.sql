@@ -583,6 +583,120 @@ BEGIN
 END
 $bp12$;
 
+
+CREATE FUNCTION sw_incident.add_incident_location(
+  p_incident_id integer,
+  p_location_role text,
+  p_location_type text,
+  p_location_ref text,
+  p_spatial_id integer,
+  p_raw_description text,
+  p_confidence text,
+  p_actor_ref text,
+  p_authority_ref text,
+  p_source_ref text,
+  p_idempotency_key text
+) RETURNS bigint
+LANGUAGE plpgsql AS $bp12$
+DECLARE
+  v_runtime sw_runtime.state%ROWTYPE;
+  v_incident sw_incident.incident%ROWTYPE;
+  v_event_id bigint;
+  v_location_id bigint;
+  v_event_type_id smallint;
+BEGIN
+  IF p_incident_id IS NULL OR p_incident_id<1
+     OR p_location_role NOT IN ('primary','secondary','staging','origin','last_known','search_area','other')
+     OR p_location_type NOT IN ('canonical_spatial','property','premises','road','landmark','public_space','raw','external')
+     OR (p_location_ref IS NULL AND p_spatial_id IS NULL
+         AND (p_raw_description IS NULL OR length(trim(p_raw_description))=0))
+     OR p_raw_description IS NULL OR length(trim(p_raw_description))=0
+     OR p_confidence NOT IN ('high','medium','low','unverified','unknown')
+     OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
+     OR p_authority_ref IS NULL OR length(trim(p_authority_ref))=0
+     OR p_source_ref IS NULL OR length(trim(p_source_ref))=0
+     OR p_idempotency_key IS NULL
+     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
+SELECT i.*,
+       (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
+       (SELECT count(*) FROM sw_incident.incident_source_link s WHERE s.incident_id=i.incident_id)::integer AS source_count
+FROM sw_incident.incident i;
+
+COMMIT;
+ THEN
+    RAISE EXCEPTION 'invalid incident location request';
+  END IF;
+  IF p_location_type='canonical_spatial' AND p_spatial_id IS NULL THEN
+    RAISE EXCEPTION 'canonical spatial location requires a spatial entity ID';
+  END IF;
+  IF p_location_type<>'canonical_spatial' AND p_spatial_id IS NOT NULL THEN
+    RAISE EXCEPTION 'spatial entity ID is only valid for canonical spatial locations';
+  END IF;
+
+  SELECT se.event_id INTO v_event_id
+  FROM sw_core.simulation_event se
+  JOIN sw_core.event_type et USING(event_type_id)
+  WHERE se.idempotency_key=p_idempotency_key;
+  IF FOUND THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM sw_core.simulation_event se
+      JOIN sw_core.event_type et USING(event_type_id)
+      WHERE se.event_id=v_event_id AND et.event_code='INCIDENT_LOCATION_ADDED'
+        AND se.subject_kind='incident' AND se.subject_id=p_incident_id
+    ) THEN
+      RAISE EXCEPTION 'incident location idempotency key conflicts with another event';
+    END IF;
+    SELECT incident_location_id INTO v_location_id
+    FROM sw_incident.incident_location
+    WHERE source_event_id=v_event_id;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'incident location event exists without its location record';
+    END IF;
+    RETURN v_location_id;
+  END IF;
+
+  SELECT * INTO v_runtime FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
+  IF NOT FOUND OR v_runtime.state<>2 OR NOT v_runtime.player_present THEN
+    RAISE EXCEPTION 'incident location recording requires running player-present simulation';
+  END IF;
+  SELECT * INTO v_incident FROM sw_incident.incident
+  WHERE incident_id=p_incident_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'incident not found'; END IF;
+  IF v_incident.status IN ('CLOSED','CANCELLED','DUPLICATE_LINKED') THEN
+    RAISE EXCEPTION 'incident is not open for location updates';
+  END IF;
+
+  SELECT event_type_id INTO v_event_type_id FROM sw_core.event_type
+  WHERE event_code='INCIDENT_LOCATION_ADDED';
+  INSERT INTO sw_core.simulation_event(
+    event_type_id,occurred_at,world_tick,subject_kind,subject_id,
+    source_ref,attributes,idempotency_key
+  ) VALUES (
+    v_event_type_id,now(),v_runtime.world_tick,'incident',p_incident_id,
+    p_source_ref,
+    jsonb_build_object(
+      'location_role',p_location_role,'location_type',p_location_type,
+      'location_ref',p_location_ref,'spatial_id',p_spatial_id,
+      'confidence',p_confidence,'authority_ref',p_authority_ref,
+      'source_ref',p_source_ref
+    ),
+    p_idempotency_key
+  ) RETURNING event_id INTO v_event_id;
+
+  INSERT INTO sw_incident.incident_location(
+    incident_id,location_role,location_type,spatial_id,location_ref,
+    raw_description,confidence,effective_tick,source_event_id,source_ref
+  ) VALUES (
+    p_incident_id,p_location_role,p_location_type,p_spatial_id,p_location_ref,
+    p_raw_description,p_confidence,v_runtime.world_tick,v_event_id,p_source_ref
+  ) RETURNING incident_location_id INTO v_location_id;
+
+  UPDATE sw_runtime.state SET last_event_id=v_event_id,updated_at=now()
+  WHERE singleton=1;
+  RETURN v_location_id;
+END
+$bp12$;
+
 CREATE VIEW sw_incident.incident_current AS
 SELECT i.*,
        (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
