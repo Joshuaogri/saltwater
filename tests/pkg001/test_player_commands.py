@@ -50,9 +50,9 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
 
     def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
         expected = {
-            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect", "dispatch"},
+            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect"},
             CommandClass.PRESENTATION_STATE: {"home", "workspace", "back"},
-            CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit"},
+            CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit", "dispatch"},
         }
         for classification, tokens in expected.items():
             actual = {
@@ -80,6 +80,13 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         self.assertEqual(parse_player_command('find business "Harbour Bank"').command.arguments,
                          ("business", "Harbour Bank"))
         self.assertTrue(parse_player_command("inspect property SWPROP-001").ok)
+        self.assertTrue(parse_player_command("dispatch").ok)
+        self.assertEqual(parse_player_command("dispatch assign SWINC-001").command.arguments,
+                         ("assign", "SWINC-001"))
+        self.assertEqual(parse_player_command("dispatch arrive SWNPC-DEP-000001").command.arguments,
+                         ("arrive", "SWNPC-DEP-000001"))
+        self.assertFalse(parse_player_command("dispatch assign").ok)
+        self.assertFalse(parse_player_command("dispatch nonsense SWINC-001").ok)
         result = parse_player_command("workspace reports-notifications")
         self.assertTrue(result.ok)
         self.assertEqual(result.command.arguments, ("reports-notifications",))
