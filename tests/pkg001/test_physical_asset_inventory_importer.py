@@ -1,9 +1,11 @@
 import copy
-import copy
+import io
+import json
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 
 from bp04_03_stage_e_test_support import stage_e_parcel_inputs, stage_e_asset_inventory
-from runtime.physical_asset_inventory_importer import validate_manifests, _geometry_hash, _geojson
+from runtime.physical_asset_inventory_importer import validate_manifests, _geometry_hash, _geojson, _report_progress
 
 
 class PhysicalAssetInventoryImporterTests(unittest.TestCase):
@@ -11,6 +13,17 @@ class PhysicalAssetInventoryImporterTests(unittest.TestCase):
     def setUpClass(cls):
         _, cls.candidates, cls.dossiers = stage_e_parcel_inputs()
         cls.inventory = stage_e_asset_inventory()
+
+    def test_progress_diagnostics_do_not_pollute_json_stdout(self):
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with redirect_stdout(stdout), redirect_stderr(stderr):
+            _report_progress("test_phase", 12.5)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(json.loads(stderr.getvalue()), {
+            "stage_e_import_progress": "test_phase",
+            "elapsed_ms": 12.5,
+        })
 
     def test_valid_candidate_manifests_are_accepted(self):
         manifest_sha, candidate_set_id = validate_manifests(
