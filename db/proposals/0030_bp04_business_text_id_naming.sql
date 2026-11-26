@@ -38,6 +38,9 @@ DECLARE
   v_code text;
   v_kind smallint;
 BEGIN
+  -- Serialize global exact/near-duplicate checks without blocking autovacuum
+  -- behind a transaction-long relation-level SHARE ROW EXCLUSIVE lock.
+  PERFORM pg_advisory_xact_lock(725101001::bigint);
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
   END IF;
@@ -172,13 +175,9 @@ BEGIN
   IF v_key='saltwater' THEN
     RAISE EXCEPTION 'Saltwater name is reserved only for the two geographic roots';
   END IF;
-  -- One transaction-scoped relation lock protects the global exact-name
-  -- namespace and near-duplicate trigger check for this batch. A distinct
-  -- advisory lock per candidate exhausts PostgreSQL's per-transaction lock
-  -- table when importing thousands of names in one transaction. The unique
-  -- namespace index remains the final exact-collision safeguard.
-  LOCK TABLE sw_names.name_reservation IN SHARE ROW EXCLUSIVE MODE;
-
+  -- The BEFORE INSERT guard serializes global namespace checks with one
+  -- transaction-scoped advisory lock. Avoid relation-level locks: they block
+  -- autovacuum while a bounded batch is being imported.
   SELECT * INTO v_existing FROM sw_names.name_reservation
     WHERE normalized_key=v_key AND namespace_slot='GLOBAL';
   IF FOUND THEN
