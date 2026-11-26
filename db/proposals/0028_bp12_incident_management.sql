@@ -746,20 +746,14 @@ DECLARE
   v_event_type_id smallint;
 BEGIN
   IF p_incident_id IS NULL OR p_incident_id<1
+     OR p_event_code IS NULL
      OR p_event_code NOT IN ('DISPATCH_ACKNOWLEDGED','UNIT_ARRIVED')
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
      OR p_authority_ref IS NULL OR length(trim(p_authority_ref))=0
      OR p_source_ref IS NULL OR length(trim(p_source_ref))=0
      OR p_description IS NULL OR length(trim(p_description))=0
      OR p_idempotency_key IS NULL
-     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
-SELECT i.*,
-       (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
-       (SELECT count(*) FROM sw_incident.incident_source_link s WHERE s.incident_id=i.incident_id)::integer AS source_count
-FROM sw_incident.incident i;
-
-COMMIT;
- THEN
+     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$' THEN
     RAISE EXCEPTION 'invalid incident operational timeline event';
   END IF;
   IF p_event_code='DISPATCH_ACKNOWLEDGED'
