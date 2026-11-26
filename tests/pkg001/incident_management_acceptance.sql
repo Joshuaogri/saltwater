@@ -182,7 +182,7 @@ BEGIN
     );
     IF v_second_id<>v_incident_id THEN RAISE EXCEPTION 'incident create idempotency failed'; END IF;
     v_assessment_event_id:=sw_incident.record_incident_assessment(
-      v_incident_id,'public_safety',2,'high','high',
+      v_incident_id,'public_safety',2::smallint,'high','high',
       'Test reassessment preserves source and prior assessment.',
       'test:bp12','test-authority','BP12-ACCEPTANCE-ASSESS-001',NULL
     );
