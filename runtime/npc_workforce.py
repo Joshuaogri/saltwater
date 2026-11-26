@@ -45,6 +45,7 @@ class NPCOfficer:
     actor_kind: str = "npc"
     player_controlled: bool = False
     service_state: str = "active"
+    position_type: str = "sworn"
 
 
 class NPCWorkforceError(ValueError):
@@ -70,8 +71,11 @@ class NPCWorkforceGenerator:
             if not isinstance(row, dict) or not required.issubset(row):
                 raise NPCWorkforceError("Every post requires post_id, unit_id and position_title.")
             values = {key: row[key] for key in required}
+            position_type = row.get("position_type", "sworn")
             if any(not isinstance(value, str) or not value.strip() for value in values.values()):
                 raise NPCWorkforceError("Post identity, unit and title must be non-empty text.")
+            if position_type not in {"sworn", "civilian", "mixed"}:
+                raise NPCWorkforceError("position_type must be sworn, civilian or mixed.")
             post_id = values["post_id"].strip()
             if post_id in seen:
                 raise NPCWorkforceError(f"Duplicate authorised post: {post_id}")
@@ -80,6 +84,7 @@ class NPCWorkforceGenerator:
                 "post_id": post_id,
                 "unit_id": values["unit_id"].strip(),
                 "position_title": values["position_title"].strip(),
+                "position_type": position_type,
             })
         normalized.sort(key=lambda item: item["post_id"])
         name_pool = [
@@ -107,6 +112,7 @@ class NPCWorkforceGenerator:
                 post_id=post_id,
                 position_title=post["position_title"],
                 shift_group=shift,
+                position_type=post["position_type"],
             ))
         return tuple(officers)
 
