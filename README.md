@@ -6,6 +6,18 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates one stable NPC occupant per supplied post, retaining the existing unit and position identities. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
 
+## NPC-led police dispatch
+
+The NPC workforce now has a gameplay dispatch layer. Given an incident, the
+simulator chooses a suitable available unit, assembles its crew from the
+current NPC shift, selects a crew lead and tracks the deployment through
+responding, on-scene, busy, returning and available. Specialist units are
+preferred when their domain matches; general patrol can cover general
+response. The player does not enter officer IDs or manage crew membership.
+This is currently an in-memory gameplay layer, not a production Neon write or
+a claim that persistent staffing is complete. See
+[the NPC world design](docs/implementation/single-player-npc-world.md).
+
 ## Business naming rebuild — 2026-11-26
 
 The SW-UNS business-name generator changes are now on `main`. The registry build completed successfully and generated 10,000 businesses with 20,000 public trading/legal names; its generator regression suite passed, and the refreshed registry was committed in [`eae9f7d`](https://github.com/Joshuaogri/saltwater/commit/eae9f7d58f7a04872d735d7966cba353f3d3b6aa). The PostgreSQL reservation run [45852648985](https://github.com/Joshuaogri/saltwater/actions/runs/45852648985) used the preceding source commit and therefore the preceding generated registry: it reported three near-duplicate pairs in that stale input. That failure does not validate or invalidate the newly generated file. A fresh PostgreSQL acceptance run against commit `eae9f7d` is still required before the 20,000 persistent name reservations can be accepted. No production Neon write or persistent name reservation was made.
