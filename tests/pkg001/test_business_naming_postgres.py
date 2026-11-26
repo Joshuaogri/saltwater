@@ -142,9 +142,19 @@ class BusinessNamingPostgresTests(unittest.TestCase):
             self.reserve(business_id, name, "legal")
 
     def test_near_duplicate_requires_review(self):
-        self.reserve(self.rows[5]["business_id"], "Cobalt Harbour Logistics Review")
+        original = "Cobalt Harbour Logistics Review"
+        candidate = "Cobalt Harbour Logistics Reviews"
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "SELECT similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
+                    (original, candidate),
+                )
+                similarity = cur.fetchone()[0]
+        self.assertGreaterEqual(similarity, 0.90)
+        self.reserve(self.rows[5]["business_id"], original)
         with self.assertRaises(psycopg.Error):
-            self.reserve(self.rows[6]["business_id"], "Cobalt Harbor Logistics Review")
+            self.reserve(self.rows[6]["business_id"], candidate)
 
     def test_transaction_rollback_removes_business_and_its_reservation(self):
         business_id = "SWBIZ-ROLLBACK-TEST"
