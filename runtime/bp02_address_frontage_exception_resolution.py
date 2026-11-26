@@ -47,9 +47,11 @@ def _valid_bridge_connector_rows(
     if (detail.get("candidate_type") != "road_reserve_proximity_connection"
             or detail.get("contact_type") != "POINT_CONTACT_ONLY"):
         return []
+    source_suffix = source_address_id.removeprefix("SWADDR-")
+    expected_property_id = f"SWP-{source_suffix}"
     rows = [
         row for row in direct_connector_audit.get("connector_candidates", [])
-        if row.get("property_id") == f"SWP-{source_address_id}"
+        if row.get("property_id") == expected_property_id
         and any(
             str(row.get("candidate_road_connection_id", "")).endswith(segment_id)
             for segment_id in bridge_segment_ids
