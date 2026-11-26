@@ -41,7 +41,7 @@ The old BP-01 draft's references to unresolved population membership and foundat
 
 ## 3. Verified BP-01 contract test evidence
 
-The dedicated [BP-01 foundational contract test run 0001](../test-evidence/BP01-foundational-contracts-run-0001.md) passed at source commit `cb0499de5f48483c011124e8b29c36077c229c68` (128 tests). It was superseded by [run 0002](../test-evidence/BP01-foundational-contracts-run-0002.md), which passed 16 test steps and 155 tests at source commit `6de73f27d81fd94ac85cba45b81380ba2bb16b0b`. Run 0002 adds NPC workforce, four-shift population-consistent staffing, dispatch lifecycle and canonical PostgreSQL source-adapter contract tests. This is focused Python evidence; it does not satisfy the remaining hidden-truth non-leakage, NPC knowledge or live host-composition acceptance criteria.
+The dedicated [BP-01 foundational contract test run 0001](../test-evidence/BP01-foundational-contracts-run-0001.md) passed (128 tests). [Run 0002](../test-evidence/BP01-foundational-contracts-run-0002.md) passed 155 tests. The latest [run 0003](../test-evidence/BP01-foundational-contracts-run-0003.md) passed 16 test steps and 156 tests at source commit `6a7ccc6408ce1aa60a43d6e6a362d3d1d6ff7b67`. Run 0003 covers the production personnel-source adapter contract, player exclusion, vacancy boundary, BP08 status and unassigned/recruit handling. This is focused Python evidence; disposable PostgreSQL integration is validated separately, and hidden-truth non-leakage, NPC knowledge and live host-composition acceptance remain outstanding.
 
 ## 4. Remaining BP-01 verification work
 
