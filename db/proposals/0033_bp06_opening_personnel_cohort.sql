@@ -149,6 +149,14 @@ CREATE TABLE sw_police.opening_personnel_cohort_member (
   PRIMARY KEY (cohort_code,person_id)
 );
 
+CREATE TRIGGER opening_personnel_cohort_immutable
+BEFORE UPDATE OR DELETE ON sw_police.opening_personnel_cohort
+FOR EACH ROW EXECUTE FUNCTION sw_police.reject_personnel_history_mutation();
+
+CREATE TRIGGER opening_personnel_cohort_member_immutable
+BEFORE UPDATE OR DELETE ON sw_police.opening_personnel_cohort_member
+FOR EACH ROW EXECUTE FUNCTION sw_police.reject_personnel_history_mutation();
+
 CREATE FUNCTION sw_police.provision_opening_personnel_cohort(
   p_members jsonb,
   p_source_ref text
@@ -158,6 +166,7 @@ AS $function$
 DECLARE
   v_manifest jsonb;
   v_existing jsonb;
+  v_existing_source_ref text;
   v_tick bigint;
   v_event_type smallint;
   v_member record;
@@ -198,13 +207,13 @@ BEGIN
 
   PERFORM pg_advisory_xact_lock(hashtextextended('saltwater:opening-police-cohort-v1',0));
 
-  SELECT member_manifest INTO v_existing
+  SELECT member_manifest,source_ref INTO v_existing,v_existing_source_ref
   FROM sw_police.opening_personnel_cohort
   WHERE cohort_code='OPENING-POLICE-500'
   FOR UPDATE;
   IF FOUND THEN
-    IF v_existing IS DISTINCT FROM v_manifest THEN
-      RAISE EXCEPTION 'opening police cohort already exists with a different identity manifest';
+    IF v_existing IS DISTINCT FROM v_manifest OR v_existing_source_ref IS DISTINCT FROM p_source_ref THEN
+      RAISE EXCEPTION 'opening police cohort already exists with a different identity manifest or source';
     END IF;
     SELECT count(*) INTO v_existing_count
     FROM sw_police.opening_personnel_cohort_member
