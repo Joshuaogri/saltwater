@@ -134,13 +134,18 @@ class BusinessNamingPostgresTests(unittest.TestCase):
             with conn.cursor() as cur:
                 for left, right in pairs:
                     cur.execute(
-                        "SELECT sw_names.similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
-                        (left, right),
+                        """SELECT sw_names.similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s)),
+                                  sw_names.show_trgm(sw_names.normalize_name(%s)),
+                                  sw_names.show_trgm(sw_names.normalize_name(%s))""",
+                        (left, right, left, right),
                     )
-                    database_similarity = cur.fetchone()[0]
+                    database_similarity, left_trigrams, right_trigrams = cur.fetchone()
                     self.assertAlmostEqual(
                         pg_trgm_similarity(left, right), database_similarity, places=6,
-                        msg=f"similarity mismatch for {left!r} / {right!r}",
+                        msg=(
+                            f"similarity mismatch for {left!r} / {right!r}; "
+                            f"database_trigrams={left_trigrams!r}/{right_trigrams!r}"
+                        ),
                     )
 
     def test_unknown_business_identity_fails_closed(self):
@@ -173,7 +178,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
         with connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
+                    "SELECT sw_names.similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
                     (original, candidate),
                 )
                 similarity = cur.fetchone()[0]
