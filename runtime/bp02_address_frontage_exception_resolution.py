@@ -64,6 +64,10 @@ def _valid_bridge_connector_rows(
         return []
     if len(connector_ids) != len(set(connector_ids)):
         return []
+    access_point_ids = [row.get("candidate_access_point_id") for row in rows]
+    if (any(not isinstance(identifier, str) or not identifier for identifier in access_point_ids)
+            or len(access_point_ids) != len(set(access_point_ids))):
+        return []
     valid = all(
         row.get("road_connection_type") == "road_reserve_proximity_connection"
         and row.get("road_connection_contact_type") == "POINT_CONTACT_ONLY"
@@ -100,6 +104,7 @@ def resolve_address_frontage_exceptions(
         proposed = None
         resolved_access_road = None
         connector_count = 0
+        connector_rows = []
         association_resolved = False
 
         if row["status"] == "ADDRESS_ROAD_DIFFERS_FROM_PARCEL_FRONTAGE_CANDIDATE":
@@ -173,6 +178,13 @@ def resolve_address_frontage_exceptions(
             "resolved_access_road_id": resolved_access_road,
             "address_road_association_resolved": association_resolved,
             "verified_geometric_connector_candidate_count": connector_count,
+            "verified_geometric_connector_candidates": [
+                {
+                    "candidate_access_point_id": connector.get("candidate_access_point_id"),
+                    "road_access_candidate_id": connector.get("candidate_road_connection_id"),
+                }
+                for connector in connector_rows
+            ],
             "evidence_basis": basis,
             "outstanding_action": outstanding,
             "source_address_preserved": True,
