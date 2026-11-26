@@ -1,0 +1,63 @@
+name: BP-01 foundational contract tests
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "runtime/bp01_foundations.py"
+      - "runtime/security.py"
+      - "runtime/player_commands.py"
+      - "runtime/player_interface.py"
+      - "runtime/application.py"
+      - "runtime/player_command_runtime.py"
+      - "runtime/kernel.py"
+      - "runtime/event_engine.py"
+      - "runtime/scheduling.py"
+      - "runtime/recovery.py"
+      - "tests/pkg001/test_bp01_foundations.py"
+      - "tests/pkg001/test_authorization.py"
+      - "tests/pkg001/test_player_commands.py"
+      - "tests/pkg001/test_player_interface.py"
+      - "tests/pkg001/test_player_application.py"
+      - "tests/pkg001/test_player_command_runtime.py"
+      - "tests/pkg001/test_runtime_kernel.py"
+      - "tests/pkg001/test_event_engine.py"
+      - "tests/pkg001/test_scheduling.py"
+      - "tests/pkg001/test_recovery.py"
+      - ".github/workflows/bp01-foundational-contracts.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bp01-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry dependency
+        run: python -m pip install "shapely==2.1.2"
+      - name: Test BP01 canon and reveal-trigger contract
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp01_foundations.py" -v
+      - name: Test player-only hidden-truth authorization
+        run: python -m unittest discover -s tests/pkg001 -p "test_authorization.py" -v
+      - name: Test canonical command parser and exact bingo trigger
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_commands.py" -v
+      - name: Test player interface and read-only command invariants
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_interface.py" -v
+      - name: Test one-player application and authenticated reveal gateway
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_application.py" -v
+      - name: Test authenticated player command runtime composition
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_command_runtime.py" -v
+      - name: Test absence freeze and authoritative runtime lifecycle
+        run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
+      - name: Test causal event processing and idempotency
+        run: python -m unittest discover -s tests/pkg001 -p "test_event_engine.py" -v
+      - name: Test authoritative clock and recurring schedules
+        run: python -m unittest discover -s tests/pkg001 -p "test_scheduling.py" -v
+      - name: Test persistence checkpoint and recovery contracts
+        run: python -m unittest discover -s tests/pkg001 -p "test_recovery.py" -v
