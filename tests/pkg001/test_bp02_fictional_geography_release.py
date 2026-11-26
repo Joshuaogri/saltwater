@@ -158,13 +158,28 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
                 {"candidate_access_point_id": row["candidate_access_point_id"]}
                 for row in selected_connectors
             ] + [{"candidate_access_point_id": f"AP-EXTRA-{i}"} for i in range(416)],
+            "buildings": [
+                {
+                    "candidate_building_id": row["candidate_building_id"],
+                    "property_id": row["candidate_property_id"],
+                    "source_candidate_parcel_id": row["source_candidate_parcel_id"],
+                }
+                for row in selected_connectors
+            ],
             "access_connectors": [
                 {
                     "candidate_connector_id": row["source_connector_candidate_id"],
                     "access_point_candidate_id": row["candidate_access_point_id"],
+                    "road_access_candidate_id": row["road_access_candidate_id"],
+                    "road_id": row["road_id"],
                 }
                 for row in selected_connectors
-            ],
+            ] + [{
+                "candidate_connector_id": "SWAC-UNRELATED-ESTATE-CONNECTOR",
+                "access_point_candidate_id": "AP-EXTRA-0",
+                "road_access_candidate_id": "ROAD-UNRELATED",
+                "road_id": "SWR-UNRELATED",
+            }],
         }
         dispositions = [
             {
