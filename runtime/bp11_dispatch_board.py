@@ -110,7 +110,7 @@ class PostgresDispatchBoard:
                                r.maximum_crew_size, r.active_members,
                                r.operational_status, r.staffing_eligible,
                                r.dispatch_eligible, r.readiness_reason,
-                               p.capability_codes
+                               r.resources_ready, p.capability_codes
                         FROM sw_police.unit_readiness r
                         JOIN sw_police.unit_profile p USING(unit_id)
                         WHERE r.dispatchable=true
