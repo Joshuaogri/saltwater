@@ -18,7 +18,24 @@ DECLARE
   v_handover_id bigint;
   v_handover_replay_id bigint;
   v_handover_document jsonb;
+  v_bootstrap_open boolean;
 BEGIN
+  -- Activate the disposable runtime so positive incident and handover paths run.
+  SELECT state,player_present,bootstrap_open INTO v_state,v_present,v_bootstrap_open
+  FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
+  IF v_state=0 THEN
+    UPDATE sw_runtime.state SET state=1 WHERE singleton=1;
+    v_state:=1;
+  END IF;
+  IF v_state=1 THEN
+    IF v_bootstrap_open THEN
+      UPDATE sw_runtime.state SET bootstrap_open=false WHERE singleton=1;
+    END IF;
+    UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
+    v_state:=2; v_present:=true;
+  ELSIF NOT (v_state=2 AND v_present) THEN
+    RAISE EXCEPTION 'BP12 acceptance fixture cannot activate runtime from state %, player_present %',v_state,v_present;
+  END IF;
   IF to_regclass('sw_incident.incident') IS NULL
      OR to_regclass('sw_incident.incident_event') IS NULL
      OR to_regclass('sw_incident.incident_source_link') IS NULL
@@ -212,7 +229,7 @@ BEGIN
       'authority_ref','command-authority:test',
       'source_ref','command-room:handover-test',
       'effective_world_tick',(SELECT world_tick FROM sw_runtime.state WHERE singleton=1),
-      'assignment_reconciliation',jsonb_build_object('handover_ready',true,'as_of_world_tick',
+      'assignment_reconciliation',jsonb_build_object('incident_id',v_incident_id,'handover_ready',true,'as_of_world_tick',
         (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),'unresolved_active_assignments',jsonb_build_array()),
       'commander_decisions',jsonb_build_array(),
       'outstanding_actions',jsonb_build_array(),
@@ -247,13 +264,34 @@ BEGIN
          WHERE command_handover_id=v_handover_id
            AND handover_document->>'record_status'='PERSISTED'
            AND handover_document->>'incoming_commander_ref'='commander:incoming'
+           AND source_event_id IS NOT NULL AND occurred_at IS NOT NULL
+           AND event_world_tick >= effective_world_tick
        ) THEN
       RAISE EXCEPTION 'BP12 command handover persistence, history or idempotency failed';
     END IF;
     BEGIN
-      UPDATE sw_incident.command_handover SET source_ref='tampered'
-      WHERE command_handover_id=v_handover_id;
+      PERFORM sw_incident.record_command_handover(
+        v_incident_id,'BP12-HANDOVER-TEST-001','commander:outgoing','commander:incoming',
+        'supervisor:prepared','command-authority:test','command-room:handover-test',
+        (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),
+        jsonb_set(v_handover_document,'{acknowledgements,0,notes}','"Changed replay payload"'::jsonb,true),
+        'BP12-HANDOVER-IDEMPOTENCY-001'
+      );
+      RAISE EXCEPTION 'conflicting command handover idempotency replay was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error<>'command handover idempotency key conflicts with prior record' THEN RAISE; END IF;
+    END;
+    BEGIN
+      UPDATE sw_incident.command_handover SET source_ref='tampered' WHERE command_handover_id=v_handover_id;
       RAISE EXCEPTION 'BP12 command handover update was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error NOT LIKE '%append-only%' THEN RAISE; END IF;
+    END;
+    BEGIN
+      DELETE FROM sw_incident.command_handover WHERE command_handover_id=v_handover_id;
+      RAISE EXCEPTION 'BP12 command handover delete was accepted';
     EXCEPTION WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
       IF v_error NOT LIKE '%append-only%' THEN RAISE; END IF;
