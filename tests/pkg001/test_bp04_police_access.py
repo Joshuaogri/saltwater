@@ -304,6 +304,78 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 location_history_reader=lambda _id: [{"incident_id": 42}],
             )
 
+    def test_dispatch_handoff_requires_dispatch_incident_and_address_permissions(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.location.resolve", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.location", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {
+                "incident_id": incident_id, "incident_ref": "SWI-42",
+                "source_type": "call", "source_record_id": "CALL-9",
+            },
+        )
+        result = resolver.prepare_dispatch_address_candidate(
+            "officer-session", 42, "SWADDR-1",
+            source_ref="dispatch:CALL-9",
+        )
+        self.assertEqual(result["address_id"], "SWADDR-1")
+        self.assertTrue(result["dispatch_use_only"])
+        self.assertNotIn("address", result)
+        actions = [row.action for row in self.audit.records]
+        self.assertEqual(actions, [
+            "bp11.dispatch.location.resolve",
+            "bp12.incident.inspect.location",
+            "bp04.lookup.inspect.address",
+        ])
+
+    def test_investigation_handoff_requires_investigation_and_bp12_history_grants(self):
+        grants = self.grants + (
+            Grant("bp16.investigation.incident.location.history", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.location.history", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        history = [{
+            "incident_id": 42, "incident_location_id": 901,
+            "source_event_id": 7001, "source_ref": "dispatch:CALL-9",
+        }]
+        result = resolver.read_investigation_location_history(
+            "officer-session", 42,
+            location_history_reader=lambda _id: history,
+        )
+        self.assertEqual(result, history)
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp16.investigation.incident.location.history",
+             "bp12.incident.inspect.location.history"],
+        )
+
+    def test_investigation_handoff_denies_without_investigation_grant(self):
+        resolver = BP04IncidentLocationResolver(self.access, lambda _id: None)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.read_investigation_location_history(
+                "officer-session", 42, location_history_reader=lambda _id: [],
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp16.investigation.incident.location.history",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
     def test_incident_location_candidate_requires_incident_grant(self):
         resolver = BP04IncidentLocationResolver(
             self.access, lambda incident_id: {"incident_id": incident_id}
