@@ -24,10 +24,15 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
             DispatchIncident("CI-NPC-INC-001", "routine patrol call", "patrol", 3, "CI-LOCATION-1")
         ], current_shift="Alpha")
         try:
-            result = console.execute(("assign", "CI-NPC-INC-001"))
+            deployments = console.process_dispatch_tick()
         except Exception as exc:
             snapshot = console._simulator.snapshot()
             self.fail("{}; shift={}; units={}".format(exc, snapshot["current_shift"], snapshot["units"]))
+        self.assertEqual(len(deployments), 1)
+        result = "NPC dispatch assigned {} to {}. Crew: {}".format(
+            deployments[0].unit_id, deployments[0].incident_id,
+            ", ".join(deployments[0].crew_names),
+        )
         self.assertIn("NPC dispatch assigned", result)
         self.assertIn("SWPS-UNIT-PATROL", result)
         self.assertIn("Crew:", result)
