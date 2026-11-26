@@ -257,9 +257,19 @@ class BP04IncidentLocationResolver:
         }
 
     def read_investigation_location_history(
-        self, credential: str, incident_id: int, *, location_history_reader
+        self, credential: str, incident_id: int, *, case_ref: str,
+        case_incident_verifier, location_history_reader,
     ) -> list[dict]:
-        """BP16 handoff: require case-work permission as well as BP12 history access."""
+        """BP16 handoff: prove case linkage before BP12 history access."""
+        if not isinstance(case_ref, str) or not case_ref.strip():
+            raise ValueError("A stable case reference is required.")
+        if not callable(case_incident_verifier):
+            raise TypeError("A trusted case-to-incident verifier is required")
+        self._access._require(
+            credential, "bp16.investigation.inspect.case", f"case:{case_ref}"
+        )
+        if case_incident_verifier(case_ref, incident_id) is not True:
+            raise PermissionError("Access denied.")
         self._access._require(
             credential,
             "bp16.investigation.incident.location.history",
