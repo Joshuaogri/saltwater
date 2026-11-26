@@ -99,6 +99,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertEqual(manifest["source_dataset_git_blob_sha"], "27b3f7848af10f2d61dee04a4dada1eff1f9871b")
         self.assertNotIn("source_dataset_sha", manifest)
         self.assertEqual(manifest["mapping_status"], "SOURCE_IDENTITY_MAPPINGS_RESOLVED_AND_GAMEPLAY_RELEASED")
+        self.assertEqual(manifest["operational_seed_approved"], built.operational_seed_approved)
         self.assertFalse(manifest["operational_seed_approved"])
         expected = [
             {
