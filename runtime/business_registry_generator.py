@@ -82,6 +82,24 @@ def _load_business_name_config() -> tuple[GeneratorConfig, tuple[str, ...], tupl
     return config, forms, legal_suffixes
 
 
+def _possible_near_duplicate_roots(
+    adjective: str,
+    noun: str,
+    similar_tokens: dict[str, tuple[str, ...]],
+) -> tuple[tuple[str, str], ...]:
+    """Return nearby root pairs in same and swapped word-role order."""
+    nearby_adjectives = similar_tokens[adjective]
+    nearby_nouns = similar_tokens[noun]
+    return tuple(dict.fromkeys(
+        [(other_adjective, other_noun)
+         for other_adjective in nearby_adjectives
+         for other_noun in nearby_nouns]
+        + [(other_adjective, other_noun)
+           for other_adjective in nearby_nouns
+           for other_noun in nearby_adjectives]
+    ))
+
+
 def _generate_business_names_report(source: dict) -> dict:
     config, _, legal_suffixes = _load_business_name_config()
     candidate_pool_count = TARGET_BUSINESSES + 2000
@@ -148,17 +166,8 @@ def _generate_business_names_report(source: dict) -> dict:
         # pg_trgm is insensitive to word order in many short phrases.
         # Search only nearby token pairs, in both word-role alignments, rather
         # than scanning the full adjective x noun vocabulary for every row.
-        nearby_adjectives = similar_tokens[adjective]
-        nearby_nouns = similar_tokens[noun]
-        possible_roots = (
-            [(other_adjective, other_noun)
-             for other_adjective in nearby_adjectives
-             for other_noun in nearby_nouns]
-            + [(other_adjective, other_noun)
-               for other_adjective in nearby_nouns
-               for other_noun in nearby_adjectives]
-        )
-        for root in dict.fromkeys(possible_roots):
+        possible_roots = _possible_near_duplicate_roots(adjective, noun, similar_tokens)
+        for root in possible_roots:
             for existing_name in accepted_by_root.get(root, ()):
                 if any(
                     pg_trgm_similarity(public_name, existing_name) > 0.90
