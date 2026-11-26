@@ -12,6 +12,7 @@ from runtime.bp12_incident_location_history import PostgresIncidentLocationHisto
 from runtime.bp12_incident_operational_events import (
     PostgresIncidentOperationalEventWriter,
     PostgresIncidentOperationalTimelineReader,
+    build_incident_operational_timeline_view,
 )
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
@@ -874,6 +875,45 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(rows[0]["event_id"], 8801)
         self.assertEqual(cursor.query[1], (42,))
         self.assertIn("operational_timeline(%s)", cursor.query[0])
+
+    def test_authorised_timeline_projects_dispatch_and_arrival_for_operational_views(self):
+        rows = [
+            {
+                "event_id": 100, "event_code": "DISPATCH_ACKNOWLEDGED",
+                "occurred_at": "2026-11-26T12:00:00Z", "world_tick": 18,
+                "source_ref": "bp11-dispatch:CAD-4",
+                "attributes": {"dispatch_ref": "CAD-4", "actor_ref": "dispatcher:2",
+                               "authority_ref": "dispatch-order:8"},
+            },
+            {
+                "event_id": 104, "event_code": "UNIT_ARRIVED",
+                "occurred_at": "2026-11-26T12:03:00Z", "world_tick": 19,
+                "source_ref": "bp10-arrival:ACT-7",
+                "attributes": {"unit_ref": "UNIT-7", "assignment_ref": "DEP-9",
+                               "field_activity_ref": "ACT-7", "actor_ref": "officer:12",
+                               "authority_ref": "deployment:9"},
+            },
+        ]
+        view = build_incident_operational_timeline_view(rows)
+        self.assertEqual([item["label"] for item in view],
+                         ["Dispatch acknowledged", "Unit arrived"])
+        self.assertEqual(view[0]["references"], {"dispatch_ref": "CAD-4"})
+        self.assertEqual(view[1]["references"]["unit_ref"], "UNIT-7")
+        self.assertEqual(view[1]["source_ref"], "bp10-arrival:ACT-7")
+
+    def test_operational_timeline_projection_rejects_out_of_order_events(self):
+        rows = [
+            {"event_id": 9, "event_code": "DISPATCH_ACKNOWLEDGED",
+             "occurred_at": "2026-11-26T12:00:00Z", "world_tick": 20,
+             "source_ref": "bp11:9",
+             "attributes": {"dispatch_ref": "CAD-9"}},
+            {"event_id": 8, "event_code": "DISPATCH_ACKNOWLEDGED",
+             "occurred_at": "2026-11-26T11:59:00Z", "world_tick": 19,
+             "source_ref": "bp11:8",
+             "attributes": {"dispatch_ref": "CAD-8"}},
+        ]
+        with self.assertRaisesRegex(ValueError, "canonical event order"):
+            build_incident_operational_timeline_view(rows)
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
