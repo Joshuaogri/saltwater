@@ -204,6 +204,31 @@ class BP04IncidentLocationResolver:
         }
 
 
+    def read_location_history(
+        self, credential: str, incident_id: int, *, location_history_reader
+    ) -> list[dict]:
+        """Read the complete BP12 location chronology under an explicit grant."""
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if not callable(location_history_reader):
+            raise TypeError("A trusted BP12 location history reader is required")
+        self._access._require(
+            credential,
+            "bp12.incident.inspect.location.history",
+            f"incident:{incident_id}",
+        )
+        rows = location_history_reader(incident_id)
+        if rows is None:
+            raise RuntimeError("Incident location history reader returned no result.")
+        result = [dict(row) for row in rows]
+        for row in result:
+            if row.get("incident_id") != incident_id:
+                raise ValueError("Location history contains a conflicting incident identity.")
+            if not row.get("source_ref") or not row.get("source_event_id"):
+                raise ValueError("Location history is missing mandatory provenance.")
+        return result
+
+
 def create_postgres_bp04_police_lookup_access(
     connect,
     lookup: Any,
