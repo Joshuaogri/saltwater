@@ -7,11 +7,11 @@
 
 ## Master blueprint approval
 
-**APPROVED — 2026-11-23.** The user has approved the Saltwater master blueprint framework, binding canon and fixed BP-01–BP-44 structure. This is approval of the master framework only. The 44 division specifications remain `DESIGNED_DRAFT` until each is semantically reconciled, complete, traceable and individually reviewed. Implementation, testing and verification remain separate statuses and are not approved or implied by this decision.
+**APPROVED — 2026-11-23.** The user approved the Saltwater master blueprint framework, binding canon and fixed BP-01–BP-44 structure. Individual division specifications are reconciled and advanced separately. BP-01 version 1.0 is now `DESIGNED`; its implementation and test evidence are in progress, and its global verification remains blocked by cross-division acceptance gaps. Implementation, testing and verification are separate statuses.
 
 | ID | Division | Specification status | Implementation | Test | Verification | Specification |
 |---|---|---|---|---|---|---|
-| BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
+| BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED | IN_PROGRESS | IN_PROGRESS | BLOCKED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
 | BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
 | BP-03 | Population and Individual Simulation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
 | BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | BLOCKED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
