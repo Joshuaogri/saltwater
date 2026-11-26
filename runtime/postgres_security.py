@@ -152,3 +152,48 @@ class PostgresGrantProvider:
             )
             for row in rows
         )
+
+
+
+class PostgresPersonnelReferenceVerifier:
+    """Verify an officer personnel reference against the authoritative BP06 view.
+
+    The supplied person_id must come from the verified authentication session.
+    The reference must be the BP06 personnel dossier UUID for that same person,
+    whose current service is active and whose category is sworn_officer.
+    Database errors propagate so the caller's protected operation fails closed.
+    """
+
+    def __init__(self, connect: Callable):
+        self._connect = connect
+
+    def __call__(self, person_id: int, personnel_ref: str) -> bool:
+        from uuid import UUID
+
+        if type(person_id) is not int or person_id < 1:
+            return False
+        if not isinstance(personnel_ref, str) or not personnel_ref.strip():
+            return False
+        try:
+            personnel_id = UUID(personnel_ref)
+        except (ValueError, TypeError, AttributeError):
+            return False
+        if str(personnel_id) != personnel_ref.casefold():
+            return False
+
+        with self._connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    SELECT 1
+                    FROM sw_police.personnel_service_current
+                    WHERE person_id=%s
+                      AND personnel_id=%s
+                      AND service_status='active'
+                      AND personnel_category='sworn_officer'
+                      AND service_state='active'
+                    LIMIT 1
+                    """,
+                    (person_id, personnel_id),
+                )
+                return cur.fetchone() is not None
