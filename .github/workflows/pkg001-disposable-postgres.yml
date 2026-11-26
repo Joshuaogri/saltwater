@@ -41,6 +41,8 @@ on:
       - "data/business/saltwater-business-registry-v1.json"
       - "data/business/saltwater-business-registry-v1.json.gz"
       - "data/naming/saltwater-person-naming-v1.json"
+      - "data/people/saltwater-opening-police-person-seed-v1.json"
+      - "data/people/saltwater-opening-police-person-seed-v1.json.gz"
       - "runtime/opening_police_person_seed.py"
       - "tests/pkg001/test_opening_police_person_seed.py"
       - "tests/pkg001/naming_acceptance.sql"
@@ -268,6 +270,9 @@ jobs:
       - name: Run BP04 stable text-ID business naming acceptance
         timeout-minutes: 20
         run: python -m unittest discover -s tests/pkg001 -p "test_business_naming_postgres.py" -v
+      - name: Run opening police person seed against the authoritative naming registry
+        timeout-minutes: 10
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed_postgres.py" -v
       - name: Run SW-NAM-001 PostgreSQL concurrency and rollback tests
         run: python -m unittest discover -s tests/pkg001 -p "test_naming_postgres.py" -v
       - name: Test persistent session verifier and durable audit sink
