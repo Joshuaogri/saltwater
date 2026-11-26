@@ -1452,3 +1452,5 @@ Operational release remains blocked: SW-GEO-V1 is still a design baseline; canon
 BP04 now exposes two constrained cross-domain location handoffs: dispatch receives only a location reference/confidence/provenance (not a duplicated address record), while investigation history requires both BP16 and BP12 grants. Both paths are independently audited and preserve BP11/BP12/BP16 ownership boundaries.
 
 The BP12 incident location chronology now has a read-only PostgreSQL adapter using a parameterised query, with regression coverage for provenance preservation, invalid IDs and failure handling. Dispatch and investigation adapters can consume this trusted reader without creating duplicate location records.
+
+Investigation history access is additionally bound to an authorised case reference: a trusted case-to-incident verifier must confirm the link before any BP12 history read. An unlinked incident is denied without revealing its location history.
