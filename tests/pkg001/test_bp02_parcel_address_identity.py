@@ -117,7 +117,7 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
             build_identity_register(self.candidates, self.properties, broken, self.codes)
 
     def test_orphan_property_fails_closed(self):
-        with self.assertRaisesRegex(ValueError, "address property reference is unresolved"):
+        with self.assertRaisesRegex(ValueError, "one-to-one to properties"):
             build_identity_register(self.candidates, self.properties[:1], self.addresses, self.codes)
 
 
