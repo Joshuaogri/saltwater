@@ -36,6 +36,14 @@ class FakeConnection:
         return Result()
 
 
+def tables_from_archive(payload):
+    document = json.loads(gzip.decompress(payload).decode())
+    return {
+        name: [dict(zip(table["columns"], row)) for row in table["rows"]]
+        for name, table in document["tables"].items()
+    }
+
+
 class BP04LookupTests(unittest.TestCase):
     def setUp(self):
         world = {
@@ -194,6 +202,37 @@ class BP04LookupTests(unittest.TestCase):
     def test_source_counts_are_reported(self):
         self.assertEqual(self.lookup.counts["SW-PROPERTY-WORLD-V1.properties"], 1)
         self.assertEqual(self.lookup.counts["SW-BUSINESS-REGISTRY-V1.businesses"], 1)
+
+    def test_dangling_premises_building_link_fails_closed(self):
+        world = tables_from_archive(self.archives["SW-PROPERTY-WORLD-V1"])
+        world["premises"][0]["building_id"] = "SWBLD-MISSING"
+        broken = dict(self.archives)
+        broken["SW-PROPERTY-WORLD-V1"] = archive("SW-PROPERTY-WORLD-V1", world)
+        with self.assertRaisesRegex(ValueError, "Premises .* references missing building"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_unit_parent_hierarchy_conflict_fails_closed(self):
+        world = tables_from_archive(self.archives["SW-PROPERTY-WORLD-V1"])
+        world["units"][0]["building_id"] = "SWBLD-OTHER"
+        world["buildings"].append({
+            **world["buildings"][0], "building_id": "SWBLD-OTHER",
+            "property_id": "SWPROP-0001",
+        })
+        broken = dict(self.archives)
+        broken["SW-PROPERTY-WORLD-V1"] = archive("SW-PROPERTY-WORLD-V1", world)
+        with self.assertRaisesRegex(ValueError, "Unit .* premises hierarchy conflicts"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_access_point_unit_hierarchy_conflict_fails_closed(self):
+        world = tables_from_archive(self.archives["SW-PROPERTY-WORLD-V1"])
+        world["access_points"][0]["premises_id"] = "SWPRE-OTHER"
+        world["premises"].append({
+            **world["premises"][0], "premises_id": "SWPRE-OTHER",
+        })
+        broken = dict(self.archives)
+        broken["SW-PROPERTY-WORLD-V1"] = archive("SW-PROPERTY-WORLD-V1", world)
+        with self.assertRaisesRegex(ValueError, "Access point .* unit hierarchy conflicts"):
+            BP04Lookup(FakeConnection(broken))
 
     def test_dangling_establishment_links_fail_closed(self):
         businesses = {
