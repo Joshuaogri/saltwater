@@ -62,7 +62,7 @@ Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning servi
 
 - Design: **DESIGNED**.
 - Implementation: **IN_PROGRESS**.
-- Testing: **IN_PROGRESS** — focused BP-01 Python contract suite passed (128 tests); remaining cross-division acceptance evidence is outstanding.
+- Testing: **IN_PROGRESS** — focused BP-01 Python contract suite passed (155 tests across 16 steps in run 0002); full disposable PostgreSQL and cross-division acceptance evidence is still being completed.
 - Verification: **BLOCKED** pending the global evidence listed above.
 - No production Neon writes, migrations, seeds, grants or permission changes were performed.
 - No new BP division or branch was created.
