@@ -79,6 +79,10 @@ BEGIN
     SELECT 1 FROM sw_names.name_reservation r
     WHERE r.normalized_key <> NEW.normalized_key
       AND r.normalized_key % NEW.normalized_key
+      AND NOT (
+        NEW.entity_type='BUSINESS' AND r.entity_type='BUSINESS'
+        AND r.entity_ref=NEW.entity_ref
+      )
   ) THEN
     RAISE EXCEPTION 'near-duplicate name requires review before reservation';
   END IF;
