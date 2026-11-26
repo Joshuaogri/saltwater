@@ -48,7 +48,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         return {"connector_candidates": [
             {
                 "property_id": "PROPERTY-EXPLICIT-42",
-                "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
+                "candidate_road_connection_id": "PAC-P2-A-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
                 "geometry_status": "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED",
@@ -59,7 +59,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
             },
             {
                 "property_id": "PROPERTY-EXPLICIT-42",
-                "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
+                "candidate_road_connection_id": "PAC-P2-A-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
                 "geometry_status": "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED",
@@ -120,6 +120,14 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         ]}
         result = resolve_address_frontage_exceptions(broken, self.geo, self._connector_report())
         self.assertFalse(result["records"][0]["address_road_association_resolved"])
+
+    def test_duplicate_connector_identity_fails_closed(self):
+        report = self._connector_report()
+        report["connector_candidates"][1]["candidate_road_connection_id"] = report["connector_candidates"][0]["candidate_road_connection_id"]
+        result = resolve_address_frontage_exceptions(self.reconciliation, self.geo, report)
+        row = result["records"][1]
+        self.assertFalse(row["address_road_association_resolved"])
+        self.assertEqual(row["verified_geometric_connector_candidate_count"], 0)
 
     def test_bridge_point_contact_without_connector_evidence_remains_unresolved(self):
         result = resolve_address_frontage_exceptions(self.reconciliation, self.geo)
