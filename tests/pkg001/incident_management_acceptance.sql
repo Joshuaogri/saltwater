@@ -297,6 +297,13 @@ BEGIN
       IF v_error NOT LIKE '%append-only%' THEN RAISE; END IF;
     END;
     BEGIN
+      TRUNCATE TABLE sw_incident.command_handover;
+      RAISE EXCEPTION 'BP12 command handover truncate was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error NOT LIKE '%append-only%' THEN RAISE; END IF;
+    END;
+    BEGIN
       PERFORM sw_incident.record_command_handover(
         v_incident_id,'BP12-HANDOVER-INVALID-002','commander:outgoing','commander:incoming',
         'supervisor:prepared','command-authority:test','command-room:handover-test',
