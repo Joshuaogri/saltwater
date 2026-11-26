@@ -107,6 +107,15 @@ Accordingly:
 This closes the current evidence review without expanding the frozen BP04 inventory. It does not change the BP02 structural pass or the operational geography release blocker. No database or Neon write, canonical promotion, operational access approval or permission grant was performed.
 ## Bridge connector engineering-data completeness review — 2026-11-26
 
+## Explicit property identity lineage correction — 2026-11-26
+
+The five-exception reconciliation previously derived a candidate property ID by removing the `SWADDR-` prefix from a source address ID and adding `SWP-`. This relied on two independent identifiers sharing a suffix, rather than using the authoritative BP04 address-to-property relationship. That implicit naming convention has been removed.
+
+The BP04-to-BP02 reconciliation now carries the exact `property_id` from the validated address identity row into each frontage-exception evidence record. Bridge connector candidates are matched against that explicit property reference. A missing property reference fails closed and cannot resolve a bridge connector. The regression test deliberately uses a property ID unrelated to the source address ID suffix and confirms the explicit relationship is used.
+
+The 36 no-building-site records continue to be linked through the source property and candidate parcel relationships; their absence of buildings is not treated as an address or identity failure. This correction does not change any property, parcel, address or connector identity and does not approve operational access. Full BP02 acceptance workflow is running for the updated source and test code; results will be recorded after completion. No Neon write or promotion was performed.
+
+
 The four geometric connector candidates associated with Customs Bridge (`SWR-B2`) and Harbour Bridge (`SWR-B1`) were checked against the Stage E connector generator, direct-connector audit, route-corridor candidate audit and terrain/obstacle source model.
 
 | Engineering item | Evidence available | Assessment |
