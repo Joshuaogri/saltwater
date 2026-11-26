@@ -21,6 +21,8 @@ Backup/restore verified 420 property assets, 180,733 units, 4,842 asset geometry
 
 ### BP04 gameplay lookup integrity — 2026-11-26
 
+A read-only `BP04IncidentLocationResolver` now prepares an incident/address location candidate after separately authorising and auditing the incident read and BP04 address resolution. It preserves the originating incident source, caller/location source reference, BP04 address source reference and explicit confidence; candidates remain `approval_required=true` and `persisted=false` until routed through BP12's append-only event-backed location workflow. Regression tests cover provenance, separate grants and missing incidents.
+
 The officer-only lookup adapter also has regression coverage for revoked sessions and audit-store outages: revoked sessions are denied, and an otherwise authorised lookup is denied if its durable audit decision cannot be recorded. Dispatch/investigation address resolution remains a read-only, permission-checked address dossier operation; no operational access or canonical geography is inferred.
 
 The lookup integrity checks now extend through the corporate/business register: parent-company references must resolve and remain acyclic; registered addresses must exist; each declared primary establishment must belong to that business; and establishment property/building/premises/unit/address links must agree across the physical hierarchy. Added regression tests for missing parent companies, self-parenting/cycles, mismatched primary establishments, missing registered addresses and conflicting establishment location links. This remains read-only and process-local; no Neon writes or operational geography promotion occur.
