@@ -213,10 +213,10 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("not connected", result.message)
 
-    def test_bingo_is_not_a_general_command(self):
+    def test_bingo_is_recognised_but_requires_the_authorised_reveal_service(self):
         result = self.interface.execute("bingo")
         self.assertFalse(result.ok)
-        self.assertIn("Unknown command", result.message)
+        self.assertIn("Hidden-truth reveal service is not connected", result.message)
 
 
 if __name__ == "__main__":
