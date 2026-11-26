@@ -193,6 +193,49 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(len(self.audit.records), 2)
         self.assertTrue(all(record.allowed for record in self.audit.records))
 
+    def test_record_address_location_uses_bp12_writer_with_both_provenance_refs(self):
+        incident_grants = self.grants + (
+            Grant(
+                "bp12.incident.inspect.location", "incident:*",
+                "police_workflow", Effect.ALLOW,
+                principal_kind=PrincipalKind.OFFICER, role="property_reader",
+            ),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup,
+            AuthorizationService(self.verifier, self.audit, incident_grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access,
+            lambda incident_id: {
+                "incident_id": incident_id,
+                "incident_ref": "SWI-0000042",
+                "source_type": "police_call",
+                "source_record_id": "CALL-77",
+            },
+        )
+        captured = {}
+        def writer(**kwargs):
+            captured.update(kwargs)
+            return 901
+        result = resolver.record_address_location(
+            "officer-session", 42, "SWADDR-1",
+            location_writer=writer, actor_ref="officer:7",
+            authority_ref="grant:location-write",
+            idempotency_key="INC-42-LOC-1",
+            source_ref="caller-stated:Harbour Avenue",
+            raw_description="Caller reports entrance on Harbour Avenue",
+        )
+        self.assertEqual(result["incident_location_id"], 901)
+        self.assertTrue(result["persisted"])
+        self.assertFalse(result["approval_required"])
+        self.assertEqual(captured["p_source_ref"], "caller-stated:Harbour Avenue")
+        self.assertEqual(captured["p_address_source_ref"], "bp04-address:SWADDR-1")
+        self.assertEqual(captured["p_location_ref"], "SWADDR-1")
+        self.assertIsNone(captured["p_spatial_id"])
+        self.assertEqual(captured["p_idempotency_key"], "INC-42-LOC-1")
+
     def test_incident_location_candidate_requires_incident_grant(self):
         resolver = BP04IncidentLocationResolver(
             self.access, lambda incident_id: {"incident_id": incident_id}
