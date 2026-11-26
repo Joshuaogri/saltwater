@@ -22,9 +22,9 @@ until staffing and an explicit status transition exist.
 
 The 9,500-person SW-DB-001 opening population includes a 500-person
 POLICE_SUBSET cohort. Those are canonical people in the population fixture,
-not additional NPCs to be generated from the 500 vacancies. The current
-disposable fixture does not yet link that full cohort to BP06 personnel service
-records. This is an explicit BP03/BP06 integration gap. Do not create duplicate
+not additional NPCs to be generated from the 500 vacancies. The current disposable fixture has zero links from that 500-person cohort to
+BP06 personnel service records and zero active personnel service rows. This is
+an explicit BP03/BP06 integration gap. Do not create duplicate
 people, personnel records, appointments or unit memberships to make dispatch
 appear available.
 

@@ -39,7 +39,8 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         self.assertEqual(vacant_posts, 500)
         self.assertEqual(active_appointments, 0)
         self.assertEqual(active_memberships, 0)
-        self.assertGreater(personnel_count, 0)
+        self.assertEqual(personnel_count, 0)
+        self.assertEqual(police_cohort_personnel_links, 0)
         self.assertGreater(dispatchable_units, 0)
 
         factory = PostgresNPCDispatchFactory(lambda: psycopg.connect())
@@ -50,11 +51,8 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         snapshot = console._simulator.snapshot()
 
         self.assertEqual(deployments, ())
-        self.assertEqual(
-            snapshot["workforce_count"], personnel_count,
-            f"NPC workforce must contain canonical active personnel only; police cohort links={police_cohort_personnel_links}",
-        )
-        self.assertEqual(snapshot["unassigned_npc_count"], personnel_count)
+        self.assertEqual(snapshot["workforce_count"], 0)
+        self.assertEqual(snapshot["unassigned_npc_count"], 0)
         self.assertEqual(snapshot["available_npc_count"], 0)
         self.assertEqual(snapshot["deployments"], [])
         self.assertTrue(all(unit["operational_status"] == "unavailable" for unit in snapshot["units"]))

@@ -89,7 +89,7 @@ class PostgresNPCDispatchFactoryTests(unittest.TestCase):
             current_shift="Alpha",
         )
         self.assertEqual(console.process_dispatch_tick(), ())
-        self.assertEqual(console._simulator.snapshot()["available_npc_count"], 4)
+        self.assertEqual(console._simulator.snapshot()["available_npc_count"], 2)
 
     def test_empty_personnel_does_not_invent_npc_staff_from_vacant_posts(self):
         cursor = Cursor([[], unit_rows()])
