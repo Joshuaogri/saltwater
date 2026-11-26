@@ -112,7 +112,7 @@ _DEFINITIONS: Final[tuple[PlayerCommandDefinition, ...]] = (
     _definition("where", "Show current workspace and selected-record state", "BP-40 Interface", CommandClass.READ_ONLY),
     _definition("find", "Search public property, address or business records", "BP-04 Property Lookup", CommandClass.READ_ONLY, "address|property|business plus search text"),
     _definition("inspect", "Inspect one property, address, building, premises, unit, access point, business or establishment", "BP-04 Property Lookup", CommandClass.READ_ONLY, "one entity type and one stable ID"),
-    _definition("dispatch", "Open the officer-authorised live dispatcher console", "BP-11 Dispatch", CommandClass.READ_ONLY),
+    _definition("dispatch", "View NPC dispatch or issue a unit assignment", "BP-11 Dispatch", CommandClass.DOMAIN_MUTATION, "optional assign <incident-id> or deployment action <deployment-id>"),
 )
 
 COMMAND_CATALOGUE: Final[tuple[PlayerCommandDefinition, ...]] = _DEFINITIONS
@@ -226,6 +226,14 @@ def parse_player_command(
         }:
             return CommandParseResult(error=CommandParseError(
                 ParseErrorCode.INVALID_VALUE, "Unsupported BP04 entity type.",
+                supplied_token=supplied,
+            ))
+    elif definition.token == "dispatch":
+        valid_actions = {"assign", "arrive", "begin", "finish", "clear", "stand_down", "available"}
+        if args and (len(args) != 2 or args[0] not in valid_actions or not args[1].strip()):
+            return CommandParseResult(error=CommandParseError(
+                ParseErrorCode.INVALID_ARGUMENT_COUNT,
+                "Use dispatch, dispatch assign <incident-id>, or a deployment action and deployment ID.",
                 supplied_token=supplied,
             ))
     elif args:
