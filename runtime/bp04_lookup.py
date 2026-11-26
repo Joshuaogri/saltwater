@@ -7,6 +7,7 @@ canonical parcel/address activation.
 """
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any, Iterable
 
@@ -69,7 +70,8 @@ COLLECTIONS = {
 
 ALIASES = {
     "property": "property", "property_id": "property",
-    "address": "address", "address_id": "address",
+    "parcel": "property", "parcel_id": "property", "parcel_design_id": "property",
+    "address": "address", "address_id": "address", "address_design_id": "address",
     "building": "building", "building_id": "building",
     "premises": "premises", "premises_id": "premises",
     "unit": "unit", "unit_id": "unit",
@@ -77,6 +79,11 @@ ALIASES = {
     "business": "business", "business_id": "business",
     "establishment": "establishment", "establishment_id": "establishment",
 }
+
+
+def _stable_design_id(prefix: str, source_id: str) -> str:
+    digest = hashlib.sha256(str(source_id).encode("utf-8")).hexdigest()[:16].upper()
+    return f"{prefix}-{digest}"
 
 
 def _normalise(value: Any) -> str:
@@ -117,6 +124,7 @@ class BP04Lookup:
         self._buildings_by_property: dict[str, list[dict]] = {}
         self._addresses_by_property: dict[str, dict] = {}
         self._source_counts: dict[str, int] = {}
+        self._design_id_to_source: dict[str, dict[str, str]] = {"property": {}, "address": {}}
 
         for dataset_id, collections in COLLECTIONS.items():
             document = load_dataset(conn, dataset_id)
@@ -133,6 +141,30 @@ class BP04Lookup:
                         raise ValueError(f"Duplicate {kind} identity: {key}")
                     record = {field: source_row.get(field) for field in retained_fields}
                     record["record_type"] = kind
+                    if kind == "property":
+                        candidate_id = record.get("source_candidate_parcel_id")
+                        if not candidate_id:
+                            raise ValueError(f"Property {key} has no parcel candidate identity")
+                        design_id = _stable_design_id("SWP", candidate_id)
+                        record.update({
+                            "parcel_design_id": design_id,
+                            "parcel_identity_status": "STABLE_DESIGN_IDENTITY",
+                            "parcel_operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
+                        })
+                    elif kind == "address":
+                        design_id = _stable_design_id("SWA", key)
+                        record.update({
+                            "address_design_id": design_id,
+                            "address_identity_status": "STABLE_DESIGN_IDENTITY",
+                            "address_operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
+                        })
+                    else:
+                        design_id = None
+                    if design_id:
+                        aliases = self._design_id_to_source[kind]
+                        if design_id in aliases:
+                            raise ValueError(f"Duplicate {kind} design identity: {design_id}")
+                        aliases[design_id] = key
                     self._by_id[kind][key] = record
                     count += 1
                 self._source_counts[f"{dataset_id}.{collection_name}"] = count
@@ -194,7 +226,9 @@ class BP04Lookup:
         kind = ALIASES.get(entity_type)
         if kind is None:
             raise ValueError(f"Unsupported BP04 entity type: {entity_type}")
-        record = self._by_id[kind].get(str(identifier))
+        key = str(identifier)
+        key = self._design_id_to_source.get(kind, {}).get(key, key)
+        record = self._by_id[kind].get(key)
         return dict(record) if record is not None else None
 
     def search(self, entity_type: str, query: str, limit: int = 20) -> list[dict]:
@@ -208,11 +242,11 @@ class BP04Lookup:
         if len(needle) < 2:
             raise ValueError("search query must contain at least two characters")
         fields = {
-            "address": ("address_id", "address_label", "street_name", "postcode",
+            "address": ("address_id", "address_design_id", "address_label", "street_name", "postcode",
                         "district_name", "neighbourhood_name"),
             "business": ("business_id", "registered_name", "trading_name",
                          "sector", "primary_activity"),
-            "property": ("property_id", "source_candidate_parcel_id",
+            "property": ("property_id", "parcel_design_id", "source_candidate_parcel_id",
                         "primary_use", "source_district_id", "source_neighbourhood_id"),
         }[kind]
         matches = []
@@ -231,6 +265,7 @@ class BP04Lookup:
         prop = self.get("property", property_id)
         if prop is None:
             return None
+        property_id = prop["property_id"]
         address_id = prop.get("address_id")
         address = self.get("address", address_id) if address_id else None
         buildings = sorted(
@@ -247,7 +282,8 @@ class BP04Lookup:
             "address": address,
             "buildings": buildings,
             "businesses": businesses,
-            "geography_binding": "source_geography_reference_only",
+            "geography_binding": "bp02_design_identity_bound_operational_release_blocked",
+            "operational_geography_approved": False,
         }
 
     def business_detail(self, business_id: str) -> dict | None:

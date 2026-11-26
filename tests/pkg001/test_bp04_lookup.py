@@ -141,13 +141,42 @@ class BP04LookupTests(unittest.TestCase):
         self.assertEqual(detail["address"]["address_id"], "SWADDR-0001")
         self.assertEqual(detail["buildings"][0]["building_id"], "SWBLD-0001")
         self.assertEqual(detail["businesses"][0]["business_id"], "SWBIZ-000001")
-        self.assertEqual(detail["geography_binding"], "source_geography_reference_only")
+        self.assertEqual(detail["geography_binding"], "bp02_design_identity_bound_operational_release_blocked")
+        self.assertFalse(detail["operational_geography_approved"])
+        self.assertTrue(detail["property"]["parcel_design_id"].startswith("SWP-"))
 
     def test_address_detail_returns_property_dossier(self):
         self.assertEqual(
             self.lookup.address_detail("SWADDR-0001")["property"]["property_id"],
             "SWPROP-0001",
         )
+
+    def test_parcel_and_address_design_ids_resolve_without_operational_promotion(self):
+        prop = self.lookup.get("property", "SWPROP-0001")
+        address = self.lookup.get("address", "SWADDR-0001")
+        parcel_id = prop["parcel_design_id"]
+        address_id = address["address_design_id"]
+        self.assertEqual(self.lookup.get("parcel", parcel_id)["property_id"], "SWPROP-0001")
+        self.assertEqual(self.lookup.get("parcel_id", parcel_id)["parcel_identity_status"],
+                         "STABLE_DESIGN_IDENTITY")
+        self.assertEqual(self.lookup.get("address_design_id", address_id)["address_id"],
+                         "SWADDR-0001")
+        self.assertEqual(self.lookup.property_detail(parcel_id)["property"]["property_id"],
+                         "SWPROP-0001")
+        self.assertEqual(self.lookup.address_detail(address_id)["property"]["property_id"],
+                         "SWPROP-0001")
+        self.assertEqual(self.lookup.get("parcel", parcel_id)["parcel_operational_status"],
+                         "NOT_APPROVED_FOR_OPERATIONAL_SEED")
+        self.assertEqual(self.lookup.get("address", address_id)["address_operational_status"],
+                         "NOT_APPROVED_FOR_OPERATIONAL_SEED")
+
+    def test_search_matches_stable_parcel_and_address_design_ids(self):
+        prop = self.lookup.get("property", "SWPROP-0001")
+        address = self.lookup.get("address", "SWADDR-0001")
+        self.assertEqual(self.lookup.search("property", prop["parcel_design_id"])[0]["property_id"],
+                         "SWPROP-0001")
+        self.assertEqual(self.lookup.search("address", address["address_design_id"])[0]["address_id"],
+                         "SWADDR-0001")
 
     def test_missing_identity_returns_none(self):
         self.assertIsNone(self.lookup.get("property", "missing"))
