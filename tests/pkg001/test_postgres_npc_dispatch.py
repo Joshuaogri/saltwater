@@ -32,7 +32,7 @@ class Connection:
 class PostgresNPCDispatchFactoryTests(unittest.TestCase):
     def test_loads_canonical_posts_and_units_without_writes(self):
         posts = [
-            (f"P-{i:03d}", "UNIT-PATROL", "Police Sergeant" if i == 1 else "Patrol Officer")
+            (f"P-{i:03d}", "UNIT-PATROL", "Police Sergeant" if i == 1 else "Patrol Officer", "sworn")
             for i in range(1, 17)
         ]
         units = [
