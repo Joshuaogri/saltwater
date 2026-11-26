@@ -97,7 +97,7 @@ class BP11DispatchBoardTests(unittest.TestCase):
     def test_unit_readiness_uses_bp08_projection_and_preserves_reason(self):
         row = ("SWPS-UNIT-PATROL", "General Patrol", "general_patrol",
                "frontline", True, 2, 6, 12, 5, "available", True,
-               False, "resource_readiness_not_integrated",
+               False, "resource_shortage_or_unverified", False,
                ["patrol", "first_response"])
         cursor = Cursor([row])
         board, audit = make_board(cursor)
