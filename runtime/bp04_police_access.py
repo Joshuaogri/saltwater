@@ -258,11 +258,12 @@ class BP04IncidentLocationResolver:
 
     def record_dispatch_address_location(
         self, credential: str, incident_id: int, address_id: str, *,
-        dispatch_ref: str, location_writer, actor_ref: str, authority_ref: str,
-        idempotency_key: str, raw_description: str,
-        location_role: str = "primary", confidence: str = "unverified",
+        dispatch_ref: str, dispatch_incident_verifier, location_writer,
+        actor_ref: str, authority_ref: str, idempotency_key: str,
+        raw_description: str, location_role: str = "primary",
+        confidence: str = "unverified",
     ) -> dict:
-        """Record a dispatch-originated location through BP12, preserving ownership."""
+        """Record a verified dispatch-originated location through BP12."""
         for name, value in (
             ("dispatch_ref", dispatch_ref), ("actor_ref", actor_ref),
             ("authority_ref", authority_ref), ("idempotency_key", idempotency_key),
@@ -272,9 +273,16 @@ class BP04IncidentLocationResolver:
                 raise ValueError(f"{name} is required")
         if not callable(location_writer):
             raise TypeError("A trusted BP12 location writer is required")
+        if not callable(dispatch_incident_verifier):
+            raise TypeError("A trusted BP11 dispatch-to-incident verifier is required")
         self._access._require(
             credential, "bp11.dispatch.location.record", f"incident:{incident_id}"
         )
+        self._access._require(
+            credential, "bp11.dispatch.inspect.assignment", f"dispatch:{dispatch_ref}"
+        )
+        if dispatch_incident_verifier(dispatch_ref, incident_id) is not True:
+            raise PermissionError("Access denied.")
         candidate = self.prepare_dispatch_address_candidate(
             credential, incident_id, address_id,
             location_role=location_role, confidence=confidence,
