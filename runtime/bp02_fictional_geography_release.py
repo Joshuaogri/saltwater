@@ -119,11 +119,11 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
         row["source_address_id"]: row
         for row in (exception_resolution or {}).get("records", [])
     }
-    assessments_by_property = {}
+    assessments_by_parcel = {}
     approved_by_candidate = {}
     for assessment in engineering_register["records"]:
         approved_by_candidate[assessment["source_connector_candidate_id"]] = assessment
-        assessments_by_property.setdefault(assessment["candidate_property_id"], []).append(assessment)
+        assessments_by_parcel.setdefault(assessment["source_candidate_parcel_id"], []).append(assessment)
 
     addresses = []
     for row in identity_register.get("addresses", []):
@@ -133,7 +133,7 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
             exception.get("resolved_access_road_id") if association_resolved
             else row.get("address_road_candidate_id") or row.get("road_id")
         )
-        property_assessments = assessments_by_property.get(row.get("property_id"), [])
+        property_assessments = assessments_by_parcel.get(row.get("source_candidate_parcel_id"), [])
         addresses.append({
             **row,
             "source_road_id": row.get("road_id"),
