@@ -41,9 +41,9 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertEqual(names_by_id["SW-D03-N2"], "Civic Terrace")
         self.assertEqual(names_by_id["SW-POI-002"], "Government Square")
 
-    def test_import_is_blocked_only_by_unapproved_operational_baseline(self):
+    def test_gameplay_release_does_not_imply_operational_seed_approval(self):
         self.assertFalse(self.report.can_import)
-        self.assertEqual(self.report.source_status, "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED")
+        self.assertEqual(self.report.source_status, "APPROVED_FOR_OPERATIONAL_USE")
         self.assertEqual(len(self.report.database_spatial_ids_not_embedded), 100)
 
 
@@ -98,7 +98,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
         self.assertEqual(manifest["source_dataset_status"], built.source_status)
         self.assertEqual(manifest["source_dataset_git_blob_sha"], "27b3f7848af10f2d61dee04a4dada1eff1f9871b")
         self.assertNotIn("source_dataset_sha", manifest)
-        self.assertEqual(manifest["mapping_status"], "SOURCE_IDENTITY_MAPPINGS_RESOLVED")
+        self.assertEqual(manifest["mapping_status"], "SOURCE_IDENTITY_MAPPINGS_RESOLVED_AND_GAMEPLAY_RELEASED")
         self.assertFalse(manifest["operational_seed_approved"])
         expected = [
             {
