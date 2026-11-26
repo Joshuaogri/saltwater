@@ -154,6 +154,7 @@ def resolve_address_frontage_exceptions(
 
         records.append({
             "source_address_id": source_id,
+            "property_id": row.get("property_id"),
             "source_candidate_parcel_id": row["source_candidate_parcel_id"],
             "source_road_id": source_road["id"],
             "source_road_name": source_road["name"],
