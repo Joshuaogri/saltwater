@@ -19,7 +19,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         expected = {
             "help", "status", "profile", "recruit", "career", "start",
             "pause", "resume", "quit", "home", "workspaces", "workspace",
-            "back", "where", "find", "inspect", "dispatch",
+            "back", "where", "find", "inspect", "dispatch", "bingo",
         }
         self.assertEqual(set(COMMAND_BY_TOKEN), expected)
         self.assertEqual(len(COMMAND_CATALOGUE), len(expected))
@@ -27,7 +27,8 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         for item in COMMAND_CATALOGUE:
             self.assertTrue(item.command_id.startswith("player."))
             self.assertTrue(item.owner)
-            self.assertEqual(item.permission_action, f"player.command.{item.token}")
+            expected_action = "reveal_hidden_truth" if item.token == "bingo" else f"player.command.{item.token}"
+            self.assertEqual(item.permission_action, expected_action)
             self.assertTrue(item.argument_grammar)
             self.assertIsInstance(item.classification, CommandClass)
             self.assertFalse(item.may_advance_time)
@@ -50,7 +51,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
 
     def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
         expected = {
-            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect"},
+            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect", "bingo"},
             CommandClass.PRESENTATION_STATE: {"home", "workspace", "back"},
             CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit", "dispatch"},
         }
@@ -96,7 +97,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         cases = (
             ("", ParseErrorCode.EMPTY_INPUT),
             ('workspace "unterminated', ParseErrorCode.MALFORMED_SYNTAX),
-            ("bingo", ParseErrorCode.UNKNOWN_COMMAND),
+            ("Bingo", ParseErrorCode.UNKNOWN_COMMAND),
             ("workspace", ParseErrorCode.MISSING_ARGUMENT),
             ("workspace cases extra", ParseErrorCode.INVALID_ARGUMENT_COUNT),
             ("status extra", ParseErrorCode.INVALID_ARGUMENT_COUNT),
@@ -114,7 +115,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
                 self.assertEqual(result.error.code, expected)
 
     def test_no_fuzzy_matching_case_guessing_or_silent_substitution(self):
-        for command in ("statuz", "workspac cases", "workspace Cases", "workspace case", "workspace unknown"):
+        for command in ("statuz", "workspac cases", "workspace Cases", "workspace case", "workspace unknown", "Bingo", " bingo", "bingo ", '"bingo"', "not bingo"):
             self.assertFalse(parse_player_command(command).ok, command)
         parsed = parse_player_command("workspace cases")
         self.assertEqual(parsed.command.arguments[0], "cases")
@@ -125,6 +126,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
             self.assertIn(item.token, help_text)
             self.assertIn(item.purpose, help_text)
         self.assertNotIn("bingo", help_text)
+        self.assertTrue(parse_player_command("bingo").ok)
         self.assertIn("workspace <id>", help_text)
         self.assertIn("find <type> <query>", help_text)
         self.assertIn("inspect <type> <id>", help_text)
