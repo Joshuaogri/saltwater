@@ -49,10 +49,11 @@ def run_full_bp02_acceptance_audit() -> dict:
     bridge_engineering_register = build_fictional_bridge_assessments(route_corridors)
 
     reconciliation = build_reconciliation(source, identity_map, property_document)
-    canonical_geography = build_canonical_geography_register(
-        reconciliation["bp02_design_identity_register_data"], assets, bridge_engineering_register
-    )
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
+    canonical_geography = build_canonical_geography_register(
+        reconciliation["bp02_design_identity_register_data"], assets,
+        bridge_engineering_register, exception_resolution,
+    )
     no_building_cross_register = reconcile_no_building_sites_and_frontage_exceptions(
         reconciliation["bp02_address_placement_review_register"],
         exception_resolution,
@@ -127,6 +128,12 @@ def run_full_bp02_acceptance_audit() -> dict:
             canonical_geography["address_count"] == 420
             and len({row["address_id"] for row in canonical_geography["addresses"]}) == 420
             and canonical_geography["property_primary_address_link_count"] == 420
+            and canonical_geography["resolved_address_exception_count"] == 5
+            and all(row["address_road_association_resolved"] for row in canonical_geography["addresses"])
+        ),
+        "identity_register_released_for_gameplay": (
+            canonical_geography["identity_register_operational_approval"]
+            and canonical_geography["identity_register_release_status"] == "RELEASED_FOR_GAMEPLAY"
         ),
         "operational_access_points_approved": canonical_geography["building_access_point_count"] > 0
             and canonical_geography["bridge_connector_count"] == 4,
