@@ -1,6 +1,6 @@
 # BP04 player, police and BP-02 geography integration
 
-**Status:** player command integration and officer-authorised adapter implemented on `main`; stable SWP/SWA design identities and the 420-address review register are generated and tested. Operational BP-02 canonical parcel/address binding remains blocked pending geography approval.
+**Status:** player command integration and officer-authorised adapter implemented on `main`; BP02 structural parcel/address/access acceptance passed on 2026-11-26 (run 45831361588), including evidence-based dispositions for all five former P1 exceptions. Operational BP-02 canonical parcel/address binding remains blocked pending geography approval, bridge entrance engineering and operational validation.
 
 ## 1. Player command surface
 
