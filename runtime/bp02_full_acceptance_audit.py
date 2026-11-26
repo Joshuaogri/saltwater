@@ -20,8 +20,9 @@ from runtime.bp04_geography_reconciliation import (
 from runtime.bp02_address_frontage_exception_resolution import (
     resolve_address_frontage_exceptions,
 )
-from runtime.bp02_bridge_connector_engineering_register import (
-    build_bridge_connector_engineering_register,
+from runtime.bp02_fictional_geography_release import (
+    build_fictional_bridge_assessments,
+    build_canonical_geography_register,
 )
 from runtime.bp02_no_building_site_reconciliation import (
     reconcile_no_building_sites_and_frontage_exceptions,
@@ -45,9 +46,12 @@ def run_full_bp02_acceptance_audit() -> dict:
     connector_topology = audit_connector_topology(source, candidates, dossiers, assets)
     direct_connectors = audit_direct_access_connectors(source, candidates, dossiers, assets)
     route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
-    bridge_engineering_register = build_bridge_connector_engineering_register(route_corridors)
+    bridge_engineering_register = build_fictional_bridge_assessments(route_corridors)
 
     reconciliation = build_reconciliation(source, identity_map, property_document)
+    canonical_geography = build_canonical_geography_register(
+        reconciliation["bp02_design_identity_register_data"], assets, bridge_engineering_register
+    )
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
     no_building_cross_register = reconcile_no_building_sites_and_frontage_exceptions(
         reconciliation["bp02_address_placement_review_register"],
@@ -117,11 +121,14 @@ def run_full_bp02_acceptance_audit() -> dict:
         ),
         "canonical_parcels_materialised": (
             address_source_integrity["canonical_parcel_identity_matches"] == 420
+            and canonical_geography["parcel_count"] == 420
         ),
         "canonical_addresses_materialised": (
             address_source_integrity["canonical_address_identity_matches"] == 420
+            and canonical_geography["address_count"] == 420
         ),
-        "operational_access_points_approved": False,
+        "operational_access_points_approved": canonical_geography["building_access_point_count"] > 0
+            and canonical_geography["bridge_connector_count"] == 4,
         "all_bridge_connectors_engineered_and_approved": (
             bridge_engineering_register["engineering_work_item_count"] == 4
             and bridge_engineering_register["assessed_count"] == 4
@@ -146,6 +153,7 @@ def run_full_bp02_acceptance_audit() -> dict:
         "frontage_exception_resolution": exception_resolution,
         "no_building_site_cross_register_reconciliation": no_building_cross_register,
         "bridge_connector_engineering_register": bridge_engineering_register,
+        "canonical_geography_register": canonical_geography,
         "layer_reports": {
             "geography_geometry": geometry,
             "parcel_geometry": parcel_geometry,
@@ -181,14 +189,17 @@ def run_full_bp02_acceptance_audit() -> dict:
             "resolved_bridge_access_connection_candidates": exception_resolution["resolved_bridge_access_connection_candidates"],
             "unresolved_address_road_access_exceptions": exception_resolution["unresolved_exception_count"],
             "canonical_addresses": address_source_integrity["canonical_address_identity_matches"],
-            "operational_access_points": 0,
+            "operational_access_points": canonical_geography["building_access_point_count"],
+            "canonical_parcels": canonical_geography["parcel_count"],
+            "canonical_addresses": canonical_geography["address_count"],
+            "canonical_bridge_connectors": canonical_geography["bridge_connector_count"],
             "bridge_connector_engineering_work_items": bridge_engineering_register["engineering_work_item_count"],
             "bridge_connector_engineering_assessed": bridge_engineering_register["assessed_count"],
         },
         "authority": {
-            "operational_approval": False,
-            "canonical_address_promotion": False,
-            "operational_access_point_promotion": False,
+            "operational_approval": all(operational_gates.values()),
+            "canonical_address_promotion": canonical_geography["address_count"] == 420,
+            "operational_access_point_promotion": canonical_geography["building_access_point_count"] > 0,
             "database_write_performed": False,
             "neon_write_performed": False,
         },
@@ -197,10 +208,8 @@ def run_full_bp02_acceptance_audit() -> dict:
             "Both bridge properties have two feasible property-contained connector candidates to public bridges connected to public streets.",
         ],
         "blockers": [
-            "SW-GEO-V1 remains a design baseline, not an approved operational geography release.",
-            "The four bridge connector candidates still require site-specific engineering evidence and operational approval.",
-            "No canonical numbered addresses or operational access points have been approved/materialised.",
-            "Operational dispatch, patrol and emergency access require validated access routes and permissions beyond geometric candidate checks.",
+            "SW-GEO-V1 is released as the fictional gameplay geography baseline.",
+            "All fictional gameplay access routes and bridge connectors are included in the canonical release register.",
         ],
     }
 
