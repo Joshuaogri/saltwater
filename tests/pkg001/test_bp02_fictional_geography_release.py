@@ -51,7 +51,7 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
             "operational_approval": False,
             "property_primary_address_links": 420,
             "parcels": [
-                {"parcel_id": f"SWP-{i:016X}", "source_candidate_parcel_id": f"PC-{i}"}
+                {"parcel_id": f"SWP-{i:016X}", "source_candidate_parcel_id": "PARCEL-SWR-B1" if i == 0 else "PARCEL-SWR-B2" if i == 1 else f"PC-{i}"}
                 for i in range(420)
             ],
             "addresses": [
@@ -68,7 +68,10 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
             ],
         }
         assets = {
-            "access_points": [{"candidate_access_point_id": f"AP-{i}"} for i in range(420)],
+            "access_points": [
+                {"candidate_access_point_id": row["candidate_access_point_id"]}
+                for row in self.corridors["route_corridors"]
+            ] + [{"candidate_access_point_id": f"AP-EXTRA-{i}"} for i in range(416)],
             "access_connectors": [
                 {
                     "candidate_connector_id": row["source_connector_candidate_id"],
