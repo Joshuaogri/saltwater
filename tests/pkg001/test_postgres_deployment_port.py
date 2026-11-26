@@ -61,6 +61,34 @@ class BP08PostgresDeploymentPortTests(unittest.TestCase):
         self.assertIn("sw_police.transition_unit_deployment", cursor.calls[0][0])
         self.assertEqual(cursor.calls[0][1][0], deployment_id)
 
+    def test_create_calls_authorised_deployment_function(self):
+        deployment_id = uuid4()
+        membership_id = uuid4()
+        cursor = Cursor((deployment_id, "authorised", "SWPS-UNIT-PATROL", 2, 902))
+        port = PostgresDeploymentPort(lambda: Connection(cursor))
+        result = port.create_deployment(
+            unit_id="SWPS-UNIT-PATROL", incident_id=12,
+            membership_ids=[membership_id], objective="Respond to incident",
+            priority=2, actor_ref="officer-person:19", authority_ref="AUTH:19",
+            source_ref="CAD:CALL-12", idempotency_key="dispatch:create:12",
+            effective_tick=53,
+        )
+        self.assertEqual(result["deployment_id"], deployment_id)
+        self.assertEqual(result["assigned_members"], 2)
+        self.assertIn("create_authorised_unit_deployment", cursor.calls[0][0])
+        self.assertEqual(cursor.calls[0][1][2], [membership_id])
+
+    def test_create_rejects_non_uuid_membership(self):
+        port = PostgresDeploymentPort(lambda: Connection(Cursor(None)))
+        with self.assertRaises(ValueError):
+            port.create_deployment(
+                unit_id="SWPS-UNIT-PATROL", incident_id=12,
+                membership_ids=["not-a-uuid"], objective="Respond",
+                priority=2, actor_ref="officer-person:19", authority_ref="AUTH:19",
+                source_ref="CAD:CALL-12", idempotency_key="dispatch:create:12",
+                effective_tick=53,
+            )
+
     def test_transition_rejects_extra_or_missing_fields(self):
         port = PostgresDeploymentPort(lambda: Connection(Cursor(None)))
         with self.assertRaises(ValueError):
