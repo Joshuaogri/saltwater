@@ -193,7 +193,7 @@ BEGIN
       RAISE EXCEPTION 'BP12 assessment history and current projection do not reconcile';
     END IF;
     IF sw_incident.record_incident_assessment(
-      v_incident_id,'public_safety',2,'high','high',
+      v_incident_id,'public_safety',2::smallint,'high','high',
       'Test reassessment preserves source and prior assessment.',
       'test:bp12','test-authority','BP12-ACCEPTANCE-ASSESS-001',NULL
     )<>v_assessment_event_id THEN RAISE EXCEPTION 'incident assessment idempotency failed'; END IF;
