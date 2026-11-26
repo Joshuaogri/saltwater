@@ -20,6 +20,7 @@ class PersistentNameRecord:
     display_name: str
     status: str
     ambiguous: bool
+    entity_ref: str | None = None
 
 
 class PostgresNameRegistry:
@@ -49,6 +50,51 @@ class PostgresNameRegistry:
         if not row:
             raise RuntimeError("name reservation returned no identifier")
         return int(row[0])
+
+    def reserve_business(
+        self, business_id: str, display_name: str, *, name_form: str,
+        source_ref: str, actor_ref: str, reason: str, effective_tick: int,
+        generation_batch_id: int | None = None,
+    ) -> int:
+        """Reserve a BP04 business name against its stable text business ID."""
+        if not isinstance(business_id, str) or not business_id.strip() or len(business_id) > 120:
+            raise ValueError("a non-empty stable text business ID is required")
+        normalize_name(display_name)
+        if name_form.lower() not in {"trading", "legal"}:
+            raise ValueError("business name_form must be trading or legal")
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT sw_names.reserve_business_name(
+                     %s::text,%s::text,%s::text,%s::text,%s::text,%s::text,%s::bigint,%s::bigint)""",
+                (
+                    business_id, name_form.lower(), display_name,
+                    source_ref, actor_ref, reason, effective_tick, generation_batch_id,
+                ),
+            )
+            row = cursor.fetchone()
+        if not row:
+            raise RuntimeError("business name reservation returned no identifier")
+        return int(row[0])
+
+    def search_business(self, value: str) -> tuple[PersistentNameRecord, ...]:
+        normalize_name(value)
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT reservation_id,entity_type,entity_ref,name_form,
+                          display_name,status,ambiguous
+                   FROM sw_names.search_business_name(%s)
+                   ORDER BY entity_ref,reservation_id""",
+                (value,),
+            )
+            rows = cursor.fetchall()
+        return tuple(
+            PersistentNameRecord(
+                reservation_id=row[0], entity_type=row[1], entity_id=None,
+                name_form=row[3], display_name=row[4], status=row[5],
+                ambiguous=row[6], entity_ref=row[2],
+            )
+            for row in rows
+        )
 
     def record_generation_batch(
         self, batch: GeneratedNameBatch, *, source_ref: str,
