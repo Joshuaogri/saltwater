@@ -25,14 +25,21 @@ class NPCWorkforceGeneratorTests(unittest.TestCase):
         self.assertTrue(all(person.player_controlled is False for person in roster))
         self.assertTrue(all(person.position_type == "sworn" for person in roster))
 
-    def test_shift_roster_creates_one_occupant_per_post_per_shift(self):
+    def test_shift_roster_assigns_one_person_per_post_across_four_shifts(self):
         source = posts(8)
+        for index, row in enumerate(source):
+            row["unit_id"] = "UNIT-A" if index < 4 else "UNIT-B"
         roster = NPCWorkforceGenerator(seed=4).generate_shift_roster(source)
-        self.assertEqual(len(roster), 32)
+        self.assertEqual(len(roster), 8)
         self.assertEqual({person.shift_group for person in roster},
                          {"Alpha", "Bravo", "Charlie", "Delta"})
-        self.assertEqual(len({(person.post_id, person.shift_group) for person in roster}), 32)
-        self.assertEqual(len({person.npc_id for person in roster}), 32)
+        self.assertEqual(len({person.post_id for person in roster}), 8)
+        self.assertEqual(len({person.npc_id for person in roster}), 8)
+        for unit_id in ("UNIT-A", "UNIT-B"):
+            unit_roster = [person for person in roster if person.unit_id == unit_id]
+            self.assertEqual({person.shift_group for person in unit_roster},
+                             {"Alpha", "Bravo", "Charlie", "Delta"})
+            self.assertEqual(len(unit_roster), 4)
 
     def test_generation_is_deterministic_and_seeded(self):
         source = posts(30)
