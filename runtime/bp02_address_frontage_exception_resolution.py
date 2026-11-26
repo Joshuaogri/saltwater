@@ -59,6 +59,11 @@ def _valid_bridge_connector_rows(
     ]
     if not rows:
         return []
+    connector_ids = [row.get("candidate_road_connection_id") for row in rows]
+    if any(not isinstance(identifier, str) or not identifier for identifier in connector_ids):
+        return []
+    if len(connector_ids) != len(set(connector_ids)):
+        return []
     valid = all(
         row.get("road_connection_type") == "road_reserve_proximity_connection"
         and row.get("road_connection_contact_type") == "POINT_CONTACT_ONLY"
