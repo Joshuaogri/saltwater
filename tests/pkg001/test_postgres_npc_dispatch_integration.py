@@ -17,10 +17,19 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
                 cursor.execute("SELECT count(*) FROM sw_police.unit_membership WHERE actual_end_tick IS NULL")
                 active_memberships = cursor.fetchone()[0]
                 cursor.execute(
-                    "SELECT count(*) FROM sw_police.personnel_service_current "
-                    "WHERE life_status=1 AND scope_status=1"
+                    "SELECT count(*) FROM sw_police.personnel_service_current service "
+                    "WHERE service.life_status=1 AND service.scope_status=1 "
+                    "AND NOT EXISTS (SELECT 1 FROM sw_player.identity_binding b "
+                    "WHERE b.person_id=service.person_id)"
                 )
                 personnel_count = cursor.fetchone()[0]
+                cursor.execute(
+                    "SELECT count(*) FROM sw_test.person_cohort cohort "
+                    "JOIN sw_police.personnel_service_current service USING (person_id) "
+                    "WHERE cohort.cohort='POLICE_SUBSET' "
+                    "AND service.life_status=1 AND service.scope_status=1"
+                )
+                police_cohort_personnel_links = cursor.fetchone()[0]
                 cursor.execute(
                     "SELECT count(*) FROM sw_police.unit_profile "
                     "WHERE lifecycle_state='active' AND dispatchable"
@@ -41,7 +50,10 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         snapshot = console._simulator.snapshot()
 
         self.assertEqual(deployments, ())
-        self.assertEqual(snapshot["workforce_count"], personnel_count)
+        self.assertEqual(
+            snapshot["workforce_count"], personnel_count,
+            f"NPC workforce must contain canonical active personnel only; police cohort links={police_cohort_personnel_links}",
+        )
         self.assertEqual(snapshot["unassigned_npc_count"], personnel_count)
         self.assertEqual(snapshot["available_npc_count"], 0)
         self.assertEqual(snapshot["deployments"], [])

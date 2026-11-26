@@ -9,10 +9,11 @@ from runtime.npc_workforce import NPCOfficer, NPCWorkforceGenerator
 
 
 class PostgresNPCDispatchFactory:
-    """Build an in-memory NPC dispatch world from canonical BP05/BP08 records.
+    """Build an NPC dispatch view from canonical personnel and BP08 units.
 
-    Only SELECT statements are issued. No personnel, membership, deployment,
-    event, or production data is written by this factory.
+    Only existing active personnel and active primary memberships are loaded.
+    The player-bound person is excluded. Vacant posts never create NPCs, and
+    BP08's current unit status is authoritative. Only SELECT statements run.
     """
 
     STAFF_SQL = """
@@ -35,6 +36,10 @@ class PostgresNPCDispatchFactory:
         LEFT JOIN sw_police.position_definition position
           ON position.position_id = appointment.position_id
         WHERE service.life_status = 1 AND service.scope_status = 1
+          AND NOT EXISTS (
+              SELECT 1 FROM sw_player.identity_binding player_binding
+              WHERE player_binding.person_id = p.person_id
+          )
         ORDER BY p.personnel_id
     """
     UNITS_SQL = """
@@ -83,7 +88,7 @@ class PostgresNPCDispatchFactory:
                             service_standing=str(standing),
                             position_type=position_type,
                         ))
-                    officers = NPCWorkforceGenerator.assign_shift_groups(officers)
+                    officers = self._generator.assign_shift_groups(officers)
                     cursor.execute(self.UNITS_SQL)
                     units = [
                         {

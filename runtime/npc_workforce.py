@@ -1,8 +1,8 @@
-"""Deterministic single-player NPC workforce generation for Saltwater.
+"""Synthetic in-memory NPC workforce helpers for Saltwater.
 
-NPCs are world actors, not player accounts. This module creates an in-memory
-roster from the existing authorised-post catalogue; persistence is a separate
-adapter so roster generation never writes to Neon implicitly.
+NPCs are world actors, not player accounts. The post-based generator is for
+tests and sandbox scenarios. Production must load canonical personnel
+identities and active memberships; it must never turn vacancies into people.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class NPCWorkforceError(ValueError):
 
 
 class NPCWorkforceGenerator:
-    """Create a stable NPC occupant for each supplied authorised post."""
+    """Create synthetic NPCs for supplied posts in tests or sandbox scenarios."""
 
     def __init__(self, *, seed: int = 20261126):
         if type(seed) is not int:
@@ -134,13 +134,10 @@ class NPCWorkforceGenerator:
         return tuple(result)
 
     def generate_shift_roster(self, posts: Iterable[dict]) -> tuple[NPCOfficer, ...]:
-        """Assign one distinct NPC per authorised post to one of four shifts.
+        """Create a synthetic one-person-per-post roster for test/sandbox use.
 
-        The shift groups rotate coverage; they do not multiply the number of
-        people represented by an authorised post. This preserves the BP01/BP03
-        population ledger: 500 authorised posts yield 500 distinct police NPCs,
-        not 2,000 additional people. Within each unit, occupants are distributed
-        round-robin across Alpha, Bravo, Charlie and Delta.
+        Production dispatch uses assign_shift_groups() on canonical personnel
+        records; it does not call this generator or create staff from vacancies.
         """
         return self.assign_shift_groups(self.generate(posts))
 

@@ -62,6 +62,8 @@ class PostgresNPCDispatchFactoryTests(unittest.TestCase):
         self.assertTrue(all(call[0].lstrip().upper().startswith("SELECT") for call in cursor.calls))
         self.assertIn("sw_police.personnel", cursor.calls[0][0])
         self.assertIn("sw_police.unit_membership", cursor.calls[0][0])
+        self.assertIn("sw_player.identity_binding", cursor.calls[0][0])
+        self.assertIn("NOT EXISTS", cursor.calls[0][0])
         self.assertNotIn("authorised_post p", cursor.calls[0][0])
 
     def test_recruits_without_post_membership_are_not_dispatchable(self):

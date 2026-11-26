@@ -4,7 +4,7 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Single-player NPC world
 
-Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates exactly one stable NPC occupant per authorised post (500 people total), distributed across four rotating shifts while preserving the approved population cap. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
+Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. BP05 defines 500 authorised posts, but vacancies are not people. The synthetic workforce generator is for tests/sandbox scenarios only; production NPC dispatch loads existing personnel and active unit memberships, excludes the player-bound person, and respects BP08 unit availability. The opening disposable establishment currently has 500 vacant posts and no active memberships, so it correctly has no dispatch-ready units. The 500-person police population cohort still needs its BP06 personnel linkage. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
 
 ## NPC-led police dispatch
 
@@ -38,22 +38,25 @@ separate future step.
 
 ## Canonical NPC workforce source
 
-The NPC dispatch factory now loads its 500-post workforce and active unit
-profiles from the existing BP05/BP08 PostgreSQL records using read-only
-queries. Each of the 500 authorised posts has one distinct NPC, assigned to one of
-four shifts; rotation changes duty status without creating extra people. Unit capability codes guide
-specialist selection. The roster and deployments remain in-memory gameplay
-state; the factory does not write personnel, membership or deployment rows to Neon.
+The NPC dispatch factory now loads existing active personnel and current primary
+unit memberships from BP05–BP08 PostgreSQL records using read-only queries. It
+excludes the person bound to the human player and does not create staff from
+vacant posts. Personnel without a current post/unit membership remain
+unassigned; BP08's current unit status is authoritative. The current opening
+fixture has 500 vacant posts and no memberships, so no dispatch-ready crew is
+fabricated. The roster and deployments remain in-memory gameplay state; the
+factory does not write personnel, membership or deployment rows to Neon.
 
 ## NPC shift and live-source validation
 
-The NPC workforce preserves sworn, civilian and mixed post types. Every authorised post receives exactly one NPC occupant, assigned across
-Alpha, Bravo, Charlie and Delta. Per-unit round-robin allocation balances
-shift coverage without exceeding the 500-person opening police cohort. Only the active shift is available for dispatch; deployed crews
-remain occupied across shift changes. A disposable PostgreSQL integration
-test now loads the actual 500 BP05 authorised posts and BP08 unit profiles,
-then assigns a test incident using NPC dispatch. This is read-only source
-integration and does not persist NPC personnel or deployments to production.
+The synthetic workforce helper preserves sworn, civilian and mixed post types
+and distributes test actors across four shifts. Production shift assignment
+distributes existing canonical personnel identities; it never multiplies them.
+The disposable PostgreSQL integration test now verifies the actual opening
+boundary: 500 authorised posts remain vacant, no career appointments or unit
+memberships exist, and the adapter does not invent NPCs or dispatch assignments.
+This is read-only source integration and does not persist NPC personnel or
+deployments to production.
 
 ## Business naming rebuild — 2026-11-26
 
@@ -1654,4 +1657,4 @@ The exact `bingo` command is now recognised only as a standalone lowercase token
 BP-01's dedicated contract workflow passed on 2026-11-26: 12 suites, 128 tests, zero failures ([run 45862390355](https://github.com/Joshuaogri/saltwater/actions/runs/45862390355)). This verifies the foundational canon, exact hidden-truth command path, player gateway, runtime absence freeze, causal event processing, scheduling and recovery contracts within the tested scope. BP-01 remains implementation-in-progress and verification-blocked pending the case-owned reveal provider, cross-channel hidden-truth non-leakage, NPC knowledge boundaries and full host composition. Evidence: [BP-01 run 0001](docs/test-evidence/BP01-foundational-contracts-run-0001.md).
 
 
-BP-01 foundational contract run 0002 passed on 2026-11-26: 16 test steps, 155 tests, zero failures ([run 45863188374](https://github.com/Joshuaogri/saltwater/actions/runs/45863188374)). The expanded suite covers the exact hidden-truth command boundary, player/runtime contracts, autonomous NPC dispatch and population-consistent four-shift staffing. The 500 authorised police posts now yield 500 distinct NPCs—not 2,000—distributed across four shifts, preserving the approved 9,500-person opening baseline. Full BP-01 verification remains blocked by cross-division information-boundary and host-persistence gaps. Evidence: [BP-01 run 0002](docs/test-evidence/BP01-foundational-contracts-run-0002.md).
+BP-01 foundational contract run 0002 passed on 2026-11-26: 16 test steps, 155 tests, zero failures ([run 45863188374](https://github.com/Joshuaogri/saltwater/actions/runs/45863188374)). It covers the foundational command, authorization, time, event, recovery and synthetic NPC shift contracts. Production dispatch has since been corrected to use existing personnel and memberships only; vacancies do not create NPCs, and the player-bound person is excluded. The 500-person police population cohort still needs BP06 personnel linkage, and the opening establishment has no staffed posts or available units. Full BP-01 verification remains blocked by cross-division information-boundary, staffing and host-persistence gaps. Evidence: [BP-01 run 0002](docs/test-evidence/BP01-foundational-contracts-run-0002.md).

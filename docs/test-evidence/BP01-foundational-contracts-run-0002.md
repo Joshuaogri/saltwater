@@ -32,6 +32,10 @@ The NPC workforce now creates exactly one distinct NPC per authorised post. The 
 
 This supersedes the earlier 2,000-occupant-per-shift design. Shift rotation changes which of the existing 500 NPCs are on duty; it does not create additional people.
 
+## Superseding production-source correction
+
+Run 0002's four-shift generator tests remain valid as synthetic roster coverage, but its former production interpretation (creating NPCs from authorised posts) is superseded. The subsequent source audit found that the disposable establishment has 500 vacant posts, zero active career post appointments and zero unit memberships. Production dispatch now loads canonical active personnel and active primary memberships, excludes the player-bound person, and respects BP08's unavailable status. It does not create people from vacancies. The adopted 500-person police subset is not yet fully linked to BP06 personnel service records; this is a recorded cross-division gap, not a reason to fabricate staff.
+
 ## Scope limits
 
 This is focused Python contract evidence, not full BP-01 release verification. It does not prove:
