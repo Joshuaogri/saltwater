@@ -130,9 +130,22 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         result = resolve_address_frontage_exceptions(broken, self.geo, self._connector_report())
         self.assertFalse(result["records"][0]["address_road_association_resolved"])
 
+    def test_distinct_access_points_may_share_one_road_connection_candidate(self):
+        report = self._connector_report()
+        report["connector_candidates"][1]["candidate_road_connection_id"] = report["connector_candidates"][0]["candidate_road_connection_id"]
+        result = resolve_address_frontage_exceptions(self.reconciliation, self.geo, report)
+        row = result["records"][1]
+        self.assertTrue(row["address_road_association_resolved"])
+        self.assertEqual(row["verified_geometric_connector_candidate_count"], 2)
+        self.assertEqual(
+            len({item["candidate_access_point_id"] for item in row["verified_geometric_connector_candidates"]}),
+            2,
+        )
+
     def test_duplicate_connector_identity_fails_closed(self):
         report = self._connector_report()
         report["connector_candidates"][1]["candidate_road_connection_id"] = report["connector_candidates"][0]["candidate_road_connection_id"]
+        report["connector_candidates"][1]["candidate_access_point_id"] = report["connector_candidates"][0]["candidate_access_point_id"]
         result = resolve_address_frontage_exceptions(self.reconciliation, self.geo, report)
         row = result["records"][1]
         self.assertFalse(row["address_road_association_resolved"])
