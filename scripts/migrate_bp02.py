@@ -43,9 +43,15 @@ def apply_bp02(conn, expected_database: str, allow_production: bool = False) -> 
                     raise RuntimeError(f"BP02 migration ledger mismatch: {rows!r}")
                 return {"status":"already_applied","version":1,"migration":name,"checksum_sha256":checksum}
         sql = MIGRATION.read_text(encoding="utf-8")
-        if not sql.lstrip().upper().startswith("BEGIN;") or not sql.rstrip().upper().endswith("COMMIT;"):
+        upper = sql.upper()
+        begin = upper.find("BEGIN;")
+        commit = upper.rfind("COMMIT;")
+        prefix = sql[:begin] if begin >= 0 else sql
+        if begin < 0 or commit <= begin or any(
+            line.strip() and not line.lstrip().startswith("--") for line in prefix.splitlines()
+        ):
             raise ValueError("BP02 migration must have one outer BEGIN/COMMIT wrapper")
-        body = sql[sql.upper().find("BEGIN;")+len("BEGIN;"):sql.upper().rfind("COMMIT;")]
+        body = sql[begin+len("BEGIN;"):commit]
         with conn.transaction():
             conn.execute(body)
             conn.execute(
