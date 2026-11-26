@@ -1468,3 +1468,6 @@ Command handover reconciliation now compares authorised BP08 deployment-assignme
 
 
 `BP04IncidentLocationResolver.build_authorised_command_handover` now orchestrates the command handover using separate audited permissions for incident inspection, BP08 deployment-assignment inspection and BP12 operational chronology. It calls trusted owner readers only after the corresponding grants pass, then applies the read-only reconciliation. The dispatcher/incident-commander projection cannot independently grant access or bypass owner-system authorisation.
+
+
+A command-handover record projection now brings together the incident reconciliation, outgoing and incoming commanders, commander decisions and rationales, outstanding actions with named owners, responsibility transfers, and handover acknowledgements. It validates identity, authority/source provenance, chronology, duplicate references, commander attribution and acknowledgement recipients. Readiness requires a clean assignment reconciliation, a recorded transfer from the outgoing to incoming commander, and explicit acceptance by the incoming commander; outstanding actions may remain open when they have named owners and are carried into the handover. The result is explicitly `PROJECTED_NOT_PERSISTED`: no durable handover register or production Neon write is claimed by this projection.
