@@ -291,7 +291,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
             "candidate_pool_count": name_report["candidate_pool_count"],
             "near_duplicate_candidates_held": name_report["near_duplicate_candidates_held"],
             "near_duplicate_threshold": name_report["near_duplicate_threshold"],
-            "near_duplicate_screen": "PASS",
+            "near_duplicate_screen": "PASS_WITHIN_GENERATED_BATCH_ONLY",
             "geography_names_checked": name_report["geography_names_checked"],
             "reservation_status": "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED",
             "exact_geography_collision_check": "PASS",
