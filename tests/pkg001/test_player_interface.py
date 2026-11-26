@@ -56,6 +56,19 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("Unknown command", result.message)
 
+    def test_read_only_queries_do_not_mutate_runtime_state_or_event_history(self):
+        commands = (
+            "help", "status", "profile", "career", "where", "workspaces",
+            "find address Harbour Avenue", "inspect property SWPROP-1",
+        )
+        before = self.kernel.status()
+        events_before = tuple(self.store.events)
+        for command in commands:
+            with self.subTest(command=command):
+                self.interface.execute(command)
+                self.assertEqual(self.kernel.status(), before)
+                self.assertEqual(tuple(self.store.events), events_before)
+
     def test_bingo_requires_injected_trusted_revealer_and_returns_its_result(self):
         unavailable = self.interface.execute("bingo")
         self.assertFalse(unavailable.ok)
