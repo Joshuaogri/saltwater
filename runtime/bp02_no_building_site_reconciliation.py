@@ -41,6 +41,7 @@ def reconcile_no_building_sites_and_frontage_exceptions(
         raise ValueError("No-building site population contains duplicate property identities")
 
     exception_addresses = set()
+    exception_properties = set()
     exception_rows = []
     no_building_exception_properties = set()
     for exception in exceptions:
@@ -51,7 +52,10 @@ def reconcile_no_building_sites_and_frontage_exceptions(
             raise ValueError("Frontage exception is missing source address, property or parcel identity")
         if address_id in exception_addresses:
             raise ValueError(f"Duplicate frontage exception address: {address_id}")
+        if property_id in exception_properties:
+            raise ValueError(f"Duplicate frontage exception property: {property_id}")
         exception_addresses.add(address_id)
+        exception_properties.add(property_id)
         review = by_address.get(address_id)
         if review is None:
             raise ValueError(f"{address_id}: frontage exception has no address review row")
