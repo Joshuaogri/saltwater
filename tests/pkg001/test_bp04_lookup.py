@@ -234,6 +234,77 @@ class BP04LookupTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Access point .* unit hierarchy conflicts"):
             BP04Lookup(FakeConnection(broken))
 
+    def test_business_parent_must_exist_and_be_acyclic(self):
+        businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
+        businesses["businesses"][0]["parent_business_id"] = "SWBIZ-MISSING"
+        broken = dict(self.archives)
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "references missing parent business"):
+            BP04Lookup(FakeConnection(broken))
+
+        businesses["businesses"][0]["parent_business_id"] = "SWBIZ-000001"
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "cannot be its own parent"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_primary_establishment_must_belong_to_business(self):
+        businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
+        businesses["businesses"].append({
+            **businesses["businesses"][0],
+            "business_id": "SWBIZ-000002",
+            "registered_name": "Other Company",
+            "trading_name": "Other Company",
+            "primary_establishment_id": "SWEST-000001",
+        })
+        broken = dict(self.archives)
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "primary establishment belongs to another business"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_registered_address_must_exist(self):
+        businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
+        businesses["businesses"][0]["registered_address_id"] = "SWADDR-MISSING"
+        broken = dict(self.archives)
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "references missing registered address"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_establishment_physical_hierarchy_must_be_consistent(self):
+        businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
+        businesses["establishments"][0]["property_id"] = "SWPROP-OTHER"
+        broken = dict(self.archives)
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "property/building relationship conflicts"):
+            BP04Lookup(FakeConnection(broken))
+
+    def test_business_parent_cycles_fail_closed(self):
+        businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
+        businesses["businesses"].append({
+            **businesses["businesses"][0],
+            "business_id": "SWBIZ-000002",
+            "registered_name": "Subsidiary",
+            "trading_name": "Subsidiary",
+            "parent_business_id": "SWBIZ-000001",
+            "primary_establishment_id": None,
+        })
+        businesses["businesses"][0]["parent_business_id"] = "SWBIZ-000002"
+        broken = dict(self.archives)
+        broken["SW-BUSINESS-REGISTRY-V1"] = archive(
+            "SW-BUSINESS-REGISTRY-V1", businesses
+        )
+        with self.assertRaisesRegex(ValueError, "parent hierarchy contains a cycle"):
+            BP04Lookup(FakeConnection(broken))
+
     def test_dangling_establishment_links_fail_closed(self):
         businesses = {
             "businesses": [{
