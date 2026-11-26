@@ -78,6 +78,19 @@ def run_full_bp02_acceptance_audit() -> dict:
             and exception_resolution["all_source_addresses_preserved"]
             and sum(exception_resolution["disposition_counts"].values()) == 5
         ),
+        "all_three_unique_frontage_road_associations_resolved": (
+            exception_resolution["disposition_counts"].get("UNIQUE_PARCEL_FRONTAGE_ROAD_ASSOCIATION_RESOLVED", 0) == 3
+        ),
+        "both_bridge_access_connector_candidates_resolved": (
+            exception_resolution["resolved_bridge_access_connection_candidates"] == 2
+            and sum(
+                row["verified_geometric_connector_candidate_count"]
+                for row in exception_resolution["records"]
+            ) == 4
+        ),
+        "no_unresolved_address_road_access_exceptions": (
+            exception_resolution["unresolved_exception_count"] == 0
+        ),
     }
 
     operational_gates = {
@@ -136,6 +149,9 @@ def run_full_bp02_acceptance_audit() -> dict:
             "access_connector_candidates": len(assets.get("access_connectors", [])),
             "address_records": reconciliation["address_records"],
             "frontage_exceptions": exception_resolution["exception_count"],
+            "resolved_address_road_associations": exception_resolution["resolved_address_road_associations"],
+            "resolved_bridge_access_connection_candidates": exception_resolution["resolved_bridge_access_connection_candidates"],
+            "unresolved_address_road_access_exceptions": exception_resolution["unresolved_exception_count"],
             "canonical_addresses": address_source_integrity["canonical_address_identity_matches"],
             "operational_access_points": 0,
         },
