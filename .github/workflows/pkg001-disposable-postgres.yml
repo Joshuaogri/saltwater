@@ -40,6 +40,9 @@ on:
       - "tests/pkg001/test_business_naming_postgres.py"
       - "data/business/saltwater-business-registry-v1.json"
       - "data/business/saltwater-business-registry-v1.json.gz"
+      - "data/naming/saltwater-person-naming-v1.json"
+      - "runtime/opening_police_person_seed.py"
+      - "tests/pkg001/test_opening_police_person_seed.py"
       - "tests/pkg001/naming_acceptance.sql"
       - "tests/pkg001/test_recruitment.py"
       - "tests/pkg001/recruit_entry_acceptance.sql"
@@ -94,6 +97,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_recruitment.py" -v
       - name: Run SW-NAM-001 naming service and generator tests
         run: python -m unittest discover -s tests/pkg001 -p "test_naming.py" -v
+      - name: Run opening police person seed tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed.py" -v
       - name: Run SW-NAM-001 canon inventory dry-run tests
         run: python -m unittest discover -s tests/pkg001 -p "test_naming_inventory.py" -v
       - name: Run SW-NAM-001 PostgreSQL adapter contract tests
