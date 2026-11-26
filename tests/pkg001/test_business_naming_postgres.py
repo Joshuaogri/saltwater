@@ -86,6 +86,14 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                 )
                 return cur.fetchone()[0]
 
+    def test_source_business_ids_remain_stable_text_keys(self):
+        ids = [row["business_id"] for row in self.rows]
+        self.assertEqual(len(ids), 10000)
+        self.assertTrue(all(isinstance(value, str) for value in ids))
+        self.assertEqual(ids[0], "SWBIZ-000001")
+        self.assertEqual(ids[-1], "SWBIZ-010000")
+        self.assertEqual(len(ids), len(set(ids)))
+
     def test_bulk_reserves_10000_trading_and_legal_names(self):
         with connect() as conn:
             with conn.cursor() as cur:
