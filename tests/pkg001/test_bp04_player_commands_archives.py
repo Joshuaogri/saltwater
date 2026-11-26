@@ -30,7 +30,7 @@ class BP04ArchivedPlayerCommandIntegrationTests(unittest.TestCase):
 
     def test_find_commands_use_real_property_address_and_business_archives(self):
         for entity_type, query, expected_key in (
-            ("property", "SWPROP", "property_id"),
+            ("property", next(iter(self.lookup._by_id["property"])), "property_id"),
             ("address", "Saltwater", "address_id"),
             ("business", "SWBIZ", "business_id"),
         ):
