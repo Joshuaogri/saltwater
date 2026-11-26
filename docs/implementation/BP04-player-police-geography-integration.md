@@ -196,3 +196,8 @@ The read-only `SW-BP02-ADDRESS-PLACEMENT-REVIEW-V1` register now consolidates ea
 The production read path is backed by `runtime/bp12_incident_location_history.py` (`PostgresIncidentLocationHistoryReader`). It calls the BP12 history function using a parameterised incident ID, returns the event-joined chronology as named fields, rejects invalid IDs and fails with a sanitised unavailable error. It performs no writes. The dispatch and investigation adapters accept this trusted reader's `read` method.
 
 Investigation access is case-scoped: the adapter first authorises `bp16.investigation.inspect.case`, then requires a trusted BP15 case-to-incident link verifier to confirm that the incident belongs to that case, before it checks the dedicated BP16 location-history grant and BP12 history grant. An unlinked incident is denied before history is read. This is a read-only handoff; it does not create or own BP15 case records or BP16 investigative work objects.
+
+
+## Dispatch-originated incident location updates
+
+`BP04IncidentLocationResolver.record_dispatch_address_location` now provides the BP11-to-BP12 write handoff. It requires the distinct `bp11.dispatch.location.record` permission, then independently authorises dispatch location resolution, BP12 incident inspection and BP04 address inspection. It passes the dispatch/CAD reference, address source reference, dispatcher actor, authority, confidence, role, raw operational description and idempotency key to the trusted BP12 event-backed writer. BP11 receives the resulting location ID and dispatch reference; BP12 alone creates the authoritative incident location/event and chronology. Retries use the BP12 idempotency key. This adapter does not update CAD state, select units, or alter BP12 incident status.
