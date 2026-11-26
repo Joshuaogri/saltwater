@@ -968,6 +968,26 @@ class BP04PoliceAccessTests(unittest.TestCase):
         )
         self.assertFalse(result["handover_ready"])
 
+    def test_command_handover_flags_active_assignment_on_closed_incident(self):
+        result = reconcile_incident_command_handover(
+            42, incident_status="CLOSED", snapshot_source_ref="bp08:snapshot:6",
+            as_of_world_tick=40,
+            assignment_snapshot=[
+                {"assignment_ref": "DEP-6", "unit_ref": "UNIT-6",
+                 "status": "ON_SCENE", "source_ref": "bp08:DEP-6"},
+            ],
+            timeline_rows=[
+                {"incident_id": 42, "event_code": "UNIT_ARRIVED",
+                 "event_id": 706, "world_tick": 30, "source_ref": "bp10:ACT-6",
+                 "attributes": {"assignment_ref": "DEP-6", "unit_ref": "UNIT-6"}},
+            ],
+        )
+        self.assertEqual(
+            [d["type"] for d in result["discrepancies"]],
+            ["ACTIVE_ASSIGNMENT_ON_TERMINAL_INCIDENT"],
+        )
+        self.assertFalse(result["handover_ready"])
+
     def test_command_handover_rejects_duplicate_assignment_snapshot_rows(self):
         assignment = {"assignment_ref": "DEP-5", "unit_ref": "UNIT-5",
                       "status": "ASSIGNED", "source_ref": "bp08:DEP-5"}
