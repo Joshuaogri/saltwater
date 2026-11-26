@@ -106,7 +106,7 @@ jobs:
           """ + "".join(sections)
           body = {
               "model": os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
-              "input": prompt,
+              "input": [{"type": "user_input", "content": prompt}],
               "store": False
           }
           req = urllib.request.Request(
@@ -123,9 +123,11 @@ jobs:
               raise SystemExit(f"Gemini API returned HTTP {exc.code}: {detail}")
           report = data.get("output_text")
           if not report:
-              # Defensive extraction for API response variants.
+              # The Interactions API returns generated text in model_output steps.
               chunks = []
-              for item in data.get("output", []):
+              for item in data.get("steps", data.get("output", [])):
+                  if item.get("type") not in (None, "model_output"):
+                      continue
                   for part in item.get("content", []):
                       if part.get("type") == "text":
                           chunks.append(part.get("text", ""))
