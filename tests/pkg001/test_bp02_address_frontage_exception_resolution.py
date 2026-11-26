@@ -58,7 +58,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
                 "crosses_water": False,
             },
             {
-                "property_id": "SWP-A2",
+                "property_id": "PROPERTY-EXPLICIT-42",
                 "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
@@ -102,6 +102,17 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         self.assertEqual(
             result["records"][1]["geometry_disposition"],
             "BRIDGE_ACCESS_CONNECTOR_CANDIDATE_TO_CONNECTED_PUBLIC_ROAD_NETWORK",
+        )
+        self.assertEqual(result["records"][1]["verified_geometric_connector_candidate_count"], 2)
+        report = self._connector_report()
+        report["connector_candidates"].append(dict(
+            report["connector_candidates"][0], property_id="UNRELATED-PROPERTY"
+        ))
+        filtered = resolve_address_frontage_exceptions(
+            self.reconciliation, self.geo, report
+        )
+        self.assertEqual(
+            filtered["records"][1]["verified_geometric_connector_candidate_count"], 2
         )
         broken = {"address_frontage_exceptions_building_access_crosscheck": [
             dict(self.reconciliation["address_frontage_exceptions_building_access_crosscheck"][1],
