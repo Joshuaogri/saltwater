@@ -129,7 +129,7 @@ jobs:
 
           SOURCE AND RUN EVIDENCE:
           """ + "".join(sections)
-          headers = {"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]}
+          headers = {"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"], "Api-Revision": "2026-05-20"}
           body = {
               "model": os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
               "input": [{"type": "user_input", "content": prompt}],
@@ -185,6 +185,17 @@ jobs:
           if not report.strip():
               raise SystemExit("Gemini completed but returned no text report.")
           pathlib.Path("gemini-bp04-review.md").write_text(report.strip() + "\\n", encoding="utf-8")
+          # Remove Google's stored background interaction after preserving the report artifact.
+          delete_req = urllib.request.Request(
+              f"{base_url}/{interaction_id}",
+              headers=headers,
+              method="DELETE",
+          )
+          try:
+              with urllib.request.urlopen(delete_req, timeout=45):
+                  print("Gemini interaction record deleted after report retrieval.", flush=True)
+          except Exception as exc:
+              print(f"::warning::Could not delete Gemini interaction record: {exc}", flush=True)
           print("Gemini review completed.")
           PY
 
