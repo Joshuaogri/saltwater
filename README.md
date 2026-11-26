@@ -4,7 +4,7 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Single-player NPC world
 
-Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates one stable NPC occupant per authorised post on each of four shifts, retaining the existing unit and position identities. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
+Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates exactly one stable NPC occupant per authorised post (500 people total), distributed across four rotating shifts while preserving the approved population cap. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
 
 ## NPC-led police dispatch
 
@@ -40,17 +40,16 @@ separate future step.
 
 The NPC dispatch factory now loads its 500-post workforce and active unit
 profiles from the existing BP05/BP08 PostgreSQL records using read-only
-queries. Each of the 500 authorised posts is staffed by a distinct NPC on each
-of four shifts, producing 2,000 shift occupants. Unit capability codes guide
+queries. Each of the 500 authorised posts has one distinct NPC, assigned to one of
+four shifts; rotation changes duty status without creating extra people. Unit capability codes guide
 specialist selection. The roster and deployments remain in-memory gameplay
 state; the factory does not write personnel, membership or deployment rows to Neon.
 
 ## NPC shift and live-source validation
 
-The NPC workforce preserves sworn, civilian and mixed post types. Every authorised
-post receives a distinct NPC occupant on each of four shifts (Alpha, Bravo,
-Charlie and Delta), so shift rotation does not fragment a unit below its normal
-crew strength. Only the active shift is available for dispatch; deployed crews
+The NPC workforce preserves sworn, civilian and mixed post types. Every authorised post receives exactly one NPC occupant, assigned across
+Alpha, Bravo, Charlie and Delta. Per-unit round-robin allocation balances
+shift coverage without exceeding the 500-person opening police cohort. Only the active shift is available for dispatch; deployed crews
 remain occupied across shift changes. A disposable PostgreSQL integration
 test now loads the actual 500 BP05 authorised posts and BP08 unit profiles,
 then assigns a test incident using NPC dispatch. This is read-only source
