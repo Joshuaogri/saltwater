@@ -94,6 +94,7 @@ class AuthorizationDecision:
     purpose: str
     policy_version: str
     decided_at: datetime
+    active_person_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -224,6 +225,7 @@ class AuthorizationService:
             purpose=purpose,
             policy_version=session.policy_version if session else self._policy_version,
             decided_at=at,
+            active_person_id=session.active_person_id if session else None,
         )
         audit = SecurityAuditRecord(
             principal_id=decision.principal_id,
@@ -250,5 +252,6 @@ class AuthorizationService:
                 purpose=purpose,
                 policy_version=decision.policy_version,
                 decided_at=at,
+                active_person_id=decision.active_person_id,
             )
         return decision
