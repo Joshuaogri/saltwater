@@ -33,6 +33,36 @@ class NPCDispatchConsole:
             deployment = self._simulator.transition(arguments[1], self._ACTIONS[action])
             return f"{deployment.deployment_id} | {deployment.unit_id} | {deployment.status}"
         raise ValueError("Use dispatch, dispatch assign <incident-id>, or dispatch arrive|begin|finish|clear|stand_down|available <deployment-id>.")
+    def process_dispatch_tick(self, *, max_assignments: int | None = None) -> tuple:
+        """Autonomously allocate pending incidents in priority order.
+
+        The simulation host can call this once per game tick. Existing manual
+        player assignments are respected, and incidents without a currently
+        suitable crew remain queued for a later tick.
+        """
+        if max_assignments is not None and (type(max_assignments) is not int or max_assignments < 1):
+            raise ValueError("max_assignments must be a positive integer or None")
+        active_incidents = {
+            row["incident_id"] for row in self._simulator.snapshot()["deployments"]
+        }
+        pending = sorted(
+            (incident for incident in self._incidents.values()
+             if incident.incident_id not in active_incidents),
+            key=lambda incident: (incident.priority, incident.incident_id),
+        )
+        assigned = []
+        for incident in pending:
+            if max_assignments is not None and len(assigned) >= max_assignments:
+                break
+            try:
+                assigned.append(self._simulator.assign_best_unit(incident))
+            except Exception as exc:
+                from runtime.npc_dispatch import NPCDispatchError
+                if isinstance(exc, NPCDispatchError):
+                    continue
+                raise
+        return tuple(assigned)
+
     def render(self) -> str:
         snapshot = self._simulator.snapshot()
         lines = ["SALTWATER NPC DISPATCH", f"Shift: {snapshot['current_shift']}",
