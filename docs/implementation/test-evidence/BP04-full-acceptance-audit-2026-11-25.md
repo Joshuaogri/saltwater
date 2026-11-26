@@ -181,3 +181,13 @@ The three workflows referenced above have now completed successfully against cod
 - [Database migration validation — run 45825332455](https://github.com/Joshuaogri/saltwater/actions/runs/45825332455): passed, 21/21 steps.
 
 This closes the outstanding CI execution for the current player integration, identity-boundary tests, BP02 structural reconciliation and regression baseline. It does not approve the five BP02 frontage exceptions, provision production BP42 grants, wire a production personnel-reference resolver, implement missing BP11/BP16 or other owner-service consumers, or substitute for the consolidated BP04 cross-register/performance/recovery acceptance. Therefore the BP04 division decision remains NOT COMPLETED.
+
+
+### BP06 personnel resolver implementation update — 2026-11-26
+
+The earlier `officer_ref_verifier` placeholder is now backed by a repository implementation. `PostgresPersonnelReferenceVerifier` queries the authoritative BP06 `personnel_service_current` view and matches the verified session `person_id` to the opaque personnel dossier UUID, requiring active sworn service. The BP04 factory `create_postgres_bp04_incident_location_resolver(...)` composes the trusted adapter. Invalid identity is rejected; database errors propagate so the handover fails closed.
+
+- [PKG-001 run 45826593214](https://github.com/Joshuaogri/saltwater/actions/runs/45826593214) completed successfully: disposable PostgreSQL and Python-kernel jobs both passed. The new BP06 verifier test suite passed, and the full existing PKG-001 disposable PostgreSQL regression passed.
+- A further test verifies that `AuthorizationDecision.active_person_id` is sourced from the verified session. Its Python-kernel job passed in the latest run [45826915217](https://github.com/Joshuaogri/saltwater/actions/runs/45826915217); the disposable PostgreSQL population-cap/recovery job is still running. The BP04 420-address reconciliation in [run 45826915157](https://github.com/Joshuaogri/saltwater/actions/runs/45826915157) is also still running.
+
+**Revised status:** repository-side personnel identity integration is IMPLEMENTED and unit-tested. Production wiring remains BLOCKED until the BP06 schema/view is present in the production deployment and the application composes the resolver using its trusted connection factory. Production BP42 grants remain default-deny. No production Neon writes or grants were made.
