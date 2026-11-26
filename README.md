@@ -1682,3 +1682,12 @@ BP-02 has now been advanced from design-only status to a fictional in-game opera
 The canonical geography builder promotes the 420 stable parcel identities and 420 linked address identities into the gameplay register, materialises the generated building access-point inventory, and binds the four bridge connectors to their engineering assessments. The geography source and identity map are marked approved for gameplay. Stable portable string IDs remain authoritative; database-specific integer spatial IDs are not embedded in source data.
 
 The full BP02 audit now checks the fictional release and canonical counts. Regression coverage includes all four assessments, fail-closed missing-connector handling, and 420/420 parcel/address materialisation. GitHub `main` is the source of truth. This release does not write to Neon; a later database seed can be prepared separately if requested.
+
+
+### BP-02 canonical address/access integration — 2026-11-26
+
+- Canonical address records now carry the resolved in-game road association while preserving the original BP04 source-road ID as provenance.
+- The three unique frontage-road dispositions and two bridge-access dispositions are materialised against their five source addresses.
+- The two bridge properties carry their paired connector assessment IDs and approved gameplay access modes; all four connectors remain linked to their source access points and route corridors.
+- The released identity-register snapshot now explicitly reports `operational_approval: true` and `RELEASED_FOR_GAMEPLAY`; the immutable design identity source remains preserved as lineage.
+- BP-02 acceptance audit version 1.1 now fails CI if the overall operational gameplay release is not PASS. The audit remains read-only; no Neon write is performed.
