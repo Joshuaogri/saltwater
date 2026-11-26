@@ -250,37 +250,51 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
                 if progress_callback:
                     progress_callback("building_identities_and_property_links", round((time.perf_counter()-started)*1000, 3))
 
-                for row in inventory["premises"]:
-                    cur.execute("""
-                        INSERT INTO sw_property.premises
-                        (entity_code,display_name,building_id,property_id,lifecycle_status,
-                         created_tick,source_ref,actor_ref,reason)
-                        VALUES (%s,%s,%s,NULL,'active',0,%s,%s,%s) RETURNING premises_id
-                    """, (row["candidate_premises_id"],row["display_name"],
-                          building_map[row["building_id"]],row["source_ref"],ACTOR,REASON))
-                    premises_map[row["candidate_premises_id"]] = cur.fetchone()[0]
-                    cur.execute("""
-                        INSERT INTO sw_property.building_premises
-                        (building_id,premises_id,valid_from_tick,source_ref,actor_ref,reason)
-                        VALUES (%s,%s,0,%s,%s,%s)
-                    """, (building_map[row["building_id"]],premises_map[row["candidate_premises_id"]],row["source_ref"],ACTOR,REASON))
+                _execute_many(cur, """
+                    INSERT INTO sw_property.premises
+                    (entity_code,display_name,building_id,property_id,lifecycle_status,
+                     created_tick,source_ref,actor_ref,reason)
+                    VALUES (%s,%s,%s,NULL,'active',0,%s,%s,%s)
+                """, [(row["candidate_premises_id"],row["display_name"],
+                       building_map[row["building_id"]],row["source_ref"],ACTOR,REASON)
+                      for row in inventory["premises"]])
+                cur.execute(
+                    "SELECT entity_code,premises_id FROM sw_property.premises WHERE entity_code = ANY(%s)",
+                    ([row["candidate_premises_id"] for row in inventory["premises"]],),
+                )
+                premises_map = dict(cur.fetchall())
+                if len(premises_map) != len(inventory["premises"]):
+                    raise RuntimeError("Stage E premises identity reconciliation count mismatch")
+                _execute_many(cur, """
+                    INSERT INTO sw_property.building_premises
+                    (building_id,premises_id,valid_from_tick,source_ref,actor_ref,reason)
+                    VALUES (%s,%s,0,%s,%s,%s)
+                """, [(building_map[row["building_id"]],
+                       premises_map[row["candidate_premises_id"]],row["source_ref"],ACTOR,REASON)
+                      for row in inventory["premises"]])
 
                 if progress_callback:
                     progress_callback("premises_identities_and_building_links", round((time.perf_counter()-started)*1000, 3))
 
-                for row in inventory["units"]:
-                    cur.execute("""
-                        INSERT INTO sw_property.unit_space
-                        (entity_code,display_name,premises_id,lifecycle_status,created_tick,source_ref,actor_ref,reason)
-                        VALUES (%s,%s,%s,'active',0,%s,%s,%s) RETURNING unit_id
-                    """, (row["candidate_unit_id"],row["display_name"],premises_map[row["premises_id"]],
-                          row["source_ref"],ACTOR,REASON))
-                    unit_map[row["candidate_unit_id"]] = cur.fetchone()[0]
-                    cur.execute("""
-                        INSERT INTO sw_property.premises_unit
-                        (premises_id,unit_id,valid_from_tick,source_ref,actor_ref,reason)
-                        VALUES (%s,%s,0,%s,%s,%s)
-                    """, (premises_map[row["premises_id"]],unit_map[row["candidate_unit_id"]],row["source_ref"],ACTOR,REASON))
+                _execute_many(cur, """
+                    INSERT INTO sw_property.unit_space
+                    (entity_code,display_name,premises_id,lifecycle_status,created_tick,source_ref,actor_ref,reason)
+                    VALUES (%s,%s,%s,'active',0,%s,%s,%s)
+                """, [(row["candidate_unit_id"],row["display_name"],premises_map[row["premises_id"]],
+                       row["source_ref"],ACTOR,REASON) for row in inventory["units"]])
+                cur.execute(
+                    "SELECT entity_code,unit_id FROM sw_property.unit_space WHERE entity_code = ANY(%s)",
+                    ([row["candidate_unit_id"] for row in inventory["units"]],),
+                )
+                unit_map = dict(cur.fetchall())
+                if len(unit_map) != len(inventory["units"]):
+                    raise RuntimeError("Stage E unit identity reconciliation count mismatch")
+                _execute_many(cur, """
+                    INSERT INTO sw_property.premises_unit
+                    (premises_id,unit_id,valid_from_tick,source_ref,actor_ref,reason)
+                    VALUES (%s,%s,0,%s,%s,%s)
+                """, [(premises_map[row["premises_id"]],unit_map[row["candidate_unit_id"]],
+                       row["source_ref"],ACTOR,REASON) for row in inventory["units"]])
 
                 if progress_callback:
                     progress_callback("unit_identities_and_premises_links", round((time.perf_counter()-started)*1000, 3))
