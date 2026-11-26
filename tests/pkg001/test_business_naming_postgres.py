@@ -75,6 +75,71 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     (naming["vocabulary_config_version"], cls.manifest_digest),
                 )
                 cls.batch_id = cur.fetchone()[0]
+                # Diagnose the exact source of any database near-duplicate
+                # rejection before attempting the expensive reservation batch.
+                cur.execute(
+                    """CREATE TEMP TABLE bp04_name_preflight (
+                         ordinal integer NOT NULL,
+                         business_id text NOT NULL,
+                         name_form text NOT NULL,
+                         display_name text NOT NULL,
+                         normalized_key text NOT NULL
+                       ) ON COMMIT DROP"""
+                )
+                preflight_rows = []
+                for row in cls.rows:
+                    preflight_rows.extend((
+                        (len(preflight_rows) + 1, row["business_id"], "trading",
+                         row["trading_name"], row["trading_name"]),
+                        (len(preflight_rows) + 2, row["business_id"], "legal",
+                         row["registered_name"], row["registered_name"]),
+                    ))
+                cur.executemany(
+                    """INSERT INTO bp04_name_preflight
+                       (ordinal,business_id,name_form,display_name,normalized_key)
+                       VALUES (%s,%s,%s,%s,sw_names.normalize_name(%s))""",
+                    preflight_rows,
+                )
+                cur.execute(
+                    "CREATE INDEX bp04_name_preflight_trgm_idx "
+                    "ON bp04_name_preflight USING gin(normalized_key gin_trgm_ops)"
+                )
+                cur.execute("ANALYZE bp04_name_preflight")
+                cur.execute(
+                    """SELECT c.business_id,c.name_form,c.display_name,
+                              r.entity_type,r.entity_ref,r.entity_id,r.display_name,
+                              sw_names.similarity(c.normalized_key,r.normalized_key)
+                       FROM bp04_name_preflight c
+                       JOIN LATERAL (
+                         SELECT r.entity_type,r.entity_ref,r.entity_id,r.display_name,
+                                r.normalized_key
+                         FROM sw_names.name_reservation r
+                         WHERE r.normalized_key % c.normalized_key
+                           AND r.normalized_key <> c.normalized_key
+                         ORDER BY sw_names.similarity(c.normalized_key,r.normalized_key) DESC
+                         LIMIT 1
+                       ) r ON sw_names.similarity(c.normalized_key,r.normalized_key)>0.90
+                       ORDER BY 8 DESC LIMIT 20"""
+                )
+                existing_conflicts = cur.fetchall()
+                cur.execute(
+                    """SELECT a.business_id,a.name_form,a.display_name,
+                              b.business_id,b.name_form,b.display_name,
+                              sw_names.similarity(a.normalized_key,b.normalized_key)
+                       FROM bp04_name_preflight a
+                       JOIN bp04_name_preflight b
+                         ON a.ordinal < b.ordinal
+                        AND b.normalized_key % a.normalized_key
+                       WHERE sw_names.similarity(a.normalized_key,b.normalized_key)>0.90
+                       ORDER BY 7 DESC LIMIT 20"""
+                )
+                batch_conflicts = cur.fetchall()
+                if existing_conflicts or batch_conflicts:
+                    raise AssertionError(
+                        "PostgreSQL near-duplicate preflight failed; "
+                        f"existing_namespace_conflicts={existing_conflicts!r}; "
+                        f"within_business_batch_conflicts={batch_conflicts!r}"
+                    )
                 # Refresh pg_trgm GIN selectivity statistics before the 20,000
                 # reservation acceptance; stale stats can force repeated scans.
                 cur.execute("ANALYZE sw_names.name_reservation")
