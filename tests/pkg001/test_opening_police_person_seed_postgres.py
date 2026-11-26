@@ -67,6 +67,14 @@ class OpeningPolicePersonNameRegistryPostgresTests(unittest.TestCase):
                     ),
                 )
                 batch_id = cur.fetchone()[0]
+                # The person-name AFTER INSERT trigger creates the canonical
+                # reservation before the explicit idempotent call below. Supply
+                # the manifest in transaction-local context so that first write
+                # receives the batch provenance.
+                cur.execute(
+                    "SELECT set_config('sw_names.generation_batch_id', %s, true)",
+                    (str(batch_id),),
+                )
 
                 cur.execute(
                     "SELECT event_type_id FROM sw_core.event_type WHERE event_code='PERSON_CREATED'"
