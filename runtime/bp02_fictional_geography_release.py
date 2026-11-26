@@ -102,42 +102,75 @@ def build_fictional_bridge_assessments(route_corridor_report: dict) -> dict:
 
 
 def build_canonical_geography_register(identity_register: dict, asset_inventory: dict,
-                                        engineering_register: dict) -> dict:
-    """Promote stable source identities into the playable canonical game register."""
-    parcels = []
-    for row in identity_register.get("parcels", []):
-        parcels.append({
+                                        engineering_register: dict,
+                                        exception_resolution: dict | None = None) -> dict:
+    """Promote stable identities and resolved fictional access decisions into gameplay canon."""
+    parcels = [
+        {
             **row,
             "identity_status": "CANONICAL",
             "operational_status": "ACTIVE_IN_GAME",
             "canonical": True,
-        })
+        }
+        for row in identity_register.get("parcels", [])
+    ]
+
+    exception_by_address = {
+        row["source_address_id"]: row
+        for row in (exception_resolution or {}).get("records", [])
+    }
+    assessments_by_property = {}
+    approved_by_candidate = {}
+    for assessment in engineering_register["records"]:
+        approved_by_candidate[assessment["source_connector_candidate_id"]] = assessment
+        assessments_by_property.setdefault(assessment["candidate_property_id"], []).append(assessment)
+
     addresses = []
     for row in identity_register.get("addresses", []):
+        exception = exception_by_address.get(row.get("source_address_id"))
+        association_resolved = bool(exception and exception.get("address_road_association_resolved"))
+        effective_road_id = (
+            exception.get("resolved_access_road_id") if association_resolved
+            else row.get("address_road_candidate_id") or row.get("road_id")
+        )
+        property_assessments = assessments_by_property.get(row.get("property_id"), [])
         addresses.append({
             **row,
+            "source_road_id": row.get("road_id"),
+            "road_id": effective_road_id,
+            "resolved_access_road_id": effective_road_id,
+            "address_road_association_status": (
+                exception.get("geometry_disposition") if association_resolved
+                else "SOURCE_ROAD_RETAINED"
+            ),
+            "address_road_association_resolved": association_resolved or not exception,
+            "access_connector_assessment_ids": sorted(
+                item["assessment_id"] for item in property_assessments
+            ),
+            "access_modes": sorted({
+                mode for item in property_assessments
+                for mode in item["approved_access_modes"]
+            }),
             "identity_status": "CANONICAL",
             "address_status": "ACTIVE_IN_GAME",
             "frontage_status": (
-                "GEOMETRY_ASSOCIATION_RESOLVED" if row.get("address_road_candidate_id")
-                else "NO_FRONTAGE_CANDIDATE_RECORDED"
+                "GEOMETRY_ASSOCIATION_RESOLVED"
+                if effective_road_id else "NO_FRONTAGE_CANDIDATE_RECORDED"
             ),
             "operational_status": "ACTIVE_IN_GAME",
             "canonical": True,
         })
-    access_points = []
-    for row in asset_inventory.get("access_points", []):
-        access_points.append({
+
+    access_points = [
+        {
             **row,
             "operational_status": "ACTIVE_IN_GAME",
             "access_point_status": "ACTIVE_IN_GAME",
             "canonical": True,
-        })
+        }
+        for row in asset_inventory.get("access_points", [])
+    ]
     connectors = []
-    approved_by_candidate = {
-        row["source_connector_candidate_id"]: row
-        for row in engineering_register["records"]
-    }
     for row in asset_inventory.get("access_connectors", []):
         assessment = approved_by_candidate.get(row["candidate_connector_id"])
         if assessment:
@@ -148,26 +181,53 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
                 "access_modes": assessment["approved_access_modes"],
                 "canonical": True,
             })
+
+    if exception_resolution is not None:
+        if exception_resolution.get("unresolved_exception_count") != 0:
+            raise ValueError("Address/access exceptions must be resolved before canonical release")
+        if not exception_resolution.get("all_source_addresses_preserved"):
+            raise ValueError("Source address provenance must be preserved")
+        if set(exception_by_address) - {row["source_address_id"] for row in addresses}:
+            raise ValueError("An exception references an address outside the canonical register")
+
     if len(parcels) != 420 or len(addresses) != 420:
         raise ValueError(f"Expected 420 parcels and addresses, got {len(parcels)} / {len(addresses)}")
     if len({row["parcel_id"] for row in parcels}) != 420:
         raise ValueError("Canonical parcel IDs are not unique")
     if len({row["address_id"] for row in addresses}) != 420:
         raise ValueError("Canonical address IDs are not unique")
-    if any(row["parcel_id"] not in {p["parcel_id"] for p in parcels} for row in addresses):
+    parcel_ids = {row["parcel_id"] for row in parcels}
+    if any(row["parcel_id"] not in parcel_ids for row in addresses):
         raise ValueError("Canonical address references an absent parcel")
     if len(engineering_register["records"]) != 4 or len(connectors) != 4:
         raise ValueError("All four bridge connector assessments must bind to source connectors")
+
+    released_identity_register = {
+        **identity_register,
+        "operational_approval": True,
+        "release_status": "RELEASED_FOR_GAMEPLAY",
+        "parcels": parcels,
+        "addresses": addresses,
+        "limitations": [
+            "The source design register remains immutable provenance; canonical gameplay status is assigned by this release register.",
+            "All five address/frontage exceptions are resolved in the accompanying canonical access decisions.",
+            "Bridge access is represented by separately assessed, property-contained connector records.",
+        ],
+    }
     return {
-        "register_id": "SW-BP02-CANONICAL-GEOGRAPHY-V1",
+        "register_id": "SW-BP02-CANONICAL-GEOGRAPHY-V2",
         "source_identity_register": identity_register["register_id"],
+        "identity_register_operational_approval": released_identity_register["operational_approval"],
+        "identity_register_release_status": released_identity_register["release_status"],
         "parcel_count": len(parcels),
         "address_count": len(addresses),
         "property_primary_address_link_count": identity_register["property_primary_address_links"],
         "building_access_point_count": len(access_points),
         "bridge_connector_count": len(connectors),
+        "resolved_address_exception_count": len(exception_by_address),
         "fictional_game_world_canon": True,
         "operational_release_status": "RELEASED_FOR_GAMEPLAY",
+        "identity_register": released_identity_register,
         "parcels": parcels,
         "addresses": addresses,
         "access_points": access_points,
