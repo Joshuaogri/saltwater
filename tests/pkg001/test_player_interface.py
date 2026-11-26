@@ -51,9 +51,25 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
 
     def test_help_and_unknown_commands(self):
         self.assertIn("status", self.interface.execute("help").message)
+        self.assertNotIn("bingo", self.interface.execute("help").message)
         result = self.interface.execute("launch")
         self.assertFalse(result.ok)
         self.assertIn("Unknown command", result.message)
+
+    def test_bingo_requires_injected_trusted_revealer_and_returns_its_result(self):
+        unavailable = self.interface.execute("bingo")
+        self.assertFalse(unavailable.ok)
+        self.assertIn("not connected", unavailable.message)
+
+        calls = []
+        interface = PlayerCommandInterface(
+            self.kernel, self.profile,
+            hidden_truth_revealer=lambda player_id: calls.append(player_id) or "Hidden case truth.",
+        )
+        result = interface.execute("bingo")
+        self.assertTrue(result.ok)
+        self.assertEqual(result.message, "Hidden case truth.")
+        self.assertEqual(calls, [self.profile.player_id])
 
     def test_profile_is_game_native_and_does_not_invent_officer(self):
         result = self.interface.execute("profile")
