@@ -1,0 +1,80 @@
+name: BP02 Geography Archive-Only Disposable PostgreSQL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/migrations/0003_bp02_source_archive.sql"
+      - "runtime/bp02_geography_archive_importer.py"
+      - "runtime/geography_identity_reconciliation.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1-identity-map.json"
+      - "tests/pkg001/test_bp02_geography_archive_importer.py"
+      - "tests/pkg001/bp02_geography_archive_acceptance.sql"
+      - ".github/workflows/bp02-geography-archive-disposable.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  archive-only-disposable-postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned PostgreSQL driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Validate SW-GEO-V1 stable identity map
+        run: python -m runtime.geography_identity_reconciliation
+      - name: Run BP02 archive builder regression tests
+        run: python -m unittest tests.pkg001.test_bp02_geography_archive_importer -v
+      - name: Measure disposable database baseline
+        run: |
+          before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_before_migrations=$before"
+      - name: Apply ordered platform and BP02 archive migrations
+        run: python scripts/migrate.py --apply
+      - name: Measure BP02 archive schema growth
+        run: |
+          after_schema=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_after_schema=$after_schema"
+      - name: Import immutable BP02 archive into disposable PostgreSQL
+        run: python -m runtime.bp02_geography_archive_importer --apply --expected-database saltwater_test
+      - name: Run archive-only SQL acceptance
+        run: psql -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp02_geography_archive_acceptance.sql
+      - name: Verify identical repeat import is idempotent
+        run: |
+          after_first=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          python -m runtime.bp02_geography_archive_importer --apply --expected-database saltwater_test
+          after_repeat=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_after_first_import=$after_first"
+          echo "database_bytes_after_repeat_import=$after_repeat"
+          test "$after_first" = "$after_repeat"
+          psql -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp02_geography_archive_acceptance.sql
