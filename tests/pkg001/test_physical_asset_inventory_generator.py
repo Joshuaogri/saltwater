@@ -108,6 +108,23 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
                             and row["loading_capability_state"] == "not_assessed"
                             for row in profiles["access_points"]))
 
+    def test_building_profile_values_match_database_check_constraints(self):
+        allowed_forms = {"detached", "semi_detached", "terraced", "tower", "slab",
+                         "courtyard", "shed", "pavilion", "underground", "other", "unknown"}
+        allowed_classes = {"low_rise", "mid_rise", "high_rise", "industrial_span",
+                           "lightweight", "civil_engineering", "other", "unknown"}
+        profiles = {row["candidate_building_id"]: row for row in self.manifest["profiles"]["buildings"]}
+        for building in self.manifest["buildings"]:
+            self.assertIn(building["building_form"], allowed_forms)
+            self.assertIn(building["structure_class"], allowed_classes)
+            self.assertEqual(profiles[building["candidate_building_id"]]["building_form"],
+                             building["building_form"])
+            self.assertEqual(profiles[building["candidate_building_id"]]["structure_class"],
+                             building["structure_class"])
+            expected_class = ("high_rise" if building["storeys_above"] >= 20 else
+                              "mid_rise" if building["storeys_above"] >= 8 else "low_rise")
+            self.assertEqual(building["structure_class"], expected_class)
+
     def test_parent_relationships_match_bp04_identity_constraints(self):
         self.assertTrue(all(row["building_id"] and "property_id" not in row
                             for row in self.manifest["premises"]))
