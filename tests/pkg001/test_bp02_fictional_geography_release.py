@@ -81,6 +81,35 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
             self.assertTrue(row["step_free_access"])
             self.assertTrue(row["candidate_route_corridor_id"].startswith("SWRC-"))
 
+    def test_four_assessments_match_distinct_access_points_sharing_road_candidate_ids(self):
+        for road in ("SWR-B1", "SWR-B2"):
+            shared_road_candidate = f"ROAD-{road}-SHARED"
+            for corridor in self.corridors["route_corridors"]:
+                if corridor["road_id"] == road and corridor["candidate_access_point_id"] in {
+                    f"AP-{road}-A", f"AP-{road}-B"
+                }:
+                    corridor["road_access_candidate_id"] = shared_road_candidate
+            for exception in self.exceptions["records"]:
+                if exception["resolved_access_road_id"] == road:
+                    for connector in exception["verified_geometric_connector_candidates"]:
+                        connector["road_access_candidate_id"] = shared_road_candidate
+
+        result = build_fictional_bridge_assessments(self.corridors, self.exceptions)
+        self.assertEqual(result["assessment_count"], 4)
+        self.assertEqual(result["approach_count"], 4)
+        self.assertTrue(result["all_approach_identities_unique"])
+        self.assertTrue(result["all_source_connector_identities_unique"])
+        self.assertEqual(
+            {
+                (row["bridge_road_id"], row["candidate_access_point_id"], row["road_access_candidate_id"])
+                for row in result["records"]
+            },
+            {
+                (road, f"AP-{road}-{suffix}", f"ROAD-{road}-SHARED")
+                for road in ("SWR-B1", "SWR-B2") for suffix in ("A", "B")
+            },
+        )
+
     def test_missing_selected_bridge_candidate_fails_closed_even_with_distractors(self):
         self.corridors["route_corridors"] = [
             row for row in self.corridors["route_corridors"]
