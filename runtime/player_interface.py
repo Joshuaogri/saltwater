@@ -48,11 +48,13 @@ class PlayerCommandInterface:
 
     def __init__(self, kernel: RuntimeKernel, profile: PlayerProfile,
                  recruitment: PostgresRecruitmentService | None = None,
-                 bp04_lookup: Any | None = None):
+                 bp04_lookup: Any | None = None,
+                 dispatch_console: Any | None = None):
         self.kernel = kernel
         self.profile = profile
         self.recruitment = recruitment
         self.bp04_lookup = bp04_lookup
+        self.dispatch_console = dispatch_console
         self.workspace_navigation = WorkspaceNavigation()
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
@@ -68,6 +70,7 @@ class PlayerCommandInterface:
             "workspaces": self._workspaces,
             "back": self._back,
             "where": self._where,
+            "dispatch": self._dispatch,
         }
 
     def execute(self, line: str) -> CommandResult:
@@ -192,6 +195,15 @@ class PlayerCommandInterface:
             return CommandResult(False, f"Property lookup unavailable: {exc}")
         except Exception:
             return CommandResult(False, "Property lookup unavailable.")
+
+    def _dispatch(self) -> CommandResult:
+        if self.dispatch_console is None:
+            return CommandResult(False, "Dispatcher console is not connected.")
+        try:
+            snapshot = self.dispatch_console.snapshot(incident_limit=25)
+            return CommandResult(True, self.dispatch_console.render(snapshot))
+        except Exception:
+            return CommandResult(False, "Dispatcher console is unavailable.")
 
     def _home(self) -> CommandResult:
         return CommandResult(True, render_home(self.profile, self.kernel.status(), self.workspace_navigation))
