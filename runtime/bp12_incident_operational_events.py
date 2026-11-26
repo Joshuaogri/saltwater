@@ -315,3 +315,124 @@ def reconcile_incident_command_handover(
         "handover_ready": not unresolved and not discrepancies,
         "read_only": True,
     }
+
+
+def build_incident_command_handover_record(
+    reconciliation: dict,
+    *,
+    handover_ref: str,
+    outgoing_commander_ref: str,
+    incoming_commander_ref: str,
+    prepared_by_ref: str,
+    authority_ref: str,
+    source_ref: str,
+    effective_world_tick: int,
+    commander_decisions: list[dict],
+    outstanding_actions: list[dict],
+    responsibility_transfers: list[dict],
+    acknowledgements: list[dict],
+) -> dict:
+    """Build a provenance-complete command handover record from owner snapshots.
+
+    This is a validated read-only record projection, not a persistence command.
+    Each supplied register must already have been obtained through its owning
+    system's authorised reader. Durable append-only recording is a separate
+    BP12 operation and is deliberately not implied by this function.
+    """
+    if not isinstance(reconciliation, dict) or not reconciliation.get("read_only"):
+        raise ValueError("A read-only incident command reconciliation is required.")
+    for name, value in (
+        ("handover_ref", handover_ref),
+        ("outgoing_commander_ref", outgoing_commander_ref),
+        ("incoming_commander_ref", incoming_commander_ref),
+        ("prepared_by_ref", prepared_by_ref),
+        ("authority_ref", authority_ref),
+        ("source_ref", source_ref),
+    ):
+        if not isinstance(value, str) or not value.strip():
+            raise ValueError(f"{name} is required.")
+    if outgoing_commander_ref == incoming_commander_ref:
+        raise ValueError("Outgoing and incoming commanders must be different.")
+    if type(effective_world_tick) is not int or effective_world_tick < reconciliation.get("as_of_world_tick", 0):
+        raise ValueError("Handover effective tick cannot precede the assignment snapshot.")
+    registers = {
+        "commander_decisions": commander_decisions,
+        "outstanding_actions": outstanding_actions,
+        "responsibility_transfers": responsibility_transfers,
+        "acknowledgements": acknowledgements,
+    }
+    validated = {}
+    for register_name, rows in registers.items():
+        if not isinstance(rows, list):
+            raise TypeError(f"{register_name} must be an authorised list.")
+        seen = set()
+        output = []
+        for row in rows:
+            if not isinstance(row, dict):
+                raise ValueError(f"{register_name} contains an invalid record.")
+            record_ref = row.get("record_ref")
+            record_source = row.get("source_ref")
+            tick = row.get("world_tick")
+            actor = row.get("actor_ref")
+            if not all(isinstance(v, str) and v.strip() for v in (record_ref, record_source, actor)):
+                raise ValueError(f"{register_name} record is missing identity or provenance.")
+            if record_ref in seen:
+                raise ValueError(f"{register_name} contains duplicate record references.")
+            if type(tick) is not int or tick < 0 or tick > effective_world_tick:
+                raise ValueError(f"{register_name} contains an invalid or future world tick.")
+            seen.add(record_ref)
+            output.append(dict(row))
+        output.sort(key=lambda item: (item["world_tick"], item["record_ref"]))
+        validated[register_name] = output
+
+    for decision in validated["commander_decisions"]:
+        if decision.get("commander_ref") not in {outgoing_commander_ref, incoming_commander_ref}:
+            raise ValueError("Commander decision is not attributable to either handover commander.")
+        if not all(isinstance(decision.get(key), str) and decision[key].strip()
+                   for key in ("decision", "rationale")):
+            raise ValueError("Commander decision requires a decision and rationale.")
+    for action in validated["outstanding_actions"]:
+        if not all(isinstance(action.get(key), str) and action[key].strip()
+                   for key in ("action", "owner_ref", "status")):
+            raise ValueError("Outstanding action requires action, owner and status.")
+        if action["status"] not in {"OPEN", "IN_PROGRESS", "BLOCKED", "COMPLETED", "CANCELLED"}:
+            raise ValueError("Outstanding action has an unsupported status.")
+    for transfer in validated["responsibility_transfers"]:
+        if not all(isinstance(transfer.get(key), str) and transfer[key].strip()
+                   for key in ("responsibility_ref", "from_ref", "to_ref")):
+            raise ValueError("Responsibility transfer is missing its ownership references.")
+        if transfer["from_ref"] == transfer["to_ref"]:
+            raise ValueError("Responsibility transfer must change the responsible party.")
+    for acknowledgement in validated["acknowledgements"]:
+        if acknowledgement.get("handover_ref") != handover_ref:
+            raise ValueError("Acknowledgement references a different handover.")
+        if acknowledgement.get("recipient_ref") not in {outgoing_commander_ref, incoming_commander_ref}:
+            raise ValueError("Acknowledgement recipient is not a handover commander.")
+        if acknowledgement.get("acknowledgement") not in {"ACCEPTED", "DECLINED", "CONDITIONAL"}:
+            raise ValueError("Unsupported handover acknowledgement.")
+        if not isinstance(acknowledgement.get("notes", ""), str):
+            raise ValueError("Acknowledgement notes must be text.")
+
+    return {
+        "handover_ref": handover_ref,
+        "incident_id": reconciliation["incident_id"],
+        "incident_status": reconciliation["incident_status"],
+        "outgoing_commander_ref": outgoing_commander_ref,
+        "incoming_commander_ref": incoming_commander_ref,
+        "prepared_by_ref": prepared_by_ref,
+        "authority_ref": authority_ref,
+        "source_ref": source_ref,
+        "effective_world_tick": effective_world_tick,
+        "assignment_reconciliation": reconciliation,
+        **validated,
+        "handover_ready": (
+            reconciliation["handover_ready"]
+            and not any(a["status"] in {"OPEN", "IN_PROGRESS", "BLOCKED"}
+                        for a in validated["outstanding_actions"])
+            and not any(a["acknowledgement"] != "ACCEPTED"
+                        for a in validated["acknowledgements"])
+            and len(validated["acknowledgements"]) >= 1
+        ),
+        "record_status": "PROJECTED_NOT_PERSISTED",
+        "read_only": True,
+    }
