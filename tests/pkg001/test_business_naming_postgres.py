@@ -102,7 +102,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                 )
                 cur.execute(
                     "CREATE INDEX bp04_name_preflight_trgm_idx "
-                    "ON bp04_name_preflight USING gin(normalized_key gin_trgm_ops)"
+                    "ON bp04_name_preflight USING gin(normalized_key sw_names.gin_trgm_ops)"
                 )
                 cur.execute("ANALYZE bp04_name_preflight")
                 cur.execute(
@@ -114,7 +114,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                          SELECT r.entity_type,r.entity_ref,r.entity_id,r.display_name,
                                 r.normalized_key
                          FROM sw_names.name_reservation r
-                         WHERE r.normalized_key % c.normalized_key
+                         WHERE r.normalized_key OPERATOR(sw_names.%) c.normalized_key
                            AND r.normalized_key <> c.normalized_key
                          ORDER BY sw_names.similarity(c.normalized_key,r.normalized_key) DESC
                          LIMIT 1
@@ -129,7 +129,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                        FROM bp04_name_preflight a
                        JOIN bp04_name_preflight b
                          ON a.ordinal < b.ordinal
-                        AND b.normalized_key % a.normalized_key
+                        AND b.normalized_key OPERATOR(sw_names.%) a.normalized_key
                        WHERE sw_names.similarity(a.normalized_key,b.normalized_key)>0.90
                        ORDER BY 7 DESC LIMIT 20"""
                 )
