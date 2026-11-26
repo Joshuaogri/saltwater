@@ -186,3 +186,8 @@ The read-only `SW-BP02-ADDRESS-PLACEMENT-REVIEW-V1` register now consolidates ea
 5. Complete the remaining business, ownership/tenancy, organisation/facility, operational-interface and 10,000-business performance acceptance criteria in the full BP04 audit.
 
 **Decision:** player lookup commands and the officer-authorised adapter are implemented; BP04 address-to-incident resolution and BP12 event-backed location writes are implemented with separate source provenance and idempotency tests. `sw_incident.incident_location_history` provides an ordered, event-joined read model; the officer resolver exposes it only after the dedicated `bp12.incident.inspect.location.history` grant and verifies incident identity and mandatory provenance. Canonical BP-02 parcel/address binding, production grant provisioning and full BP04 division acceptance remain incomplete.
+
+
+## Dispatch and investigation location handoffs
+
+`BP04IncidentLocationResolver.prepare_dispatch_address_candidate` now provides BP11 with a minimal address reference and confidence/provenance fields; it does not copy the full BP04 address record into dispatch state. Access requires the dedicated `bp11.dispatch.location.resolve` grant, followed by the existing BP12 incident-inspection and BP04 address-inspection checks. `read_investigation_location_history` requires both the BP16 investigation-history grant and the BP12 incident-history grant before returning the event-backed chronology. Each decision is independently audited. These are cross-domain read adapters only: BP11 remains owner of dispatch/CAD, BP12 remains owner of incidents, and BP16 remains owner of investigative work.
