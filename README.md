@@ -1750,3 +1750,18 @@ The full BP02 audit now checks the fictional release and canonical counts. Regre
 - The two bridge properties carry their paired connector assessment IDs and approved gameplay access modes; all four connectors remain linked to their source access points and route corridors.
 - The released identity-register snapshot now explicitly reports `operational_approval: true` and `RELEASED_FOR_GAMEPLAY`; the immutable design identity source remains preserved as lineage.
 - BP-02 acceptance audit version 1.1 now fails CI if the overall operational gameplay release is not PASS. The audit remains read-only; no Neon write is performed.
+
+## BP04 engineering review and performance baseline — 2026-11-26
+
+- Independent Gemini review run: [45901239195](https://github.com/Joshuaogri/saltwater/actions/runs/45901239195). The report is retained as the workflow artifact `gemini-bp04-engineering-review`.
+- The reviewed disposable PostgreSQL acceptance reserved and validated all 20,000 public business names (10,000 businesses × trading/legal names) and completed its 10 tests successfully in 1,054.518 seconds (about 17.6 minutes).
+- The review identified repeated per-name SQL function/trigger work, trigram screening, owner-row locking, and reservation-event writes as areas to measure. It did not provide a per-statement EXPLAIN profile or a granular CPU profile; these remain hypotheses for optimisation, not proven bottleneck attribution.
+- **Driver correction for future reviews:** the repository installs `psycopg[binary]>=3.2,<4`. Psycopg 3.1+ uses pipeline mode internally for `executemany()`; therefore it is incorrect to assume 20,000 independent network roundtrips from the Python call alone. Separate per-item SQL executions from actual network synchronization points. Reference: [Psycopg pipeline mode documentation](https://www.psycopg.org/psycopg3/docs/advanced/pipeline.html).
+- Gemini's suggested bulk-function sketch is not adopted verbatim. The canonical row trigger must continue to enforce the 0.90 near-duplicate threshold for every writer; moving threshold configuration only into one batch entry point could leave other insert paths dependent on caller session settings. Any batch optimisation must preserve trigger enforcement, exact uniqueness, stable text IDs, owner locking, generator-manifest validation, provenance, idempotency, and atomic rollback.
+- Next BP04 experiment: collect phase timings, statement counts, representative `EXPLAIN (ANALYZE, BUFFERS)` output, and lock/wait evidence on disposable PostgreSQL before changing the reservation path.
+
+## SW-DB-001 contract correction — 2026-11-26
+
+- Corrected `tests/pkg001/test_sw_db_001_contract.py` so proposal isolation checks reject the exact disposable proposal `0010_canonical_world_provisioning.sql`, rather than rejecting every source migration with the `0010_` prefix.
+- The broader prefix assertion incorrectly rejected the legitimate source migration `0010_bp04_lawful_use_building_control.sql`.
+- Fix committed on `main`: `34c72d0ce3057740a8f9c9f268697d8fbb2e1afe`. The new SW-DB-001 Python regression job passed all tests, including the previously failing contract check.
