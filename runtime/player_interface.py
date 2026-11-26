@@ -49,12 +49,14 @@ class PlayerCommandInterface:
     def __init__(self, kernel: RuntimeKernel, profile: PlayerProfile,
                  recruitment: PostgresRecruitmentService | None = None,
                  bp04_lookup: Any | None = None,
-                 dispatch_console: Any | None = None):
+                 dispatch_console: Any | None = None,
+                 npc_dispatch_console: Any | None = None):
         self.kernel = kernel
         self.profile = profile
         self.recruitment = recruitment
         self.bp04_lookup = bp04_lookup
         self.dispatch_console = dispatch_console
+        self.npc_dispatch_console = npc_dispatch_console
         self.workspace_navigation = WorkspaceNavigation()
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
@@ -83,6 +85,8 @@ class PlayerCommandInterface:
         command = parsed.command
         if command.token in {"find", "inspect"}:
             return self._property_lookup(command.token, command.arguments)
+        if command.token == "dispatch":
+            return self._dispatch(command.arguments)
         if command.token == "workspace":
             self.workspace_navigation = self.workspace_navigation.select(command.arguments[0])
             return CommandResult(True, f"Current workspace: {WORKSPACE_BY_ID[self.workspace_navigation.current].label}")
@@ -196,7 +200,14 @@ class PlayerCommandInterface:
         except Exception:
             return CommandResult(False, "Property lookup unavailable.")
 
-    def _dispatch(self) -> CommandResult:
+    def _dispatch(self, arguments: tuple[str, ...] = ()) -> CommandResult:
+        if self.npc_dispatch_console is not None:
+            try:
+                return CommandResult(True, self.npc_dispatch_console.execute(arguments))
+            except Exception as exc:
+                return CommandResult(False, str(exc))
+        if arguments:
+            return CommandResult(False, "NPC dispatch commands are not connected. Use dispatch to view the board.")
         if self.dispatch_console is None:
             return CommandResult(False, "Dispatcher console is not connected.")
         try:
