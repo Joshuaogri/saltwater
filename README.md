@@ -1514,3 +1514,6 @@ The previously pending closure workflows have now passed: BP04 player/police/geo
 ### BP04/BP06 personnel identity integration — 2026-11-26
 
 Added `PostgresPersonnelReferenceVerifier`, backed by BP06's `sw_police.personnel_service_current` view. Handover preparer references must be the UUID dossier of the verified session's same canonical person and must be active sworn service. Invalid/mismatched references fail closed; database errors propagate. Added a PostgreSQL resolver factory and unit tests, now included in PKG-001 CI. This is repository implementation only; production deployment, BP42 grants, BP02 operational geography and remaining owner-service integrations remain separate blockers. No production Neon changes were made. See [BP04/BP06 personnel integration](docs/implementation/BP04-player-police-geography-integration.md).
+
+
+The BP06 personnel-reference verifier's four unit tests have passed in [PKG-001 run 45826593214](https://github.com/Joshuaogri/saltwater/actions/runs/45826593214); all 26 Python-kernel steps passed. Disposable PostgreSQL validation remains in progress, so no full workflow pass is claimed yet.
