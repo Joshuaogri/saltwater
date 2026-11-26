@@ -71,6 +71,7 @@ class NPCDispatchSimulator:
             self._units[unit_id] = {
                 "unit_id": unit_id,
                 "domain": str(profile.get("functional_domain") or "general_patrol"),
+                "capabilities": frozenset(profile.get("capability_codes") or ()),
                 "dispatchable": profile.get("dispatchable", True) is True,
                 "minimum_crew_size": minimum,
                 "target_crew_size": target,
@@ -99,12 +100,17 @@ class NPCDispatchSimulator:
             if not profile["dispatchable"] or self._unit_state[unit_id] != "available":
                 continue
             domain = profile["domain"]
-            if domain not in {incident.required_domain, "general_patrol"}:
+            capabilities = profile["capabilities"]
+            if domain not in {incident.required_domain, "general_patrol"} and incident.required_domain not in capabilities:
                 continue
             crew = self._available_crew(unit_id, self.current_shift)
             if len(crew) < profile["minimum_crew_size"]:
                 continue
-            match_score = 0 if domain == incident.required_domain else 1
+            match_score = (
+                0 if incident.required_domain in capabilities
+                else 1 if domain == incident.required_domain
+                else 2
+            )
             candidates.append((match_score, -len(crew), unit_id, crew))
         if not candidates:
             raise NPCDispatchError(f"No available NPC unit has a crew for {incident.incident_type}.")
