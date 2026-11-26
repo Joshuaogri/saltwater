@@ -46,10 +46,11 @@ def run_full_bp02_acceptance_audit() -> dict:
     connector_topology = audit_connector_topology(source, candidates, dossiers, assets)
     direct_connectors = audit_direct_access_connectors(source, candidates, dossiers, assets)
     route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
-    bridge_engineering_register = build_fictional_bridge_assessments(route_corridors)
-
     reconciliation = build_reconciliation(source, identity_map, property_document)
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
+    bridge_engineering_register = build_fictional_bridge_assessments(
+        route_corridors, exception_resolution,
+    )
     canonical_geography = build_canonical_geography_register(
         reconciliation["bp02_design_identity_register_data"], assets,
         bridge_engineering_register, exception_resolution,
@@ -137,8 +138,12 @@ def run_full_bp02_acceptance_audit() -> dict:
         ),
         "operational_access_points_approved": canonical_geography["building_access_point_count"] > 0
             and canonical_geography["bridge_connector_count"] == 4,
-        "all_bridge_connectors_engineered_and_approved": (
+        "all_four_bridge_approaches_match_engineering_assessments": (
             bridge_engineering_register["assessment_count"] == 4
+            and bridge_engineering_register["approach_count"] == 4
+            and bridge_engineering_register["all_approach_identities_unique"]
+            and bridge_engineering_register["all_source_connector_identities_unique"]
+            and len({row["candidate_route_corridor_id"] for row in bridge_engineering_register["records"]}) == 4
             and bridge_engineering_register["assessed_count"] == 4
             and bridge_engineering_register["operationally_approved_count"] == 4
         ),
