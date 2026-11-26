@@ -277,7 +277,7 @@ BEGIN
       event_type_id,occurred_at,world_tick,subject_kind,subject_id,
       source_ref,attributes,idempotency_key
     ) VALUES (
-      v_event_type,clock_timestamp(),v_tick,'person',v_member.person_id::text,
+      v_event_type,clock_timestamp(),v_tick,'person',v_member.person_id,
       p_source_ref,
       jsonb_build_object('personnel_category',v_member.personnel_category,
                          'service_standing','established',
