@@ -1,0 +1,76 @@
+name: BP02 Geography Release Package Measurement
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1-identity-map.json"
+      - "runtime/geography_identity_reconciliation.py"
+      - ".github/workflows/bp02-release-package-measurement.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  measure-release-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate stable source identity coverage
+        run: python -m runtime.geography_identity_reconciliation
+      - name: Build deterministic compressed BP02 geography package
+        env:
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/bp02-package
+          cp data/geography/saltwater-geography-v1.json /tmp/bp02-package/
+          cp data/geography/saltwater-geography-v1-identity-map.json /tmp/bp02-package/
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
+            -C /tmp/bp02-package -cf - . | gzip -n -9 > bp02-geography-release.tar.gz
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          files = [
+              Path("data/geography/saltwater-geography-v1.json"),
+              Path("data/geography/saltwater-geography-v1-identity-map.json"),
+          ]
+          archive = Path("bp02-geography-release.tar.gz")
+          source_bytes = sum(p.stat().st_size for p in files)
+          result = {
+              "release": "SW-GEO-V1",
+              "source_commit": os.environ["SOURCE_COMMIT"],
+              "files": [
+                  {"path": str(p), "bytes": p.stat().st_size,
+                   "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+                  for p in files
+              ],
+              "source_bytes_total": source_bytes,
+              "compressed_archive_bytes": archive.stat().st_size,
+              "compression_ratio": round(archive.stat().st_size / source_bytes, 6),
+              "archive_sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+              "database_growth_bytes": None,
+              "database_growth_note": "Not measured; this workflow does not connect to Neon.",
+          }
+          Path("bp02-geography-package-measurement.json").write_text(
+              json.dumps(result, indent=2, sort_keys=True) + "\\n", encoding="utf-8"
+          )
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+      - name: Preserve compressed package and measurement
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp02-geography-release-package-${{ github.run_id }}
+          path: |
+            bp02-geography-release.tar.gz
+            bp02-geography-package-measurement.json
+          if-no-files-found: error
+          retention-days: 30
