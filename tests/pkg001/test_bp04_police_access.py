@@ -918,7 +918,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
 
     def test_command_handover_reconciles_assignment_arrival_and_open_discrepancies(self):
         result = reconcile_incident_command_handover(
-            42, incident_status="ACTIVE",
+            42, incident_status="ACTIVE_MANAGEMENT",
             snapshot_source_ref="bp08-assignment-snapshot:88",
             as_of_world_tick=25,
             assignment_snapshot=[
@@ -950,7 +950,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
 
     def test_command_handover_detects_assignment_unit_mismatch(self):
         result = reconcile_incident_command_handover(
-            42, incident_status="OPEN",
+            42, incident_status="RECEIVED",
             snapshot_source_ref="bp08:snapshot:4", as_of_world_tick=12,
             assignment_snapshot=[
                 {"assignment_ref": "DEP-4", "unit_ref": "UNIT-4",
