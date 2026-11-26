@@ -1,6 +1,8 @@
 import unittest
 
-from runtime.kernel import InMemoryRuntimeStore, RuntimeKernel
+from runtime.kernel import InMemoryRuntimeStore, Lifecycle, RuntimeKernel
+from runtime.scheduling import InMemoryScheduleStore, TickScheduler
+from runtime.npc_dispatch_scheduler import register_npc_dispatch_schedule
 from runtime.npc_dispatch import DispatchIncident, NPCDispatchSimulator
 from runtime.npc_dispatch_console import NPCDispatchConsole
 from runtime.npc_workforce import NPCWorkforceGenerator
@@ -13,7 +15,7 @@ def build_console():
          "position_title": "Police Sergeant" if i == 1 else "Patrol Officer"}
         for i in range(1, 17)
     ]
-    officers = NPCWorkforceGenerator(seed=10).generate(posts)
+    officers = NPCWorkforceGenerator(seed=10).generate_shift_roster(posts)
     simulator = NPCDispatchSimulator(
         officers,
         [{"unit_id": "UNIT-PATROL", "functional_domain": "general_patrol",
@@ -51,6 +53,27 @@ class NPCDispatchConsoleTests(unittest.TestCase):
         self.assertEqual(len(assigned), 1)
         self.assertEqual(assigned[0].incident_id, "INC-HIGH")
         self.assertEqual(console.process_dispatch_tick(), ())
+
+    def test_authoritative_tick_scheduler_runs_recurring_npc_dispatch(self):
+        kernel = RuntimeKernel(InMemoryRuntimeStore())
+        kernel.transition(Lifecycle.READY)
+        kernel.close_bootstrap()
+        kernel.transition(Lifecycle.RUNNING, player_present=True)
+        scheduler = TickScheduler(kernel, InMemoryScheduleStore(), {})
+        console = build_console()
+        schedule_id, handler = register_npc_dispatch_schedule(scheduler, console)
+
+        kernel.advance_tick()
+        self.assertTrue(scheduler.dispatch_one())
+        self.assertEqual(handler.last_run_tick, 1)
+        self.assertEqual(handler.last_assigned_count, 1)
+        self.assertEqual(console._simulator.snapshot()["deployments"][0]["incident_id"], "SWINC-001")
+
+        kernel.advance_tick()
+        self.assertTrue(scheduler.dispatch_one())
+        self.assertEqual(handler.last_run_tick, 2)
+        self.assertEqual(handler.last_assigned_count, 0)
+        self.assertGreater(schedule_id, 0)
 
     def test_console_shows_queue_units_and_deployments(self):
         console = build_console()
