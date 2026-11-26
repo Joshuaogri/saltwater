@@ -48,6 +48,41 @@ def run_full_bp02_acceptance_audit() -> dict:
     route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
     reconciliation = build_reconciliation(source, identity_map, property_document)
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
+    if exception_resolution["unresolved_exception_count"]:
+        unresolved_ids = {
+            row["source_address_id"] for row in exception_resolution["records"]
+            if not row["address_road_association_resolved"]
+        }
+        diagnostic = []
+        for row in exception_resolution["records"]:
+            if row["source_address_id"] not in unresolved_ids:
+                continue
+            property_connectors = [
+                {
+                    key: candidate.get(key)
+                    for key in (
+                        "candidate_access_point_id", "candidate_road_connection_id",
+                        "road_connection_type", "road_connection_contact_type",
+                        "geometry_status", "property_contains_connector",
+                        "crosses_origin_building", "crosses_other_building", "crosses_water",
+                    )
+                }
+                for candidate in direct_connectors.get("connector_candidates", [])
+                if candidate.get("property_id") == row.get("property_id")
+            ]
+            diagnostic.append({
+                "source_address_id": row["source_address_id"],
+                "property_id": row.get("property_id"),
+                "source_candidate_parcel_id": row["source_candidate_parcel_id"],
+                "source_road_id": row["source_road_id"],
+                "building_access_road_candidate_status": row["building_access_road_candidate_status"],
+                "building_access_road_candidate_ids": row["building_access_road_candidate_ids"],
+                "building_access_road_candidate_details": row["building_access_road_candidate_details"],
+                "geometry_disposition": row["geometry_disposition"],
+                "verified_geometric_connector_candidate_count": row["verified_geometric_connector_candidate_count"],
+                "property_direct_connector_candidates": property_connectors,
+            })
+        print("BP02_UNRESOLVED_FRONTAGE_EXCEPTION_DIAGNOSTICS=" + json.dumps(diagnostic, sort_keys=True))
     bridge_engineering_register = build_fictional_bridge_assessments(
         route_corridors, exception_resolution,
     )
