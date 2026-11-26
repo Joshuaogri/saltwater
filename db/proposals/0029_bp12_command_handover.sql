@@ -97,6 +97,8 @@ BEGIN
     RAISE EXCEPTION 'command handover is not accepted and ready for transfer';
   END IF;
 
+  -- Serialize concurrent retries for the same key before checking either ledger.
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_idempotency_key,0));
   SELECT * INTO v_prior FROM sw_incident.command_handover
   WHERE idempotency_key=p_idempotency_key;
   IF FOUND THEN
