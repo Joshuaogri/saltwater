@@ -118,29 +118,22 @@ class NPCWorkforceGenerator:
 
 
     def generate_shift_roster(self, posts: Iterable[dict]) -> tuple[NPCOfficer, ...]:
-        """Staff every authorised post on all four shifts.
+        """Assign one distinct NPC per authorised post to one of four shifts.
 
-        An authorised post is a position, not a single 24-hour body. Each shift
-        therefore receives its own deterministic NPC occupant for every post.
+        The shift groups rotate coverage; they do not multiply the number of
+        people represented by an authorised post. This preserves the BP01/BP03
+        population ledger: 500 authorised posts yield 500 distinct police NPCs,
+        not 2,000 additional people. Within each unit, occupants are distributed
+        round-robin across Alpha, Bravo, Charlie and Delta.
         """
-        source = list(posts)
-        expanded = []
-        for row in source:
-            if not isinstance(row, dict) or not isinstance(row.get("post_id"), str):
-                raise NPCWorkforceError("Every post requires a stable post_id.")
-            for shift in _SHIFT_GROUPS:
-                expanded.append({**row, "post_id": f'{row["post_id"]}::{shift}'})
-        generated = self.generate(expanded)
+        generated = self.generate(posts)
+        per_unit_counts: dict[str, int] = {}
         result = []
-        for index, officer in enumerate(generated, start=1):
-            original_post, shift = officer.post_id.rsplit("::", 1)
-            result.append(replace(
-                officer,
-                npc_id=str(uuid5(NAMESPACE_URL, f"saltwater:npc:{self.seed}:{original_post}:{shift}")),
-                service_number=f"SWNPC-{index:06d}",
-                post_id=original_post,
-                shift_group=shift,
-            ))
+        for officer in generated:
+            index = per_unit_counts.get(officer.unit_id, 0)
+            per_unit_counts[officer.unit_id] = index + 1
+            shift = _SHIFT_GROUPS[index % len(_SHIFT_GROUPS)]
+            result.append(replace(officer, shift_group=shift))
         return tuple(result)
 
     @staticmethod
