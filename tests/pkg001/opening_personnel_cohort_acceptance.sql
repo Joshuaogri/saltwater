@@ -60,7 +60,7 @@ BEGIN
       event_type_id,occurred_at,world_tick,subject_kind,subject_id,
       source_ref,attributes,idempotency_key
     ) VALUES (
-      v_population_changed,clock_timestamp(),0,'person',v_person_id::text,
+      v_population_changed,clock_timestamp(),0,'person',v_person_id,
       'BP06-OPENING-TEST:population:'||i,
       jsonb_build_object('life_status',1,'scope_status',1),
       'BP06-OPENING-TEST:population:'||i
