@@ -17,6 +17,11 @@ The revised full acceptance audit passed in [run 45831361588](https://github.com
 
 ### BP02 bridge connector engineering review — 2026-11-26
 
+### BP02 identity lineage correction — 2026-11-26
+
+Bridge exception resolution now uses the explicit BP04 `property_id` from the validated address-to-property relationship rather than deriving a property identifier from an address-ID suffix. Missing identity fails closed. A regression test proves resolution with unrelated address/property identifiers. Full BP02 acceptance is running against this change; no property/address identities were changed and no Neon write or operational promotion occurred.
+
+
 The four Customs Bridge/Harbour Bridge connector candidates have 2D geometric centreline evidence only. Width/corridor width are null; gradient has no elevation source; surface is unknown; drainage and vertical clearance are unassessed; access-control type is unknown; and no constructed entrance, legal access, traversability or emergency-egress evidence exists. Planar building/water clearance checks do not establish engineering clearance. All four remain `UNREVIEWED_GEOMETRIC_LINE_ONLY`; bridge-to-public-road connectivity remains a design-geometry finding, not operational approval. The required next evidence is site-specific survey and engineering assessment. BP02 remains `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`; no inventory changes or Neon writes were made. See [BP-02 address placement review register](docs/implementation/BP02-address-placement-review-register.md).
 
 
