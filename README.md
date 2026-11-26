@@ -1450,3 +1450,5 @@ The first full audit identified 26 connector centrelines crossing other generate
 Operational release remains blocked: SW-GEO-V1 is still a design baseline; canonical operational addresses and operational access-point approvals are absent. No Neon writes or property archive uploads were performed.
 
 BP04 now exposes two constrained cross-domain location handoffs: dispatch receives only a location reference/confidence/provenance (not a duplicated address record), while investigation history requires both BP16 and BP12 grants. Both paths are independently audited and preserve BP11/BP12/BP16 ownership boundaries.
+
+The BP12 incident location chronology now has a read-only PostgreSQL adapter using a parameterised query, with regression coverage for provenance preservation, invalid IDs and failure handling. Dispatch and investigation adapters can consume this trusted reader without creating duplicate location records.
