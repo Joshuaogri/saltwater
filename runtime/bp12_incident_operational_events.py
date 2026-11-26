@@ -199,7 +199,9 @@ def reconcile_incident_command_handover(
     if type(incident_id) is not int or incident_id < 1:
         raise ValueError("A positive incident ID is required.")
     if incident_status not in {
-        "OPEN", "ACTIVE", "RESOLVED", "CLOSED", "CANCELLED", "DUPLICATE_LINKED"
+        "RECEIVED", "AWAITING_TRIAGE", "ASSESSED", "ALLOCATED", "DISPATCHED",
+        "RESPONDING", "ATTENDED", "ACTIVE_MANAGEMENT", "MONITORING",
+        "RESOLVED", "CLOSED", "CANCELLED", "DUPLICATE_LINKED", "REOPENED"
     }:
         raise ValueError("Unsupported incident status.")
     if not isinstance(snapshot_source_ref, str) or not snapshot_source_ref.strip():
@@ -261,6 +263,7 @@ def reconcile_incident_command_handover(
     unresolved = []
     discrepancies = []
     reconciled = []
+    terminal_incident = incident_status in {"RESOLVED", "CLOSED", "CANCELLED", "DUPLICATE_LINKED"}
     for assignment_ref, assignment in assignments.items():
         arrival = arrivals.pop(assignment_ref, None)
         if arrival and arrival["unit_ref"] != assignment["unit_ref"]:
@@ -272,6 +275,13 @@ def reconcile_incident_command_handover(
             })
         arrived = arrival is not None
         active = assignment["status"] in {"ASSIGNED", "EN_ROUTE", "ON_SCENE"}
+        if terminal_incident and active:
+            discrepancies.append({
+                "type": "ACTIVE_ASSIGNMENT_ON_TERMINAL_INCIDENT",
+                "assignment_ref": assignment_ref,
+                "assignment_status": assignment["status"],
+                "incident_status": incident_status,
+            })
         if active and not arrived:
             unresolved.append(assignment_ref)
         if arrived and assignment["status"] in {"ASSIGNED", "EN_ROUTE", "CANCELLED", "RELEASED"}:
