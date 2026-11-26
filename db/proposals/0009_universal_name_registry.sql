@@ -160,6 +160,9 @@ DECLARE
   v_code text;
   v_kind smallint;
 BEGIN
+  -- Serialize global exact/near-duplicate checks without blocking autovacuum
+  -- behind a transaction-long relation-level SHARE ROW EXCLUSIVE lock.
+  PERFORM pg_advisory_xact_lock(725101001::bigint);
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
     RAISE EXCEPTION 'normalized key does not match the authoritative normalizer';
   END IF;
