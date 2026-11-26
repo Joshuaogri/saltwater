@@ -119,6 +119,8 @@ class PostgresPlayerCommandRuntime:
             raise TypeError("verifier must provide verify(credential)")
         if not isinstance(authorization, AuthorizationService):
             raise TypeError("authorization must be an AuthorizationService")
+        if hidden_truth_revealer is not None and not callable(hidden_truth_revealer):
+            raise TypeError("hidden_truth_revealer must be a trusted callable")
         self._connect = connect
         self._verifier = verifier
         self._authorization = authorization
