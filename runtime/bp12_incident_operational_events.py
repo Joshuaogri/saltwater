@@ -97,10 +97,20 @@ class PostgresIncidentOperationalTimelineReader:
                     raise ValueError("BP12 returned an unsupported operational event.")
                 if not isinstance(source_ref, str) or not source_ref.strip():
                     raise ValueError("BP12 operational event is missing source provenance.")
-                if not isinstance(attributes, dict):
-                    raise ValueError("BP12 operational event attributes are invalid.")
+                if type(event_id) is not int or event_id < 1 or type(world_tick) is not int or world_tick < 0:
+                    raise ValueError("BP12 operational event identity or world tick is invalid.")
+                if occurred_at is None or not isinstance(attributes, dict):
+                    raise ValueError("BP12 operational event attributes or timestamp are invalid.")
+                if attributes.get("source_ref") != source_ref:
+                    raise ValueError("BP12 operational event source provenance does not reconcile.")
                 if not attributes.get("actor_ref") or not attributes.get("authority_ref"):
                     raise ValueError("BP12 operational event is missing actor or authority provenance.")
+                if event_code == "DISPATCH_ACKNOWLEDGED" and not attributes.get("dispatch_ref"):
+                    raise ValueError("Dispatch acknowledgement is missing its dispatch reference.")
+                if event_code == "UNIT_ARRIVED" and not all(
+                    attributes.get(key) for key in ("unit_ref", "assignment_ref", "field_activity_ref")
+                ):
+                    raise ValueError("Unit arrival is missing deployment or field activity provenance.")
                 result.append({
                     "event_id": event_id,
                     "incident_id": row_incident_id,
