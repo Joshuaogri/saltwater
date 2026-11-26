@@ -183,6 +183,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0027_bp09_police_resource_readiness.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0028_bp12_incident_management.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0029_bp12_command_handover.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0031_bp11_dispatch_lifecycle_writer.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -213,6 +214,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/career_history_acceptance.sql
       - name: Verify BP08 unit catalogue, establishment and readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/unit_deployment_acceptance.sql
+      - name: Verify BP11 dispatch lifecycle writer
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp11_dispatch_lifecycle_acceptance.sql
       - name: Verify BP09 resource inventory and dispatch readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/resource_readiness_acceptance.sql
       - name: Verify BP12 incident schema and runtime boundary
