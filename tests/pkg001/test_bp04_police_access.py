@@ -13,6 +13,7 @@ from runtime.bp12_incident_operational_events import (
     PostgresIncidentOperationalEventWriter,
     PostgresIncidentOperationalTimelineReader,
     build_incident_operational_timeline_view,
+    reconcile_incident_command_handover,
 )
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
@@ -914,6 +915,68 @@ class BP04PoliceAccessTests(unittest.TestCase):
         ]
         with self.assertRaisesRegex(ValueError, "canonical event order"):
             build_incident_operational_timeline_view(rows)
+
+    def test_command_handover_reconciles_assignment_arrival_and_open_discrepancies(self):
+        result = reconcile_incident_command_handover(
+            42, incident_status="ACTIVE",
+            snapshot_source_ref="bp08-assignment-snapshot:88",
+            as_of_world_tick=25,
+            assignment_snapshot=[
+                {"assignment_ref": "DEP-1", "unit_ref": "UNIT-1",
+                 "status": "ON_SCENE", "source_ref": "bp08:DEP-1"},
+                {"assignment_ref": "DEP-2", "unit_ref": "UNIT-2",
+                 "status": "EN_ROUTE", "source_ref": "bp08:DEP-2"},
+                {"assignment_ref": "DEP-3", "unit_ref": "UNIT-3",
+                 "status": "COMPLETED", "source_ref": "bp08:DEP-3"},
+            ],
+            timeline_rows=[
+                {"incident_id": 42, "event_code": "UNIT_ARRIVED",
+                 "event_id": 700, "world_tick": 20,
+                 "source_ref": "bp10:ACT-1",
+                 "attributes": {"assignment_ref": "DEP-1", "unit_ref": "UNIT-1"}},
+                {"incident_id": 42, "event_code": "UNIT_ARRIVED",
+                 "event_id": 701, "world_tick": 21,
+                 "source_ref": "bp10:ACT-2",
+                 "attributes": {"assignment_ref": "DEP-99", "unit_ref": "UNIT-99"}},
+            ],
+        )
+        self.assertEqual(result["unresolved_assignment_refs"], ["DEP-2"])
+        self.assertEqual(
+            [d["type"] for d in result["discrepancies"]],
+            ["ARRIVAL_WITHOUT_CURRENT_ASSIGNMENT"],
+        )
+        self.assertFalse(result["handover_ready"])
+        self.assertTrue(result["read_only"])
+
+    def test_command_handover_detects_assignment_unit_mismatch(self):
+        result = reconcile_incident_command_handover(
+            42, incident_status="OPEN",
+            snapshot_source_ref="bp08:snapshot:4", as_of_world_tick=12,
+            assignment_snapshot=[
+                {"assignment_ref": "DEP-4", "unit_ref": "UNIT-4",
+                 "status": "ON_SCENE", "source_ref": "bp08:DEP-4"},
+            ],
+            timeline_rows=[
+                {"incident_id": 42, "event_code": "UNIT_ARRIVED",
+                 "event_id": 702, "world_tick": 11, "source_ref": "bp10:ACT-4",
+                 "attributes": {"assignment_ref": "DEP-4", "unit_ref": "UNIT-OTHER"}},
+            ],
+        )
+        self.assertEqual(
+            [d["type"] for d in result["discrepancies"]],
+            ["ARRIVAL_UNIT_MISMATCH"],
+        )
+        self.assertFalse(result["handover_ready"])
+
+    def test_command_handover_rejects_duplicate_assignment_snapshot_rows(self):
+        assignment = {"assignment_ref": "DEP-5", "unit_ref": "UNIT-5",
+                      "status": "ASSIGNED", "source_ref": "bp08:DEP-5"}
+        with self.assertRaisesRegex(ValueError, "duplicate assignment"):
+            reconcile_incident_command_handover(
+                42, incident_status="OPEN", snapshot_source_ref="bp08:snapshot:5",
+                as_of_world_tick=1, assignment_snapshot=[assignment, assignment],
+                timeline_rows=[],
+            )
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
