@@ -125,3 +125,57 @@ class PostgresIncidentOperationalTimelineReader:
             raise
         except Exception as exc:
             raise RuntimeError("Incident operational timeline is unavailable.") from exc
+
+
+def build_incident_operational_timeline_view(rows: list[dict]) -> list[dict]:
+    """Create a minimal dispatcher/incident-commander presentation from authorised rows.
+
+    Callers must obtain rows through the audited officer access method first.
+    This projection is read-only and does not replace BP11/BP08/BP10 ownership.
+    """
+    if not isinstance(rows, list):
+        raise TypeError("Authorised operational timeline rows must be a list.")
+    view = []
+    previous_key = None
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("Operational timeline contains an invalid row.")
+        code = row.get("event_code")
+        attributes = row.get("attributes")
+        if code not in {"DISPATCH_ACKNOWLEDGED", "UNIT_ARRIVED"}:
+            raise ValueError("Operational timeline contains an unsupported event.")
+        if not isinstance(attributes, dict):
+            raise ValueError("Operational timeline attributes are invalid.")
+        event_id = row.get("event_id")
+        world_tick = row.get("world_tick")
+        occurred_at = row.get("occurred_at")
+        if type(event_id) is not int or event_id < 1 or type(world_tick) is not int or world_tick < 0:
+            raise ValueError("Operational timeline ordering fields are invalid.")
+        if occurred_at is None or not row.get("source_ref"):
+            raise ValueError("Operational timeline chronology or provenance is incomplete.")
+        order_key = (world_tick, event_id)
+        if previous_key is not None and order_key < previous_key:
+            raise ValueError("Operational timeline is not in canonical event order.")
+        previous_key = order_key
+        if code == "DISPATCH_ACKNOWLEDGED":
+            if not attributes.get("dispatch_ref"):
+                raise ValueError("Dispatch acknowledgement is missing its dispatch reference.")
+            label = "Dispatch acknowledged"
+            references = {"dispatch_ref": attributes["dispatch_ref"]}
+        else:
+            required = ("unit_ref", "assignment_ref", "field_activity_ref")
+            if not all(attributes.get(key) for key in required):
+                raise ValueError("Unit arrival is missing deployment or field activity provenance.")
+            label = "Unit arrived"
+            references = {key: attributes[key] for key in required}
+        view.append({
+            "event_id": event_id,
+            "label": label,
+            "occurred_at": occurred_at,
+            "world_tick": world_tick,
+            "references": references,
+            "actor_ref": attributes.get("actor_ref"),
+            "authority_ref": attributes.get("authority_ref"),
+            "source_ref": row["source_ref"],
+        })
+    return view
