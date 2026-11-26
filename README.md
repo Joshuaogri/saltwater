@@ -14,10 +14,14 @@ To enable it, add a repository Actions secret named `GEMINI_API_KEY` using a
 key created in [Google AI Studio](https://aistudio.google.com/app/apikey).
 Then open **Actions → Gemini independent engineering review → Run workflow**,
 enter the PKG-001 run ID, and leave the model as `gemini-3.8-flash`. The report
-appears in the workflow summary and as a downloadable artifact. The workflow
-uses the Gemini Interactions API and requests non-persistent processing
-(`store: false`). No Gemini request is made until the workflow is manually
-run and the secret is configured.
+appears in the workflow summary and as a downloadable artifact. The workflow uses the Gemini Interactions API in background mode because the
+synchronous request exceeded its 240-second client timeout. Background mode
+requires `store: true`: Google temporarily stores the interaction while it runs.
+After a successful report is retrieved, the workflow attempts to delete that
+interaction record. If the run fails or times out before cleanup, Google's
+standard retention policy applies (currently one day on the free tier and up to
+55 days on paid tiers). The review is read-only and no Gemini request is made
+until the workflow is manually run and the secret is configured.
 
 ## BP02 bridge identity and business-naming lock remediation — 2026-11-26
 
