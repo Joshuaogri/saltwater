@@ -998,6 +998,75 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 timeline_rows=[],
             )
 
+    def test_authorised_command_handover_uses_incident_assignment_and_timeline_grants(self):
+        grants = self.grants + (
+            Grant("bp12.incident.inspect.command_handover", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp08.deployment.inspect.incident_assignments", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.operational_timeline", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {
+                "incident_id": incident_id, "status": "ACTIVE_MANAGEMENT",
+            },
+        )
+        result = resolver.build_authorised_command_handover(
+            "officer-session", 42,
+            assignment_snapshot_reader=lambda _id: {
+                "source_ref": "bp08:snapshot:42", "as_of_world_tick": 30,
+                "assignments": [{
+                    "assignment_ref": "DEP-1", "unit_ref": "UNIT-1",
+                    "status": "ON_SCENE", "source_ref": "bp08:DEP-1",
+                }],
+            },
+            operational_timeline_reader=lambda _id: [{
+                "incident_id": 42, "event_id": 801,
+                "event_code": "UNIT_ARRIVED", "world_tick": 29,
+                "occurred_at": "2026-11-26T12:10:00Z",
+                "source_ref": "bp10:ACT-1",
+                "attributes": {"source_ref": "bp10:ACT-1",
+                               "actor_ref": "officer:1", "authority_ref": "deploy:1",
+                               "unit_ref": "UNIT-1", "assignment_ref": "DEP-1",
+                               "field_activity_ref": "ACT-1"},
+            }],
+        )
+        self.assertTrue(result["handover_ready"])
+        self.assertEqual(result["incident_status"], "ACTIVE_MANAGEMENT")
+        self.assertEqual(result["assignments"][0]["arrival_event_id"], 801)
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp12.incident.inspect.command_handover",
+             "bp08.deployment.inspect.incident_assignments",
+             "bp12.incident.inspect.operational_timeline"],
+        )
+
+    def test_authorised_command_handover_denies_before_assignment_reader(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda incident_id: {
+                "incident_id": incident_id, "status": "RECEIVED",
+            },
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.build_authorised_command_handover(
+                "officer-session", 42,
+                assignment_snapshot_reader=lambda _id: self.fail("assignment reader must not run"),
+                operational_timeline_reader=lambda _id: self.fail("timeline reader must not run"),
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp12.incident.inspect.command_handover",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
             self.access.inspect("officer-session", "property", "SWPROP-1")
