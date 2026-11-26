@@ -11,6 +11,8 @@ from enum import Enum
 from types import MappingProxyType
 from typing import Final
 
+from runtime.bp01_foundations import is_exact_hidden_truth_reveal_trigger
+
 
 class CommandClass(str, Enum):
     READ_ONLY = "read_only"
@@ -83,6 +85,8 @@ def _definition(
     owner: str,
     classification: CommandClass,
     grammar: str = "no arguments",
+    *,
+    permission_action: str | None = None,
 ) -> PlayerCommandDefinition:
     return PlayerCommandDefinition(
         command_id=f"player.{token}.v1",
@@ -91,12 +95,13 @@ def _definition(
         owner=owner,
         argument_grammar=grammar,
         classification=classification,
-        permission_action=f"player.command.{token}",
+        permission_action=permission_action or f"player.command.{token}",
     )
 
 
 _DEFINITIONS: Final[tuple[PlayerCommandDefinition, ...]] = (
     _definition("help", "Show available commands", "BP-40 Interface", CommandClass.READ_ONLY),
+    _definition("bingo", "Reveal hidden case truth on exact player request", "BP-01 Foundations", CommandClass.READ_ONLY, permission_action="reveal_hidden_truth"),
     _definition("status", "Show runtime and simulation clock", "BP-40 Interface", CommandClass.READ_ONLY),
     _definition("profile", "Show the active player profile", "BP-40 Interface", CommandClass.READ_ONLY),
     _definition("recruit", "Request entry as a recruit", "BP-04 Recruitment", CommandClass.DOMAIN_MUTATION),
@@ -128,6 +133,8 @@ def render_command_help() -> str:
     """Render the human help text from the canonical command definitions."""
     lines = ["Saltwater commands"]
     for item in COMMAND_CATALOGUE:
+        if item.token == "bingo":
+            continue  # Deliberately undisclosed in ordinary help and prompts.
         suffix = (" <id>" if item.token == "workspace" else
                   " <type> <query>" if item.token == "find" else
                   " <type> <id>" if item.token == "inspect" else
@@ -165,6 +172,11 @@ def parse_player_command(
         return CommandParseResult(error=CommandParseError(
             ParseErrorCode.UNKNOWN_COMMAND, f"Unknown command: {supplied}. Type help.",
             supplied_token=supplied,
+        ))
+    if token == "bingo" and not is_exact_hidden_truth_reveal_trigger(text):
+        return CommandParseResult(error=CommandParseError(
+            ParseErrorCode.UNKNOWN_COMMAND,
+            "Unknown command. Type help.", supplied_token=supplied,
         ))
     if require_canonical_spacing:
         canonical = text == text.strip() and text == " ".join(parts)
