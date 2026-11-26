@@ -256,6 +256,51 @@ class BP04IncidentLocationResolver:
             "dispatch_use_only": True,
         }
 
+    def record_dispatch_address_location(
+        self, credential: str, incident_id: int, address_id: str, *,
+        dispatch_ref: str, location_writer, actor_ref: str, authority_ref: str,
+        idempotency_key: str, raw_description: str,
+        location_role: str = "primary", confidence: str = "unverified",
+    ) -> dict:
+        """Record a dispatch-originated location through BP12, preserving ownership."""
+        for name, value in (
+            ("dispatch_ref", dispatch_ref), ("actor_ref", actor_ref),
+            ("authority_ref", authority_ref), ("idempotency_key", idempotency_key),
+            ("raw_description", raw_description),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} is required")
+        if not callable(location_writer):
+            raise TypeError("A trusted BP12 location writer is required")
+        self._access._require(
+            credential, "bp11.dispatch.location.record", f"incident:{incident_id}"
+        )
+        candidate = self.prepare_dispatch_address_candidate(
+            credential, incident_id, address_id,
+            location_role=location_role, confidence=confidence,
+            source_ref=f"dispatch:{dispatch_ref}",
+        )
+        location_id = location_writer(
+            p_incident_id=incident_id,
+            p_location_role=candidate["location_role"],
+            p_location_type="property",
+            p_location_ref=address_id,
+            p_spatial_id=None,
+            p_raw_description=raw_description,
+            p_confidence=candidate["confidence"],
+            p_actor_ref=actor_ref,
+            p_authority_ref=authority_ref,
+            p_source_ref=candidate["source_ref"],
+            p_address_source_ref=candidate["address_source_ref"],
+            p_idempotency_key=idempotency_key,
+        )
+        return {
+            **candidate,
+            "dispatch_ref": dispatch_ref,
+            "persisted": True,
+            "incident_location_id": location_id,
+        }
+
     def read_investigation_location_history(
         self, credential: str, incident_id: int, *, case_ref: str,
         case_incident_verifier, location_history_reader,
