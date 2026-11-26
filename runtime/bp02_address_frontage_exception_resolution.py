@@ -29,7 +29,7 @@ def _bridge_has_public_street_connections(road_id: str, geography: dict) -> bool
 
 
 def _valid_bridge_connector_rows(
-    source_address_id: str,
+    property_id: str | None,
     road_id: str,
     candidate_details: dict,
     geography: dict,
@@ -47,11 +47,11 @@ def _valid_bridge_connector_rows(
     if (detail.get("candidate_type") != "road_reserve_proximity_connection"
             or detail.get("contact_type") != "POINT_CONTACT_ONLY"):
         return []
-    source_suffix = source_address_id.removeprefix("SWADDR-")
-    expected_property_id = f"SWP-{source_suffix}"
+    if not isinstance(property_id, str) or not property_id:
+        return []
     rows = [
         row for row in direct_connector_audit.get("connector_candidates", [])
-        if row.get("property_id") == expected_property_id
+        if row.get("property_id") == property_id
         and any(
             str(row.get("candidate_road_connection_id", "")).endswith(segment_id)
             for segment_id in bridge_segment_ids
@@ -122,7 +122,7 @@ def resolve_address_frontage_exceptions(
             if len(bridge_ids) == 1 and access_status == "SOURCE_ROAD_MATCHES_BUILDING_ACCESS_SET":
                 bridge_id = bridge_ids[0]
                 connector_rows = _valid_bridge_connector_rows(
-                    source_id, bridge_id, candidate_details, geography, direct_connector_audit
+                    row.get("property_id"), bridge_id, candidate_details, geography, direct_connector_audit
                 )
                 if connector_rows:
                     connector_count = len(connector_rows)
