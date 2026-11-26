@@ -15,6 +15,9 @@ DECLARE
   v_operational_replay_id bigint;
   v_status text;
   v_error text;
+  v_handover_id bigint;
+  v_handover_replay_id bigint;
+  v_handover_document jsonb;
 BEGIN
   IF to_regclass('sw_incident.incident') IS NULL
      OR to_regclass('sw_incident.incident_event') IS NULL
@@ -198,6 +201,75 @@ BEGIN
     EXCEPTION WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
       IF v_error NOT LIKE 'invalid incident state transition:%' THEN RAISE; END IF;
+    END;
+    v_handover_document:=jsonb_build_object(
+      'handover_ref','BP12-HANDOVER-TEST-001',
+      'incident_id',v_incident_id,
+      'incident_status','AWAITING_TRIAGE',
+      'outgoing_commander_ref','commander:outgoing',
+      'incoming_commander_ref','commander:incoming',
+      'prepared_by_ref','supervisor:prepared',
+      'authority_ref','command-authority:test',
+      'source_ref','command-room:handover-test',
+      'effective_world_tick',(SELECT world_tick FROM sw_runtime.state WHERE singleton=1),
+      'assignment_reconciliation',jsonb_build_object('handover_ready',true,'as_of_world_tick',
+        (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),'unresolved_active_assignments',jsonb_build_array()),
+      'commander_decisions',jsonb_build_array(),
+      'outstanding_actions',jsonb_build_array(),
+      'responsibility_transfers',jsonb_build_array(jsonb_build_object(
+        'record_ref','transfer:test:1','responsibility_ref','incident-command',
+        'from_ref','commander:outgoing','to_ref','commander:incoming',
+        'actor_ref','commander:outgoing','source_ref','command-room:transfer','world_tick',
+        (SELECT world_tick FROM sw_runtime.state WHERE singleton=1))),
+      'acknowledgements',jsonb_build_array(jsonb_build_object(
+        'record_ref','ack:test:1','handover_ref','BP12-HANDOVER-TEST-001',
+        'recipient_ref','commander:incoming','acknowledgement','ACCEPTED',
+        'actor_ref','commander:incoming','source_ref','command-room:ack',
+        'world_tick',(SELECT world_tick FROM sw_runtime.state WHERE singleton=1),'notes','Accepted')),
+      'handover_ready',true,'record_status','PROJECTED_NOT_PERSISTED','read_only',true
+    );
+    v_handover_id:=sw_incident.record_command_handover(
+      v_incident_id,'BP12-HANDOVER-TEST-001','commander:outgoing','commander:incoming',
+      'supervisor:prepared','command-authority:test','command-room:handover-test',
+      (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),v_handover_document,
+      'BP12-HANDOVER-IDEMPOTENCY-001'
+    );
+    v_handover_replay_id:=sw_incident.record_command_handover(
+      v_incident_id,'BP12-HANDOVER-TEST-001','commander:outgoing','commander:incoming',
+      'supervisor:prepared','command-authority:test','command-room:handover-test',
+      (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),v_handover_document,
+      'BP12-HANDOVER-IDEMPOTENCY-001'
+    );
+    IF v_handover_replay_id<>v_handover_id
+       OR (SELECT count(*) FROM sw_incident.command_handover WHERE incident_id=v_incident_id)<>1
+       OR NOT EXISTS (
+         SELECT 1 FROM sw_incident.command_handover_history(v_incident_id)
+         WHERE command_handover_id=v_handover_id
+           AND handover_document->>'record_status'='PERSISTED'
+           AND handover_document->>'incoming_commander_ref'='commander:incoming'
+       ) THEN
+      RAISE EXCEPTION 'BP12 command handover persistence, history or idempotency failed';
+    END IF;
+    BEGIN
+      UPDATE sw_incident.command_handover SET source_ref='tampered'
+      WHERE command_handover_id=v_handover_id;
+      RAISE EXCEPTION 'BP12 command handover update was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error NOT LIKE '%append-only%' THEN RAISE; END IF;
+    END;
+    BEGIN
+      PERFORM sw_incident.record_command_handover(
+        v_incident_id,'BP12-HANDOVER-INVALID-002','commander:outgoing','commander:incoming',
+        'supervisor:prepared','command-authority:test','command-room:handover-test',
+        (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),
+        jsonb_set(v_handover_document,'{handover_ready}','false'::jsonb,true),
+        'BP12-HANDOVER-INVALID-IDEMPOTENCY'
+      );
+      RAISE EXCEPTION 'unready command handover was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error<>'command handover is not accepted and ready for transfer' THEN RAISE; END IF;
     END;
   ELSE
     BEGIN
