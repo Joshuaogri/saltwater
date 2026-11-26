@@ -3,6 +3,7 @@ import unittest
 from shapely.geometry import Point, Polygon
 
 from bp04_03_stage_e_test_support import stage_e_parcel_inputs, stage_e_asset_inventory
+from runtime.physical_asset_inventory_generator import build_asset_inventory
 
 
 class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
@@ -80,30 +81,6 @@ class PhysicalAssetInventoryGeneratorTests(unittest.TestCase):
         self.assertTrue(all(row["emergency_egress_state"] == "not_assessed"
                             and row["loading_capability_state"] == "not_assessed"
                             for row in self.manifest["access_points"]))
-
-    def test_bp04_02_profiles_and_typed_child_detail_are_complete(self):
-        profiles = self.manifest["profiles"]
-        self.assertEqual(len(profiles["properties"]), len(self.manifest["properties"]))
-        self.assertEqual(len(profiles["buildings"]), len(self.manifest["buildings"]))
-        self.assertEqual(len(profiles["premises"]), len(self.manifest["premises"]))
-        self.assertEqual(len(profiles["units"]), len(self.manifest["units"]))
-        self.assertEqual(len(profiles["access_points"]), len(self.manifest["access_points"]))
-        details = self.manifest["details"]
-        for key in ("measurements", "building_levels", "building_components",
-                    "premises_rooms", "utility_systems", "physical_features",
-                    "condition_assessments", "asset_assertions"):
-            self.assertGreater(len(details[key]), 0, key)
-        self.assertEqual(details["physical_defects"], [])
-        self.assertTrue(all(row["material_code"] == "unknown"
-                            and row["condition_code"] == "not_assessed"
-                            for row in details["building_components"]))
-        self.assertTrue(all(row["condition_code"] == "not_assessed"
-                            for row in details["condition_assessments"]))
-        self.assertTrue(all(row["knowledge_state"] == "not_assessed"
-                            for row in details["asset_assertions"]))
-        self.assertTrue(all(row["emergency_egress"] is None
-                            and row["loading_capable"] is None
-                            for row in profiles["access_points"]))
 
     def test_bp04_02_profiles_and_typed_child_detail_are_complete(self):
         profiles = self.manifest["profiles"]
