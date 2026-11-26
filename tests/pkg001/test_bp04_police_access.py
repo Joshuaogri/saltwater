@@ -331,7 +331,8 @@ class BP04PoliceAccessTests(unittest.TestCase):
             field_activity_ref="PATROL-ACT-19",
         )
         self.assertEqual(event_id, 8801)
-        self.assertIn("record_operational_timeline_event(%s", cursor.executed[0])
+        self.assertIn("record_operational_timeline_event(", cursor.executed[0])
+        self.assertEqual(cursor.executed[0].count("%s"), 11)
         self.assertEqual(cursor.executed[1][0:2], (42, "UNIT_ARRIVED"))
         self.assertEqual(cursor.executed[1][7:9], ("DEP-4", "PATROL-ACT-19"))
         self.assertTrue(connection.committed)
