@@ -282,9 +282,18 @@ class BP04LookupTests(unittest.TestCase):
             BP04Lookup(FakeConnection(broken))
 
     def test_establishment_physical_hierarchy_must_be_consistent(self):
+        world = tables_from_archive(self.archives["SW-PROPERTY-WORLD-V1"])
+        world["properties"].append({
+            **world["properties"][0],
+            "property_id": "SWPROP-OTHER",
+            "address_id": None,
+            "source_candidate_parcel_id": "SWPAR-OTHER",
+            "building_ids": [],
+        })
         businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
         businesses["establishments"][0]["property_id"] = "SWPROP-OTHER"
         broken = dict(self.archives)
+        broken["SW-PROPERTY-WORLD-V1"] = archive("SW-PROPERTY-WORLD-V1", world)
         broken["SW-BUSINESS-REGISTRY-V1"] = archive(
             "SW-BUSINESS-REGISTRY-V1", businesses
         )
