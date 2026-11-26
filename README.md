@@ -19,6 +19,10 @@ The detailed import reported **1,525,071,872 bytes** of disposable database grow
 
 Backup/restore verified 420 property assets, 180,733 units, 4,842 asset geometry candidates, 2,948 access connector candidates and the same manifest checksum. See [BP04-03 Stage E acceptance evidence](docs/implementation/test-evidence/BP04-03-stage-e-run-45736034489.md).
 
+### BP04 gameplay lookup integrity — 2026-11-26
+
+The archive-backed lookup now fails closed on dangling or inconsistent property/building/premises/unit/access-point relationships. It validates parent-child hierarchy across the detailed property stack before exposing records to gameplay, preventing an apparently valid address or establishment lookup from masking broken physical-location links. Regression coverage includes missing premises buildings, unit-to-premises conflicts and access-point-to-unit conflicts. This remains read-only and process-local; no Neon writes or operational geography promotion occur.
+
 **Release boundary:** Stage E's detailed disposable database acceptance now passes, but generated physical detail and connector geometry remain unapproved candidates. BP04/BP02 gameplay integration and operational geography release gates remain open. This result does not authorise Neon deployment.
 
 ## Canonical constraints
