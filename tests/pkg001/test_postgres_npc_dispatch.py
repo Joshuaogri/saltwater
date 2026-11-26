@@ -53,8 +53,11 @@ class PostgresNPCDispatchFactoryTests(unittest.TestCase):
         self.assertTrue(all(call[0].lstrip().upper().startswith("SELECT") for call in cursor.calls))
 
     def test_dispatchable_unit_without_status_history_is_initialised_available(self):
-        posts = [("P-001", "UNIT-PATROL", "Patrol Officer", "sworn"),
-                 ("P-002", "UNIT-PATROL", "Police Sergeant", "sworn")]
+        posts = [
+            (f"P-{index:03d}", "UNIT-PATROL",
+             "Police Sergeant" if index % 2 == 0 else "Patrol Officer", "sworn")
+            for index in range(1, 9)
+        ]
         units = [("UNIT-PATROL", "frontline", True, 2, 3, "unavailable", None, ["patrol"])]
         cursor = Cursor([posts, units])
         console = PostgresNPCDispatchFactory(lambda: Connection(cursor), seed=4).build(
