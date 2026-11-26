@@ -201,6 +201,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0029_bp12_command_handover.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0031_bp11_dispatch_lifecycle_writer.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0032_bp11_authorised_deployment_creation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0033_bp06_opening_personnel_cohort.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -227,6 +228,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/recruit_entry_acceptance.sql
       - name: Verify BP06 personnel service dossier and supervisor links
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/personnel_service_acceptance.sql
+      - name: Verify BP06 opening 500-person police cohort linkage
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/opening_personnel_cohort_acceptance.sql
       - name: Verify BP07 career history and recruit rank/post boundaries
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/career_history_acceptance.sql
       - name: Verify BP08 unit catalogue, establishment and readiness
