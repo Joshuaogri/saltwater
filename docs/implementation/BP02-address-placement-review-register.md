@@ -72,4 +72,19 @@ The full BP02 acceptance audit previously used only parcel-frontage candidates a
 - Both bridge segments connect at both endpoints to public motor-vehicle/emergency street segments. The connector candidates therefore reach a connected public road network at design-geometry level.
 - The two bridge access associations can be dispositioned as geometric access-connection candidates, rather than left as unexplained point contacts. They are not confirmed entrances: width, gradient, surface, drainage, clearance, access controls and operational approval remain outstanding.
 
-The updated resolver and regression tests are committed on `main`; the full acceptance workflow must pass before these revised dispositions are treated as verified. No source geography, BP04 source address, canonical address, operational access point or Neon record is changed by this review.
+The updated resolver and regression tests are committed on `main`. The complete full-parcel/address/access acceptance workflow passed in [run 45831361588](https://github.com/Joshuaogri/saltwater/actions/runs/45831361588) on 2026-11-26. The published artifact `bp02-full-parcel-address-access-acceptance` reports `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`: all 12 structural checks passed; all six geometry/access layers reported zero failed checks; all five exception dispositions are resolved; and there are zero unresolved address-road/access exceptions. The report confirms 420/420 property-address links, 2,948 connector candidates, 1,474 building candidates, 2,926 direct-geometry-feasible unreviewed connectors and 22 blocked direct lines. No canonical addresses, operational access points, database writes or Neon writes were created. No source geography, BP04 source address or operational status was promoted by this review.
+
+
+## Verified BP-02 structural acceptance — 2026-11-26
+
+The successful run's acceptance artifact confirms the structural result and preserves the operational boundary:
+
+- Overall status: `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`.
+- Structural status: `PASS`; all 12 structural assertions are true.
+- All five former P1 address/access exceptions have evidence-based geometric dispositions; `unresolved_address_road_access_exceptions = 0`.
+- The three source-road conflicts resolve to unique parcel frontage associations (`SWR-H17` twice and `SWR-H01` once), while both bridge records resolve to connected-public-road geometric access candidates (two property-contained connector candidates per bridge).
+- The six layer audits (parcel geometry, geography geometry, building access candidates, direct access connectors, connector topology and route-corridor candidates) all report zero failed checks.
+- The 22 direct connector lines that are not clear remain explicitly blocked; they are not silently treated as passable. The 2,926 feasible direct lines remain unreviewed geometric candidates.
+- Operational release remains blocked because SW-GEO-V1 has not been approved as operational geography, canonical parcels/addresses are not materialised, no operational access points are approved, and bridge entrance engineering/operational validation is outstanding.
+
+The run published the JSON evidence artifact `bp02-full-parcel-address-access-acceptance` (45,291-byte ZIP; artifact SHA-256 `d8a19a4098891a06dadcbc857b5c22037545371c28bb6251ed8e84b2626d6aaa`). This is CI evidence only. No production database or Neon writes were performed.
