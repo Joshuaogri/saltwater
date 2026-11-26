@@ -4,7 +4,7 @@
 **Blueprint:** Saltwater Master Blueprint BP-01–BP-44  
 **Version:** 1.0  
 **Status:** `DESIGNED` — reconciled against adopted Saltwater canon and approved for implementation  
-**Date:** 2026-11-22  
+**Date:** 2026-11-26  
 **Authority:** User-owned canon and final design approval. The master framework and binding canon were approved 2026-11-23; BP-01 was reconciled and directed for completion on 2026-11-26. Design approval is distinct from implementation, testing and verification.  
 **Parent:** `docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md`  
 **Traceability:** 52→44 crosswalk v1.1; source IDs retained below.
@@ -58,19 +58,20 @@ These are hard constraints, not targets that may be exceeded by convenience.
 - BP-02 owns the canonical geography and location hierarchy.
 
 ### 3.2 Population
+- The exact population membership formula, transient-person treatment, opening cohorts and atomic lifecycle rules are fixed by adopted decision [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md); BP-03 implements the authoritative ledger.
 - Maximum: **10,000 living people in total**, including police and every other countable person.
-- Opening baseline: **9,000 residents + 500 police = 9,500 living people**.
+- Opening baseline: **9,000 civilian usual residents + 500 active police-service members = 9,500 distinct living people**. The cohorts are mutually exclusive for the opening reconciliation.
 - Remaining capacity at opening: **500**. This is headroom, not an additional population.
 - Police are included in the total and must never be added a second time.
 - Every person is counted once by stable person identity, regardless of multiple roles, jobs, household memberships or population categories.
-- Population accounting must define treatment of residents, temporary residents, visitors, commuters, officials and other persons. No represented living person may be silently excluded from the authoritative count.
+- Countable people are the set union of usual residents, persons physically present and active police-service members, deduplicated by stable person ID. Visitors, commuters, temporary workers, temporary residents and off-map absences follow the exact rules in SW-CANON-001.
 - Births and arrivals consume capacity; deaths and qualifying permanent exits release capacity. Capacity-changing transactions must be atomic and auditable.
 - An operation that would create 10,001 living people must be rejected without partial side effects.
-- Approximate police strength is 500; each police employee has an individual persistent record and is part of the same population ledger.
+- The opening police-service cohort is exactly 500; subsequent staffing changes reconcile through BP-03. Each police employee has an individual persistent record and is part of the same population ledger.
 - BP-03 owns population identity/counting/capacity; BP-06 owns police-personnel records; BP-38 owns integrity constraints; BP-43 verifies boundaries.
 
 ### 3.3 Businesses
-- Saltwater must contain at least **10,000 distinct businesses**.
+- Saltwater must contain at least **10,000 distinct businesses at the opening baseline**. This is a minimum, not a maximum; the registry may grow beyond 10,000.
 - A business must be a coherent identifiable entity, not a duplicate placeholder created only to reach a count.
 - Each active business must have a stable ID, status, sector, ownership/operator basis and a valid premises, mobile or virtual operating basis.
 - Business records must support the functions relevant to policing and city coherence: people, employment, premises, hours, access, services, assets, transactions, records and lifecycle.
@@ -78,6 +79,8 @@ These are hard constraints, not targets that may be exceeded by convenience.
 - BP-04 owns business identity and operations; BP-38 owns shared identity/data standards.
 
 ### 3.4 Simulation depth
+Saltwater is the sole primate city and dominant national/international hub, as fixed by [SW-CANON-002](../decisions/SW-CANON-002-primate-city-global-hub.md). The highest-level institutions, companies and services across the major sectors are concentrated in this one city.
+
 Police is the deepest and primary simulation. Other institutions and city systems must function sufficiently to create, support, constrain and respond to policing and to produce credible persistent consequences. They must not be decorative placeholders where their operation affects play. They are not automatically required to have police-equivalent depth.
 
 **Traceability:** C03–C07; P02–P03,P05–P06; S03.R01–R05; S07.R01–R04.
@@ -505,8 +508,8 @@ The complete 52-division mapping remains in `SALTWATER-52-TO-44-CROSSWALK.md`. T
 ## 20. Open decisions and non-assumptions
 
 The following are implementation details owned by the named divisions, not unresolved BP-01 canon decisions:
-- exact city geometry, districts, roads, parcels and address register (BP-02);
-- population membership definitions for transient persons and the exact atomic admission/exit event model (BP-03);
+- detailed city geometry, roads, parcels and address register under the already adopted single-island/eight-district/24-neighbourhood canon (BP-02);
+- implementation of the SW-CANON-001 population ledger, atomic admission/exit events and concurrency controls (BP-03);
 - business sector distribution, operating premises and generation method for the 10,000+ registry (BP-04);
 - police organisation, ranks, positions, staffing structure and career rules (BP-05–BP-08);
 - detailed crime taxonomy, legal framework and procedural rules of the fictional jurisdiction (BP-13,BP-25–BP-29);
