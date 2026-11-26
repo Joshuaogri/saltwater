@@ -157,6 +157,8 @@ jobs:
           echo "bp39_checkpoint_recovery_schema_growth_bytes=$((after_recovery-before_recovery))"
           before_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0030_bp04_business_text_id_naming.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0023_bp05_police_architecture.sql
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/police_architecture_acceptance.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0024_bp06_personnel_service_records.sql
