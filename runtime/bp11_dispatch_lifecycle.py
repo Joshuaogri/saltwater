@@ -126,6 +126,17 @@ class PostgresDispatchLifecycle:
             raise ValueError("expected_status is required.")
 
         self._require(credential, f"bp11.dispatch.{command}", deployment_id)
+        decision = self._authorization.decide(
+            credential,
+            action=f"bp11.dispatch.{command}",
+            resource=f"dispatch-deployment:{deployment_id}",
+            purpose=self._purpose,
+            expected_principal_id=self._principal_id,
+            expected_principal_kind=PrincipalKind.OFFICER,
+        )
+        if type(decision.active_person_id) is not int or decision.active_person_id < 1:
+            raise PermissionError("Access denied.")
+        actor_ref = f"officer-person:{decision.active_person_id}"
         try:
             current = self._port.get_deployment(deployment_id)
             if current is None:
@@ -144,7 +155,7 @@ class PostgresDispatchLifecycle:
                 expected_status=actual_status,
                 resulting_status=resulting_status,
                 event_kind=event_kind,
-                actor_person_id=self._principal_id,
+                actor_ref=actor_ref,
                 reason=reason,
                 source_ref=source_ref,
                 idempotency_key=idempotency_key,
