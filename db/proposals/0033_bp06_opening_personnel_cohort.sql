@@ -189,6 +189,7 @@ BEGIN
        SELECT 1 FROM jsonb_to_recordset(v_manifest)
          AS x(person_id integer,personnel_category text)
        WHERE x.person_id IS NULL
+          OR x.personnel_category IS NULL
           OR x.personnel_category NOT IN
              ('sworn_officer','civilian_employee','technical_professional')
      ) THEN
@@ -214,7 +215,7 @@ BEGIN
     RETURN 500;
   END IF;
 
-  SELECT state,world_tick INTO STRICT v_tick
+  SELECT world_tick INTO STRICT v_tick
   FROM sw_runtime.state
   WHERE singleton=1 AND state=1 AND player_present=false
     AND bootstrap_open=true AND world_tick=0
