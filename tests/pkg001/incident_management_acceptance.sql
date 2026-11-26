@@ -79,7 +79,7 @@ BEGIN
       v_incident_id,'secondary','property','SWADDR-TEST-002',NULL,
       'Fictional secondary test address','unverified',
       'test:bp12','test-authority','caller-stated:BP12-ACCEPTANCE-LOCATION-001',
-      'BP12-ACCEPTANCE-LOCATION-001'
+      'bp04-address:SWADDR-TEST-002','BP12-ACCEPTANCE-LOCATION-001'
     );
     IF v_second_location_id<>v_location_id
        OR (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>2 THEN
