@@ -99,7 +99,9 @@ class BusinessRegistryTests(unittest.TestCase):
         self.assertEqual(document["metadata"]["summary"]["distinct_business_count"], 10000)
         self.assertEqual(len(document["tables"]["businesses"]["rows"]), 10000)
         self.assertEqual(len(document["tables"]["establishments"]["rows"]), 10000)
-        persisted_names = [row["trading_name"] for row in document["tables"]["businesses"]["rows"]]
+        business_columns = document["tables"]["businesses"]["columns"]
+        trading_name_index = business_columns.index("trading_name")
+        persisted_names = [row[trading_name_index] for row in document["tables"]["businesses"]["rows"]]
         generated_names = [row["trading_name"] for row in self.registry["businesses"]]
         self.assertEqual(persisted_names, generated_names)
         self.assertEqual(document["metadata"]["naming"]["standard"], "SW-UNS-001")
