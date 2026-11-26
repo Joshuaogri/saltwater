@@ -258,6 +258,8 @@ def generate_candidates(domain: str, count: int, *, seed: int, config: Generator
         elif domain == "business":
             if not config.business_roots:
                 raise ValueError("business_roots must not be empty")
+            if not config.business_forms:
+                raise ValueError("business_forms must not be empty")
             # Business roots are sampled without replacement. A root is used once
             # per batch, so uniqueness never depends on appending numeric IDs.
             normalized_roots = [normalize_name(root) for root in config.business_roots]
