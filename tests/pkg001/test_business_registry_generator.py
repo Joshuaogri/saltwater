@@ -3,8 +3,10 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.business_registry_generator import build_business_registry
+from runtime.business_registry_generator import build_business_registry, _generate_business_names
 from runtime.property_tenure_generator import _expand_columnar
+from runtime.naming import normalize_name
+from runtime.naming_inventory import inventory_geography_names
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -22,10 +24,35 @@ class BusinessRegistryTests(unittest.TestCase):
         rows = self.registry["businesses"]
         ids = [x["business_id"] for x in rows]
         names = [x["registered_name"] for x in rows]
+        trading_names = [x["trading_name"] for x in rows]
         self.assertEqual(len(rows), 10000)
         self.assertEqual(len(ids), len(set(ids)))
         self.assertEqual(len(names), len(set(names)))
+        self.assertEqual(len(trading_names), len({normalize_name(x) for x in trading_names}))
         self.assertEqual(self.registry["summary"]["distinct_business_count"], 10000)
+
+    def test_business_names_have_no_numeric_placeholder_suffixes(self):
+        for row in self.registry["businesses"]:
+            self.assertFalse(any(ch.isdigit() for ch in row["trading_name"]), row["trading_name"])
+            self.assertFalse(any(ch.isdigit() for ch in row["registered_name"]), row["registered_name"])
+
+    def test_business_names_do_not_collide_with_adopted_geography_names(self):
+        geography = inventory_geography_names(json.loads(
+            (ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        ))
+        reserved = {normalize_name(item.display_name) for item in geography.candidates}
+        generated = {
+            normalize_name(row["trading_name"]) for row in self.registry["businesses"]
+        } | {
+            normalize_name(row["registered_name"]) for row in self.registry["businesses"]
+        }
+        self.assertFalse(generated & reserved)
+
+    def test_business_name_candidates_are_deterministic(self):
+        source = json.loads(
+            (ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(_generate_business_names(source), _generate_business_names(source))
 
     def test_every_business_has_one_establishment_and_unit_link(self):
         r = self.registry
@@ -72,6 +99,10 @@ class BusinessRegistryTests(unittest.TestCase):
         self.assertEqual(document["metadata"]["summary"]["distinct_business_count"], 10000)
         self.assertEqual(len(document["tables"]["businesses"]["rows"]), 10000)
         self.assertEqual(len(document["tables"]["establishments"]["rows"]), 10000)
+        persisted_names = [row["trading_name"] for row in document["tables"]["businesses"]["rows"]]
+        generated_names = [row["trading_name"] for row in self.registry["businesses"]]
+        self.assertEqual(persisted_names, generated_names)
+        self.assertEqual(document["metadata"]["naming"]["standard"], "SW-UNS-001")
 
 
 if __name__ == "__main__":
