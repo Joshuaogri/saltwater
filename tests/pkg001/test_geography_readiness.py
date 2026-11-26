@@ -16,6 +16,8 @@ class GeographyReadinessTests(unittest.TestCase):
             "districts": 8, "neighbourhoods": 24, "roads": 42,
             "nodes": 367, "segments": 685, "routes": 5,
         })
+        self.assertEqual(report["source_status"], "APPROVED_FOR_OPERATIONAL_USE")
+        self.assertTrue(report["checks"]["gameplay_release_approved"])
         self.assertEqual(report["failed_checks"], [])
         self.assertEqual(report["passed_checks"], len(report["checks"]))
 
