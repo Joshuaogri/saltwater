@@ -128,7 +128,10 @@ def render_command_help() -> str:
     """Render the human help text from the canonical command definitions."""
     lines = ["Saltwater commands"]
     for item in COMMAND_CATALOGUE:
-        suffix = " <id>" if item.token == "workspace" else " <type> <query>" if item.token == "find" else " <type> <id>" if item.token == "inspect" else ""
+        suffix = (" <id>" if item.token == "workspace" else
+                  " <type> <query>" if item.token == "find" else
+                  " <type> <id>" if item.token == "inspect" else
+                  " [assign <incident-id>]" if item.token == "dispatch" else "")
         lines.append(f"  {item.token}{suffix}  {item.purpose}")
     return "\n".join(lines)
 
