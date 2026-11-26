@@ -1,6 +1,7 @@
 """Generate Saltwater's 10,000-entity fictional business registry."""
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 from runtime.dataset_io import load_json
@@ -8,8 +9,12 @@ from pathlib import Path
 
 from runtime.property_world_generator import build_property_world, to_columnar_document
 from runtime.property_tenure_generator import _expand_columnar
+from runtime.naming import GeneratorConfig, normalize_name
+from runtime.name_generation import generate_candidates
+from runtime.naming_inventory import inventory_geography_names
 
-GENERATOR = "SW-BUSINESS-REGISTRY-GENERATOR-001"
+GENERATOR = "SW-BUSINESS-REGISTRY-GENERATOR-002"
+BUSINESS_NAME_SEED = 20261126
 TARGET_BUSINESSES = 10_000
 
 SECTORS = [
@@ -50,6 +55,53 @@ def _sector_for(index: int):
         cursor -= count
     raise ValueError("Business sector allocation does not cover registry target")
 
+def _load_business_name_config() -> tuple[GeneratorConfig, tuple[str, ...], tuple[str, ...]]:
+    """Load the versioned SW-UNS business vocabulary; no mutable DB writes."""
+    root = Path(__file__).resolve().parents[1]
+    payload = json.loads(
+        (root / "data/naming/saltwater-business-naming-v1.json").read_text(encoding="utf-8")
+    )
+    if payload.get("schema") != "saltwater-business-naming-vocabulary/1.0":
+        raise ValueError("unsupported business naming vocabulary schema")
+    adjectives = tuple(str(x).strip() for x in payload.get("adjectives", []) if str(x).strip())
+    nouns = tuple(str(x).strip() for x in payload.get("nouns", []) if str(x).strip())
+    forms = tuple(str(x).strip() for x in payload.get("business_forms", []) if str(x).strip())
+    legal_suffixes = tuple(str(x).strip() for x in payload.get("legal_suffixes", []) if str(x).strip())
+    if not adjectives or not nouns or not forms or not legal_suffixes:
+        raise ValueError("business naming vocabulary sections must be non-empty")
+    roots = tuple(f"{adjective} {noun}" for adjective in adjectives for noun in nouns)
+    if len({normalize_name(x) for x in roots}) != len(roots):
+        raise ValueError("business root vocabulary contains normalized duplicates")
+    config = GeneratorConfig(
+        given_names=(), middle_names=(), family_names=(), place_roots=(),
+        business_roots=roots, business_forms=forms,
+        config_version=str(payload.get("config_version", "")),
+    )
+    if not config.config_version:
+        raise ValueError("business naming config_version is required")
+    return config, forms, legal_suffixes
+
+
+def _generate_business_names(source: dict) -> tuple[str, ...]:
+    config, _, _ = _load_business_name_config()
+    candidates = generate_candidates(
+        "business", TARGET_BUSINESSES, seed=BUSINESS_NAME_SEED, config=config
+    )
+    # Existing adopted geography names are a reserved comparison set. Existing
+    # canon conflicts remain conflicts; this dry-run never renames or imports them.
+    geography = inventory_geography_names(source)
+    reserved = {normalize_name(item.display_name) for item in geography.candidates}
+    normalized = [normalize_name(name) for name in candidates]
+    if len(normalized) != len(set(normalized)):
+        raise ValueError("generated business trading names are not globally unique")
+    collision = sorted(set(normalized) & reserved)
+    if collision:
+        raise ValueError("generated business names collide with adopted geography canon: " + ", ".join(collision))
+    if any(any(ch.isdigit() for ch in name) for name in candidates):
+        raise ValueError("generated business names must not contain numeric placeholder suffixes")
+    return candidates
+
+
 def build_business_registry(source: dict, property_world: dict | None = None) -> dict:
     property_world = property_world or build_property_world(source)
     units = property_world["units"]
@@ -67,8 +119,11 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         raise ValueError("Not enough canonical units to host the business registry")
     selected_units = ordered_units[:TARGET_BUSINESSES]
 
+    trade_names = _generate_business_names(source)
+    _, _, legal_suffixes = _load_business_name_config()
     businesses, establishments, occupancy_links = [], [], []
     sector_counts = {}
+    used_public_names: set[str] = set()
     for index, unit in enumerate(selected_units):
         sequence = index + 1
         business_id = f"SWBIZ-{sequence:06d}"
@@ -83,9 +138,13 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         prem = premises[premises_id]
         building = buildings[building_id]
         address = addresses[address_id]
-        prefix = _pick(PREFIXES, business_id + "-prefix")
-        root = _pick(ROOTS, business_id + "-root")
-        trade_name = f"{prefix} {root} {sequence:05d}"
+        trade_name = trade_names[index]
+        registered_name = f"{trade_name} {_pick(legal_suffixes, business_id + '-legal-suffix')}"
+        for public_name in (trade_name, registered_name):
+            key = normalize_name(public_name)
+            if key in used_public_names:
+                raise ValueError(f"business public name collision: {public_name}")
+            used_public_names.add(key)
         legal_form = _pick(["private_limited_company","limited_liability_partnership","cooperative","sole_establishment_company","public_company"], business_id+"-form")
         size = _pick(["micro","small","small","medium","medium","large"], business_id+"-size")
         status = "active" if _number(business_id+"-status",1,100) <= 94 else ("seasonal" if _number(business_id+"-season",1,2)==1 else "temporarily_inactive")
@@ -94,7 +153,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         employee_band = {"micro":"1-4","small":"5-19","medium":"20-99","large":"100-499"}[size]
         businesses.append({
             "business_id": business_id,
-            "registered_name": f"{trade_name} {_pick(['Limited','Company','Trading','Enterprises','Cooperative'], business_id+'-suffix')}",
+            "registered_name": registered_name,
             "trading_name": trade_name,
             "sector": sector,
             "primary_activity": activity,
@@ -169,6 +228,17 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         "businesses": businesses,
         "establishments": establishments,
         "business_unit_links": occupancy_links,
+        "naming": {
+            "standard": "SW-UNS-001",
+            "vocabulary_dataset": "SW-BUSINESS-NAMING-V1",
+            "vocabulary_config_version": _load_business_name_config()[0].config_version,
+            "generator_version": 1,
+            "seed": BUSINESS_NAME_SEED,
+            "candidate_count": len(trade_names),
+            "reservation_status": "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED",
+            "exact_geography_collision_check": "PASS",
+            "numeric_placeholder_check": "PASS",
+        },
         "lineage": {
             "property_world_dataset": "SW-PROPERTY-WORLD-V1",
             "property_count": property_world["summary"]["property_count"],
@@ -198,8 +268,16 @@ def main():
     output = root / "data/business/saltwater-business-registry-v1.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     document = to_columnar_document(result)
-    output.write_text(json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n", encoding="utf-8")
-    print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"], "output_bytes": output.stat().st_size}, indent=2, sort_keys=True))
+    serialized = (json.dumps(document, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
+    output.write_bytes(serialized)
+    compressed = output.with_suffix(output.suffix + ".gz")
+    compressed.write_bytes(gzip.compress(serialized, compresslevel=9, mtime=0))
+    print(json.dumps(result["summary"] | {
+        "manifest_sha256": result["manifest_sha256"],
+        "output_bytes": output.stat().st_size,
+        "compressed_output_bytes": compressed.stat().st_size,
+        "naming": result["naming"],
+    }, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
