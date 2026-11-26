@@ -6,6 +6,7 @@ import gzip
 import hashlib
 import json
 import os
+import sys
 import time
 from pathlib import Path
 
@@ -600,6 +601,14 @@ def import_inventory(conn, inventory: dict, candidates: dict, dossiers: dict,
     }
 
 
+def _report_progress(phase: str, elapsed_ms: float) -> None:
+    """Emit diagnostics to stderr so stdout remains a single machine-readable JSON result."""
+    print(json.dumps({
+        "stage_e_import_progress": phase,
+        "elapsed_ms": elapsed_ms,
+    }), file=sys.stderr, flush=True)
+
+
 def _read_manifest(path: str) -> dict:
     source = Path(path)
     opener = gzip.open if source.suffix == ".gz" else open
@@ -626,15 +635,9 @@ def main():
             dbname=os.getenv("PGDATABASE","saltwater_test"),user=os.getenv("PGUSER","saltwater_test"),
             password=os.getenv("PGPASSWORD","test-only"))
     try:
-        def report_progress(phase, elapsed_ms):
-            print(json.dumps({
-                "stage_e_import_progress": phase,
-                "elapsed_ms": elapsed_ms,
-            }), flush=True)
-
         result=import_inventory(
             conn, inventory, candidates, dossiers, args.source_commit,
-            progress_callback=report_progress,
+            progress_callback=_report_progress,
         )
         print(json.dumps(result,indent=2,sort_keys=True))
     finally:
