@@ -155,9 +155,15 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
         ]
         assets = {
             "access_points": [
-                {"candidate_access_point_id": row["candidate_access_point_id"]}
+                {
+                    "candidate_access_point_id": row["candidate_access_point_id"],
+                    "building_id": row["candidate_building_id"],
+                }
                 for row in selected_connectors
-            ] + [{"candidate_access_point_id": f"AP-EXTRA-{i}"} for i in range(416)],
+            ] + [
+                {"candidate_access_point_id": f"AP-EXTRA-{i}", "building_id": f"BLD-EXTRA-{i}"}
+                for i in range(416)
+            ],
             "buildings": [
                 {
                     "candidate_building_id": row["candidate_building_id"],
