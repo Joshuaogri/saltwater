@@ -109,7 +109,7 @@ BEGIN
   WHERE idempotency_key=p_idempotency_key;
   IF FOUND THEN
     IF v_prior.incident_id<>p_incident_id OR v_prior.handover_ref<>p_handover_ref
-       OR v_prior.handover_document<>p_handover_document
+       OR v_prior.handover_document<>jsonb_set(p_handover_document,'{record_status}','"PERSISTED"'::jsonb,true)
        OR v_prior.source_ref<>p_source_ref THEN
       RAISE EXCEPTION 'command handover idempotency key conflicts with prior record';
     END IF;
