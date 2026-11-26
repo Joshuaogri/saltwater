@@ -138,8 +138,14 @@ class NameGenerationTests(unittest.TestCase):
         self.assertGreaterEqual(len({x.rsplit(" ", 1)[-1] for x in values}), 4)
 
     def test_business_generation_is_deterministic_and_unique(self):
-        values = generate_candidates("business", 12, seed=9, config=self.config)
+        values = generate_candidates("business", 4, seed=9, config=self.config)
         self.assertEqual(len(values), len({normalize_name(x) for x in values}))
+        self.assertEqual(len({normalize_name(" ".join(x.split()[:1])) for x in values}), 4)
+        self.assertTrue(all(not any(ch.isdigit() for ch in x) for x in values))
+
+    def test_business_generation_fails_closed_when_root_vocabulary_is_too_small(self):
+        with self.assertRaises(NamingError):
+            generate_candidates("business", 5, seed=9, config=self.config)
 
     def test_batch_records_version_seed_and_reproducible_manifest(self):
         a = generate_batch("person", 8, seed=71, config=self.config)
