@@ -13,8 +13,9 @@ player does not administer every NPC individually.
 ## Police workforce foundation
 
 The BP05 organisational establishment contains 500 authorised police posts.
-The current NPC workforce generator creates one stable NPC occupant per
-authorised post, using the existing post identity, unit and position title.
+The NPC workforce generator creates one stable NPC occupant per authorised
+post on each of four shifts, using the existing post identity, unit and position
+title. The 500-post establishment therefore yields 2,000 shift occupants.
 NPC identity is distinct from player identity. Generation is deterministic for
 a given seed and post catalogue, so repeated runs produce the same NPC roster.
 
