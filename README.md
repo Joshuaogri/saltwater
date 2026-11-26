@@ -21,7 +21,7 @@ Backup/restore verified 420 property assets, 180,733 units, 4,842 asset geometry
 
 ### BP04 gameplay lookup integrity — 2026-11-26
 
-A read-only `BP04IncidentLocationResolver` now prepares an incident/address location candidate after separately authorising and auditing the incident read and BP04 address resolution. It preserves the originating incident source, caller/location source reference, BP04 address source reference and explicit confidence; candidates remain `approval_required=true` and `persisted=false` until routed through BP12's append-only event-backed location workflow. Regression tests cover provenance, separate grants and missing incidents.
+`BP04IncidentLocationResolver` now resolves incident addresses under separate audited incident/address grants and hands reviewed candidates to BP12's `add_incident_location` writer. BP12 appends an `INCIDENT_LOCATION_ADDED` simulation event and immutable location record, retains caller/source and BP04 address provenance separately, validates runtime and incident state, and enforces idempotency. No spatial ID is inferred from an address. Regression tests cover authorisation, provenance and the writer handoff.
 
 The officer-only lookup adapter also has regression coverage for revoked sessions and audit-store outages: revoked sessions are denied, and an otherwise authorised lookup is denied if its durable audit decision cannot be recorded. Dispatch/investigation address resolution remains a read-only, permission-checked address dossier operation; no operational access or canonical geography is inferred.
 
