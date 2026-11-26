@@ -54,7 +54,14 @@ class NPCDispatchSimulator:
         self._officers = {officer.npc_id: officer for officer in officer_rows}
         self._units: dict[str, dict] = {}
         self._officer_state = {
-            officer.npc_id: ("available" if officer.shift_group == current_shift else "off_duty")
+            officer.npc_id: (
+                "unassigned"
+                if officer.unit_id is None or officer.post_id is None
+                   or officer.service_standing == "recruit"
+                else "unavailable"
+                if officer.service_state != "active"
+                else "available" if officer.shift_group == current_shift else "off_duty"
+            )
             for officer in officer_rows
         }
         self._unit_state: dict[str, str] = {}
@@ -204,15 +211,21 @@ class NPCDispatchSimulator:
             "current_shift": self.current_shift,
             "units": self.available_units(),
             "deployments": [asdict(item) for item in self._deployments.values()],
+            "workforce_count": len(self._officers),
             "available_npc_count": sum(state == "available" for state in self._officer_state.values()),
             "assigned_npc_count": sum(state in self._ACTIVE_STATES for state in self._officer_state.values()),
             "off_duty_npc_count": sum(state == "off_duty" for state in self._officer_state.values()),
+            "unassigned_npc_count": sum(state == "unassigned" for state in self._officer_state.values()),
+            "unavailable_npc_count": sum(state == "unavailable" for state in self._officer_state.values()),
         }
 
     def _available_crew(self, unit_id: str, shift: str) -> list[NPCOfficer]:
         crew = [
             officer for officer in self._officers.values()
             if officer.unit_id == unit_id
+            and officer.post_id is not None
+            and officer.position_type in {"sworn", "mixed"}
+            and officer.service_standing != "recruit"
             and officer.shift_group == shift
             and officer.service_state == "active"
             and self._officer_state[officer.npc_id] == "available"
