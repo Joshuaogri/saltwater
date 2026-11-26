@@ -207,6 +207,26 @@ class PlayerCommandRuntimeTests(unittest.TestCase):
             "opaque-credential", "find address Harbour Avenue"
         )
 
+    def test_trusted_hidden_truth_revealer_is_passed_into_player_application(self):
+        revealer = lambda player_id: "Hidden truth for " + player_id
+        gateway = Mock()
+        gateway.execute.return_value = CommandResult(True, "Hidden truth")
+        with patch(
+            "runtime.player_command_runtime.create_postgres_player_application",
+            return_value=object(),
+        ) as create_app, patch(
+            "runtime.player_command_runtime.bind_authorized_player_commands",
+            return_value=gateway,
+        ):
+            runtime = PostgresPlayerCommandRuntime(
+                self.connect, self.verifier, self.authorization,
+                hidden_truth_revealer=revealer,
+            )
+            result = runtime.execute("opaque-credential", "bingo")
+        self.assertTrue(result.ok)
+        self.assertIs(create_app.call_args.kwargs["hidden_truth_revealer"], revealer)
+        gateway.execute.assert_called_once_with("opaque-credential", "bingo")
+
     def test_revoked_session_is_still_sent_to_gateway_for_audited_denial(self):
         self.verifier.session = make_session(status=SessionStatus.REVOKED)
         gateway = Mock()
