@@ -70,7 +70,7 @@ def pg_trgm_similarity(left: str, right: str) -> float:
     """
     def trigrams(value: str) -> set[str]:
         result: set[str] = set()
-        for word in re.findall(r"\\w+", value.casefold(), flags=re.UNICODE):
+        for word in re.findall(r"\w+", value.casefold(), flags=re.UNICODE):
             padded = f"  {word} "
             result.update(padded[index:index + 3] for index in range(len(padded) - 2))
         return result
