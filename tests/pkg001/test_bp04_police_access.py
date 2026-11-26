@@ -973,7 +973,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
                       "status": "ASSIGNED", "source_ref": "bp08:DEP-5"}
         with self.assertRaisesRegex(ValueError, "duplicate assignment"):
             reconcile_incident_command_handover(
-                42, incident_status="OPEN", snapshot_source_ref="bp08:snapshot:5",
+                42, incident_status="RECEIVED", snapshot_source_ref="bp08:snapshot:5",
                 as_of_world_tick=1, assignment_snapshot=[assignment, assignment],
                 timeline_rows=[],
             )
