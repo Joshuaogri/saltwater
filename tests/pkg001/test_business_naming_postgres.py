@@ -75,6 +75,9 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     (naming["vocabulary_config_version"], cls.manifest_digest),
                 )
                 cls.batch_id = cur.fetchone()[0]
+                # Refresh pg_trgm GIN selectivity statistics before the 20,000
+                # reservation acceptance; stale stats can force repeated scans.
+                cur.execute("ANALYZE sw_names.name_reservation")
 
     def reserve(self, business_id, name, name_form="trading", batch_id=None):
         with connect() as conn:
