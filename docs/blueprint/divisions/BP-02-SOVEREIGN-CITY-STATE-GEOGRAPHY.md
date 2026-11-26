@@ -3,11 +3,11 @@
 **Project:** Saltwater  
 **Blueprint:** BP-01–BP-44  
 **Version:** 0.1  
-**Status:** `DESIGNED_DRAFT` — awaiting user review/approval  
+**Status:** `VERIFIED` — completed and released for fictional gameplay on 2026-11-26  
 **Date:** 2026-11-22  
 **Owner:** BP-02  
 **Dependencies:** BP-01, BP-03, BP-04, BP-10–BP-12, BP-17, BP-20, BP-22, BP-35, BP-37, BP-38, BP-40, BP-43, BP-44  
-**Authority:** User-owned canon. Foundational geography is resolved by [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md); the detailed versioned map dataset remains to be built and validated.
+**Authority:** User-owned and approved canon. Foundational geography is resolved by [SW-CANON-001](../decisions/SW-CANON-001-population-scope-and-foundational-geography.md). The versioned gameplay geography, parcel/address identities, access-point candidates and bridge-connector assessments have been implemented, released and verified by the full BP-02 acceptance workflow. Production Neon seeding is tracked separately and is not represented as completed.
 
 ---
 
@@ -509,7 +509,7 @@ No additional district, neighbourhood, city, territory or external playable area
 
 ## 19. Completion statement
 
-**Design status:** `DESIGNED_DRAFT`; foundational geography canon is adopted by SW-CANON-001. Detailed map geometry, roads, parcels, addresses and routing remain to be implemented and validated.  
+**Design and release status:** `VERIFIED`; foundational geography canon, the versioned fictional map, roads, parcel/address identities, gameplay access-point inventory and bridge-connector assessments are implemented and accepted for gameplay. Production Neon seeding remains a separate, unperformed persistence step.  
 **Implementation status:** `NOT_STARTED` unless separately evidenced.  
 **Test status:** `NOT_STARTED`.  
 **Verification status:** `NOT_STARTED`.
@@ -564,3 +564,16 @@ Requirements:
 BP-02 supplies its canonical spatial IDs and names to BP-03, BP-04 and all operational consumers. BP-38 owns the registry's authoritative persistence and constraints; BP-43 must test geographic name collisions, historical reservation, imports and concurrent creation.
 
 **SW-NAM-001 implementation slice:** proposal `0009_universal_name_registry.sql` adds a geography-version trigger that reserves names atomically against stable `spatial_id` values and records append-only rename history. The two existing roots (`saltwater-state`, `saltwater-city`) retain separate IDs and the exact name `Saltwater` under the sole user-approved exception; name-only lookup returns both. The registry migration and SQL/Python tests are disposable-only. User-approved corrections resolve those two collisions without changing IDs: neighbourhood `SW-D01-N1` is now **Westgate Gardens** while district `SW-D01` remains **Westgate**; neighbourhood `SW-D03-N2` is now **Civic Terrace** while landmark `SW-POI-002` remains **Government Square**. The source JSON and SVG labels are updated. The map dataset is still not approved for operational seeding and 100 map source IDs still have no materialised spatial-ID mapping, so canon import remains blocked. Disposable CI passed in runs `45409845359`, `45410340222` and `45411243093`; final storage-detail run `45411243093` passed and recorded populated heap/index/TOAST storage detail. No Neon migration or BP-02 completion is claimed.
+
+
+## BP-02 completion and acceptance — 2026-11-26
+
+**Division status: COMPLETE — VERIFIED FOR FICTIONAL GAMEPLAY.**
+
+The user confirmed acceptance of BP-02 after the complete acceptance workflow passed. GitHub Actions run [45889071983](https://github.com/Joshuaogri/saltwater/actions/runs/45889071983), job `140146960703` (`full-bp02-acceptance`), completed successfully. The workflow completed the address-review/geometry-exception tests, full parcel/address/access-point acceptance audit and evidence-artifact publication.
+
+The released gameplay geography includes the canonical fictional geography source, 420 stable parcel identities and 420 linked address identities, the generated building access-point inventory, the five resolved address/frontage dispositions and four bridge connector engineering assessments. The release and acceptance audit distinguish fictional gameplay approval from real-world engineering claims; the connector specifications are authored Saltwater game-world facts.
+
+The BP-02 source release and acceptance evidence are maintained on GitHub `main`. **No BP-02 geography dataset has been uploaded or seeded into production Neon.** Neon persistence/import is a separate integration task and must not be implied by this source-level completion status.
+
+This completion record supersedes earlier draft, pending, blocked and “not yet approved for operational seeding” status notes in this document. Those notes remain as historical evidence of the earlier development stages.
