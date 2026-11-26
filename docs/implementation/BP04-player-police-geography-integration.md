@@ -234,3 +234,10 @@ The remaining work is divided into four acceptance tracks:
 4. **Consolidated acceptance:** run the pinned archive/source integrity and cross-register checks, player command integration, officer authorization and police handoff tests, BP02 address/parcel reconciliation and geometry audit, representative lookup performance, and failure/rollback/recovery checks. Publish a criterion-to-test matrix with explicit PASS, BLOCKED or NOT IMPLEMENTED results. BP04 is complete only when every required BP04 criterion passes or an explicitly accepted dependency is recorded; successful archive deployment alone is not division completion.
 
 **Release boundaries:** BP02 operational parcel/address approval remains a separately owned geography dependency; BP04 must continue to label its stable SWP/SWA design identities as unapproved for operational use. No production Neon writes, grants or data promotions are authorised by this plan.
+
+
+### Player command integration — real archive test added (2026-11-26)
+
+Added `tests/pkg001/test_bp04_player_commands_archives.py` and wired it into the PostgreSQL 16/18 BP04 disposable workflow immediately after the archive-only import. Unlike the lookup-only archive test, this exercises the actual `PlayerCommandInterface` using the real `BP04Lookup` built from the imported compressed archives.
+
+The integration covers `find` for property, address and business; `inspect` for property, address, building, premises, unit, access point, business and establishment; malformed/missing records; and proof that read-only lookup leaves lifecycle, player presence and world tick unchanged. The workflow is triggered by the new test and runs it on both PostgreSQL versions. Result remains pending until GitHub Actions reports the run; this is not yet a passing acceptance claim.
