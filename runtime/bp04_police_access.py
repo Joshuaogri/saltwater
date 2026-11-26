@@ -160,6 +160,50 @@ class BP04IncidentLocationResolver:
         }
 
 
+    def record_address_location(
+        self, credential: str, incident_id: int, address_id: str, *,
+        location_writer, actor_ref: str, authority_ref: str,
+        idempotency_key: str, location_role: str = "primary",
+        confidence: str = "unverified", source_ref: str,
+        raw_description: str,
+    ) -> dict:
+        """Record a reviewed address through a trusted BP12 event-backed writer."""
+        if not callable(location_writer):
+            raise TypeError("A trusted BP12 location writer is required")
+        for name, value in (
+            ("actor_ref", actor_ref), ("authority_ref", authority_ref),
+            ("idempotency_key", idempotency_key),
+            ("raw_description", raw_description),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} is required")
+        candidate = self.prepare_address_candidate(
+            credential, incident_id, address_id,
+            location_role=location_role, confidence=confidence,
+            source_ref=source_ref,
+        )
+        location_id = location_writer(
+            p_incident_id=incident_id,
+            p_location_role=candidate["location_role"],
+            p_location_type=candidate["location_type"],
+            p_location_ref=address_id,
+            p_spatial_id=None,
+            p_raw_description=raw_description,
+            p_confidence=candidate["confidence"],
+            p_actor_ref=actor_ref,
+            p_authority_ref=authority_ref,
+            p_source_ref=candidate["source_ref"],
+            p_address_source_ref=candidate["address_source_ref"],
+            p_idempotency_key=idempotency_key,
+        )
+        return {
+            **candidate,
+            "approval_required": False,
+            "persisted": True,
+            "incident_location_id": location_id,
+        }
+
+
 def create_postgres_bp04_police_lookup_access(
     connect,
     lookup: Any,
