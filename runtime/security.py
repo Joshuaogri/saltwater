@@ -188,7 +188,7 @@ class AuthorizationService:
         elif at < session.issued_at or at >= session.expires_at:
             reason = "session_outside_validity_window"
         elif action == "reveal_hidden_truth" and (
-            session.principal_kind != PrincipalKind.PLAYER or reveal_trigger != "bingo"
+            session.principal_kind != PrincipalKind.PLAYER or not is_exact_hidden_truth_reveal_trigger(reveal_trigger)
         ):
             reason = "hidden_truth_requires_exact_player_trigger"
         else:
