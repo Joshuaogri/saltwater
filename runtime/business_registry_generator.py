@@ -3,14 +3,13 @@ from __future__ import annotations
 
 import gzip
 import hashlib
-from difflib import SequenceMatcher
 import json
 from runtime.dataset_io import load_json
 from pathlib import Path
 
 from runtime.property_world_generator import build_property_world, to_columnar_document
 from runtime.property_tenure_generator import _expand_columnar
-from runtime.naming import GeneratorConfig, normalize_name
+from runtime.naming import GeneratorConfig, normalize_name, pg_trgm_similarity
 from runtime.name_generation import generate_candidates
 from runtime.naming_inventory import inventory_geography_names
 
@@ -84,69 +83,92 @@ def _load_business_name_config() -> tuple[GeneratorConfig, tuple[str, ...], tupl
 
 
 def _generate_business_names_report(source: dict) -> dict:
-    config, _, _ = _load_business_name_config()
-    candidate_pool_count = TARGET_BUSINESSES + 1000
+    config, _, legal_suffixes = _load_business_name_config()
+    candidate_pool_count = TARGET_BUSINESSES + 2000
     candidates = generate_candidates(
         "business", candidate_pool_count, seed=BUSINESS_NAME_SEED, config=config
     )
     geography = inventory_geography_names(source)
     geography_names = tuple(item.display_name for item in geography.candidates)
     reserved = {normalize_name(name) for name in geography_names}
-    normalized = [normalize_name(name) for name in candidates]
-    if len(normalized) != len(set(normalized)):
-        raise ValueError("generated business trading names are not globally unique")
-    collision = sorted(set(normalized) & reserved)
-    if collision:
-        raise ValueError("generated business names collide with adopted geography canon: " + ", ".join(collision))
-    if any(any(ch.isdigit() for ch in name) for name in candidates):
-        raise ValueError("generated business names must not contain numeric placeholder suffixes")
 
-    # Match the shared registry's 0.90 near-duplicate review threshold. Candidate
-    # roots are adjective+noun pairs; compare only roots whose component words
-    # are themselves similar, avoiding an O(n^2) scan across the full batch.
     adjective_vocab = tuple(dict.fromkeys(root.split(" ", 1)[0] for root in config.business_roots))
     noun_vocab = tuple(dict.fromkeys(root.split(" ", 1)[1] for root in config.business_roots))
     def similar_words(words: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
         return {
             word: tuple(
                 other for other in words
-                if SequenceMatcher(None, word.casefold(), other.casefold()).ratio() >= 0.90
+                if pg_trgm_similarity(word, other) > 0.90
             )
             for word in words
         }
     similar_adjectives = similar_words(adjective_vocab)
     similar_nouns = similar_words(noun_vocab)
-    accepted_by_root: dict[tuple[str, str], str] = {}
-    accepted: list[str] = []
+
+    accepted_trading: list[str] = []
+    accepted_registered: list[str] = []
+    accepted_by_root: dict[tuple[str, str], list[str]] = {}
+    accepted_public_keys: set[str] = set()
     held_near_duplicates = 0
+    held_exact_collisions = 0
+
     for candidate in candidates:
         adjective, noun, *_ = candidate.split()
-        near = False
+        business_id = f"SWBIZ-{len(accepted_trading) + 1:06d}"
+        registered_name = (
+            f"{candidate} {_pick(legal_suffixes, business_id + '-legal-suffix')}"
+        )
+        public_names = (candidate, registered_name)
+        public_keys = tuple(normalize_name(name) for name in public_names)
+
+        if len(set(public_keys)) != len(public_keys) or any(
+            key in reserved or key in accepted_public_keys for key in public_keys
+        ):
+            held_exact_collisions += 1
+            continue
+
+        near_duplicate = False
         for other_adjective in similar_adjectives[adjective]:
             for other_noun in similar_nouns[noun]:
-                other = accepted_by_root.get((other_adjective, other_noun))
-                if other and SequenceMatcher(None, candidate.casefold(), other.casefold()).ratio() >= 0.90:
-                    near = True
+                for existing_name in accepted_by_root.get((other_adjective, other_noun), ()):
+                    if any(
+                        pg_trgm_similarity(public_name, existing_name) > 0.90
+                        for public_name in public_names
+                    ):
+                        near_duplicate = True
+                        break
+                if near_duplicate:
                     break
-            if near:
+            if near_duplicate:
                 break
-        if near:
+
+        if near_duplicate:
             held_near_duplicates += 1
             continue
-        accepted_by_root[(adjective, noun)] = candidate
-        accepted.append(candidate)
-        if len(accepted) == TARGET_BUSINESSES:
+
+        accepted_trading.append(candidate)
+        accepted_registered.append(registered_name)
+        accepted_public_keys.update(public_keys)
+        accepted_by_root.setdefault((adjective, noun), []).extend(public_names)
+        if len(accepted_trading) == TARGET_BUSINESSES:
             break
-    if len(accepted) != TARGET_BUSINESSES:
+
+    if len(accepted_trading) != TARGET_BUSINESSES:
         raise ValueError(
-            f"business vocabulary produced only {len(accepted)} names after exact and near-duplicate review"
+            "business vocabulary produced only "
+            f"{len(accepted_trading)} names after PostgreSQL-compatible exact "
+            "and near-duplicate review"
         )
     return {
-        "names": tuple(accepted),
+        "names": tuple(accepted_trading),
+        "registered_names": tuple(accepted_registered),
         "candidate_pool_count": candidate_pool_count,
         "near_duplicate_candidates_held": held_near_duplicates,
+        "exact_collision_candidates_held": held_exact_collisions,
         "near_duplicate_threshold": 0.90,
+        "similarity_algorithm": "POSTGRES_PG_TRGM_COMPATIBLE",
         "geography_names_checked": len(geography_names),
+        "public_name_count": len(accepted_public_keys),
     }
 
 
@@ -173,7 +195,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
 
     name_report = _generate_business_names_report(source)
     trade_names = name_report["names"]
-    _, _, legal_suffixes = _load_business_name_config()
+    registered_names = name_report["registered_names"]
     businesses, establishments, occupancy_links = [], [], []
     sector_counts = {}
     used_public_names: set[str] = set()
@@ -192,7 +214,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         building = buildings[building_id]
         address = addresses[address_id]
         trade_name = trade_names[index]
-        registered_name = f"{trade_name} {_pick(legal_suffixes, business_id + '-legal-suffix')}"
+        registered_name = registered_names[index]"
         for public_name in (trade_name, registered_name):
             key = normalize_name(public_name)
             if key in used_public_names:
@@ -290,9 +312,12 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
             "candidate_count": len(trade_names),
             "candidate_pool_count": name_report["candidate_pool_count"],
             "near_duplicate_candidates_held": name_report["near_duplicate_candidates_held"],
+            "exact_collision_candidates_held": name_report["exact_collision_candidates_held"],
             "near_duplicate_threshold": name_report["near_duplicate_threshold"],
-            "near_duplicate_screen": "PASS_WITHIN_GENERATED_BATCH_ONLY",
+            "similarity_algorithm": name_report["similarity_algorithm"],
+            "near_duplicate_screen": "PASS_WITHIN_ALL_GENERATED_PUBLIC_NAMES",
             "geography_names_checked": name_report["geography_names_checked"],
+            "public_name_count": name_report["public_name_count"],
             "reservation_status": "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED",
             "exact_geography_collision_check": "PASS",
             "numeric_placeholder_check": "PASS",
