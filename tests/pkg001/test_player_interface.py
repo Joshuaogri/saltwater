@@ -152,6 +152,38 @@ class PlayerCommandInterfaceTests(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertIn("not connected", result.message)
 
+    def test_dispatch_command_uses_injected_authorised_console(self):
+        class Console:
+            def __init__(self):
+                self.called = False
+            def snapshot(self, incident_limit=25):
+                self.called = True
+                return {
+                    "incidents": [{"incident_ref": "SWINC-100", "priority": 1,
+                                   "severity_code": "high", "status": "OPEN"}],
+                    "dispatchable_unit_profiles": [{"unit_id": "SWPS-UNIT-PATROL",
+                        "official_name": "Patrol Unit", "dispatch_eligible": False,
+                        "readiness_reason": "resources_not_ready"}],
+                    "eligible_unit_count": 0,
+                }
+            def render(self, snapshot):
+                from runtime.bp11_dispatcher_console import PostgresDispatcherConsole
+                return PostgresDispatcherConsole.render(snapshot)
+
+        console = Console()
+        interface = PlayerCommandInterface(self.kernel, self.profile, dispatch_console=console)
+        result = interface.execute("dispatch")
+        self.assertTrue(result.ok)
+        self.assertTrue(console.called)
+        self.assertIn("SWINC-100", result.message)
+        self.assertIn("NOT ELIGIBLE", result.message)
+        self.assertIn("read-only", result.message.lower())
+
+    def test_dispatch_command_fails_honestly_without_console(self):
+        result = self.interface.execute("dispatch")
+        self.assertFalse(result.ok)
+        self.assertIn("not connected", result.message)
+
     def test_bingo_is_not_a_general_command(self):
         result = self.interface.execute("bingo")
         self.assertFalse(result.ok)
