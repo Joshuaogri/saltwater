@@ -106,7 +106,8 @@ class BP11DispatchBoardTests(unittest.TestCase):
         self.assertTrue(units[0]["staffing_eligible"])
         self.assertFalse(units[0]["dispatch_eligible"])
         self.assertEqual(units[0]["readiness_reason"],
-                         "resource_readiness_not_integrated")
+                         "resource_shortage_or_unverified")
+        self.assertFalse(units[0]["resources_ready"])
         self.assertTrue(audit.records[-1].allowed)
 
     def test_snapshot_reports_zero_assignments_and_eligible_count(self):
@@ -114,7 +115,7 @@ class BP11DispatchBoardTests(unittest.TestCase):
                     1, "high", "Urgent", 8, 8, 8, 1, 1, None, "communications")
         unit = ("SWPS-UNIT-PATROL", "General Patrol", "general_patrol",
                 "frontline", True, 2, 6, 12, 5, "available", True,
-                False, "resource_readiness_not_integrated", ["patrol"])
+                False, "resource_shortage_or_unverified", False, ["patrol"])
         cursor = Cursor(row_sets=[[incident], [unit]])
         board, _ = make_board(cursor)
         result = board.snapshot("dispatcher-session", incident_limit=5)
