@@ -1,5 +1,24 @@
 # Saltwater
 
+## Gemini independent engineering review
+
+A read-only Gemini reviewer is available through
+[the Gemini BP04 review workflow](.github/workflows/gemini-bp04-review.yml).
+It reviews a selected PKG-001 disposable PostgreSQL run alongside the BP04
+business-name acceptance test, Python reservation adapter and authoritative SQL
+reservation/trigger implementation. Its remit is performance diagnosis and
+independent engineering critique; it cannot commit code, alter workflow
+requirements, disable registry safeguards, or access production Neon.
+
+To enable it, add a repository Actions secret named `GEMINI_API_KEY` using a
+key created in [Google AI Studio](https://aistudio.google.com/app/apikey).
+Then open **Actions → Gemini independent engineering review → Run workflow**,
+enter the PKG-001 run ID, and leave the model as `gemini-3.8-flash`. The report
+appears in the workflow summary and as a downloadable artifact. The workflow
+uses the Gemini Interactions API and requests non-persistent processing
+(`store: false`). No Gemini request is made until the workflow is manually
+run and the secret is configured.
+
 ## BP02 bridge identity and business-naming lock remediation — 2026-11-26
 
 The BP02 bridge assessment builder now selects only the four connector identities
