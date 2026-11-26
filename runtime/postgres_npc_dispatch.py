@@ -5,7 +5,7 @@ from typing import Any, Callable, Iterable
 
 from runtime.npc_dispatch import NPCDispatchSimulator
 from runtime.npc_dispatch_console import NPCDispatchConsole
-from runtime.npc_workforce import NPCWorkforceGenerator
+from runtime.npc_workforce import NPCOfficer, NPCWorkforceGenerator
 
 
 class PostgresNPCDispatchFactory:
@@ -15,17 +15,32 @@ class PostgresNPCDispatchFactory:
     event, or production data is written by this factory.
     """
 
-    POSTS_SQL = """
-        SELECT p.post_id, p.component_id AS unit_id, d.position_title, d.position_type
-        FROM sw_police.authorised_post p
-        JOIN sw_police.position_definition d USING (position_id)
-        WHERE p.post_status <> 'abolished'
-        ORDER BY p.post_id
+    STAFF_SQL = """
+        SELECT p.personnel_id::text, p.service_number,
+               person.given_name, person.family_name,
+               p.service_standing, service.service_state, service.personnel_category,
+               membership.unit_id, membership.post_id,
+               position.position_title, position.position_type
+        FROM sw_police.personnel p
+        JOIN sw_police.personnel_service_current service
+          ON service.personnel_id = p.personnel_id
+        JOIN sw_people.person person ON person.person_id = p.person_id
+        LEFT JOIN sw_police.unit_membership membership
+          ON membership.personnel_id = p.personnel_id
+         AND membership.membership_type = 'primary'
+         AND membership.actual_end_tick IS NULL
+        LEFT JOIN sw_police.career_post_appointment appointment
+          ON appointment.position_appointment_id = membership.position_appointment_id
+         AND appointment.effective_to_tick IS NULL
+        LEFT JOIN sw_police.position_definition position
+          ON position.position_id = appointment.position_id
+        WHERE service.life_status = 1 AND service.scope_status = 1
+        ORDER BY p.personnel_id
     """
     UNITS_SQL = """
         SELECT u.unit_id, u.functional_domain, u.dispatchable,
                u.minimum_crew_size, u.target_crew_size,
-               s.operational_status, s.status_effective_tick, u.capability_codes
+               s.operational_status, u.capability_codes
         FROM sw_police.unit_profile u
         JOIN sw_police.unit_current_status s USING (unit_id)
         WHERE u.lifecycle_state = 'active'
@@ -42,11 +57,33 @@ class PostgresNPCDispatchFactory:
         try:
             with self._connection_factory() as connection:
                 with connection.cursor() as cursor:
-                    cursor.execute(self.POSTS_SQL)
-                    posts = [
-                        {"post_id": row[0], "unit_id": row[1], "position_title": row[2], "position_type": row[3]}
-                        for row in cursor.fetchall()
-                    ]
+                    cursor.execute(self.STAFF_SQL)
+                    staff_rows = cursor.fetchall()
+                    officers = []
+                    for row in staff_rows:
+                        personnel_id, service_number, given, family, standing, service_state, category, unit_id, post_id, title, position_type = row
+                        display_name = " ".join(part for part in (given, family) if isinstance(part, str) and part.strip())
+                        if not display_name:
+                            display_name = str(service_number)
+                        if not title:
+                            title = "Unassigned recruit" if standing == "recruit" else "Unassigned personnel"
+                        if position_type not in {"sworn", "civilian", "mixed"}:
+                            position_type = "sworn" if category == "sworn_officer" else "civilian"
+                        officers.append(NPCOfficer(
+                            npc_id=f"SWPERSONNEL:{personnel_id}",
+                            service_number=str(service_number),
+                            given_name=str(given or ""),
+                            family_name=str(family or ""),
+                            display_name=display_name,
+                            unit_id=unit_id,
+                            post_id=post_id,
+                            position_title=str(title),
+                            shift_group="Alpha",
+                            service_state=str(service_state),
+                            service_standing=str(standing),
+                            position_type=position_type,
+                        ))
+                    officers = NPCWorkforceGenerator.assign_shift_groups(officers)
                     cursor.execute(self.UNITS_SQL)
                     units = [
                         {
@@ -55,22 +92,15 @@ class PostgresNPCDispatchFactory:
                             "dispatchable": row[2],
                             "minimum_crew_size": row[3],
                             "target_crew_size": row[4],
-                            # The BP08 status view defaults to unavailable when no status event exists.
-                            # At game bootstrap, an active dispatchable unit with no status history is
-                            # initialised as available in this in-memory game projection; explicit
-                            # unavailable/deployed/etc. status events remain authoritative.
-                            "operational_status": (
-                                "available" if row[6] is None and row[2] is True else row[5]
-                            ),
-                            "capability_codes": row[7],
+                            # BP08's current-status projection is authoritative.
+                            # No status event means unavailable, not implicitly ready.
+                            "operational_status": row[5],
+                            "capability_codes": row[6],
                         }
                         for row in cursor.fetchall()
                     ]
-            if not posts:
-                raise ValueError("The police establishment contains no authorised NPC posts.")
             if not units:
                 raise ValueError("The police establishment contains no active unit profiles.")
-            officers = self._generator.generate_shift_roster(posts)
             simulator = NPCDispatchSimulator(
                 officers, units, current_shift=current_shift
             )
