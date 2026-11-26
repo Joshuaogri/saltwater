@@ -23,6 +23,7 @@ class NPCWorkforceGeneratorTests(unittest.TestCase):
         self.assertEqual(len({person.post_id for person in roster}), 500)
         self.assertTrue(all(person.actor_kind == "npc" for person in roster))
         self.assertTrue(all(person.player_controlled is False for person in roster))
+        self.assertTrue(all(person.position_type == "sworn" for person in roster))
 
     def test_generation_is_deterministic_and_seeded(self):
         source = posts(30)
@@ -49,6 +50,16 @@ class NPCWorkforceGeneratorTests(unittest.TestCase):
     def test_incomplete_post_fails(self):
         with self.assertRaises(NPCWorkforceError):
             NPCWorkforceGenerator().generate([{"post_id": "P1", "unit_id": "U1"}])
+
+    def test_position_type_preserves_civilian_and_mixed_roles(self):
+        source = [
+            {"post_id": "P1", "unit_id": "U1", "position_title": "Dispatcher",
+             "position_type": "civilian"},
+            {"post_id": "P2", "unit_id": "U1", "position_title": "Training Officer",
+             "position_type": "mixed"},
+        ]
+        roster = NPCWorkforceGenerator().generate(source)
+        self.assertEqual([person.position_type for person in roster], ["civilian", "mixed"])
 
     def test_empty_catalogue_returns_empty_roster(self):
         self.assertEqual(NPCWorkforceGenerator().generate([]), ())
