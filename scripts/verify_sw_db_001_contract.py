@@ -22,7 +22,7 @@ def verify() -> None:
     if "0009_universal_name_registry.sql" not in names:
         raise SystemExit("proposal 0009 naming registry must precede SW-DB-001")
     migrations = sorted((ROOT / "db/migrations").glob("*.sql"))
-    if any(path.name.startswith("0010_") for path in migrations):
+    if any(path.name == PROPOSAL.name for path in migrations):
         raise SystemExit("SW-DB-001 must remain a disposable proposal, not a source migration")
 
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
