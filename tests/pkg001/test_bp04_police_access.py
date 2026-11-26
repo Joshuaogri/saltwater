@@ -1198,5 +1198,151 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(self.audit.records[-1].reason, "no_matching_grant")
 
 
+    def test_authorised_handover_persistence_requires_record_and_source_grants(self):
+        grants = self.grants + (
+            Grant("bp12.incident.record.command_handover", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.command_handover", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp08.deployment.inspect.incident_assignments", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.operational_timeline", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {
+                "incident_id": incident_id, "status": "ACTIVE_MANAGEMENT",
+            },
+        )
+        class Writer:
+            def __init__(self):
+                self.document = None
+                self.key = None
+            def record(self, document, *, idempotency_key):
+                self.document = document
+                self.key = idempotency_key
+                return 77
+        writer = Writer()
+        result = resolver.record_authorised_command_handover(
+            "officer-session", 42,
+            assignment_snapshot_reader=lambda _id: {
+                "source_ref": "bp08:snapshot:42", "as_of_world_tick": 30,
+                "assignments": [],
+            },
+            operational_timeline_reader=lambda _id: [],
+            handover_fields={
+                "handover_ref": "HO-42-10",
+                "outgoing_commander_ref": "commander:old",
+                "incoming_commander_ref": "commander:new",
+                "prepared_by_ref": "supervisor:1",
+                "authority_ref": "command:authority:1",
+                "source_ref": "command-room:42",
+                "effective_world_tick": 31,
+                "commander_decisions": [],
+                "outstanding_actions": [],
+                "responsibility_transfers": [{
+                    "record_ref": "TR-42-10", "responsibility_ref": "incident-command",
+                    "from_ref": "commander:old", "to_ref": "commander:new",
+                    "actor_ref": "commander:old", "source_ref": "command:transfer:42",
+                    "world_tick": 31,
+                }],
+                "acknowledgements": [{
+                    "record_ref": "ACK-42-10", "handover_ref": "HO-42-10",
+                    "recipient_ref": "commander:new", "acknowledgement": "ACCEPTED",
+                    "notes": "Accepted", "actor_ref": "commander:new",
+                    "source_ref": "command:ack:42", "world_tick": 31,
+                }],
+            },
+            handover_writer=writer, idempotency_key="HO-42-10-IDEMPOTENCY",
+        )
+        self.assertTrue(result["persisted"])
+        self.assertEqual(result["command_handover_id"], 77)
+        self.assertEqual(result["record_status"], "PERSISTED")
+        self.assertEqual(writer.document["incident_id"], 42)
+        self.assertEqual(writer.key, "HO-42-10-IDEMPOTENCY")
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp12.incident.record.command_handover",
+             "bp12.incident.inspect.command_handover",
+             "bp08.deployment.inspect.incident_assignments",
+             "bp12.incident.inspect.operational_timeline"],
+        )
+
+    def test_authorised_handover_record_denial_precedes_owner_readers(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda incident_id: self.fail("incident reader must not run"),
+        )
+        class Writer:
+            def record(self, *_args, **_kwargs):
+                self.fail("handover writer must not run")
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_authorised_command_handover(
+                "officer-session", 42,
+                assignment_snapshot_reader=lambda _id: self.fail("assignment reader must not run"),
+                operational_timeline_reader=lambda _id: self.fail("timeline reader must not run"),
+                handover_fields={}, handover_writer=Writer(),
+                idempotency_key="HO-DENIED",
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp12.incident.record.command_handover",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
+    def test_authorised_handover_history_has_separate_audited_permission(self):
+        grants = self.grants + (
+            Grant("bp12.incident.inspect.command_handover.history", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {"incident_id": incident_id, "status": "RECEIVED"},
+        )
+        class Reader:
+            def read(self, incident_id):
+                return [{
+                    "incident_id": incident_id, "source_ref": "command-room:42",
+                    "source_event_id": 1001,
+                    "handover_document": {"record_status": "PERSISTED"},
+                }]
+        rows = resolver.read_authorised_command_handover_history(
+            "officer-session", 42, history_reader=Reader(),
+        )
+        self.assertEqual(rows[0]["source_event_id"], 1001)
+        self.assertEqual(self.audit.records[-1].action,
+                         "bp12.incident.inspect.command_handover.history")
+        self.assertTrue(self.audit.records[-1].allowed)
+
+    def test_authorised_handover_history_denies_before_reader(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda incident_id: {"incident_id": incident_id, "status": "RECEIVED"},
+        )
+        class Reader:
+            def read(self, _incident_id):
+                raise AssertionError("history reader must not run")
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.read_authorised_command_handover_history(
+                "officer-session", 42, history_reader=Reader(),
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp12.incident.inspect.command_handover.history",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
+
+
 if __name__ == "__main__":
     unittest.main()
