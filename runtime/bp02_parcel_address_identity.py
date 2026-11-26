@@ -43,6 +43,17 @@ def build_identity_register(
             raise ValueError(f"Missing or duplicate property ID: {source_id}")
         property_by_id[source_id] = row
 
+    property_candidate_ids = [row.get("source_candidate_parcel_id") for row in properties]
+    if (
+        any(not candidate_id or candidate_id not in candidate_by_id for candidate_id in property_candidate_ids)
+        or len(property_candidate_ids) != len(set(property_candidate_ids))
+        or set(property_candidate_ids) != set(candidate_by_id)
+    ):
+        raise ValueError(
+            "Parcel candidates must map one-to-one to properties; "
+            "missing, duplicate or unassigned candidate links are not permitted"
+        )
+
     address_by_id = {}
     for row in addresses:
         source_id = row.get("address_id")
