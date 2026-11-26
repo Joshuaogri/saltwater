@@ -46,9 +46,10 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 2. Add NPC knowledge-history tests proving NPCs cannot know facts without a plausible perception, access or communication path.
 3. Prove player questions and information-only commands do not mutate authoritative world state across the full command gateway.
 4. Prove player choices are never silently selected or auto-completed, including investigation direction and consequential decisions.
-5. Prove the running game host registers and runs all required NPC schedules while the player is present, and freezes all scheduled work during absence.
-6. Run the relevant Python and disposable PostgreSQL acceptance suites against the current main commit and retain reproducible evidence.
-7. Reconcile every BP-01 acceptance ID to its owner implementation, test and evidence reference; no criterion is marked verified from documentation alone.
+5. Complete the BP15/BP16 case-owned hidden-truth reveal provider and verify that all outward channels preserve the reveal gate.
+6. Prove the running game host registers and runs all required NPC schedules while the player is present, and freezes all scheduled work during absence.
+7. Run the relevant Python and disposable PostgreSQL acceptance suites against the current main commit and retain reproducible evidence.
+8. Reconcile every BP-01 acceptance ID to its owner implementation, test and evidence reference; no criterion is marked verified from documentation alone.
 
 Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning services. BP-01 defines the invariant; it must not duplicate those divisions' substantive data models or algorithms.
 
