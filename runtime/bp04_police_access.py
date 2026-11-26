@@ -597,3 +597,21 @@ def create_postgres_bp04_police_lookup_access(
         PostgresGrantProvider(connect),
     )
     return BP04PoliceLookupAccess(lookup, authorization, principal_id)
+
+
+
+def create_postgres_bp04_incident_location_resolver(
+    connect, police_access: BP04PoliceLookupAccess, incident_reader
+) -> BP04IncidentLocationResolver:
+    """Compose the BP04/BP12 resolver with the authoritative BP06 identity check.
+
+    This creates no grants or schema changes. The supplied connection factory
+    is used only to verify the authenticated person's current BP06 dossier.
+    """
+    from runtime.postgres_security import PostgresPersonnelReferenceVerifier
+
+    return BP04IncidentLocationResolver(
+        police_access,
+        incident_reader,
+        officer_ref_verifier=PostgresPersonnelReferenceVerifier(connect),
+    )
