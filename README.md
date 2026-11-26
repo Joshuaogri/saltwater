@@ -30,6 +30,14 @@ deployment ID. The player never enters personnel or membership IDs. The
 simulator is currently in-memory; durable workforce persistence is still a
 separate future step.
 
+## Canonical NPC workforce source
+
+The NPC dispatch factory now loads its 500-post workforce and active unit
+profiles from the existing BP05/BP08 PostgreSQL records using read-only
+queries. Unit capability codes guide specialist selection. The roster and
+deployments remain in-memory gameplay state; the factory does not write
+personnel, membership or deployment rows to Neon.
+
 ## Business naming rebuild — 2026-11-26
 
 The SW-UNS business-name generator changes are now on `main`. The registry build completed successfully and generated 10,000 businesses with 20,000 public trading/legal names; its generator regression suite passed, and the refreshed registry was committed in [`eae9f7d`](https://github.com/Joshuaogri/saltwater/commit/eae9f7d58f7a04872d735d7966cba353f3d3b6aa). The PostgreSQL reservation run [45852648985](https://github.com/Joshuaogri/saltwater/actions/runs/45852648985) used the preceding source commit and therefore the preceding generated registry: it reported three near-duplicate pairs in that stale input. That failure does not validate or invalidate the newly generated file. A fresh PostgreSQL acceptance run against commit `eae9f7d` is still required before the 20,000 persistent name reservations can be accepted. No production Neon write or persistent name reservation was made.
