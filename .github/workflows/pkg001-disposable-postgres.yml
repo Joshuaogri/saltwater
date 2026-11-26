@@ -1,4 +1,5 @@
 name: PKG-001 disposable PostgreSQL validation
+# BP06 opening-cohort acceptance runs immediately after schema proposals, at tick-zero bootstrap.
 
 on:
   push:
