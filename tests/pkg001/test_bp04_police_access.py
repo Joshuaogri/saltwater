@@ -399,6 +399,9 @@ class BP04PoliceAccessTests(unittest.TestCase):
 
     def test_investigation_handoff_requires_investigation_and_bp12_history_grants(self):
         grants = self.grants + (
+            Grant("bp16.investigation.inspect.case", "case:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
             Grant("bp16.investigation.incident.location.history", "incident:*",
                   "police_workflow", Effect.ALLOW,
                   principal_kind=PrincipalKind.OFFICER, role="property_reader"),
@@ -416,21 +419,54 @@ class BP04PoliceAccessTests(unittest.TestCase):
             "source_event_id": 7001, "source_ref": "dispatch:CALL-9",
         }]
         result = resolver.read_investigation_location_history(
-            "officer-session", 42,
+            "officer-session", 42, case_ref="CASE-7",
+            case_incident_verifier=lambda case_ref, incident_id: (
+                case_ref == "CASE-7" and incident_id == 42
+            ),
             location_history_reader=lambda _id: history,
         )
         self.assertEqual(result, history)
         self.assertEqual(
             [row.action for row in self.audit.records],
-            ["bp16.investigation.incident.location.history",
+            ["bp16.investigation.inspect.case",
+             "bp16.investigation.incident.location.history",
              "bp12.incident.inspect.location.history"],
+        )
+
+    def test_investigation_history_rejects_unlinked_incident_before_bp12_read(self):
+        grants = self.grants + (
+            Grant("bp16.investigation.inspect.case", "case:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp16.investigation.incident.location.history", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.location.history", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.read_investigation_location_history(
+                "officer-session", 42, case_ref="CASE-7",
+                case_incident_verifier=lambda _case, _incident: False,
+                location_history_reader=lambda _id: self.fail("history read must not run"),
+            )
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp16.investigation.inspect.case"],
         )
 
     def test_investigation_handoff_denies_without_investigation_grant(self):
         resolver = BP04IncidentLocationResolver(self.access, lambda _id: None)
         with self.assertRaisesRegex(PermissionError, "Access denied"):
             resolver.read_investigation_location_history(
-                "officer-session", 42, location_history_reader=lambda _id: [],
+                "officer-session", 42, case_ref="CASE-7",
+                case_incident_verifier=lambda _case, _incident: True,
+                location_history_reader=lambda _id: [],
             )
         self.assertEqual(
             self.audit.records[-1].action,
