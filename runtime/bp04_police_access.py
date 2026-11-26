@@ -463,6 +463,75 @@ class BP04IncidentLocationResolver:
             as_of_world_tick=snapshot.get("as_of_world_tick"),
         )
 
+    def record_authorised_command_handover(
+        self, credential: str, incident_id: int, *,
+        assignment_snapshot_reader, operational_timeline_reader,
+        handover_fields: dict, handover_writer, idempotency_key: str,
+    ) -> dict:
+        """Persist a ready handover after separate audited domain permissions."""
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if not isinstance(handover_fields, dict):
+            raise TypeError("Validated handover fields must be supplied as a mapping.")
+        if not callable(getattr(handover_writer, "record", None)):
+            raise TypeError("A trusted BP12 command handover writer is required.")
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            raise ValueError("A handover idempotency key is required.")
+        self._access._require(
+            credential, "bp12.incident.record.command_handover",
+            f"incident:{incident_id}",
+        )
+        reconciliation = self.build_authorised_command_handover(
+            credential, incident_id,
+            assignment_snapshot_reader=assignment_snapshot_reader,
+            operational_timeline_reader=operational_timeline_reader,
+        )
+        from runtime.bp12_incident_operational_events import build_incident_command_handover_record
+        document = build_incident_command_handover_record(
+            reconciliation=reconciliation, **handover_fields
+        )
+        if document.get("incident_id") != incident_id:
+            raise ValueError("Handover projection incident identity does not match the authorised incident.")
+        if document.get("handover_ready") is not True:
+            raise ValueError("Incident command handover is not ready for persistence.")
+        record_id = handover_writer.record(
+            document, idempotency_key=idempotency_key
+        )
+        if type(record_id) is not int or record_id < 1:
+            raise RuntimeError("BP12 command handover writer returned an invalid record ID.")
+        return {
+            **document,
+            "record_status": "PERSISTED",
+            "read_only": True,
+            "persisted": True,
+            "command_handover_id": record_id,
+        }
+
+    def read_authorised_command_handover_history(
+        self, credential: str, incident_id: int, *, history_reader,
+    ) -> list[dict]:
+        """Read BP12's append-only command handover history under its own grant."""
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if not callable(getattr(history_reader, "read", None)):
+            raise TypeError("A trusted BP12 command handover history reader is required.")
+        self._access._require(
+            credential, "bp12.incident.inspect.command_handover.history",
+            f"incident:{incident_id}",
+        )
+        rows = history_reader.read(incident_id)
+        if not isinstance(rows, list):
+            raise RuntimeError("BP12 command handover history reader returned an invalid result.")
+        for row in rows:
+            if not isinstance(row, dict) or row.get("incident_id") != incident_id:
+                raise ValueError("Command handover history contains a conflicting incident identity.")
+            if not row.get("source_ref") or not row.get("source_event_id"):
+                raise ValueError("Command handover history is missing mandatory provenance.")
+            document = row.get("handover_document")
+            if not isinstance(document, dict) or document.get("record_status") != "PERSISTED":
+                raise ValueError("Command handover history contains an invalid persisted document.")
+        return rows
+
     def read_investigation_location_history(
         self, credential: str, incident_id: int, *, case_ref: str,
         case_incident_verifier, location_history_reader,
