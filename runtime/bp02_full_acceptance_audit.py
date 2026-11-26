@@ -20,7 +20,7 @@ from runtime.bp04_geography_reconciliation import (
 from runtime.bp02_address_frontage_exception_resolution import (
     resolve_address_frontage_exceptions,
 )
-from runtime.bp02_no_building_site_reconciliation import (
+from runtime.bp02_bridge_connector_engineering_register import (\n    build_bridge_connector_engineering_register,\n)\nfrom runtime.bp02_no_building_site_reconciliation import (
     reconcile_no_building_sites_and_frontage_exceptions,
 )
 
