@@ -23,9 +23,17 @@ disposable database finding: inspection of the connected Neon database found no
 `sw_names` schema/table and no active blocking lock or long-running query. No
 production Neon data was changed.
 
-The remediation is committed on `main`. Validation for the final code/test
-commit is being rerun: database migration validation has passed; the BP02 full
-acceptance audit is running; the PKG-001 disposable PostgreSQL run is queued.
+The remediation is committed on `main` (latest source/test commit
+`f1c4f4ba6fb4705b9e5d3f207ae80a23d3c5e073`). Latest validation status:
+
+- Database migration validation: passed, run [45881868532](https://github.com/Joshuaogri/saltwater/actions/runs/45881868532).
+- BP04-03 geography readiness: passed, run [45881868543](https://github.com/Joshuaogri/saltwater/actions/runs/45881868543).
+- BP04 player/police/geography integration: passed, run [45881748368](https://github.com/Joshuaogri/saltwater/actions/runs/45881748368).
+- BP02 full parcel/address/access acceptance: running, run [45881748459](https://github.com/Joshuaogri/saltwater/actions/runs/45881748459).
+- PKG-001 disposable PostgreSQL validation: running the business-name acceptance step, run [45881868578](https://github.com/Joshuaogri/saltwater/actions/runs/45881868578).
+
+The two long-running acceptance workflows have not reported a failure in their
+current steps. Their final results are not yet claimed.
 
 
 Saltwater is a fictional sovereign city-state and a single-city police simulation.
