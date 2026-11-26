@@ -397,6 +397,131 @@ class BP04PoliceAccessTests(unittest.TestCase):
             "bp04.lookup.inspect.address",
         ])
 
+    def test_dispatch_acknowledgement_requires_verified_assignment_and_mirrors_event(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.acknowledgement.record", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp11.dispatch.inspect.assignment", "dispatch:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        captured = {}
+        result = resolver.record_dispatch_acknowledgement(
+            "officer-session", 42, dispatch_ref="CAD-88",
+            dispatch_incident_verifier=lambda ref, incident: ref == "CAD-88" and incident == 42,
+            event_writer=lambda **kw: captured.update(kw) or 7101,
+            actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
+            idempotency_key="CAD-88-ACK-1", acknowledgement_ref="ACK-11",
+            description="Unit acknowledges dispatch",
+        )
+        self.assertEqual(result["event_code"], "DISPATCH_ACKNOWLEDGED")
+        self.assertEqual(result["event_id"], 7101)
+        self.assertEqual(captured["dispatch_ref"], "CAD-88")
+        self.assertEqual(captured["source_ref"], "dispatch-ack:ACK-11")
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp11.dispatch.acknowledgement.record",
+             "bp11.dispatch.inspect.assignment"],
+        )
+
+    def test_dispatch_acknowledgement_rejects_unlinked_assignment_before_writer(self):
+        grants = self.grants + (
+            Grant("bp11.dispatch.acknowledgement.record", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp11.dispatch.inspect.assignment", "dispatch:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_dispatch_acknowledgement(
+                "officer-session", 42, dispatch_ref="CAD-88",
+                dispatch_incident_verifier=lambda _ref, _incident: False,
+                event_writer=lambda **_kw: self.fail("writer must not run"),
+                actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
+                idempotency_key="CAD-88-ACK-2", acknowledgement_ref="ACK-12",
+                description="Unlinked acknowledgement",
+            )
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp11.dispatch.acknowledgement.record",
+             "bp11.dispatch.inspect.assignment"],
+        )
+
+    def test_field_unit_arrival_requires_bp08_and_bp10_authorisation(self):
+        grants = self.grants + (
+            Grant("bp10.patrol.record_arrival", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp08.deployment.inspect.assignment", "assignment:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp10.patrol.inspect.field_activity", "field_activity:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        captured = {}
+        result = resolver.record_field_unit_arrival(
+            "officer-session", 42, unit_ref="UNIT-7", assignment_ref="DEP-4",
+            field_activity_ref="PATROL-ACT-19",
+            deployment_activity_verifier=lambda unit, assignment, activity, incident:
+                (unit, assignment, activity, incident) ==
+                ("UNIT-7", "DEP-4", "PATROL-ACT-19", 42),
+            event_writer=lambda **kw: captured.update(kw) or 7102,
+            actor_ref="officer:12", authority_ref="patrol-order:5",
+            idempotency_key="PATROL-ACT-19-ARRIVAL",
+            description="Unit reports arrival at incident location",
+        )
+        self.assertEqual(result["event_code"], "UNIT_ARRIVED")
+        self.assertEqual(result["event_id"], 7102)
+        self.assertEqual(captured["unit_ref"], "UNIT-7")
+        self.assertEqual(captured["assignment_ref"], "DEP-4")
+        self.assertEqual(captured["field_activity_ref"], "PATROL-ACT-19")
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp10.patrol.record_arrival", "bp08.deployment.inspect.assignment",
+             "bp10.patrol.inspect.field_activity"],
+        )
+
+    def test_field_unit_arrival_rejects_unverified_deployment_before_writer(self):
+        grants = self.grants + (
+            Grant("bp10.patrol.record_arrival", "incident:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp08.deployment.inspect.assignment", "assignment:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp10.patrol.inspect.field_activity", "field_activity:*", "police_workflow",
+                  Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_field_unit_arrival(
+                "officer-session", 42, unit_ref="UNIT-7", assignment_ref="DEP-4",
+                field_activity_ref="PATROL-ACT-19",
+                deployment_activity_verifier=lambda *_args: False,
+                event_writer=lambda **_kw: self.fail("writer must not run"),
+                actor_ref="officer:12", authority_ref="patrol-order:5",
+                idempotency_key="PATROL-ACT-19-ARRIVAL-2",
+                description="Unverified arrival",
+            )
+        self.assertEqual(
+            [row.action for row in self.audit.records],
+            ["bp10.patrol.record_arrival", "bp08.deployment.inspect.assignment",
+             "bp10.patrol.inspect.field_activity"],
+        )
+
     def test_dispatch_location_update_is_event_writer_handoff_with_provenance(self):
         grants = self.grants + (
             Grant("bp11.dispatch.location.record", "incident:*", "police_workflow",
