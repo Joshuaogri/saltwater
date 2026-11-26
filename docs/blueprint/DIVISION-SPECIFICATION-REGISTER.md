@@ -176,3 +176,8 @@ Statuses are independent across specification, implementation, testing and verif
 
 
 **Additional BP04 finding (2026-11-26):** The five-digit sequence-suffix defect has been corrected. AC-A04 is now PARTIAL: the 10,000 generated names are normalized-unique, numeric-placeholder-free, screened for within-batch near-duplicates and exact-checked against SW-GEO-V1, but are not yet persistently reserved against the full global SW-UNS-001 namespace. See the strict acceptance audit.
+
+
+## BP-01 design disposition update — 2026-11-26
+
+The historical audit entries above that state all 44 division specifications remain `DESIGNED_DRAFT` record the position at the time of that audit and are superseded for BP-01 only. BP-01 version 1.0 is now `DESIGNED` following reconciliation against the approved master canon, SW-CANON-001, SW-CANON-002 and SW-UNS-001. Its implementation and tests are `IN_PROGRESS`; verification remains `BLOCKED` pending the cross-division evidence listed in [the BP-01 implementation register](../implementation/BP01-foundational-implementation-register.md). BP-02–BP-44 retain their individually recorded statuses. This update does not mark the whole game or its dependent divisions complete.
