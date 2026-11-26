@@ -109,8 +109,7 @@ def _generate_business_names_report(source: dict) -> dict:
             )
             for word in words
         }
-    similar_adjectives = similar_words(adjective_vocab)
-    similar_nouns = similar_words(noun_vocab)
+    similar_tokens = similar_words(tuple(dict.fromkeys(adjective_vocab + noun_vocab)))
 
     accepted_trading: list[str] = []
     accepted_registered: list[str] = []
@@ -147,31 +146,28 @@ def _generate_business_names_report(source: dict) -> dict:
 
         near_duplicate = False
         # pg_trgm is insensitive to word order in many short phrases.
-        # Compare both adjective/noun alignments so "Beacon Elm" and
-        # "Elm Beacon" cannot evade screening by swapping vocabulary roles.
-        for other_adjective in adjective_vocab:
+        # Search only nearby token pairs, in both word-role alignments, rather
+        # than scanning the full adjective x noun vocabulary for every row.
+        nearby_adjectives = similar_tokens[adjective]
+        nearby_nouns = similar_tokens[noun]
+        possible_roots = (
+            [(other_adjective, other_noun)
+             for other_adjective in nearby_adjectives
+             for other_noun in nearby_nouns]
+            + [(other_adjective, other_noun)
+               for other_adjective in nearby_nouns
+               for other_noun in nearby_adjectives]
+        )
+        for root in dict.fromkeys(possible_roots):
+            for existing_name in accepted_by_root.get(root, ()):
+                if any(
+                    pg_trgm_similarity(public_name, existing_name) > 0.90
+                    for public_name in public_names
+                ):
+                    near_duplicate = True
+                    break
             if near_duplicate:
                 break
-            for other_noun in noun_vocab:
-                same_alignment = (
-                    other_adjective in similar_adjectives[adjective]
-                    and other_noun in similar_nouns[noun]
-                )
-                swapped_alignment = (
-                    other_noun in similar_adjectives[adjective]
-                    and other_adjective in similar_nouns[noun]
-                )
-                if not (same_alignment or swapped_alignment):
-                    continue
-                for existing_name in accepted_by_root.get((other_adjective, other_noun), ()):
-                    if any(
-                        pg_trgm_similarity(public_name, existing_name) > 0.90
-                        for public_name in public_names
-                    ):
-                        near_duplicate = True
-                        break
-                if near_duplicate:
-                    break
 
         if near_duplicate:
             held_near_duplicates += 1
