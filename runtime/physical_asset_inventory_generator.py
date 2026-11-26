@@ -837,7 +837,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         bid, ref = b["candidate_building_id"], b["source_ref"]
         building_profiles.append({
             "candidate_building_id": bid, "building_use": b["building_use"],
-            "building_form": b["building_form"], "structure_class": "unknown",
+            "building_form": b["building_form"], "structure_class": b["structure_class"],
             "construction_system": "unknown", "foundation_type": "not_assessed",
             "roof_form": "unknown", "roof_covering": "unknown", "facade_system": "unknown",
             "storeys_above": b["storeys_above"], "storeys_below": b["storeys_below"],
