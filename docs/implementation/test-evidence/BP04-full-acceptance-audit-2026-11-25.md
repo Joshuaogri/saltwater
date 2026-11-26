@@ -170,3 +170,14 @@ The following are completed deliverables: production compressed archive deployme
 The following are not silently waived: BP02 operational geography approval; five frontage/access exceptions; production BP42 officer grants; wiring the trusted personnel-reference resolver to the authoritative BP06 personnel service; BP11/BP16 operational consumers; applicable business/healthcare/transport/utility consumers; and consolidated cross-register/performance/recovery acceptance.
 
 No production Neon writes, permission grants, operational geography promotions or data promotions were made by this work. Do not mark BP04 COMPLETED until required BP04-owned criteria pass and external dependencies are either completed or explicitly accepted by the user.
+
+
+### Final CI results for the 2026-11-26 closure reassessment
+
+The three workflows referenced above have now completed successfully against code commit 57fef4ab24b3e9f6767b204fa15eec60fdb8153a:
+
+- [BP04 player and police lookup integration with BP02 geography — run 45825332438](https://github.com/Joshuaogri/saltwater/actions/runs/45825332438): passed, 12/12 steps. This includes the complete 420-address BP02 reconciliation, not merely the earlier player and authorization steps.
+- [PKG-001 disposable PostgreSQL validation — run 45825332524](https://github.com/Joshuaogri/saltwater/actions/runs/45825332524): both jobs passed; 31 disposable-PostgreSQL steps and 25 Python-kernel steps.
+- [Database migration validation — run 45825332455](https://github.com/Joshuaogri/saltwater/actions/runs/45825332455): passed, 21/21 steps.
+
+This closes the outstanding CI execution for the current player integration, identity-boundary tests, BP02 structural reconciliation and regression baseline. It does not approve the five BP02 frontage exceptions, provision production BP42 grants, wire a production personnel-reference resolver, implement missing BP11/BP16 or other owner-service consumers, or substitute for the consolidated BP04 cross-register/performance/recovery acceptance. Therefore the BP04 division decision remains NOT COMPLETED.
