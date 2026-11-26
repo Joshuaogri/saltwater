@@ -1,7 +1,7 @@
 """Player-facing NPC dispatch console; no personnel credentials or IDs required."""
 from __future__ import annotations
 from typing import Iterable
-from runtime.npc_dispatch import DispatchIncident, NPCDispatchSimulator
+from runtime.npc_dispatch import DispatchIncident, NPCDispatchError, NPCDispatchSimulator
 
 class NPCDispatchConsole:
     _ACTIONS = {"arrive":"arrive","begin":"begin_work","finish":"finish_work","clear":"clear_scene","stand_down":"stand_down","available":"available"}
@@ -56,11 +56,8 @@ class NPCDispatchConsole:
                 break
             try:
                 assigned.append(self._simulator.assign_best_unit(incident))
-            except Exception as exc:
-                from runtime.npc_dispatch import NPCDispatchError
-                if isinstance(exc, NPCDispatchError):
-                    continue
-                raise
+            except NPCDispatchError:
+                continue
         return tuple(assigned)
 
     def render(self) -> str:
