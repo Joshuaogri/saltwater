@@ -9,8 +9,7 @@ from runtime.bp04_police_access import (
     create_postgres_bp04_police_lookup_access,
 )
 from runtime.bp12_incident_location_history import PostgresIncidentLocationHistoryReader
-from runtime.bp12_incident_operational_events import (\n    PostgresIncidentOperationalEventWriter,\n    PostgresIncidentOperationalTimelineReader,\n)
-from runtime.security import (
+from runtime.bp12_incident_operational_events import (\n    PostgresIncidentOperationalEventWriter,\n    PostgresIncidentOperationalTimelineReader,\n)\nfrom runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
     PrincipalKind, PrincipalStatus, SessionStatus, VerifiedSession,
 )
