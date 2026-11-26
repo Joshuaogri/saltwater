@@ -42,6 +42,44 @@ class PostgresDeploymentPort:
         except Exception as exc:
             raise PostgresDeploymentPortError("Deployment lookup failed.") from exc
 
+    def create_deployment(self, **command: Any) -> dict:
+        required = {
+            "unit_id", "incident_id", "membership_ids", "objective", "priority",
+            "actor_ref", "authority_ref", "source_ref", "idempotency_key", "effective_tick",
+        }
+        if set(command) != required:
+            raise ValueError("Invalid BP08 deployment creation command.")
+        if not isinstance(command["membership_ids"], (list, tuple)) or not all(
+            isinstance(value, UUID) for value in command["membership_ids"]
+        ):
+            raise ValueError("membership_ids must be UUID values.")
+        if type(command["incident_id"]) is not int or command["incident_id"] < 1:
+            raise ValueError("incident_id must be a positive integer.")
+        try:
+            with self._connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """SELECT deployment_id,status,unit_id,assigned_members,event_id
+                           FROM sw_police.create_authorised_unit_deployment(
+                             %s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                        (
+                            command["unit_id"], command["incident_id"],
+                            list(command["membership_ids"]), command["objective"],
+                            command["priority"], command["actor_ref"],
+                            command["authority_ref"], command["source_ref"],
+                            command["idempotency_key"], command["effective_tick"],
+                        ),
+                    )
+                    row = cur.fetchone()
+            if row is None:
+                raise PostgresDeploymentPortError("BP08 creation function returned no result.")
+            return {"deployment_id": row[0], "status": row[1], "unit_id": row[2],
+                    "assigned_members": row[3], "event_id": row[4]}
+        except PostgresDeploymentPortError:
+            raise
+        except Exception as exc:
+            raise PostgresDeploymentPortError("Deployment creation failed.") from exc
+
     def transition_deployment(self, **command: Any) -> dict:
         required = {
             "deployment_id", "expected_status", "resulting_status", "event_kind",
