@@ -31,6 +31,27 @@ class NPCDispatchConsoleTests(unittest.TestCase):
         self.assertIn("Crew:", result)
         self.assertIn("Deployment: SWNPC-DEP-000001", result)
 
+    def test_dispatch_tick_automatically_assigns_pending_incidents_by_priority(self):
+        posts = [
+            {"post_id": f"P-{i:03d}", "unit_id": "UNIT-PATROL",
+             "position_title": "Police Sergeant" if i == 1 else "Patrol Officer"}
+            for i in range(1, 17)
+        ]
+        officers = NPCWorkforceGenerator(seed=10).generate_shift_roster(posts)
+        simulator = NPCDispatchSimulator(
+            officers,
+            [{"unit_id": "UNIT-PATROL", "functional_domain": "general_patrol",
+              "minimum_crew_size": 2, "target_crew_size": 3}],
+        )
+        console = NPCDispatchConsole(simulator, [
+            DispatchIncident("INC-LOW", "Theft", "general_patrol", 4),
+            DispatchIncident("INC-HIGH", "Robbery", "general_patrol", 1),
+        ])
+        assigned = console.process_dispatch_tick(max_assignments=1)
+        self.assertEqual(len(assigned), 1)
+        self.assertEqual(assigned[0].incident_id, "INC-HIGH")
+        self.assertEqual(console.process_dispatch_tick(), ())
+
     def test_console_shows_queue_units_and_deployments(self):
         console = build_console()
         view = console.execute()
