@@ -48,6 +48,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         return {"connector_candidates": [
             {
                 "property_id": "PROPERTY-EXPLICIT-42",
+                "candidate_access_point_id": "AP-P2-A",
                 "candidate_road_connection_id": "PAC-P2-A-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
@@ -59,6 +60,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
             },
             {
                 "property_id": "PROPERTY-EXPLICIT-42",
+                "candidate_access_point_id": "AP-P2-B",
                 "candidate_road_connection_id": "PAC-P2-B-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
@@ -93,6 +95,13 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
         self.assertEqual(row["resolved_access_road_id"], "R-BRIDGE")
         self.assertTrue(row["address_road_association_resolved"])
         self.assertEqual(row["verified_geometric_connector_candidate_count"], 2)
+        self.assertEqual(
+            row["verified_geometric_connector_candidates"],
+            [
+                {"candidate_access_point_id": "AP-P2-A", "road_access_candidate_id": "PAC-P2-A-BSEG"},
+                {"candidate_access_point_id": "AP-P2-B", "road_access_candidate_id": "PAC-P2-B-BSEG"},
+            ],
+        )
         self.assertFalse(row["operational_access_approved"])
 
     def test_bridge_resolution_uses_explicit_property_link_not_address_id_pattern(self):
