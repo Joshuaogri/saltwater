@@ -20,6 +20,9 @@ from runtime.bp04_geography_reconciliation import (
 from runtime.bp02_address_frontage_exception_resolution import (
     resolve_address_frontage_exceptions,
 )
+from runtime.bp02_no_building_site_reconciliation import (
+    reconcile_no_building_sites_and_frontage_exceptions,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -42,6 +45,10 @@ def run_full_bp02_acceptance_audit() -> dict:
 
     reconciliation = build_reconciliation(source, identity_map, property_document)
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
+    no_building_cross_register = reconcile_no_building_sites_and_frontage_exceptions(
+        reconciliation["bp02_address_placement_review_register"],
+        exception_resolution,
+    )
 
     address_source_integrity = {
         "property_records": reconciliation["property_records"],
@@ -91,6 +98,13 @@ def run_full_bp02_acceptance_audit() -> dict:
         "no_unresolved_address_road_access_exceptions": (
             exception_resolution["unresolved_exception_count"] == 0
         ),
+        "no_building_and_frontage_exception_identities_reconcile": (
+            no_building_cross_register["all_exception_identities_match_review_register"]
+            and no_building_cross_register["no_building_site_count"] == 36
+            and no_building_cross_register["frontage_exception_count"] == 5
+            and no_building_cross_register["frontage_exceptions_on_no_building_sites"] == 3
+            and no_building_cross_register["frontage_exceptions_on_sites_with_building_candidates"] == 2
+        ),
     }
 
     operational_gates = {
@@ -121,6 +135,7 @@ def run_full_bp02_acceptance_audit() -> dict:
         "overall_status": "PASS" if all_structural and all_operational else "STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED" if all_structural else "FAIL",
         "address_source_integrity": address_source_integrity,
         "frontage_exception_resolution": exception_resolution,
+        "no_building_site_cross_register_reconciliation": no_building_cross_register,
         "layer_reports": {
             "geography_geometry": geometry,
             "parcel_geometry": parcel_geometry,
@@ -149,6 +164,9 @@ def run_full_bp02_acceptance_audit() -> dict:
             "access_connector_candidates": len(assets.get("access_connectors", [])),
             "address_records": reconciliation["address_records"],
             "frontage_exceptions": exception_resolution["exception_count"],
+            "no_building_property_sites": no_building_cross_register["no_building_property_count"],
+            "no_building_sites_with_frontage_exceptions": no_building_cross_register["frontage_exceptions_on_no_building_sites"],
+            "frontage_exceptions_on_sites_with_building_candidates": no_building_cross_register["frontage_exceptions_on_sites_with_building_candidates"],
             "resolved_address_road_associations": exception_resolution["resolved_address_road_associations"],
             "resolved_bridge_access_connection_candidates": exception_resolution["resolved_bridge_access_connection_candidates"],
             "unresolved_address_road_access_exceptions": exception_resolution["unresolved_exception_count"],
