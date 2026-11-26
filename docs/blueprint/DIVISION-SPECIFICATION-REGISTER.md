@@ -12,7 +12,7 @@
 | ID | Division | Specification status | Implementation | Test | Verification | Specification |
 |---|---|---|---|---|---|---|
 | BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED | IN_PROGRESS | IN_PROGRESS | BLOCKED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
-| BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
+| BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED | IMPLEMENTED | TESTED | VERIFIED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
 | BP-03 | Population and Individual Simulation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
 | BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | BLOCKED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
@@ -58,6 +58,8 @@
 
 **BP-04 status note (2026-11-25):** The implementation and test statuses include the bounded property-world source generators, archive reader, 92-table schema, archive-only production release, authenticated player `find/inspect` commands, officer-only lookup adapter and BP04-to-BP02 source-context reconciliation. The adapter remains default-deny until policy grants are provisioned. All 420 property/address context links resolve to generated parcel candidates and BP-02 district/neighbourhood/road entity codes, but BP-02 currently has zero canonical parcel and address identity entries; no address was promoted. Full verification remains `BLOCKED` pending canonical geography binding, police-service integration, remaining cross-register acceptance and the [full BP04 acceptance audit](../implementation/test-evidence/BP04-full-acceptance-audit-2026-11-25.md). The BP04 specification remains `DESIGNED_DRAFT`; master-blueprint approval does not by itself approve every division specification.
 
+**BP-02 completion record (2026-11-26):** BP-02 is **DESIGNED, IMPLEMENTED, TESTED and VERIFIED** for the fictional gameplay geography release. The user accepted completion after full acceptance workflow [45889071983](https://github.com/Joshuaogri/saltwater/actions/runs/45889071983) passed (job `140146960703`). The source release covers the versioned Saltwater geography, 420 parcel identities, 420 linked address identities, building access-point inventory, five resolved address/frontage dispositions and four bridge connector assessments. This is a GitHub `main` source release; it has **not** been seeded into production Neon. Neon persistence is tracked separately and is not claimed complete.
+
 ## Governing status rules
 
 - `NOT_STARTED`: no full division specification exists.
@@ -75,7 +77,7 @@ Statuses are independent across specification, implementation, testing and verif
 
 1. Crosswalk structural coverage: all 52 source divisions, 168 requirement IDs and 60 test IDs are mapped; semantic completeness/ownership audit remains to be completed. See [52→44 crosswalk](SALTWATER-52-TO-44-CROSSWALK.md).
 2. BP-01: full specification draft created; user review/approval pending.
-3. BP-02: full architecture draft created; exact map canon decisions remain open.
+3. BP-02: **COMPLETE — VERIFIED** for fictional gameplay; full acceptance run 45889071983 passed. Production Neon seeding remains a separate persistence task.
 4. BP-03: full population architecture draft created; population-scope countability decisions remain open.
 5. BP-04: full built-world/property/business/organisation specification draft created; business baseline and distribution decisions remain open.
 6. BP-05: full police institutional architecture specification draft created; command titles, unit structure and staffing allocation remain open.
