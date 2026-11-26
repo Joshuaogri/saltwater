@@ -36,30 +36,84 @@ BRIDGE_PROFILES = {
 }
 
 
-def build_fictional_bridge_assessments(route_corridor_report: dict) -> dict:
-    """Assess the four generated game-world bridge connectors in-world."""
+def build_fictional_bridge_assessments(
+    route_corridor_report: dict,
+    frontage_exception_resolution: dict,
+) -> dict:
+    """Assess only the four connector identities verified by BP-02 exception evidence."""
     corridors = route_corridor_report.get("route_corridors", [])
+    exception_rows = frontage_exception_resolution.get("records", [])
+    if frontage_exception_resolution.get("unresolved_exception_count") != 0:
+        raise ValueError("Bridge assessments require resolved BP-02 address exceptions")
+
     records = []
+    selected_connector_ids = set()
     for road_id, profile in BRIDGE_PROFILES.items():
-        candidates = sorted(
-            (row for row in corridors if row.get("road_id") == road_id),
-            key=lambda row: row.get("source_connector_candidate_id", ""),
-        )
+        approaches = [
+            row for row in exception_rows
+            if row.get("geometry_disposition")
+            == "BRIDGE_ACCESS_CONNECTOR_CANDIDATE_TO_CONNECTED_PUBLIC_ROAD_NETWORK"
+            and row.get("resolved_access_road_id") == road_id
+        ]
+        if len(approaches) != 1:
+            raise ValueError(
+                f"{road_id}: expected one property-specific resolved bridge approach record, "
+                f"found {len(approaches)}"
+            )
+        approach = approaches[0]
+        property_id = approach.get("property_id")
+        parcel_id = approach.get("source_candidate_parcel_id")
+        connector_refs = approach.get("verified_geometric_connector_candidates", [])
+        if not property_id or not parcel_id or len(connector_refs) != 2:
+            raise ValueError(f"{road_id}: expected two fully identified connector approach references")
+        pairs = {
+            (row.get("candidate_access_point_id"), row.get("road_access_candidate_id"))
+            for row in connector_refs
+        }
+        if (len(pairs) != 2
+                or any(not access_id or not road_access_id for access_id, road_access_id in pairs)):
+            raise ValueError(f"{road_id}: bridge approach connector identities are incomplete or duplicated")
+
+        candidates = [
+            row for row in corridors
+            if row.get("road_id") == road_id
+            and row.get("candidate_property_id") == property_id
+            and row.get("source_candidate_parcel_id") == parcel_id
+            and (row.get("candidate_access_point_id"), row.get("road_access_candidate_id")) in pairs
+        ]
         if len(candidates) != 2:
-            raise ValueError(f"{road_id}: expected two game connector candidates, got {len(candidates)}")
+            raise ValueError(
+                f"{road_id}: expected two source-identified bridge approach candidates, found {len(candidates)}"
+            )
+        candidates.sort(key=lambda row: row.get("source_connector_candidate_id", ""))
+        matched_pairs = {
+            (row.get("candidate_access_point_id"), row.get("road_access_candidate_id"))
+            for row in candidates
+        }
+        connector_ids = [row.get("source_connector_candidate_id") for row in candidates]
+        if (matched_pairs != pairs
+                or any(not value for value in connector_ids)
+                or len(connector_ids) != len(set(connector_ids))
+                or selected_connector_ids.intersection(connector_ids)):
+            raise ValueError(f"{road_id}: bridge approach candidate identity is not one-to-one")
+        selected_connector_ids.update(connector_ids)
+
         for index, candidate in enumerate(candidates, start=1):
-            cid = candidate.get("source_connector_candidate_id")
-            if not cid or not candidate.get("candidate_property_id") or not candidate.get("candidate_access_point_id"):
-                raise ValueError(f"{road_id}: incomplete connector lineage")
+            cid = candidate["source_connector_candidate_id"]
+            if not candidate.get("candidate_route_corridor_id") or not candidate.get("candidate_building_id"):
+                raise ValueError(f"{road_id}: incomplete route-corridor or building lineage for {cid}")
             width = profile["road_width_m"] - (0.1 if index == 2 else 0.0)
             records.append({
                 "assessment_id": f"SW-BP02-FENG-{cid}",
+                "bridge_approach_id": f"SW-BP02-APPROACH-{cid}",
+                "approach_number": index,
                 "bridge_road_id": road_id,
                 "bridge_name": profile["bridge_name"],
                 "district": profile["district"],
                 "source_connector_candidate_id": cid,
                 "candidate_route_corridor_id": candidate["candidate_route_corridor_id"],
                 "candidate_access_point_id": candidate["candidate_access_point_id"],
+                "road_access_candidate_id": candidate["road_access_candidate_id"],
                 "candidate_building_id": candidate["candidate_building_id"],
                 "candidate_property_id": candidate["candidate_property_id"],
                 "source_candidate_parcel_id": candidate["source_candidate_parcel_id"],
@@ -90,11 +144,15 @@ def build_fictional_bridge_assessments(route_corridor_report: dict) -> dict:
                 "fictional_record_note": "Invented Saltwater simulation specification; no real-world measurement is represented.",
             })
     records.sort(key=lambda row: row["assessment_id"])
+    approach_ids = [row["bridge_approach_id"] for row in records]
     return {
         "register_id": "SW-BP02-FICTIONAL-BRIDGE-ENGINEERING-V1",
         "source_candidate_manifest_sha256": route_corridor_report.get("manifest_sha256"),
         "fictional_game_world_assessments": True,
         "assessment_count": len(records),
+        "approach_count": len(approach_ids),
+        "all_approach_identities_unique": len(approach_ids) == len(set(approach_ids)) == 4,
+        "all_source_connector_identities_unique": len(selected_connector_ids) == 4,
         "assessed_count": sum(row["engineering_status"] == "ASSESSED_PASS" for row in records),
         "operationally_approved_count": sum(row["operational_access_approved"] for row in records),
         "records": records,
