@@ -22,6 +22,10 @@ class FakeCursor:
         self.query = query
         self.params = params
 
+    def executemany(self, query, params_seq):
+        self.query = query
+        self.params = list(params_seq)
+
     def fetchone(self):
         return self.one
 
@@ -77,6 +81,24 @@ class PostgresNamingAdapterTests(unittest.TestCase):
         self.assertEqual(self.connection.value.params[1], "trading")
         self.assertEqual(self.connection.value.params[-1], 8)
         self.assertEqual(self.connection.commits, 0)
+
+    def test_business_batch_reservation_uses_executemany_without_committing(self):
+        count = self.registry.reserve_business_batch(
+            (
+                ("SWBIZ-000001", "trading", "Amber Meridian Trading"),
+                ("SWBIZ-000001", "legal", "Amber Meridian Trading Limited"),
+            ),
+            source_ref="business-registry-v1", actor_ref="ci-test",
+            reason="batch adapter contract", effective_tick=0,
+            generation_batch_id=8,
+        )
+        self.assertEqual(count, 2)
+        self.assertIn("sw_names.reserve_business_name", self.connection.value.query)
+        self.assertEqual(len(self.connection.value.params), 2)
+        self.assertEqual(self.connection.value.params[0][0], "SWBIZ-000001")
+        self.assertEqual(self.connection.value.params[1][1], "legal")
+        self.assertEqual(self.connection.commits, 0)
+        self.assertEqual(self.connection.rollbacks, 0)
 
     def test_business_search_preserves_text_identity(self):
         self.connection.value.rows = [
