@@ -1,19 +1,13 @@
-import json
 import unittest
-from pathlib import Path
 
-from runtime.parcel_candidate_generator import build_candidates
 from runtime.parcel_dossier_generator import build_parcel_dossiers
-
-ROOT = Path(__file__).resolve().parents[2]
-SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
+from bp04_03_stage_e_test_support import stage_e_parcel_inputs
 
 
 class ParcelDossierGeneratorTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.candidates = build_candidates(SOURCE)
-        cls.result = build_parcel_dossiers(SOURCE, cls.candidates)
+        cls.source, cls.candidates, cls.result = stage_e_parcel_inputs()
 
     def test_dossier_count_and_geometry_measurements(self):
         summary = self.result["summary"]
@@ -90,7 +84,7 @@ class ParcelDossierGeneratorTests(unittest.TestCase):
         ))
 
     def test_dossier_manifest_is_deterministic(self):
-        second = build_parcel_dossiers(SOURCE, build_candidates(SOURCE))
+        second = build_parcel_dossiers(self.source, self.candidates)
         self.assertEqual(self.result["manifest_sha256"], second["manifest_sha256"])
 
 

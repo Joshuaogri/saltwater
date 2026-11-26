@@ -1,22 +1,16 @@
 import copy
-import json
+import copy
 import unittest
-from pathlib import Path
 
-from runtime.parcel_candidate_generator import build_candidates
-from runtime.parcel_dossier_generator import build_parcel_dossiers
-from runtime.physical_asset_inventory_generator import build_asset_inventory
+from bp04_03_stage_e_test_support import stage_e_parcel_inputs, stage_e_asset_inventory
 from runtime.physical_asset_inventory_importer import validate_manifests, _geometry_hash, _geojson
 
 
 class PhysicalAssetInventoryImporterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        root = Path(__file__).resolve().parents[2]
-        source = json.loads((root / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-        cls.candidates = build_candidates(source)
-        cls.dossiers = build_parcel_dossiers(source, cls.candidates)
-        cls.inventory = build_asset_inventory(source, cls.candidates, cls.dossiers)
+        _, cls.candidates, cls.dossiers = stage_e_parcel_inputs()
+        cls.inventory = stage_e_asset_inventory()
 
     def test_valid_candidate_manifests_are_accepted(self):
         manifest_sha, candidate_set_id = validate_manifests(

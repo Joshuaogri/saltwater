@@ -1,22 +1,15 @@
 import copy
 import hashlib
-import json
 import unittest
-from pathlib import Path
 
-from runtime.parcel_candidate_generator import build_candidates
-from runtime.parcel_dossier_generator import build_parcel_dossiers
 from runtime.parcel_dossier_importer import validate_manifest
-
-ROOT = Path(__file__).resolve().parents[2]
-SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
+from bp04_03_stage_e_test_support import stage_e_parcel_inputs
 
 
 class ParcelDossierImporterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.candidates = build_candidates(SOURCE)
-        cls.manifest = build_parcel_dossiers(SOURCE, cls.candidates)
+        _, cls.candidates, cls.manifest = stage_e_parcel_inputs()
 
     def _rehash(self, data):
         canonical = dict(data)

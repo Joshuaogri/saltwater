@@ -69,12 +69,27 @@ jobs:
           python-version: "3.12"
       - name: Install pinned geometry and PostgreSQL drivers
         run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
-      - name: Run Stage E generator and importer regression tests
+      - name: Run Stage E generator and importer regression tests with shared fixtures
         run: |
-          python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_generator.py" -v
-          python -m unittest discover -s tests/pkg001 -p "test_physical_asset_inventory_importer.py" -v
-          python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_generator.py" -v
-          python -m unittest discover -s tests/pkg001 -p "test_parcel_dossier_importer.py" -v
+          python - <<'PY'
+          import importlib
+          import sys
+          import unittest
+
+          sys.path.insert(0, "tests/pkg001")
+          modules = (
+              "test_physical_asset_inventory_generator",
+              "test_physical_asset_inventory_importer",
+              "test_parcel_dossier_generator",
+              "test_parcel_dossier_importer",
+          )
+          suite = unittest.TestSuite()
+          loader = unittest.defaultTestLoader
+          for name in modules:
+              suite.addTests(loader.loadTestsFromModule(importlib.import_module(name)))
+          result = unittest.TextTestRunner(verbosity=2).run(suite)
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
       - name: Apply approved foundations to disposable PostgreSQL 16
         run: |
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
