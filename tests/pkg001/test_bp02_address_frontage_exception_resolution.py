@@ -59,7 +59,7 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
             },
             {
                 "property_id": "PROPERTY-EXPLICIT-42",
-                "candidate_road_connection_id": "PAC-P2-A-BSEG",
+                "candidate_road_connection_id": "PAC-P2-B-BSEG",
                 "road_connection_type": "road_reserve_proximity_connection",
                 "road_connection_contact_type": "POINT_CONTACT_ONLY",
                 "geometry_status": "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED",
