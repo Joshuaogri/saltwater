@@ -41,7 +41,7 @@ def run_full_bp02_acceptance_audit() -> dict:
     route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
 
     reconciliation = build_reconciliation(source, identity_map, property_document)
-    exception_resolution = resolve_address_frontage_exceptions(reconciliation, source)
+    exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
 
     address_source_integrity = {
         "property_records": reconciliation["property_records"],
@@ -91,9 +91,8 @@ def run_full_bp02_acceptance_audit() -> dict:
             address_source_integrity["canonical_address_identity_matches"] == 420
         ),
         "operational_access_points_approved": False,
-        "all_address_frontage_exceptions_closed": (
-            exception_resolution["unique_frontage_candidates_identified"] == 0
-            and exception_resolution["bridge_point_contact_cases"] == 0
+        "all_address_road_access_exceptions_resolved": (
+            exception_resolution["unresolved_exception_count"] == 0
         ),
     }
 
@@ -149,8 +148,8 @@ def run_full_bp02_acceptance_audit() -> dict:
         },
         "blockers": [
             "SW-GEO-V1 remains a design baseline, not an approved operational geography release.",
-            "Three addresses have a unique parcel-frontage candidate but their source street references are not confirmed by address-side entrance evidence.",
-            "Two parcels have only point-contact proximity to bridge road reserves; bridge contact is not street frontage or a confirmed access route.",
+            "Three source-road conflicts have one unique parcel frontage road association; the original source values remain preserved as provenance.",
+            "Two bridge cases have feasible property-contained connector candidates to bridge road reserves connected to public streets; entrance engineering and operational approval remain outstanding.",
             "No canonical numbered addresses or operational access points have been approved/materialised.",
             "Operational dispatch, patrol and emergency access require validated access routes and permissions beyond geometric candidate checks.",
         ],
