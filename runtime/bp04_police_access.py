@@ -94,6 +94,72 @@ class BP04PoliceLookupAccess:
 
 
 
+
+class BP04IncidentLocationResolver:
+    """Prepare a provenance-preserving incident/address candidate without writing.
+
+    Incident and address reads are independently authorised and audited.
+    Persistence remains the responsibility of the BP12 event-backed location
+    command; this resolver cannot mutate incident history.
+    """
+
+    def __init__(self, police_access: BP04PoliceLookupAccess, incident_reader):
+        if not isinstance(police_access, BP04PoliceLookupAccess):
+            raise TypeError("police_access must be BP04PoliceLookupAccess")
+        if not callable(incident_reader):
+            raise TypeError("incident_reader must be a trusted callable")
+        self._access = police_access
+        self._incident_reader = incident_reader
+
+    def prepare_address_candidate(
+        self, credential: str, incident_id: int, address_id: str, *,
+        location_role: str = "primary", confidence: str = "unverified",
+        source_ref: str,
+    ) -> dict:
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if location_role not in {"primary", "secondary", "staging", "origin",
+                                 "last_known", "search_area", "other"}:
+            raise ValueError("Unsupported incident location role.")
+        if confidence not in {"high", "medium", "low", "unverified", "unknown"}:
+            raise ValueError("Unsupported location confidence.")
+        if not isinstance(source_ref, str) or not source_ref.strip():
+            raise ValueError("The originating location source reference is required.")
+
+        self._access._require(
+            credential, "bp12.incident.inspect.location", f"incident:{incident_id}"
+        )
+        incident = self._incident_reader(incident_id)
+        if not incident:
+            raise LookupError("Incident not found.")
+        if incident.get("incident_id") != incident_id:
+            raise ValueError("Incident reader returned a conflicting incident identity.")
+
+        address = self._access.resolve_address(credential, address_id)
+        if not address:
+            raise LookupError("Address not found.")
+        address_record = address.get("address", address)
+        if address_record.get("address_id") != address_id:
+            raise ValueError("Address lookup returned a conflicting identity.")
+        return {
+            "record_type": "incident_location_candidate",
+            "incident_id": incident_id,
+            "incident_ref": incident.get("incident_ref"),
+            "incident_source_ref": incident.get("source_ref") or
+                f"{incident.get('source_type')}:{incident.get('source_record_id')}",
+            "location_role": location_role,
+            "location_type": "property",
+            "address_id": address_id,
+            "address": address_record,
+            "confidence": confidence,
+            "source_ref": source_ref,
+            "address_source_ref": address_record.get("source_ref") or
+                f"bp04-address:{address_id}",
+            "approval_required": True,
+            "persisted": False,
+        }
+
+
 def create_postgres_bp04_police_lookup_access(
     connect,
     lookup: Any,
