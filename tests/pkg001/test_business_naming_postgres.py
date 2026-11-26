@@ -8,6 +8,7 @@ from pathlib import Path
 import psycopg
 
 from runtime.naming import pg_trgm_similarity
+from runtime.postgres_naming import PostgresNameRegistry
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -102,13 +103,17 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                 (row["business_id"], "legal", row["registered_name"], self.batch_id),
             ))
         with connect() as conn:
+            registry = PostgresNameRegistry(conn)
+            reservation_count = registry.reserve_business_batch(
+                ((business_id, form, display_name) for business_id, form, display_name, _ in reservations),
+                source_ref="SW-BUSINESS-REGISTRY-V1",
+                actor_ref="ci-business-naming",
+                reason="BP04 bulk name reservation acceptance",
+                effective_tick=0,
+                generation_batch_id=self.batch_id,
+            )
+            self.assertEqual(reservation_count, 20000)
             with conn.cursor() as cur:
-                cur.executemany(
-                    """SELECT sw_names.reserve_business_name(
-                         %s,%s,%s,'SW-BUSINESS-REGISTRY-V1',
-                         'ci-business-naming','BP04 bulk name reservation acceptance',0,%s)""",
-                    reservations,
-                )
                 cur.execute(
                     """SELECT count(*) FILTER (WHERE name_form='trading'),
                               count(*) FILTER (WHERE name_form='legal'),
