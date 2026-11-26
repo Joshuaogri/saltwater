@@ -172,7 +172,12 @@ BEGIN
   IF v_key='saltwater' THEN
     RAISE EXCEPTION 'Saltwater name is reserved only for the two geographic roots';
   END IF;
-  PERFORM pg_advisory_xact_lock(hashtextextended(v_key,0));
+  -- One transaction-scoped relation lock protects the global exact-name
+  -- namespace and near-duplicate trigger check for this batch. A distinct
+  -- advisory lock per candidate exhausts PostgreSQL's per-transaction lock
+  -- table when importing thousands of names in one transaction. The unique
+  -- namespace index remains the final exact-collision safeguard.
+  LOCK TABLE sw_names.name_reservation IN SHARE ROW EXCLUSIVE MODE;
 
   SELECT * INTO v_existing FROM sw_names.name_reservation
     WHERE normalized_key=v_key AND namespace_slot='GLOBAL';
