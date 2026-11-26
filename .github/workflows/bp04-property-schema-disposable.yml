@@ -21,7 +21,8 @@ on:
       - "tests/pkg001/test_bp04_archive_reader.py"
       - "runtime/bp04_lookup.py"
       - "tests/pkg001/test_bp04_lookup.py"
-      - "tests/pkg001/test_bp04_lookup_archives.py"\n      - "tests/pkg001/test_bp04_player_commands_archives.py"
+      - "tests/pkg001/test_bp04_lookup_archives.py"
+      - "tests/pkg001/test_bp04_player_commands_archives.py"
       - "tests/pkg001/bp04_archive_only_acceptance.sql"
       - "tests/pkg001/bp04_property_import_acceptance.sql"
       - ".github/workflows/bp04-property-schema-disposable.yml"
@@ -110,7 +111,9 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_archive_only_acceptance.sql
       - name: Verify gameplay lookup against the actual imported BP04 archives
         run: python -m unittest tests.pkg001.test_bp04_lookup_archives -v
-      - name: Verify player find and inspect commands against real BP04 archives\n        run: python -m unittest tests.pkg001.test_bp04_player_commands_archives -v\n      - name: Verify second import is idempotent and storage-stable
+      - name: Verify player find and inspect commands against real BP04 archives
+        run: python -m unittest tests.pkg001.test_bp04_player_commands_archives -v
+      - name: Verify second import is idempotent and storage-stable
         run: |
           BEFORE="$(psql -At -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database());")"
           psql -v ON_ERROR_STOP=1 -c "SELECT pg_stat_reset();"
