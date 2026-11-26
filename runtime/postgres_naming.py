@@ -6,7 +6,7 @@ rolls back, so domain creation and name reservation remain atomic.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Iterable
 
 from runtime.naming import NORMALIZER_VERSION, GeneratedNameBatch, normalize_name
 
@@ -75,6 +75,38 @@ class PostgresNameRegistry:
         if not row:
             raise RuntimeError("business name reservation returned no identifier")
         return int(row[0])
+
+    def reserve_business_batch(
+        self, reservations: Iterable[tuple[str, str, str]], *,
+        source_ref: str, actor_ref: str, reason: str, effective_tick: int,
+        generation_batch_id: int | None = None,
+    ) -> int:
+        """Reserve (business_id, name_form, display_name) rows in one DB-API batch.
+
+        The caller owns the transaction. Any collision aborts the caller's
+        transaction; this method never commits or rolls back.
+        """
+        parameters = []
+        for business_id, name_form, display_name in reservations:
+            if not isinstance(business_id, str) or not business_id.strip() or len(business_id) > 120:
+                raise ValueError("a non-empty stable text business ID is required")
+            form = name_form.lower()
+            if form not in {"trading", "legal"}:
+                raise ValueError("business name_form must be trading or legal")
+            normalize_name(display_name)
+            parameters.append((
+                business_id, form, display_name, source_ref, actor_ref,
+                reason, effective_tick, generation_batch_id,
+            ))
+        if not parameters:
+            return 0
+        with self._connection.cursor() as cursor:
+            cursor.executemany(
+                """SELECT sw_names.reserve_business_name(
+                     %s::text,%s::text,%s::text,%s::text,%s::text,%s::text,%s::bigint,%s::bigint)""",
+                parameters,
+            )
+        return len(parameters)
 
     def search_business(self, value: str) -> tuple[PersistentNameRecord, ...]:
         normalize_name(value)
