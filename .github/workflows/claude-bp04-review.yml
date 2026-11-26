@@ -70,16 +70,16 @@ jobs:
                   })
               excerpt = (
                   "Full workflow logs are not yet downloadable (commonly because a job is still running). "
-                  "Do not infer runtime measurements from this. Available job/step state follows:\\n"
+                  "Do not infer runtime measurements from this. Available job/step state follows:\n"
                   + json.dumps(summary, indent=2)
-                  + "\\nLog retrieval diagnostic: " + (p.stderr or "no diagnostic returned")[:2000]
+                  + "\nLog retrieval diagnostic: " + (p.stderr or "no diagnostic returned")[:2000]
               )
               log_status = "Full logs unavailable; supplied run metadata and job/step status instead."
 
           with open("bp04-run-context.txt", "w", encoding="utf-8") as f:
               f.write(json.dumps({k: v for k, v in meta.items() if k != "jobs"}, indent=2)
-                      + "\\n\\nEvidence collection status: " + log_status
-                      + "\\n\\n--- BP04 workflow log excerpt / available job state ---\\n" + excerpt)
+                      + "\n\nEvidence collection status: " + log_status
+                      + "\n\n--- BP04 workflow log excerpt / available job state ---\n" + excerpt)
           print(log_status)
           PY
 
@@ -103,7 +103,7 @@ jobs:
           for name in files:
               path = pathlib.Path(name)
               if path.exists():
-                  sections.append(f"\\n\\n===== FILE: {name} =====\\n" + path.read_text(encoding="utf-8")[:50000])
+                  sections.append(f"\n\n===== FILE: {name} =====\n" + path.read_text(encoding="utf-8")[:50000])
           prompt = """You are Claude, acting as an independent senior PostgreSQL performance and correctness reviewer for Saltwater, a fictional single-player police simulation.
           Review the attached BP04 disposable PostgreSQL acceptance evidence. The test must reserve all 20,000 public business names (10,000 businesses, trading and legal forms) and preserve every canonical invariant.
 
@@ -153,13 +153,13 @@ jobs:
               detail = exc.read().decode("utf-8", "replace")[:3000]
               raise SystemExit(f"Anthropic API returned HTTP {exc.code}: {detail}")
 
-          report = "\\n".join(
+          report = "\n".join(
               block.get("text", "") for block in data.get("content", [])
               if block.get("type") == "text"
           ).strip()
           if not report:
               raise SystemExit("Claude returned no text report.")
-          pathlib.Path("claude-bp04-review.md").write_text(report + "\\n", encoding="utf-8")
+          pathlib.Path("claude-bp04-review.md").write_text(report + "\n", encoding="utf-8")
           print("Claude review completed.")
           PY
 
