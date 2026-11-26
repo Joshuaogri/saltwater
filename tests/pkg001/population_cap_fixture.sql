@@ -5,6 +5,7 @@ DO $$
 DECLARE
   current_count integer;
   current_tick bigint;
+  phase_started timestamptz;
 BEGIN
   UPDATE sw_runtime.state
     SET state=1,player_present=false,bootstrap_open=false
@@ -37,6 +38,7 @@ BEGIN
     population_event_id bigint
   ) ON COMMIT DROP;
 
+  phase_started := clock_timestamp();
   WITH inserted AS (
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
     SELECT et.event_type_id,now(),current_tick,
@@ -50,7 +52,10 @@ BEGIN
   SELECT substring(source_ref from '([0-9]+)$')::integer,event_id
   FROM inserted;
 
+  RAISE NOTICE 'CAP_FIXTURE_PHASE=person_created_events ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
+
   -- The canonical person-name AFTER trigger remains enabled for every row.
+  phase_started := clock_timestamp();
   -- High-entropy family tokens avoid a shared-prefix synthetic naming workload.
   WITH inserted AS (
     INSERT INTO sw_people.person
@@ -66,6 +71,9 @@ BEGIN
   FROM inserted i
   WHERE i.source_ref='SW-DB-001:cap-person:'||s.fixture_no;
 
+  RAISE NOTICE 'CAP_FIXTURE_PHASE=people_and_name_registry ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
+  phase_started := clock_timestamp();
+
   WITH inserted AS (
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref)
     SELECT et.event_type_id,now(),current_tick,
@@ -80,12 +88,18 @@ BEGIN
   FROM inserted i
   WHERE i.source_ref='SW-DB-001:cap-population-state:'||s.fixture_no;
 
+  RAISE NOTICE 'CAP_FIXTURE_PHASE=population_state_events ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
+
   -- Population-cap and immutable history triggers remain authoritative.
+  phase_started := clock_timestamp();
   INSERT INTO sw_people.population_state
     (person_id,life_status,scope_status,effective_tick,last_event_id)
   SELECT person_id,1,1,current_tick,population_event_id
   FROM cap_fixture_stage
   ORDER BY fixture_no;
+
+  RAISE NOTICE 'CAP_FIXTURE_PHASE=population_state_and_history ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
+  phase_started := clock_timestamp();
 
   IF (SELECT count(*) FROM cap_fixture_stage) <> 9999-current_count
      OR EXISTS (SELECT 1 FROM cap_fixture_stage
@@ -96,5 +110,6 @@ BEGIN
   IF (SELECT living_included FROM sw_people.population_counter WHERE singleton=1) <> 9999 THEN
     RAISE EXCEPTION 'fixture did not reach 9,999 living included persons';
   END IF;
+  RAISE NOTICE 'CAP_FIXTURE_PHASE=final_reconciliation ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
 END
-$$;
+$;
