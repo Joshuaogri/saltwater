@@ -33,7 +33,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
         cls.by_id = {row["business_id"]: row for row in cls.rows}
         naming = document["metadata"]["naming"]
         manifest = {
-            "dataset_id": document["metadata"]["dataset_id"],
+            "dataset_id": "SW-BUSINESS-REGISTRY-V1",
             "generator_version": naming["generator_version"],
             "normalizer_version": 1,
             "config_version": naming["vocabulary_config_version"],
