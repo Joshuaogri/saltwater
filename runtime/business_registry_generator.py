@@ -98,7 +98,7 @@ def _generate_business_names_report(source: dict) -> dict:
         return {
             word: tuple(
                 other for other in words
-                if pg_trgm_similarity(word, other) > 0.90
+                if pg_trgm_similarity(word, other) > 0.0
             )
             for word in words
         }
