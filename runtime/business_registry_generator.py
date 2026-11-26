@@ -146,8 +146,23 @@ def _generate_business_names_report(source: dict) -> dict:
             continue
 
         near_duplicate = False
-        for other_adjective in similar_adjectives[adjective]:
-            for other_noun in similar_nouns[noun]:
+        # pg_trgm is insensitive to word order in many short phrases.
+        # Compare both adjective/noun alignments so "Beacon Elm" and
+        # "Elm Beacon" cannot evade screening by swapping vocabulary roles.
+        for other_adjective in adjective_vocab:
+            if near_duplicate:
+                break
+            for other_noun in noun_vocab:
+                same_alignment = (
+                    other_adjective in similar_adjectives[adjective]
+                    and other_noun in similar_nouns[noun]
+                )
+                swapped_alignment = (
+                    other_noun in similar_adjectives[adjective]
+                    and other_adjective in similar_nouns[noun]
+                )
+                if not (same_alignment or swapped_alignment):
+                    continue
                 for existing_name in accepted_by_root.get((other_adjective, other_noun), ()):
                     if any(
                         pg_trgm_similarity(public_name, existing_name) > 0.90
@@ -157,8 +172,6 @@ def _generate_business_names_report(source: dict) -> dict:
                         break
                 if near_duplicate:
                     break
-            if near_duplicate:
-                break
 
         if near_duplicate:
             held_near_duplicates += 1
