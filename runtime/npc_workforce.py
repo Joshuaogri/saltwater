@@ -38,13 +38,14 @@ class NPCOfficer:
     given_name: str
     family_name: str
     display_name: str
-    unit_id: str
-    post_id: str
+    unit_id: str | None
+    post_id: str | None
     position_title: str
     shift_group: str
     actor_kind: str = "npc"
     player_controlled: bool = False
     service_state: str = "active"
+    service_standing: str = "established"
     position_type: str = "sworn"
 
 
@@ -117,6 +118,21 @@ class NPCWorkforceGenerator:
         return tuple(officers)
 
 
+    @staticmethod
+    def assign_shift_groups(officers: Iterable[NPCOfficer]) -> tuple[NPCOfficer, ...]:
+        """Assign existing people to four shifts without creating new identities."""
+        rows = sorted(tuple(officers), key=lambda item: (
+            item.unit_id or "", item.post_id or "", item.service_number
+        ))
+        counts: dict[str, int] = {}
+        result = []
+        for officer in rows:
+            group = officer.unit_id or "__unassigned__"
+            index = counts.get(group, 0)
+            counts[group] = index + 1
+            result.append(replace(officer, shift_group=_SHIFT_GROUPS[index % len(_SHIFT_GROUPS)]))
+        return tuple(result)
+
     def generate_shift_roster(self, posts: Iterable[dict]) -> tuple[NPCOfficer, ...]:
         """Assign one distinct NPC per authorised post to one of four shifts.
 
@@ -126,15 +142,7 @@ class NPCWorkforceGenerator:
         not 2,000 additional people. Within each unit, occupants are distributed
         round-robin across Alpha, Bravo, Charlie and Delta.
         """
-        generated = self.generate(posts)
-        per_unit_counts: dict[str, int] = {}
-        result = []
-        for officer in generated:
-            index = per_unit_counts.get(officer.unit_id, 0)
-            per_unit_counts[officer.unit_id] = index + 1
-            shift = _SHIFT_GROUPS[index % len(_SHIFT_GROUPS)]
-            result.append(replace(officer, shift_group=shift))
-        return tuple(result)
+        return self.assign_shift_groups(self.generate(posts))
 
     @staticmethod
     def as_records(officers: Iterable[NPCOfficer]) -> list[dict]:
