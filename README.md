@@ -19,6 +19,11 @@ The revised full acceptance audit passed in [run 45831361588](https://github.com
 
 ### BP02 identity lineage correction — 2026-11-26
 
+### BP02 no-building / exception reconciliation — 2026-11-26
+
+A dedicated read-only audit now cross-checks all no-building sites against the five frontage exceptions using explicit address, property, parcel and source-road identities. It counts no-building sites independently of primary review classifications, preserving the distinction between P1 frontage conflicts and P2 no-building review items. Acceptance expects 36 no-building properties, three overlapping frontage exceptions and two bridge exceptions on sites with building candidates. Tests and full acceptance workflow are pending. Inventory and Neon remain unchanged.
+
+
 Bridge exception resolution now uses the explicit BP04 `property_id` from the validated address-to-property relationship rather than deriving a property identifier from an address-ID suffix. Missing identity fails closed. A regression test proves resolution with unrelated address/property identifiers. Full BP02 acceptance is running against this change; no property/address identities were changed and no Neon write or operational promotion occurred.
 
 
