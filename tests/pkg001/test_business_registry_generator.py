@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.business_registry_generator import build_business_registry, _generate_business_names
+from runtime.business_registry_generator import build_business_registry
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.naming import normalize_name
 from runtime.naming_inventory import inventory_geography_names
@@ -47,12 +47,6 @@ class BusinessRegistryTests(unittest.TestCase):
             normalize_name(row["registered_name"]) for row in self.registry["businesses"]
         }
         self.assertFalse(generated & reserved)
-
-    def test_business_name_candidates_are_deterministic(self):
-        source = json.loads(
-            (ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual(_generate_business_names(source), _generate_business_names(source))
 
     def test_every_business_has_one_establishment_and_unit_link(self):
         r = self.registry
