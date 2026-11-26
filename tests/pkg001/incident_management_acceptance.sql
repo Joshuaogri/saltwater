@@ -9,6 +9,8 @@ DECLARE
   v_second_id integer;
   v_event_id bigint;
   v_assessment_event_id bigint;
+  v_location_id bigint;
+  v_second_location_id bigint;
   v_status text;
   v_error text;
 BEGIN
@@ -46,6 +48,51 @@ BEGIN
        OR (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>1 THEN
       RAISE EXCEPTION 'BP12 incident creation did not create complete source/event/location lineage';
     END IF;
+    v_location_id:=sw_incident.add_incident_location(
+      v_incident_id,'secondary','property','SWADDR-TEST-002',NULL,
+      'Fictional secondary test address','unverified',
+      'test:bp12','test-authority','caller-stated:BP12-ACCEPTANCE-LOCATION-001',
+      'BP12-ACCEPTANCE-LOCATION-001'
+    );
+    IF (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>2
+       OR NOT EXISTS(
+         SELECT 1 FROM sw_incident.incident_location
+         WHERE incident_location_id=v_location_id
+           AND location_ref='SWADDR-TEST-002'
+           AND confidence='unverified'
+           AND source_ref='caller-stated:BP12-ACCEPTANCE-LOCATION-001'
+       )
+       OR NOT EXISTS(
+         SELECT 1 FROM sw_core.simulation_event se
+         JOIN sw_core.event_type et USING(event_type_id)
+         WHERE se.event_id=(SELECT source_event_id FROM sw_incident.incident_location
+                            WHERE incident_location_id=v_location_id)
+           AND et.event_code='INCIDENT_LOCATION_ADDED'
+           AND se.subject_kind='incident' AND se.subject_id=v_incident_id
+       ) THEN
+      RAISE EXCEPTION 'BP12 incident location event/provenance recording failed';
+    END IF;
+    v_second_location_id:=sw_incident.add_incident_location(
+      v_incident_id,'secondary','property','SWADDR-TEST-002',NULL,
+      'Fictional secondary test address','unverified',
+      'test:bp12','test-authority','caller-stated:BP12-ACCEPTANCE-LOCATION-001',
+      'BP12-ACCEPTANCE-LOCATION-001'
+    );
+    IF v_second_location_id<>v_location_id
+       OR (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>2 THEN
+      RAISE EXCEPTION 'BP12 incident location idempotency failed';
+    END IF;
+    BEGIN
+      PERFORM sw_incident.add_incident_location(
+        v_incident_id,'primary','canonical_spatial',NULL,NULL,
+        'Missing canonical spatial identity','unknown',
+        'test:bp12','test-authority','test-source','BP12-ACCEPTANCE-INVALID-SPATIAL'
+      );
+      RAISE EXCEPTION 'canonical spatial location without spatial ID was accepted';
+    EXCEPTION WHEN OTHERS THEN
+      GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
+      IF v_error<>'canonical spatial location requires a spatial entity ID' THEN RAISE; END IF;
+    END;
     v_second_id:=sw_incident.create_incident(
       'system','BP12-ACCEPTANCE-001','Fictional test incident; no real occurrence.',
       'test:bp12','BP12-ACCEPTANCE-CREATE-001',NULL,'unknown','unclassified',3::smallint,
