@@ -111,6 +111,7 @@ class PostgresPlayerCommandRuntime:
         verifier: SessionVerifier,
         authorization: AuthorizationService,
         bp04_lookup: BP04Lookup | None = None,
+        hidden_truth_revealer: Callable[[str], str] | None = None,
     ):
         if not callable(connect):
             raise TypeError("connect must be a trusted PostgreSQL connection factory")
@@ -122,6 +123,7 @@ class PostgresPlayerCommandRuntime:
         self._verifier = verifier
         self._authorization = authorization
         self._bp04_lookup = bp04_lookup
+        self._hidden_truth_revealer = hidden_truth_revealer
         self._resolver = PostgresPlayerContextResolver(connect)
 
     def _get_bp04_lookup(self):
@@ -143,7 +145,8 @@ class PostgresPlayerCommandRuntime:
                 session.principal_id, session.active_person_id
             )
             application = create_postgres_player_application(
-                self._connect, context.profile, bp04_lookup=self._get_bp04_lookup
+                self._connect, context.profile, bp04_lookup=self._get_bp04_lookup,
+                hidden_truth_revealer=self._hidden_truth_revealer,
             )
             gateway: AuthorizedPlayerCommandGateway = bind_authorized_player_commands(
                 application, self._authorization, session.principal_id
