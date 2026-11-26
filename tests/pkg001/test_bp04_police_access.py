@@ -236,6 +236,74 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertIsNone(captured["p_spatial_id"])
         self.assertEqual(captured["p_idempotency_key"], "INC-42-LOC-1")
 
+    def test_incident_location_history_requires_separate_history_grant_and_preserves_rows(self):
+        grants = self.grants + (
+            Grant(
+                "bp12.incident.inspect.location.history", "incident:*",
+                "police_workflow", Effect.ALLOW,
+                principal_kind=PrincipalKind.OFFICER, role="property_reader",
+            ),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup,
+            AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        rows = [{
+            "incident_id": 42, "incident_location_id": 901,
+            "source_event_id": 7001, "source_ref": "caller:CALL-77",
+            "event_attributes": {"address_source_ref": "bp04-address:SWADDR-1"},
+        }]
+        result = resolver.read_location_history(
+            "officer-session", 42,
+            location_history_reader=lambda incident_id: rows,
+        )
+        self.assertEqual(result, rows)
+        self.assertEqual(self.audit.records[-1].action,
+                         "bp12.incident.inspect.location.history")
+        self.assertTrue(self.audit.records[-1].allowed)
+
+    def test_incident_location_history_denies_without_history_grant(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda _id: None
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.read_location_history(
+                "officer-session", 42,
+                location_history_reader=lambda _id: [],
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp12.incident.inspect.location.history",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
+    def test_incident_location_history_rejects_cross_incident_or_missing_provenance(self):
+        grants = self.grants + (
+            Grant(
+                "bp12.incident.inspect.location.history", "incident:*",
+                "police_workflow", Effect.ALLOW,
+                principal_kind=PrincipalKind.OFFICER, role="property_reader",
+            ),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup,
+            AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        with self.assertRaisesRegex(ValueError, "conflicting incident identity"):
+            resolver.read_location_history(
+                "officer-session", 42,
+                location_history_reader=lambda _id: [{"incident_id": 43}],
+            )
+        with self.assertRaisesRegex(ValueError, "missing mandatory provenance"):
+            resolver.read_location_history(
+                "officer-session", 42,
+                location_history_reader=lambda _id: [{"incident_id": 42}],
+            )
+
     def test_incident_location_candidate_requires_incident_grant(self):
         resolver = BP04IncidentLocationResolver(
             self.access, lambda incident_id: {"incident_id": incident_id}
