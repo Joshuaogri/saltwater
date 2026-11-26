@@ -37,6 +37,10 @@ class FakeConnection:
 
 
 def tables_from_archive(payload):
+    # archive() returns the (compressed_payload, sha256) pair used by the
+    # fake archive store; tests only need the compressed payload here.
+    if isinstance(payload, tuple):
+        payload = payload[0]
     document = json.loads(gzip.decompress(payload).decode())
     return {
         name: [dict(zip(table["columns"], row)) for row in table["rows"]]
