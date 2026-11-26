@@ -4,7 +4,7 @@
 
 **Specification authority:** `docs/blueprint/divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md` (still `DESIGNED_DRAFT`; eight open design decisions remain).  
 **Status register:** `docs/blueprint/DIVISION-SPECIFICATION-REGISTER.md` records BP04 as IMPLEMENTED / TESTED / BLOCKED.  
-**Latest relevant CI:** BP04 integration [45834691417](https://github.com/Joshuaogri/saltwater/actions/runs/45834691417) passed; PKG-001 disposable PostgreSQL [45837315742](https://github.com/Joshuaogri/saltwater/actions/runs/45837315742) passed; migration validation [45837315871](https://github.com/Joshuaogri/saltwater/actions/runs/45837315871) passed. These runs validate specific slices, not all 48 BP04 criteria.  
+**Latest relevant CI:** Business registry build and its 9 regression tests [45840815853](https://github.com/Joshuaogri/saltwater/actions/runs/45840815853) passed; migration validation [45840815670](https://github.com/Joshuaogri/saltwater/actions/runs/45840815670) passed; PKG-001 disposable PostgreSQL [45840815690](https://github.com/Joshuaogri/saltwater/actions/runs/45840815690) was still running at the time of this audit update. BP04 integration [45834691417](https://github.com/Joshuaogri/saltwater/actions/runs/45834691417) and earlier PKG-001 [45837315742](https://github.com/Joshuaogri/saltwater/actions/runs/45837315742) passed. These runs validate specific slices, not all 48 BP04 criteria.  
 **Production archive:** [45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) passed archive-only source deployment. Production storage was measured separately.
 
 ## Status meanings
@@ -22,7 +22,7 @@
 | AC-A01 — at least 10,000 distinct valid local businesses | PARTIAL | The raw source contains 10,000 business and establishment records, but the sequence-suffixed names fail the valid-identity quality requirement; the raw count is not accepted as 10,000 valid businesses until AC-A04 is remediated. |
 | AC-A02 — branches, establishments, brands and aliases not miscounted | PARTIAL | Business/establishment hierarchy and parent references are validated; a full adversarial branch/brand/alias anti-inflation acceptance report is not present. |
 | AC-A03 — every business has unique ID, plausible identity, sector, local scope, lifecycle status and provenance | PARTIAL | Stable identities, sector and source provenance exist; a full record-by-record plausibility/local-scope/lifecycle audit with exception report is not linked. |
-| AC-A04 — duplicates, placeholders and off-map entities cannot inflate local minimum | FAIL | `runtime/business_registry_generator.py` appends the sequential index (`{sequence:05d}`) to every trading name and registered name. These sequence-generated labels are not independently plausible business identities; they are being used to make the 10,000 names unique. The generator also does not reserve candidates through the mandatory shared SW-UNS-001 registry. The current 10,000 count therefore cannot be accepted as 10,000 valid distinct identities. |
+| AC-A04 — duplicates, placeholders and off-map entities cannot inflate local minimum | PARTIAL | The sequence-suffix defect has been corrected. The new deterministic generator creates 10,000 normalized-unique trading names from a versioned 30,448-root vocabulary, screens 11,000 candidates, holds four internal near-duplicate candidates for review, checks exact collisions against all 102 adopted SW-GEO-V1 names, rejects numeric placeholders, and places establishments only on Saltwater property-world units. However, names have not yet been persistently reserved against the complete shared SW-UNS-001 namespace or every other adopted canonical name; this remains a required acceptance step. |
 | AC-A05 — total registry and active operating counts distinguished | NOT VERIFIED | The required reconciled count report separating all lifecycle classes is not evidenced. |
 | AC-A06 — business records do not create people | PASS | BP04 source generation/import boundary does not create person records; population is separately owned. |
 | AC-A07 — staffing and visitors respect the 10,000-person cap | NOT VERIFIED | Global population-cap tests pass in PKG-001, but the BP04 staff/visitor reference interaction is not demonstrated end-to-end. |
@@ -103,10 +103,10 @@
 | Result | Count |
 |---|---:|
 | PASS | 5 |
-| PARTIAL | 18 |
+| PARTIAL | 19 |
 | BLOCKED | 3 |
 | NOT VERIFIED | 21 |
-| FAIL | 1 |\n| **Total** | **48** |
+| FAIL | 0 |\n| **Total** | **48** |
 
 A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot be declared complete while any required criterion remains PARTIAL, BLOCKED or NOT VERIFIED.
 
@@ -127,7 +127,7 @@ A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot b
 This is a source/documentation audit only. No production Neon writes, grants, canonical address promotions, operational access-point approvals, or property inventory expansion occurred. Work remains on GitHub `main`.
 
 
-## Confirmed business-name quality defect — 2026-11-26
+## Business-name defect remediation and remaining reservation gap — 2026-11-26
 
 The registry generator currently builds each trading name as `<prefix> <root> <five-digit sequence>` and uses that as the basis for the registered name. The numeric sequence is an identity-disambiguation device, not a natural business naming method. This directly conflicts with BP04 AC-A04's prohibition on numbered placeholder names and SW-UNS-001's requirement that names be proposed and reserved through the shared canonical namespace.
 
