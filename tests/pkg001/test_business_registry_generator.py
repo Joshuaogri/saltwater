@@ -3,7 +3,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.business_registry_generator import build_business_registry
+from runtime.business_registry_generator import build_business_registry, _possible_near_duplicate_roots
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.naming import normalize_name
 from runtime.naming_inventory import inventory_geography_names
@@ -12,6 +12,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class BusinessRegistryTests(unittest.TestCase):
+    def test_near_duplicate_screen_checks_swapped_word_roles(self):
+        similar_tokens = {
+            "Beacon": ("Beacon",),
+            "Elm": ("Elm",),
+            "Calder": ("Calder", "Caldera"),
+            "Caldera": ("Calder", "Caldera"),
+            "Mill": ("Mill",),
+        }
+        beacon_roots = _possible_near_duplicate_roots("Beacon", "Elm", similar_tokens)
+        self.assertIn(("Elm", "Beacon"), beacon_roots)
+        calder_roots = _possible_near_duplicate_roots("Calder", "Mill", similar_tokens)
+        self.assertIn(("Mill", "Caldera"), calder_roots)
+
     @classmethod
     def setUpClass(cls):
         source = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
