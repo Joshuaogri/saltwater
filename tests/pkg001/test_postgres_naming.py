@@ -63,6 +63,42 @@ class PostgresNamingAdapterTests(unittest.TestCase):
         self.assertEqual(self.connection.value.params[-1], 8)
         self.assertEqual(self.connection.commits, 0)
 
+    def test_business_reservation_uses_stable_text_id_and_controlled_function(self):
+        reservation_id = self.registry.reserve_business(
+            "SWBIZ-000001", "Amber Meridian Trading", name_form="trading",
+            source_ref="business-registry-v1", actor_ref="ci-test",
+            reason="business naming integration", effective_tick=0,
+            generation_batch_id=8,
+        )
+        self.assertEqual(reservation_id, 71)
+        self.assertIn("sw_names.reserve_business_name", self.connection.value.query)
+        self.assertIn("%s::text", self.connection.value.query)
+        self.assertEqual(self.connection.value.params[0], "SWBIZ-000001")
+        self.assertEqual(self.connection.value.params[1], "trading")
+        self.assertEqual(self.connection.value.params[-1], 8)
+        self.assertEqual(self.connection.commits, 0)
+
+    def test_business_search_preserves_text_identity(self):
+        self.connection.value.rows = [
+            (72, "BUSINESS", "SWBIZ-000001", "trading",
+             "Amber Meridian Trading", "active", False),
+        ]
+        results = self.registry.search_business("Amber Meridian Trading")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0].entity_id, None)
+        self.assertEqual(results[0].entity_ref, "SWBIZ-000001")
+        self.assertEqual(results[0].entity_type, "BUSINESS")
+        self.assertIn("sw_names.search_business_name", self.connection.value.query)
+
+    def test_business_reservation_rejects_missing_or_numeric_business_identity(self):
+        with self.assertRaises(ValueError):
+            self.registry.reserve_business(
+                "", "Amber Meridian Trading", name_form="trading",
+                source_ref="fixture", actor_ref="test", reason="invalid",
+                effective_tick=0,
+            )
+        self.assertIsNone(self.connection.value.query)
+
     def test_generation_batch_manifest_is_persisted_with_binary_digest(self):
         digest = hashlib.sha256(b"fixture").hexdigest()
         batch = GeneratedNameBatch(
