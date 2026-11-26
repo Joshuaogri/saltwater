@@ -156,6 +156,74 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(self.audit.records[-1].reason, "session_not_active")
         self.assertFalse(self.audit.records[-1].allowed)
 
+    def test_incident_location_candidate_preserves_provenance_without_writing(self):
+        incident_grants = self.grants + (
+            Grant(
+                "bp12.incident.inspect.location", "incident:*",
+                "police_workflow", Effect.ALLOW,
+                principal_kind=PrincipalKind.OFFICER, role="property_reader",
+            ),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup,
+            AuthorizationService(self.verifier, self.audit, incident_grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access,
+            lambda incident_id: {
+                "incident_id": incident_id,
+                "incident_ref": "SWI-0000042",
+                "source_type": "police_call",
+                "source_record_id": "CALL-77",
+                "source_ref": "police_call:CALL-77",
+            },
+        )
+        candidate = resolver.prepare_address_candidate(
+            "officer-session", 42, "SWADDR-1",
+            location_role="primary", confidence="unverified",
+            source_ref="caller-stated:Harbour Avenue",
+        )
+        self.assertEqual(candidate["incident_source_ref"], "police_call:CALL-77")
+        self.assertEqual(candidate["source_ref"], "caller-stated:Harbour Avenue")
+        self.assertEqual(candidate["address_source_ref"], "bp04-address:SWADDR-1")
+        self.assertTrue(candidate["approval_required"])
+        self.assertFalse(candidate["persisted"])
+        self.assertEqual(len(self.audit.records), 2)
+        self.assertTrue(all(record.allowed for record in self.audit.records))
+
+    def test_incident_location_candidate_requires_incident_grant(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda incident_id: {"incident_id": incident_id}
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.prepare_address_candidate(
+                "officer-session", 42, "SWADDR-1",
+                source_ref="call:77",
+            )
+        self.assertEqual(self.audit.records[-1].action, "bp12.incident.inspect.location")
+        self.assertFalse(self.audit.records[-1].allowed)
+
+    def test_incident_location_candidate_rejects_missing_incident(self):
+        incident_grants = self.grants + (
+            Grant(
+                "bp12.incident.inspect.location", "incident:*",
+                "police_workflow", Effect.ALLOW,
+                principal_kind=PrincipalKind.OFFICER, role="property_reader",
+            ),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup,
+            AuthorizationService(self.verifier, self.audit, incident_grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        with self.assertRaisesRegex(LookupError, "Incident not found"):
+            resolver.prepare_address_candidate(
+                "officer-session", 42, "SWADDR-1", source_ref="call:77"
+            )
+        self.assertEqual(len(self.audit.records), 1)
+
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
             self.access.inspect("officer-session", "property", "SWPROP-1")
