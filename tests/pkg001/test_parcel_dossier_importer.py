@@ -1,5 +1,6 @@
 import copy
 import hashlib
+import json
 import unittest
 
 from runtime.parcel_dossier_importer import validate_manifest
