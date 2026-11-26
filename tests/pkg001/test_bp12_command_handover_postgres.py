@@ -58,7 +58,10 @@ def document():
         "authority_ref": "command:authority",
         "source_ref": "command-room:1",
         "effective_world_tick": 10,
-        "assignment_reconciliation": {"handover_ready": True},
+        "assignment_reconciliation": {
+            "handover_ready": True,
+            "timeline_rows": [{"occurred_at": datetime(2026, 11, 26, 12, 0, tzinfo=timezone.utc)}],
+        },
         "commander_decisions": [],
         "outstanding_actions": [],
         "responsibility_transfers": [{
@@ -88,7 +91,12 @@ class CommandHandoverPostgresAdapterTests(unittest.TestCase):
         query, params = cursor.calls[0]
         self.assertIn("sw_incident.record_command_handover", query)
         self.assertEqual(params[0], 7)
-        self.assertEqual(json.loads(params[8])["handover_ref"], "HANDOVER-1")
+        payload = json.loads(params[8])
+        self.assertEqual(payload["handover_ref"], "HANDOVER-1")
+        self.assertEqual(
+            payload["assignment_reconciliation"]["timeline_rows"][0]["occurred_at"],
+            "2026-11-26T12:00:00+00:00",
+        )
         self.assertEqual(params[9], "handover:1")
         self.assertTrue(connection.committed)
 
