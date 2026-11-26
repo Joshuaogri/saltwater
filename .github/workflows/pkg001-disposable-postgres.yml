@@ -127,6 +127,10 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_bp11_dispatch_lifecycle.py" -v
       - name: Run BP11 dispatcher console tests
         run: python -m unittest discover -s tests/pkg001 -p "test_bp11_dispatcher_console.py" -v
+      - name: Run BP11 dispatch creation tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp11_dispatch_creation.py" -v
+      - name: Run BP08 deployment port tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_deployment_port.py" -v
       - name: Run BP11 dispatch board tests
         run: python -m unittest discover -s tests/pkg001 -p "test_bp11_dispatch_board.py" -v
 
@@ -186,6 +190,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0028_bp12_incident_management.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0029_bp12_command_handover.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0031_bp11_dispatch_lifecycle_writer.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0032_bp11_authorised_deployment_creation.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
@@ -218,6 +223,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/unit_deployment_acceptance.sql
       - name: Verify BP11 dispatch lifecycle writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp11_dispatch_lifecycle_acceptance.sql
+      - name: Verify BP11 authorised deployment creation
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp11_deployment_creation_acceptance.sql
       - name: Verify BP09 resource inventory and dispatch readiness
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/resource_readiness_acceptance.sql
       - name: Verify BP12 incident schema and runtime boundary
