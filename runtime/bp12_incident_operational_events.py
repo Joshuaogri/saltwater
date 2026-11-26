@@ -179,3 +179,129 @@ def build_incident_operational_timeline_view(rows: list[dict]) -> list[dict]:
             "source_ref": row["source_ref"],
         })
     return view
+
+
+def reconcile_incident_command_handover(
+    incident_id: int,
+    *,
+    incident_status: str,
+    assignment_snapshot: list[dict],
+    timeline_rows: list[dict],
+    snapshot_source_ref: str,
+    as_of_world_tick: int,
+) -> dict:
+    """Reconcile authorised BP08/BP10 assignment state with BP12 event mirrors.
+
+    The caller must obtain incident, assignment and timeline snapshots through
+    their owning systems' authorised readers. This function does not fetch,
+    authorise, persist or mutate any operational state.
+    """
+    if type(incident_id) is not int or incident_id < 1:
+        raise ValueError("A positive incident ID is required.")
+    if incident_status not in {
+        "OPEN", "ACTIVE", "RESOLVED", "CLOSED", "CANCELLED", "DUPLICATE_LINKED"
+    }:
+        raise ValueError("Unsupported incident status.")
+    if not isinstance(snapshot_source_ref, str) or not snapshot_source_ref.strip():
+        raise ValueError("Assignment snapshot provenance is required.")
+    if type(as_of_world_tick) is not int or as_of_world_tick < 0:
+        raise ValueError("A non-negative snapshot world tick is required.")
+    if not isinstance(assignment_snapshot, list) or not isinstance(timeline_rows, list):
+        raise TypeError("Authorised assignment and timeline snapshots must be lists.")
+
+    assignments = {}
+    allowed_states = {"ASSIGNED", "EN_ROUTE", "ON_SCENE", "COMPLETED", "CANCELLED", "RELEASED"}
+    for item in assignment_snapshot:
+        if not isinstance(item, dict):
+            raise ValueError("Assignment snapshot contains an invalid record.")
+        assignment_ref = item.get("assignment_ref")
+        unit_ref = item.get("unit_ref")
+        status = item.get("status")
+        source_ref = item.get("source_ref")
+        if not all(isinstance(v, str) and v.strip() for v in (assignment_ref, unit_ref, source_ref)):
+            raise ValueError("Assignment snapshot is missing identity or provenance.")
+        if status not in allowed_states:
+            raise ValueError("Assignment snapshot contains an unsupported state.")
+        if assignment_ref in assignments:
+            raise ValueError("Assignment snapshot contains duplicate assignment references.")
+        assignments[assignment_ref] = {
+            "assignment_ref": assignment_ref, "unit_ref": unit_ref,
+            "status": status, "source_ref": source_ref,
+        }
+
+    arrivals = {}
+    previous_key = None
+    for event in timeline_rows:
+        if not isinstance(event, dict) or event.get("incident_id") != incident_id:
+            raise ValueError("Timeline contains a conflicting incident identity.")
+        if event.get("event_code") != "UNIT_ARRIVED":
+            continue
+        attrs = event.get("attributes")
+        if not isinstance(attrs, dict):
+            raise ValueError("Arrival event attributes are invalid.")
+        assignment_ref, unit_ref = attrs.get("assignment_ref"), attrs.get("unit_ref")
+        if not assignment_ref or not unit_ref or not event.get("source_ref"):
+            raise ValueError("Arrival event is missing assignment or source provenance.")
+        tick, event_id = event.get("world_tick"), event.get("event_id")
+        if type(tick) is not int or tick < 0 or type(event_id) is not int or event_id < 1:
+            raise ValueError("Arrival event ordering fields are invalid.")
+        key = (tick, event_id)
+        if previous_key is not None and key < previous_key:
+            raise ValueError("Timeline is not in canonical event order.")
+        previous_key = key
+        if assignment_ref in arrivals:
+            # Preserve the first arrival; subsequent arrivals for one assignment
+            # are a material discrepancy, not a silent overwrite.
+            raise ValueError("Multiple arrival events exist for one assignment.")
+        arrivals[assignment_ref] = {
+            "unit_ref": unit_ref, "event_id": event_id,
+            "world_tick": tick, "source_ref": event["source_ref"],
+        }
+
+    unresolved = []
+    discrepancies = []
+    reconciled = []
+    for assignment_ref, assignment in assignments.items():
+        arrival = arrivals.pop(assignment_ref, None)
+        if arrival and arrival["unit_ref"] != assignment["unit_ref"]:
+            discrepancies.append({
+                "type": "ARRIVAL_UNIT_MISMATCH",
+                "assignment_ref": assignment_ref,
+                "assignment_unit_ref": assignment["unit_ref"],
+                "arrival_unit_ref": arrival["unit_ref"],
+            })
+        arrived = arrival is not None
+        active = assignment["status"] in {"ASSIGNED", "EN_ROUTE", "ON_SCENE"}
+        if active and not arrived:
+            unresolved.append(assignment_ref)
+        if arrived and assignment["status"] in {"ASSIGNED", "EN_ROUTE", "CANCELLED", "RELEASED"}:
+            discrepancies.append({
+                "type": "ARRIVAL_ASSIGNMENT_STATE_MISMATCH",
+                "assignment_ref": assignment_ref,
+                "assignment_status": assignment["status"],
+                "arrival_event_id": arrival["event_id"],
+            })
+        reconciled.append({
+            **assignment,
+            "arrival_recorded": arrived,
+            "arrival_event_id": arrival["event_id"] if arrival else None,
+            "arrival_world_tick": arrival["world_tick"] if arrival else None,
+        })
+    for assignment_ref, arrival in arrivals.items():
+        discrepancies.append({
+            "type": "ARRIVAL_WITHOUT_CURRENT_ASSIGNMENT",
+            "assignment_ref": assignment_ref,
+            "arrival_event_id": arrival["event_id"],
+        })
+
+    return {
+        "incident_id": incident_id,
+        "incident_status": incident_status,
+        "snapshot_source_ref": snapshot_source_ref,
+        "as_of_world_tick": as_of_world_tick,
+        "assignments": reconciled,
+        "unresolved_assignment_refs": sorted(unresolved),
+        "discrepancies": discrepancies,
+        "handover_ready": not unresolved and not discrepancies,
+        "read_only": True,
+    }
