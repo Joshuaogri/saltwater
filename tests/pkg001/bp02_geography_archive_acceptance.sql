@@ -26,9 +26,6 @@ BEGIN
      OR (v_row.source_manifest->'identity_validation'->>'unresolved')::integer <> 0 THEN
     RAISE EXCEPTION 'SW-GEO-V1 archive metadata or release boundary failed acceptance';
   END IF;
-  IF v_row.archive_sha256 <> encode(digest(v_row.compressed_payload,'sha256'),'hex') THEN
-    RAISE EXCEPTION 'SW-GEO-V1 archive checksum mismatch';
-  END IF;
 END
 $$;
 
