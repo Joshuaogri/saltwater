@@ -1,7 +1,7 @@
 # BP-02 address placement review register
 
-**Date:** 2026-11-25  
-**Status:** IMPLEMENTED AND TESTED — dedicated GitHub Actions run 45688271976 passed  
+**Date:** 2026-11-26  
+**Status:** STRUCTURAL ACCEPTANCE PASSED — full audit run 45831361588; operational geography release remains blocked  
 **Scope:** Read-only GitHub source and disposable CI validation. No Neon writes.
 
 ## Purpose
