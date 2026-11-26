@@ -263,6 +263,95 @@ class BP04Lookup:
                         f"references missing {kind} {value}"
                     )
 
+        # Business registry links are reciprocal: a parent company, registered
+        # address and declared primary establishment must resolve to the same
+        # canonical source identities, not merely to arbitrary existing rows.
+        primary_establishment_owners = {}
+        for business in self._by_id["business"].values():
+            business_id = business["business_id"]
+            parent_id = business.get("parent_business_id")
+            if parent_id:
+                if parent_id not in self._by_id["business"]:
+                    raise ValueError(
+                        f"Business {business_id} references missing parent business {parent_id}"
+                    )
+                if parent_id == business_id:
+                    raise ValueError(f"Business {business_id} cannot be its own parent")
+            registered_address_id = business.get("registered_address_id")
+            if registered_address_id and registered_address_id not in self._by_id["address"]:
+                raise ValueError(
+                    f"Business {business_id} references missing registered address "
+                    f"{registered_address_id}"
+                )
+            primary_id = business.get("primary_establishment_id")
+            if primary_id:
+                primary = self._by_id["establishment"].get(primary_id)
+                if primary is None:
+                    raise ValueError(
+                        f"Business {business_id} references missing primary establishment {primary_id}"
+                    )
+                if primary.get("business_id") != business_id:
+                    raise ValueError(
+                        f"Business {business_id} primary establishment belongs to another business"
+                    )
+                owner = primary_establishment_owners.setdefault(primary_id, business_id)
+                if owner != business_id:
+                    raise ValueError(
+                        f"Primary establishment {primary_id} is assigned to multiple businesses"
+                    )
+
+        # Reject corporate-parent cycles; parent/child relationships must form
+        # an acyclic ownership hierarchy even when every referenced ID exists.
+        for business_id in self._by_id["business"]:
+            visited = set()
+            current_id = business_id
+            while current_id:
+                if current_id in visited:
+                    raise ValueError(f"Business parent hierarchy contains a cycle at {current_id}")
+                visited.add(current_id)
+                current = self._by_id["business"].get(current_id)
+                current_id = current.get("parent_business_id") if current else None
+
+        for establishment in self._by_id["establishment"].values():
+            establishment_id = establishment["establishment_id"]
+            building = self._by_id["building"].get(establishment.get("building_id"))
+            premises = self._by_id["premises"].get(establishment.get("premises_id"))
+            unit = self._by_id["unit"].get(establishment.get("unit_id"))
+            address = self._by_id["address"].get(establishment.get("address_id"))
+            if building and establishment.get("property_id") != building.get("property_id"):
+                raise ValueError(
+                    f"Establishment {establishment_id} property/building relationship conflicts"
+                )
+            if premises and any(
+                premises.get(field) != establishment.get(field)
+                for field in ("property_id", "building_id")
+                if premises.get(field) is not None and establishment.get(field) is not None
+            ):
+                raise ValueError(
+                    f"Establishment {establishment_id} premises hierarchy conflicts"
+                )
+            if unit and any(
+                unit.get(field) != establishment.get(field)
+                for field in ("property_id", "building_id", "premises_id")
+                if unit.get(field) is not None and establishment.get(field) is not None
+            ):
+                raise ValueError(
+                    f"Establishment {establishment_id} unit hierarchy conflicts"
+                )
+            if address and establishment.get("property_id") != address.get("property_id"):
+                raise ValueError(
+                    f"Establishment {establishment_id} property/address relationship conflicts"
+                )
+            for linked, linked_address_id, label in (
+                (building, building.get("address_id") if building else None, "building"),
+                (premises, premises.get("address_id") if premises else None, "premises"),
+                (unit, unit.get("address_id") if unit else None, "unit"),
+            ):
+                if linked_address_id and establishment.get("address_id") and linked_address_id != establishment.get("address_id"):
+                    raise ValueError(
+                        f"Establishment {establishment_id} address/{label} relationship conflicts"
+                    )
+
     @property
     def counts(self) -> dict[str, int]:
         """Number of indexed source identities, by dataset collection."""
