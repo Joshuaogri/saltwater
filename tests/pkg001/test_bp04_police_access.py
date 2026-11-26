@@ -8,6 +8,7 @@ from runtime.bp04_police_access import (
     BP04IncidentLocationResolver,
     create_postgres_bp04_police_lookup_access,
 )
+from runtime.bp12_incident_location_history import PostgresIncidentLocationHistoryReader
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
     PrincipalKind, PrincipalStatus, SessionStatus, VerifiedSession,
@@ -57,6 +58,46 @@ def make_session(kind=PrincipalKind.OFFICER):
         roles=frozenset({"property_reader"}),
         policy_version="police-test",
     )
+
+
+class FakeHistoryCursor:
+    description = [
+        ("incident_location_id",), ("incident_id",), ("location_role",),
+        ("location_type",), ("spatial_id",), ("location_ref",),
+        ("raw_description",), ("confidence",), ("effective_tick",),
+        ("source_event_id",), ("source_ref",), ("event_occurred_at",),
+        ("event_source_ref",), ("event_attributes",),
+    ]
+
+    def __init__(self, rows):
+        self.rows = rows
+        self.executed = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def execute(self, query, params):
+        self.executed = (query, params)
+
+    def fetchall(self):
+        return self.rows
+
+
+class FakeHistoryConnection:
+    def __init__(self, cursor):
+        self._cursor = cursor
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def cursor(self):
+        return self._cursor
 
 
 class BP04PoliceAccessTests(unittest.TestCase):
@@ -235,6 +276,27 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(captured["p_location_ref"], "SWADDR-1")
         self.assertIsNone(captured["p_spatial_id"])
         self.assertEqual(captured["p_idempotency_key"], "INC-42-LOC-1")
+
+    def test_postgres_incident_location_history_reader_uses_parameterised_read(self):
+        values = (901, 42, "primary", "property", None, "SWADDR-1",
+                  "Reported address", "unverified", 12, 7001,
+                  "dispatch:CALL-9", None, "dispatch:CALL-9",
+                  {"address_source_ref": "bp04-address:SWADDR-1"})
+        cursor = FakeHistoryCursor([values])
+        reader = PostgresIncidentLocationHistoryReader(
+            lambda: FakeHistoryConnection(cursor)
+        )
+        rows = reader.read(42)
+        self.assertEqual(rows[0]["incident_id"], 42)
+        self.assertEqual(rows[0]["event_attributes"]["address_source_ref"],
+                         "bp04-address:SWADDR-1")
+        self.assertEqual(cursor.executed[1], (42,))
+        self.assertIn("incident_location_history(%s)", cursor.executed[0])
+
+    def test_postgres_incident_location_history_reader_rejects_invalid_id(self):
+        reader = PostgresIncidentLocationHistoryReader(lambda: None)
+        with self.assertRaises(ValueError):
+            reader.read(0)
 
     def test_incident_location_history_requires_separate_history_grant_and_preserves_rows(self):
         grants = self.grants + (
