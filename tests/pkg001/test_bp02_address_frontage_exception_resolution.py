@@ -5,11 +5,23 @@ from runtime.bp02_address_frontage_exception_resolution import resolve_address_f
 
 class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
     def setUp(self):
-        self.geo = {"roads": [
-            {"id": "R-SRC", "name": "Original Street", "class": "local_street"},
-            {"id": "R-ALT", "name": "Alternative Avenue", "class": "local_street"},
-            {"id": "R-BRIDGE", "name": "Harbour Bridge", "class": "bridge"},
-        ]}
+        self.geo = {
+            "roads": [
+                {"id": "R-SRC", "name": "Original Street", "class": "local_street"},
+                {"id": "R-ALT", "name": "Alternative Avenue", "class": "local_street"},
+                {"id": "R-BRIDGE", "name": "Harbour Bridge", "class": "bridge"},
+                {"id": "R-LEFT", "name": "West Street", "class": "local_street"},
+                {"id": "R-RIGHT", "name": "East Street", "class": "local_street"},
+            ],
+            "network": {"segments": [
+                {"id": "BSEG", "road_id": "R-BRIDGE", "from_node_id": "N1", "to_node_id": "N2",
+                 "access": "public", "modes": ["motor_vehicle", "emergency"]},
+                {"id": "LSEG", "road_id": "R-LEFT", "from_node_id": "N1", "to_node_id": "N0",
+                 "access": "public", "modes": ["motor_vehicle", "emergency"]},
+                {"id": "RSEG", "road_id": "R-RIGHT", "from_node_id": "N2", "to_node_id": "N3",
+                 "access": "public", "modes": ["motor_vehicle", "emergency"]},
+            ]},
+        }
         self.reconciliation = {"address_frontage_exceptions_building_access_crosscheck": [
             {
                 "source_address_id": "A1", "source_candidate_parcel_id": "P1",
@@ -32,22 +44,76 @@ class BP02AddressFrontageExceptionResolutionTests(unittest.TestCase):
             },
         ]}
 
-    def test_unique_frontage_is_identified_without_rewriting_source_address(self):
+    def _connector_report(self):
+        return {"connector_candidates": [
+            {
+                "property_id": "SWP-A2",
+                "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
+                "road_connection_type": "road_reserve_proximity_connection",
+                "road_connection_contact_type": "POINT_CONTACT_ONLY",
+                "geometry_status": "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED",
+                "property_contains_connector": True,
+                "crosses_origin_building": False,
+                "crosses_other_building": False,
+                "crosses_water": False,
+            },
+            {
+                "property_id": "SWP-A2",
+                "candidate_road_connection_id": "PAC-P2-PROX-BSEG",
+                "road_connection_type": "road_reserve_proximity_connection",
+                "road_connection_contact_type": "POINT_CONTACT_ONLY",
+                "geometry_status": "DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED",
+                "property_contains_connector": True,
+                "crosses_origin_building": False,
+                "crosses_other_building": False,
+                "crosses_water": False,
+            },
+        ]}
+
+    def test_unique_frontage_resolves_road_association_without_rewriting_source(self):
         result = resolve_address_frontage_exceptions(self.reconciliation, self.geo)
         row = result["records"][0]
         self.assertEqual(row["proposed_frontage_road_id"], "R-ALT")
-        self.assertEqual(row["geometry_disposition"],
-                         "UNIQUE_PARCEL_FRONTAGE_IDENTIFIED_SOURCE_ADDRESS_NOT_CONFIRMED")
+        self.assertEqual(row["resolved_access_road_id"], "R-ALT")
+        self.assertEqual(row["geometry_disposition"], "UNIQUE_PARCEL_FRONTAGE_ROAD_ASSOCIATION_RESOLVED")
+        self.assertTrue(row["address_road_association_resolved"])
         self.assertEqual(row["source_road_id"], "R-SRC")
         self.assertFalse(row["canonical_address_corrected"])
+        self.assertFalse(row["operational_access_approved"])
 
-    def test_bridge_point_contact_is_not_promoted_to_frontage(self):
+    def test_bridge_connector_and_connected_public_streets_resolve_road_association_only(self):
+        result = resolve_address_frontage_exceptions(
+            self.reconciliation, self.geo, self._connector_report()
+        )
+        row = result["records"][1]
+        self.assertEqual(
+            row["geometry_disposition"],
+            "BRIDGE_ACCESS_CONNECTOR_CANDIDATE_TO_CONNECTED_PUBLIC_ROAD_NETWORK",
+        )
+        self.assertEqual(row["resolved_access_road_id"], "R-BRIDGE")
+        self.assertTrue(row["address_road_association_resolved"])
+        self.assertEqual(row["verified_geometric_connector_candidate_count"], 2)
+        self.assertFalse(row["operational_access_approved"])
+
+    def test_bridge_point_contact_without_connector_evidence_remains_unresolved(self):
         result = resolve_address_frontage_exceptions(self.reconciliation, self.geo)
         row = result["records"][1]
-        self.assertEqual(row["geometry_disposition"],
-                         "BRIDGE_POINT_CONTACT_ONLY_NOT_STREET_FRONTAGE")
-        self.assertIsNone(row["proposed_frontage_road_id"])
-        self.assertFalse(row["operational_access_approved"])
+        self.assertEqual(row["geometry_disposition"], "BRIDGE_POINT_CONTACT_ONLY_NOT_STREET_FRONTAGE")
+        self.assertFalse(row["address_road_association_resolved"])
+
+    def test_bridge_requires_public_motor_vehicle_emergency_connections_at_both_ends(self):
+        broken_geo = dict(self.geo)
+        broken_geo["network"] = {"segments": self.geo["network"]["segments"][:2]}
+        result = resolve_address_frontage_exceptions(
+            self.reconciliation, broken_geo, self._connector_report()
+        )
+        self.assertFalse(result["records"][1]["address_road_association_resolved"])
+
+    def test_connector_crossing_water_fails_closed(self):
+        report = self._connector_report()
+        report["connector_candidates"][0]["crosses_water"] = True
+        result = resolve_address_frontage_exceptions(self.reconciliation, self.geo, report)
+        self.assertFalse(result["records"][1]["address_road_association_resolved"])
 
     def test_duplicate_exception_fails_closed(self):
         broken = {"address_frontage_exceptions_building_access_crosscheck":
