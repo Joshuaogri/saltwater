@@ -47,6 +47,8 @@ class NPCDeployment:
 class NPCDispatchSimulator:
     """Select available NPC units and manage their simple operational lifecycle."""
 
+    _ACTIVE_STATES = frozenset({"responding", "on_scene", "busy", "returning"})
+
     def __init__(self, officers: Iterable[NPCOfficer], unit_profiles: Iterable[dict], *, current_shift: str = "Alpha"):
         officer_rows = tuple(officers)
         self._officers = {officer.npc_id: officer for officer in officer_rows}
