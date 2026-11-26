@@ -29,16 +29,25 @@ class Connection:
         return False
 
 
+def staff_rows(count=8, *, unit_id="UNIT-PATROL", post_prefix="POST"):
+    return [
+        (
+            f"PERSONNEL-{index:03d}", f"SW-{index:04d}",
+            f"Officer{index}", "Example", "established", "active",
+            "sworn_officer", unit_id, f"{post_prefix}-{index:03d}",
+            "Police Sergeant" if index % 2 == 0 else "Patrol Officer", "sworn",
+        )
+        for index in range(1, count + 1)
+    ]
+
+
+def unit_rows(status="available"):
+    return [("UNIT-PATROL", "frontline", True, 2, 4, status, ["patrol", "first_response"])]
+
+
 class PostgresNPCDispatchFactoryTests(unittest.TestCase):
-    def test_loads_canonical_posts_and_units_without_writes(self):
-        posts = [
-            (f"P-{i:03d}", "UNIT-PATROL", "Police Sergeant" if i == 1 else "Patrol Officer", "sworn")
-            for i in range(1, 17)
-        ]
-        units = [
-            ("UNIT-PATROL", "frontline", True, 2, 4, "available", 0, ["patrol", "first_response"])
-        ]
-        cursor = Cursor([posts, units])
+    def test_loads_canonical_personnel_and_membership_without_writes(self):
+        cursor = Cursor([staff_rows(), unit_rows()])
         factory = PostgresNPCDispatchFactory(lambda: Connection(cursor), seed=3)
         console = factory.build(
             [DispatchIncident("INC-1", "Burglary", "patrol")],
@@ -51,34 +60,49 @@ class PostgresNPCDispatchFactoryTests(unittest.TestCase):
         self.assertIn("NPC dispatch assigned UNIT-PATROL", assigned)
         self.assertEqual(len(cursor.calls), 2)
         self.assertTrue(all(call[0].lstrip().upper().startswith("SELECT") for call in cursor.calls))
+        self.assertIn("sw_police.personnel", cursor.calls[0][0])
+        self.assertIn("sw_police.unit_membership", cursor.calls[0][0])
+        self.assertNotIn("authorised_post p", cursor.calls[0][0])
 
-    def test_dispatchable_unit_without_status_history_is_initialised_available(self):
-        posts = [
-            (f"P-{index:03d}", "UNIT-PATROL",
-             "Police Sergeant" if index % 2 == 0 else "Patrol Officer", "sworn")
-            for index in range(1, 9)
-        ]
-        units = [("UNIT-PATROL", "frontline", True, 2, 3, "unavailable", None, ["patrol"])]
-        cursor = Cursor([posts, units])
-        console = PostgresNPCDispatchFactory(lambda: Connection(cursor), seed=4).build(
-            [DispatchIncident("INC-BOOT-1", "Routine patrol", "patrol")], current_shift="Alpha"
-        )
-        assigned = console.process_dispatch_tick()
-        self.assertEqual(len(assigned), 1)
-        self.assertEqual(assigned[0].unit_id, "UNIT-PATROL")
-
-    def test_explicit_unavailable_status_event_is_not_overridden(self):
-        posts = [("P-001", "UNIT-PATROL", "Patrol Officer", "sworn"),
-                 ("P-002", "UNIT-PATROL", "Police Sergeant", "sworn")]
-        units = [("UNIT-PATROL", "frontline", True, 2, 3, "unavailable", 5, ["patrol"])]
-        cursor = Cursor([posts, units])
-        console = PostgresNPCDispatchFactory(lambda: Connection(cursor), seed=4).build(
-            [DispatchIncident("INC-BOOT-2", "Routine patrol", "patrol")], current_shift="Alpha"
+    def test_recruits_without_post_membership_are_not_dispatchable(self):
+        recruit = [(
+            "PERSONNEL-RECRUIT", "SW-RECRUIT-0001", "Avery", "Recruit",
+            "recruit", "active", "sworn_officer", None, None, None, None,
+        )]
+        cursor = Cursor([recruit, unit_rows()])
+        console = PostgresNPCDispatchFactory(lambda: Connection(cursor)).build(
+            [DispatchIncident("INC-RECRUIT", "Routine patrol", "patrol")],
+            current_shift="Alpha",
         )
         self.assertEqual(console.process_dispatch_tick(), ())
+        snapshot = console._simulator.snapshot()
+        self.assertEqual(snapshot["workforce_count"], 1)
+        self.assertEqual(snapshot["unassigned_npc_count"], 1)
+        self.assertEqual(snapshot["available_npc_count"], 0)
 
-    def test_missing_posts_fails_as_source_configuration_problem(self):
-        cursor = Cursor([[], [("UNIT-PATROL", "frontline", True, 2, 4, "available", 0, ["patrol"]) ]])
+    def test_no_status_history_does_not_make_staffed_unit_available(self):
+        cursor = Cursor([staff_rows(), unit_rows(status="unavailable")])
+        console = PostgresNPCDispatchFactory(lambda: Connection(cursor)).build(
+            [DispatchIncident("INC-UNAVAILABLE", "Routine patrol", "patrol")],
+            current_shift="Alpha",
+        )
+        self.assertEqual(console.process_dispatch_tick(), ())
+        self.assertEqual(console._simulator.snapshot()["available_npc_count"], 4)
+
+    def test_empty_personnel_does_not_invent_npc_staff_from_vacant_posts(self):
+        cursor = Cursor([[], unit_rows()])
+        console = PostgresNPCDispatchFactory(lambda: Connection(cursor)).build(
+            [DispatchIncident("INC-EMPTY", "Routine patrol", "patrol")],
+            current_shift="Alpha",
+        )
+        self.assertEqual(console.process_dispatch_tick(), ())
+        snapshot = console._simulator.snapshot()
+        self.assertEqual(snapshot["workforce_count"], 0)
+        self.assertEqual(snapshot["unassigned_npc_count"], 0)
+        self.assertEqual(snapshot["available_npc_count"], 0)
+
+    def test_missing_unit_profiles_fails_as_source_configuration_problem(self):
+        cursor = Cursor([[], []])
         factory = PostgresNPCDispatchFactory(lambda: Connection(cursor))
         with self.assertRaisesRegex(RuntimeError, "could not be loaded"):
             factory.build([])
