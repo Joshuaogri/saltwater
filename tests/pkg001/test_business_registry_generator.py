@@ -107,8 +107,13 @@ class BusinessRegistryTests(unittest.TestCase):
         self.assertEqual(document["metadata"]["naming"]["standard"], "SW-UNS-001")
         self.assertEqual(
             document["metadata"]["naming"]["near_duplicate_screen"],
-            "PASS_WITHIN_GENERATED_BATCH_ONLY",
+            "PASS_WITHIN_ALL_GENERATED_PUBLIC_NAMES",
         )
+        self.assertEqual(
+            document["metadata"]["naming"]["similarity_algorithm"],
+            "POSTGRES_PG_TRGM_COMPATIBLE",
+        )
+        self.assertEqual(document["metadata"]["naming"]["public_name_count"], 20000)
         self.assertEqual(document["metadata"]["naming"]["reservation_status"],
                          "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED")
         compressed_path = path.with_suffix(path.suffix + ".gz")
