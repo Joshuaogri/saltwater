@@ -24,13 +24,6 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
                 )
                 personnel_count = cursor.fetchone()[0]
                 cursor.execute(
-                    "SELECT count(*) FROM sw_test.person_cohort cohort "
-                    "JOIN sw_police.personnel_service_current service USING (person_id) "
-                    "WHERE cohort.cohort='POLICE_SUBSET' "
-                    "AND service.life_status=1 AND service.scope_status=1"
-                )
-                police_cohort_personnel_links = cursor.fetchone()[0]
-                cursor.execute(
                     "SELECT count(*) FROM sw_police.unit_profile "
                     "WHERE lifecycle_state='active' AND dispatchable"
                 )
@@ -40,7 +33,6 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         self.assertEqual(active_appointments, 0)
         self.assertEqual(active_memberships, 0)
         self.assertEqual(personnel_count, 0)
-        self.assertEqual(police_cohort_personnel_links, 0)
         self.assertGreater(dispatchable_units, 0)
 
         factory = PostgresNPCDispatchFactory(lambda: psycopg.connect())
