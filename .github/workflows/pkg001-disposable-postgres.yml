@@ -121,6 +121,8 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_bp12_command_handover_postgres.py" -v
       - name: Run BP12 incident operations service tests
         run: python -m unittest discover -s tests/pkg001 -p "test_bp12_incident_service.py" -v
+      - name: Run BP11 dispatch board tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp11_dispatch_board.py" -v
 
   disposable-postgres:
     runs-on: ubuntu-latest
