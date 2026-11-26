@@ -15,7 +15,7 @@ from runtime.naming import NORMALIZER_VERSION, GeneratedNameBatch, normalize_nam
 class PersistentNameRecord:
     reservation_id: int
     entity_type: str
-    entity_id: int
+    entity_id: int | None
     name_form: str
     display_name: str
     status: str
