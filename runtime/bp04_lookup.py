@@ -201,8 +201,55 @@ class BP04Lookup:
             if address.get("property_id") not in self._by_id["property"]:
                 raise ValueError(f"Address {address['address_id']} references missing property")
         for building in self._by_id["building"].values():
-            if building.get("property_id") not in self._by_id["property"]:
+            property_id = building.get("property_id")
+            if property_id not in self._by_id["property"]:
                 raise ValueError(f"Building {building['building_id']} references missing property")
+            address_id = building.get("address_id")
+            if address_id and address_id not in self._by_id["address"]:
+                raise ValueError(f"Building {building['building_id']} references missing address")
+        for premises in self._by_id["premises"].values():
+            for field, kind in (("property_id", "property"), ("building_id", "building"),
+                                ("address_id", "address")):
+                value = premises.get(field)
+                if value and value not in self._by_id[kind]:
+                    raise ValueError(
+                        f"Premises {premises['premises_id']} references missing {kind} {value}"
+                    )
+            building = self._by_id["building"].get(premises.get("building_id"))
+            if building and building.get("property_id") != premises.get("property_id"):
+                raise ValueError(
+                    f"Premises {premises['premises_id']} property/building relationship conflicts"
+                )
+        for unit in self._by_id["unit"].values():
+            for field, kind in (("property_id", "property"), ("building_id", "building"),
+                                ("premises_id", "premises"), ("address_id", "address")):
+                value = unit.get(field)
+                if value and value not in self._by_id[kind]:
+                    raise ValueError(
+                        f"Unit {unit['unit_id']} references missing {kind} {value}"
+                    )
+            premises = self._by_id["premises"].get(unit.get("premises_id"))
+            if premises and any(
+                premises.get(field) != unit.get(field)
+                for field in ("property_id", "building_id")
+            ):
+                raise ValueError(f"Unit {unit['unit_id']} premises hierarchy conflicts")
+        for access_point in self._by_id["access_point"].values():
+            for field, kind in (("property_id", "property"), ("building_id", "building"),
+                                ("premises_id", "premises"), ("unit_id", "unit")):
+                value = access_point.get(field)
+                if value and value not in self._by_id[kind]:
+                    raise ValueError(
+                        f"Access point {access_point['access_point_id']} references missing {kind} {value}"
+                    )
+            unit = self._by_id["unit"].get(access_point.get("unit_id"))
+            if unit and any(
+                unit.get(field) != access_point.get(field)
+                for field in ("property_id", "building_id", "premises_id")
+            ):
+                raise ValueError(
+                    f"Access point {access_point['access_point_id']} unit hierarchy conflicts"
+                )
         for establishment in self._by_id["establishment"].values():
             for field, kind in (
                 ("business_id", "business"), ("property_id", "property"),
