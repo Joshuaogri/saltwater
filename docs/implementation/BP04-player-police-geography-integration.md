@@ -215,3 +215,8 @@ Dispatch write-through also requires a trusted BP11 assignment verifier and a se
 
 
 `BP04IncidentLocationResolver.build_authorised_command_handover` is the officer-facing orchestration boundary. It independently audits `bp12.incident.inspect.command_handover`, `bp08.deployment.inspect.incident_assignments` and `bp12.incident.inspect.operational_timeline` before using the trusted incident, BP08 assignment and BP12 chronology readers. It then calls the pure reconciliation function. Denial occurs before protected readers are invoked; no BP08/BP10/BP11/BP12 operational source records are changed.
+
+
+## Command handover record projection
+
+`build_incident_command_handover_record` composes the assignment/arrival reconciliation with commander decisions and rationales, outstanding actions and owners, responsibility transfers, and acknowledgements. It validates record identity and provenance, world-tick chronology, duplicate record references, commander attribution, transfer direction, and acknowledgement recipient/handover identity. A handover is ready only when the assignment reconciliation is clear, responsibility is transferred from the outgoing commander to the incoming commander, and the incoming commander explicitly accepts. Outstanding actions can remain open if they retain a named owner and are carried into the record. The result status is `PROJECTED_NOT_PERSISTED`; this is deliberately a read-only projection, not an append-only persistence API. A durable BP12 handover event/register and authorised source readers remain separate work and must be implemented and tested before claiming persisted handovers.
