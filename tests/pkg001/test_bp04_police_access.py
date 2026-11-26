@@ -470,7 +470,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
             )
         self.assertEqual(
             self.audit.records[-1].action,
-            "bp16.investigation.incident.location.history",
+            "bp16.investigation.inspect.case",
         )
         self.assertFalse(self.audit.records[-1].allowed)
 
