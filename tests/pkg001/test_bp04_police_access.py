@@ -491,7 +491,9 @@ class BP04PoliceAccessTests(unittest.TestCase):
         with self.assertRaisesRegex(PermissionError, "Access denied"):
             resolver.record_dispatch_address_location(
                 "officer-session", 42, "SWADDR-1",
-                dispatch_ref="CAD-88", location_writer=lambda **_kw: self.fail("writer"),
+                dispatch_ref="CAD-88",
+                dispatch_incident_verifier=lambda _ref, _incident: True,
+                location_writer=lambda **_kw: self.fail("writer"),
                 actor_ref="dispatcher:4", authority_ref="dispatch-grant:9",
                 idempotency_key="CAD-88-LOC-1", raw_description="Dispatch update",
             )
