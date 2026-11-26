@@ -39,6 +39,15 @@ class PostgresDispatcherConsole:
                 raise
             raise DispatcherConsoleError("Dispatcher console is unavailable.") from exc
 
+    def create_deployment(self, creation_service: Any, **command: Any) -> dict:
+        """Create a deployment through the officer-authorised creation service."""
+        if not callable(getattr(creation_service, "create", None)):
+            raise TypeError("creation_service must provide create")
+        try:
+            return creation_service.create(self._credential, **command)
+        except Exception as exc:
+            raise DispatcherConsoleError("Deployment creation was not completed.") from exc
+
     def transition(
         self, deployment_id: UUID, *, command: str, expected_status: str,
         reason: str, source_ref: str, idempotency_key: str, effective_tick: int,
