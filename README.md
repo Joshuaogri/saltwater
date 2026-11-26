@@ -1456,3 +1456,4 @@ The BP12 incident location chronology now has a read-only PostgreSQL adapter usi
 Investigation history access is additionally bound to an authorised case reference: a trusted case-to-incident verifier must confirm the link before any BP12 history read. An unlinked incident is denied without revealing its location history.
 
 Dispatch-originated location updates now have a BP11-to-BP12 writer handoff. The dispatcher must hold a dedicated record grant; dispatch, incident and address reads are separately authorised and audited. The BP12 writer receives CAD provenance, dispatcher authority, confidence and an idempotency key, and remains the sole owner of the incident-location event and history.
+Dispatch-originated location writes additionally verify that the referenced CAD assignment is actually linked to the target incident, under a separate BP11 assignment-inspection grant. A mismatched link is rejected before BP04 address lookup or BP12 persistence.
