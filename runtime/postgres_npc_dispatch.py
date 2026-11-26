@@ -16,7 +16,7 @@ class PostgresNPCDispatchFactory:
     """
 
     POSTS_SQL = """
-        SELECT p.post_id, p.component_id AS unit_id, d.position_title
+        SELECT p.post_id, p.component_id AS unit_id, d.position_title, d.position_type
         FROM sw_police.authorised_post p
         JOIN sw_police.position_definition d USING (position_id)
         WHERE p.post_status <> 'abolished'
@@ -44,7 +44,7 @@ class PostgresNPCDispatchFactory:
                 with connection.cursor() as cursor:
                     cursor.execute(self.POSTS_SQL)
                     posts = [
-                        {"post_id": row[0], "unit_id": row[1], "position_title": row[2]}
+                        {"post_id": row[0], "unit_id": row[1], "position_title": row[2], "position_type": row[3]}
                         for row in cursor.fetchall()
                     ]
                     cursor.execute(self.UNITS_SQL)
