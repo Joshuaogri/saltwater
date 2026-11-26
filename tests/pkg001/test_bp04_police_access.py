@@ -14,6 +14,7 @@ from runtime.bp12_incident_operational_events import (
     PostgresIncidentOperationalTimelineReader,
     build_incident_operational_timeline_view,
     reconcile_incident_command_handover,
+    build_incident_command_handover_record,
 )
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
@@ -1066,6 +1067,85 @@ class BP04PoliceAccessTests(unittest.TestCase):
             "bp12.incident.inspect.command_handover",
         )
         self.assertFalse(self.audit.records[-1].allowed)
+
+    def test_command_handover_record_requires_incoming_commander_acceptance(self):
+        reconciliation = reconcile_incident_command_handover(
+            42, incident_status="ACTIVE_MANAGEMENT",
+            snapshot_source_ref="bp08:snapshot:42", as_of_world_tick=50,
+            assignment_snapshot=[
+                {"assignment_ref": "DEP-1", "unit_ref": "UNIT-1",
+                 "status": "COMPLETED", "source_ref": "bp08:DEP-1"},
+            ],
+            timeline_rows=[],
+        )
+        base = dict(
+            reconciliation=reconciliation, handover_ref="HO-42-7",
+            outgoing_commander_ref="commander:old",
+            incoming_commander_ref="commander:new",
+            prepared_by_ref="dispatcher:4", authority_ref="command-order:77",
+            source_ref="command-console:handover:7", effective_world_tick=51,
+            commander_decisions=[{
+                "record_ref": "DEC-1", "commander_ref": "commander:old",
+                "decision": "Maintain perimeter", "rationale": "Preserve scene integrity",
+                "actor_ref": "commander:old", "source_ref": "bp12:decision:1",
+                "world_tick": 48,
+            }],
+            outstanding_actions=[{
+                "record_ref": "ACT-1", "action": "Obtain witness statement",
+                "owner_ref": "officer:8", "status": "OPEN",
+                "actor_ref": "commander:old", "source_ref": "bp12:action:1",
+                "world_tick": 49,
+            }],
+            responsibility_transfers=[{
+                "record_ref": "TR-1", "responsibility_ref": "scene-command",
+                "from_ref": "commander:old", "to_ref": "commander:new",
+                "actor_ref": "commander:old", "source_ref": "bp12:transfer:1",
+                "world_tick": 51,
+            }],
+        )
+        unaccepted = build_incident_command_handover_record(
+            **base, acknowledgements=[{
+                "record_ref": "ACK-1", "handover_ref": "HO-42-7",
+                "recipient_ref": "commander:old", "acknowledgement": "ACCEPTED",
+                "notes": "Outgoing commander confirms handover", "actor_ref": "commander:old",
+                "source_ref": "bp12:ack:1", "world_tick": 51,
+            }],
+        )
+        self.assertFalse(unaccepted["handover_ready"])
+        self.assertEqual(unaccepted["record_status"], "PROJECTED_NOT_PERSISTED")
+        accepted = build_incident_command_handover_record(
+            **base, acknowledgements=[{
+                "record_ref": "ACK-2", "handover_ref": "HO-42-7",
+                "recipient_ref": "commander:new", "acknowledgement": "ACCEPTED",
+                "notes": "Incoming commander accepts responsibility", "actor_ref": "commander:new",
+                "source_ref": "bp12:ack:2", "world_tick": 51,
+            }],
+        )
+        self.assertTrue(accepted["handover_ready"])
+        self.assertTrue(accepted["read_only"])
+        self.assertEqual(accepted["outstanding_actions"][0]["status"], "OPEN")
+
+    def test_command_handover_record_rejects_unattributed_decisions(self):
+        reconciliation = reconcile_incident_command_handover(
+            42, incident_status="RECEIVED",
+            snapshot_source_ref="bp08:snapshot:43", as_of_world_tick=4,
+            assignment_snapshot=[], timeline_rows=[],
+        )
+        with self.assertRaisesRegex(ValueError, "not attributable"):
+            build_incident_command_handover_record(
+                reconciliation, handover_ref="HO-42-8",
+                outgoing_commander_ref="commander:old",
+                incoming_commander_ref="commander:new",
+                prepared_by_ref="dispatcher:4", authority_ref="command-order:78",
+                source_ref="command-console:handover:8", effective_world_tick=4,
+                commander_decisions=[{
+                    "record_ref": "DEC-X", "commander_ref": "commander:other",
+                    "decision": "Unsupported", "rationale": "Unknown authority",
+                    "actor_ref": "commander:other", "source_ref": "bp12:decision:x",
+                    "world_tick": 4,
+                }],
+                outstanding_actions=[], responsibility_transfers=[], acknowledgements=[],
+            )
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
