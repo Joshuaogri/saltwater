@@ -112,10 +112,6 @@ class OpeningPolicePersonNameRegistryPostgresTests(unittest.TestCase):
                     person_id = cur.fetchone()[0]
                     created_ids.append(person_id)
                     cur.execute(
-                        "UPDATE sw_core.simulation_event SET subject_id=%s WHERE event_id=%s",
-                        (person_id, event_id),
-                    )
-                    cur.execute(
                         """SELECT sw_names.reserve_name(
                              'PERSON',%s,'canonical',%s,%s,
                              'ci-opening-person-seed',
