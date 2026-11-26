@@ -241,3 +241,10 @@ The remaining work is divided into four acceptance tracks:
 Added `tests/pkg001/test_bp04_player_commands_archives.py` and wired it into the PostgreSQL 16/18 BP04 disposable workflow immediately after the archive-only import. Unlike the lookup-only archive test, this exercises the actual `PlayerCommandInterface` using the real `BP04Lookup` built from the imported compressed archives.
 
 The integration covers `find` for property, address and business; `inspect` for property, address, building, premises, unit, access point, business and establishment; malformed/missing records; and proof that read-only lookup leaves lifecycle, player presence and world tick unchanged. The workflow is triggered by the new test and runs it on both PostgreSQL versions. Result remains pending until GitHub Actions reports the run; this is not yet a passing acceptance claim.
+
+
+### Authenticated officer attribution — implemented, production resolver still required (2026-11-26)
+
+`AuthorizationDecision` now carries `active_person_id` from the same verified session used for the audited authorization decision. The BP04 gateway returns that decision to the protected handover operation. Before owner snapshots are read or BP12 is called, handover persistence requires a trusted, injected personnel-reference verifier to confirm that `prepared_by_ref` belongs to that verified active person. Missing active-person identity, absent resolver, or a non-matching reference fails closed.
+
+Regression coverage includes the matching authenticated preparer, a caller-supplied mismatched preparer, and a session without `active_person_id`. The audited officer-authorization test step passed in [BP04 workflow run 45825332438](https://github.com/Joshuaogri/saltwater/actions/runs/45825332438); the full geography workflow remains in progress at the time of this note. The repository now provides the fail-closed contract, but production handover remains unavailable until the owning personnel service is wired as the trusted reference verifier. No production grants were created and no production Neon changes were made.
