@@ -225,6 +225,7 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
     frontage_exceptions = [
         {
             "source_address_id": row["source_address_id"],
+            "property_id": row["property_id"],
             "source_candidate_parcel_id": row["source_candidate_parcel_id"],
             "source_road_id": row["road_id"],
             "candidate_frontage_road_ids": row["candidate_frontage_road_ids"],
