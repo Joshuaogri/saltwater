@@ -79,7 +79,9 @@ def pg_trgm_similarity(left: str, right: str) -> float:
     right_trigrams = trigrams(normalize_name(right))
     if not left_trigrams or not right_trigrams:
         return 0.0
-    return len(left_trigrams & right_trigrams) / max(len(left_trigrams), len(right_trigrams))
+    common = len(left_trigrams & right_trigrams)
+    union = len(left_trigrams) + len(right_trigrams) - common
+    return common / union if union else 0.0
 
 
 @dataclass(frozen=True, slots=True)
