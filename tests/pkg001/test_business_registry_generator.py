@@ -36,6 +36,26 @@ class BusinessRegistryTests(unittest.TestCase):
             self.assertFalse(any(ch.isdigit() for ch in row["trading_name"]), row["trading_name"])
             self.assertFalse(any(ch.isdigit() for ch in row["registered_name"]), row["registered_name"])
 
+    def test_business_names_pass_global_geography_near_duplicate_screen(self):
+        from runtime.naming import pg_trgm_similarity
+        geography = inventory_geography_names(json.loads(
+            (ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
+        ))
+        names = [
+            name
+            for row in self.registry["businesses"]
+            for name in (row["trading_name"], row["registered_name"])
+        ]
+        for item in geography.candidates:
+            for name in names:
+                self.assertLessEqual(
+                    pg_trgm_similarity(name, item.display_name), 0.90,
+                    f"business name {name!r} is too similar to adopted canon {item.display_name!r}",
+                )
+        naming = self.registry["naming"]
+        self.assertGreaterEqual(naming["geography_near_duplicate_candidates_held"], 0)
+        self.assertEqual(naming["similarity_algorithm"], "POSTGRES_PG_TRGM_COMPATIBLE")
+
     def test_business_names_do_not_collide_with_adopted_geography_names(self):
         geography = inventory_geography_names(json.loads(
             (ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8")
