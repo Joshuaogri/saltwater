@@ -15,6 +15,11 @@ on:
       - "runtime/event_engine.py"
       - "runtime/scheduling.py"
       - "runtime/recovery.py"
+      - "runtime/npc_dispatch.py"
+      - "runtime/npc_workforce.py"
+      - "runtime/npc_dispatch_console.py"
+      - "runtime/npc_dispatch_scheduler.py"
+      - "runtime/postgres_npc_dispatch.py"
       - "tests/pkg001/test_bp01_foundations.py"
       - "tests/pkg001/test_authorization.py"
       - "tests/pkg001/test_player_commands.py"
@@ -27,6 +32,10 @@ on:
       - "tests/pkg001/test_event_engine.py"
       - "tests/pkg001/test_scheduling.py"
       - "tests/pkg001/test_recovery.py"
+      - "tests/pkg001/test_npc_dispatch.py"
+      - "tests/pkg001/test_npc_workforce.py"
+      - "tests/pkg001/test_npc_dispatch_console.py"
+      - "tests/pkg001/test_postgres_npc_dispatch.py"
       - ".github/workflows/bp01-foundational-contracts.yml"
   workflow_dispatch:
 
@@ -65,5 +74,13 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_event_engine.py" -v
       - name: Test authoritative clock and recurring schedules
         run: python -m unittest discover -s tests/pkg001 -p "test_scheduling.py" -v
+      - name: Test autonomous NPC workforce and dispatch lifecycle
+        run: python -m unittest discover -s tests/pkg001 -p "test_npc_dispatch.py" -v
+      - name: Test four-shift NPC workforce generation
+        run: python -m unittest discover -s tests/pkg001 -p "test_npc_workforce.py" -v
+      - name: Test NPC dispatch console and recurring tick integration
+        run: python -m unittest discover -s tests/pkg001 -p "test_npc_dispatch_console.py" -v
+      - name: Test canonical PostgreSQL NPC dispatch source adapter
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_npc_dispatch.py" -v
       - name: Test persistence checkpoint and recovery contracts
         run: python -m unittest discover -s tests/pkg001 -p "test_recovery.py" -v
