@@ -1,5 +1,33 @@
 # Saltwater
 
+## BP02 bridge identity and business-naming lock remediation — 2026-11-26
+
+The BP02 bridge assessment builder now selects only the four connector identities
+confirmed by the address-frontage exception register. Matching is by bridge road,
+property, parcel, access-point candidate and road-access candidate; unrelated
+corridors that happen to share a bridge road ID are excluded. Each selected
+connector receives a distinct bridge-approach ID and a one-to-one engineering
+assessment record. The acceptance audit now verifies all four approach identities.
+
+The BP04 business-name reservation path no longer takes a table-wide
+`SHARE ROW EXCLUSIVE` lock on `sw_names.name_reservation`. The global exact/near-
+duplicate check is serialized with a transaction-scoped advisory lock in the
+reservation guard, allowing autovacuum to work without waiting for a relation lock.
+The PostgreSQL regression test checks that the advisory lock is held and the
+table-wide lock is absent during a bulk reservation transaction.
+
+The previous disposable PostgreSQL run timed out during the 20,000-name business
+reservation acceptance. Its server log repeatedly reported autovacuum skipping
+`name_reservation` because the table lock was unavailable. This is a CI-only
+disposable database finding: inspection of the connected Neon database found no
+`sw_names` schema/table and no active blocking lock or long-running query. No
+production Neon data was changed.
+
+The remediation is committed on `main`. Validation for the final code/test
+commit is being rerun: database migration validation has passed; the BP02 full
+acceptance audit is running; the PKG-001 disposable PostgreSQL run is queued.
+
+
 Saltwater is a fictional sovereign city-state and a single-city police simulation.
 
 ## Single-player NPC world
