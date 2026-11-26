@@ -9,6 +9,7 @@ from runtime.bp04_police_access import (
     create_postgres_bp04_police_lookup_access,
 )
 from runtime.bp12_incident_location_history import PostgresIncidentLocationHistoryReader
+from runtime.bp12_incident_operational_events import PostgresIncidentOperationalEventWriter
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
     PrincipalKind, PrincipalStatus, SessionStatus, VerifiedSession,
@@ -98,6 +99,46 @@ class FakeHistoryConnection:
 
     def cursor(self):
         return self._cursor
+
+
+class FakeOperationalCursor:
+    def __init__(self, result=(8801,)):
+        self.result = result
+        self.executed = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def execute(self, query, params):
+        self.executed = (query, params)
+
+    def fetchone(self):
+        return self.result
+
+
+class FakeOperationalConnection:
+    def __init__(self, cursor):
+        self._cursor = cursor
+        self.committed = False
+        self.rolled_back = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_args):
+        return False
+
+    def cursor(self):
+        return self._cursor
+
+    def commit(self):
+        self.committed = True
+
+    def rollback(self):
+        self.rolled_back = True
 
 
 class BP04PoliceAccessTests(unittest.TestCase):
@@ -276,6 +317,35 @@ class BP04PoliceAccessTests(unittest.TestCase):
         self.assertEqual(captured["p_location_ref"], "SWADDR-1")
         self.assertIsNone(captured["p_spatial_id"])
         self.assertEqual(captured["p_idempotency_key"], "INC-42-LOC-1")
+
+    def test_postgres_operational_event_writer_uses_parameterised_bp12_function(self):
+        cursor = FakeOperationalCursor((8801,))
+        connection = FakeOperationalConnection(cursor)
+        writer = PostgresIncidentOperationalEventWriter(lambda: connection)
+        event_id = writer.record(
+            incident_id=42, event_code="UNIT_ARRIVED",
+            actor_ref="officer:12", authority_ref="patrol-order:5",
+            source_ref="bp10-arrival:PATROL-ACT-19",
+            description="Unit arrived", idempotency_key="ARRIVAL-001",
+            unit_ref="UNIT-7", assignment_ref="DEP-4",
+            field_activity_ref="PATROL-ACT-19",
+        )
+        self.assertEqual(event_id, 8801)
+        self.assertIn("record_operational_timeline_event(%s", cursor.executed[0])
+        self.assertEqual(cursor.executed[1][0:2], (42, "UNIT_ARRIVED"))
+        self.assertEqual(cursor.executed[1][7:9], ("DEP-4", "PATROL-ACT-19"))
+        self.assertTrue(connection.committed)
+        self.assertFalse(connection.rolled_back)
+
+    def test_postgres_operational_event_writer_rejects_missing_arrival_refs(self):
+        writer = PostgresIncidentOperationalEventWriter(lambda: self.fail("DB must not be opened"))
+        with self.assertRaisesRegex(ValueError, "Unit, deployment and field activity"):
+            writer.record(
+                incident_id=42, event_code="UNIT_ARRIVED",
+                actor_ref="officer:12", authority_ref="patrol-order:5",
+                source_ref="bp10-arrival:bad", description="Unit arrived",
+                idempotency_key="ARRIVAL-BAD",
+            )
 
     def test_postgres_incident_location_history_reader_uses_parameterised_read(self):
         values = (901, 42, "primary", "property", None, "SWADDR-1",
