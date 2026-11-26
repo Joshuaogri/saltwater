@@ -120,12 +120,13 @@ def run_full_bp02_acceptance_audit() -> dict:
             source.get("status") == "APPROVED_FOR_OPERATIONAL_USE"
         ),
         "canonical_parcels_materialised": (
-            address_source_integrity["canonical_parcel_identity_matches"] == 420
-            and canonical_geography["parcel_count"] == 420
+            canonical_geography["parcel_count"] == 420
+            and len({row["parcel_id"] for row in canonical_geography["parcels"]}) == 420
         ),
         "canonical_addresses_materialised": (
-            address_source_integrity["canonical_address_identity_matches"] == 420
-            and canonical_geography["address_count"] == 420
+            canonical_geography["address_count"] == 420
+            and len({row["address_id"] for row in canonical_geography["addresses"]}) == 420
+            and canonical_geography["property_primary_address_link_count"] == 420
         ),
         "operational_access_points_approved": canonical_geography["building_access_point_count"] > 0
             and canonical_geography["bridge_connector_count"] == 4,
