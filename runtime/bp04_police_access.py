@@ -426,6 +426,43 @@ class BP04IncidentLocationResolver:
                 raise ValueError("Operational timeline is missing actor or authority provenance.")
         return result
 
+    def build_authorised_command_handover(
+        self, credential: str, incident_id: int, *,
+        assignment_snapshot_reader, operational_timeline_reader,
+    ) -> dict:
+        """Build a command handover from independently authorised owner snapshots."""
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if not callable(assignment_snapshot_reader) or not callable(operational_timeline_reader):
+            raise TypeError("Trusted BP08 assignment and BP12 timeline readers are required")
+        self._access._require(
+            credential, "bp12.incident.inspect.command_handover",
+            f"incident:{incident_id}",
+        )
+        incident = self._incident_reader(incident_id)
+        if not isinstance(incident, dict) or incident.get("incident_id") != incident_id:
+            raise LookupError("Incident not found.")
+        self._access._require(
+            credential, "bp08.deployment.inspect.incident_assignments",
+            f"incident:{incident_id}",
+        )
+        snapshot = assignment_snapshot_reader(incident_id)
+        if not isinstance(snapshot, dict):
+            raise ValueError("BP08 assignment snapshot is invalid.")
+        from runtime.bp12_incident_operational_events import reconcile_incident_command_handover
+        timeline = self.read_operational_timeline(
+            credential, incident_id,
+            operational_timeline_reader=operational_timeline_reader,
+        )
+        return reconcile_incident_command_handover(
+            incident_id,
+            incident_status=incident.get("status"),
+            assignment_snapshot=snapshot.get("assignments"),
+            timeline_rows=timeline,
+            snapshot_source_ref=snapshot.get("source_ref"),
+            as_of_world_tick=snapshot.get("as_of_world_tick"),
+        )
+
     def read_investigation_location_history(
         self, credential: str, incident_id: int, *, case_ref: str,
         case_incident_verifier, location_history_reader,
