@@ -52,6 +52,20 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         self.assertIs(result.activation, activation)
         self.assertIs(result.commands, commands)
 
+    def test_factory_can_inject_trusted_hidden_truth_revealer(self):
+        connect = lambda: None
+        profile = PlayerProfile("00000000-0000-4000-8000-000000000001", "Player")
+        revealer = lambda player_id: "Truth for " + player_id
+        with patch("runtime.application.PostgresRuntimeStore"), patch(
+            "runtime.application.PostgresRecruitmentService"
+        ), patch("runtime.application.RuntimeKernel"), patch(
+            "runtime.application.PlayerCommandInterface"
+        ) as commands_type, patch("runtime.application.PostgresSessionLifecycle"), patch(
+            "runtime.application.PostgresPlayerActivationService"
+        ):
+            create_postgres_player_application(connect, profile, hidden_truth_revealer=revealer)
+        self.assertIs(commands_type.call_args.kwargs["hidden_truth_revealer"], revealer)
+
     def test_factory_rejects_untrusted_or_invalid_inputs_before_wiring(self):
         with self.assertRaises(TypeError):
             create_postgres_player_application(None, PlayerProfile("p", "Player"))
@@ -163,6 +177,40 @@ class PostgresPlayerApplicationTests(unittest.TestCase):
         result = gateway.execute("token", "reveal-secret")
 
         self.assertFalse(result.ok)
+        authorization.decide.assert_not_called()
+        commands.execute.assert_not_called()
+
+    def test_gateway_bingo_uses_exact_reveal_authorization_before_dispatch(self):
+        principal_id = uuid4()
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        commands.execute.return_value = CommandResult(True, "Hidden truth")
+        authorization = Mock(spec=AuthorizationService)
+        authorization.decide.return_value = SimpleNamespace(allowed=True, principal_id=principal_id)
+        application = PostgresPlayerApplication(
+            kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands
+        )
+        gateway = bind_authorized_player_commands(application, authorization, principal_id)
+        result = gateway.execute("opaque-token", "bingo")
+        self.assertTrue(result.ok)
+        authorization.decide.assert_called_once_with(
+            "opaque-token", action="reveal_hidden_truth",
+            resource=f"player:{commands.profile.player_id}",
+            purpose="player_requested_reveal", reveal_trigger="bingo",
+            expected_principal_id=principal_id,
+        )
+        commands.execute.assert_called_once_with("bingo")
+
+    def test_gateway_rejects_non_exact_bingo_before_authorization(self):
+        commands = Mock()
+        commands.profile = PlayerProfile(str(uuid4()), "Player")
+        authorization = Mock(spec=AuthorizationService)
+        application = PostgresPlayerApplication(
+            kernel=object(), recruitment=object(), sessions=object(), activation=object(), commands=commands
+        )
+        gateway = bind_authorized_player_commands(application, authorization, uuid4())
+        for text in ("Bingo", " bingo", "bingo ", '"bingo"', "not bingo"):
+            self.assertFalse(gateway.execute("opaque-token", text).ok)
         authorization.decide.assert_not_called()
         commands.execute.assert_not_called()
 
