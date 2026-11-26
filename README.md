@@ -14,10 +14,13 @@ current NPC shift, selects a crew lead and tracks the deployment through
 responding, on-scene, busy, returning and available. Specialist units are
 preferred when their domain matches; general patrol can cover general
 response. The player does not enter officer IDs or manage crew membership.
-The console also exposes a priority-ordered autonomous dispatch tick: the game
-host can call it to allocate pending incidents without a player command, while
-unserviceable incidents remain queued. The simulation host/tick scheduler wiring
-is still outstanding. This is an in-memory gameplay layer, not a production Neon
+The console also exposes a priority-ordered autonomous dispatch tick. It is
+connected to BP37's authoritative recurring tick scheduler through
+`runtime/npc_dispatch_scheduler.py`: `register_npc_dispatch_schedule()` installs
+the police owner handler and recurring schedule. The scheduler invokes dispatch
+on due world ticks without a player command; unserviceable incidents remain
+queued. The game-session host must register this schedule when it composes the
+NPC dispatch world and continue running the shared tick scheduler. This is an in-memory gameplay layer, not a production Neon
 write or a claim that persistent staffing is complete. See
 [the NPC world design](docs/implementation/single-player-npc-world.md).
 
