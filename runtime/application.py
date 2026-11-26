@@ -47,14 +47,15 @@ class AuthorizedPlayerCommandGateway:
             return CommandResult(False, "Invalid command.")
         command = parsed.command
         reveal = command.token == "bingo"
-        decision = self.authorization.decide(
-            credential,
-            action="reveal_hidden_truth" if reveal else command.permission_action,
-            resource=self.player_resource,
-            purpose="player_requested_reveal" if reveal else self.purpose,
-            reveal_trigger=command.original_text if reveal else None,
-            expected_principal_id=self.principal_id,
-        )
+        authorization_args = {
+            "action": "reveal_hidden_truth" if reveal else command.permission_action,
+            "resource": self.player_resource,
+            "purpose": "player_requested_reveal" if reveal else self.purpose,
+            "expected_principal_id": self.principal_id,
+        }
+        if reveal:
+            authorization_args["reveal_trigger"] = command.original_text
+        decision = self.authorization.decide(credential, **authorization_args)
         if not decision.allowed:
             return CommandResult(False, "Access denied.")
         return self.commands.execute(line)
