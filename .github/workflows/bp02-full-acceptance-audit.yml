@@ -9,6 +9,10 @@ on:
       - "data/property/saltwater-property-world-v1.json.gz"
       - "runtime/bp02_address_frontage_exception_resolution.py"
       - "runtime/bp02_bridge_connector_engineering_register.py"
+      - "runtime/bp02_fictional_geography_release.py"
+      - "runtime/bp04_geography_reconciliation.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1-identity-map.json"
       - "runtime/bp02_address_review_register.py"
       - "runtime/bp02_full_acceptance_audit.py"
       - "runtime/bp02_no_building_site_reconciliation.py"
@@ -21,6 +25,7 @@ on:
       - "runtime/building_access_route_corridor_audit.py"
       - "tests/pkg001/test_bp02_address_frontage_exception_resolution.py"
       - "tests/pkg001/test_bp02_bridge_connector_engineering_register.py"
+      - "tests/pkg001/test_bp02_fictional_geography_release.py"
       - "tests/pkg001/test_bp02_address_review_register.py"
       - "tests/pkg001/test_bp02_no_building_site_reconciliation.py"
       - "tests/pkg001/test_building_access_candidate_audit.py"
@@ -44,7 +49,7 @@ jobs:
         run: python -m pip install "shapely==2.1.2"
       - name: Test address review and geometry exception dispositions
         run: |
-          python -m unittest tests.pkg001.test_bp02_address_review_register tests.pkg001.test_bp02_address_frontage_exception_resolution tests.pkg001.test_bp02_bridge_connector_engineering_register tests.pkg001.test_bp02_no_building_site_reconciliation tests.pkg001.test_building_access_candidate_audit tests.pkg001.test_building_access_route_corridor_audit -v
+          python -m unittest tests.pkg001.test_bp02_address_review_register tests.pkg001.test_bp02_address_frontage_exception_resolution tests.pkg001.test_bp02_bridge_connector_engineering_register tests.pkg001.test_bp02_fictional_geography_release tests.pkg001.test_bp02_no_building_site_reconciliation tests.pkg001.test_building_access_candidate_audit tests.pkg001.test_building_access_route_corridor_audit -v
       - name: Run complete BP-02 parcel, address and access-point acceptance audit
         run: python -m runtime.bp02_full_acceptance_audit
       - name: Upload complete BP-02 acceptance report
