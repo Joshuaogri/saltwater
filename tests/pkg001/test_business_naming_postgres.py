@@ -104,14 +104,21 @@ class BusinessNamingPostgresTests(unittest.TestCase):
             ))
         with connect() as conn:
             registry = PostgresNameRegistry(conn)
-            reservation_count = registry.reserve_business_batch(
-                ((business_id, form, display_name) for business_id, form, display_name, _ in reservations),
-                source_ref="SW-BUSINESS-REGISTRY-V1",
-                actor_ref="ci-business-naming",
-                reason="BP04 bulk name reservation acceptance",
-                effective_tick=0,
-                generation_batch_id=self.batch_id,
-            )
+            reservation_count = 0
+            # PostgreSQL advisory/name locks are transaction-scoped. Keep each
+            # write transaction bounded, as a resumable production importer must.
+            chunk_size = 500
+            for offset in range(0, len(reservations), chunk_size):
+                chunk = reservations[offset:offset + chunk_size]
+                reservation_count += registry.reserve_business_batch(
+                    ((business_id, form, display_name) for business_id, form, display_name, _ in chunk),
+                    source_ref="SW-BUSINESS-REGISTRY-V1",
+                    actor_ref="ci-business-naming",
+                    reason="BP04 bulk name reservation acceptance",
+                    effective_tick=0,
+                    generation_batch_id=self.batch_id,
+                )
+                conn.commit()
             self.assertEqual(reservation_count, 20000)
             with conn.cursor() as cur:
                 cur.execute(
