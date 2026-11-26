@@ -427,9 +427,10 @@ def build_incident_command_handover_record(
         **validated,
         "handover_ready": (
             reconciliation["handover_ready"]
-            and not any(a["status"] in {"OPEN", "IN_PROGRESS", "BLOCKED"}
-                        for a in validated["outstanding_actions"])
-            and not any(a["acknowledgement"] != "ACCEPTED"
+            and any(t["from_ref"] == outgoing_commander_ref
+                    and t["to_ref"] == incoming_commander_ref
+                    for t in validated["responsibility_transfers"])
+            and not any(a["acknowledgement"] == "DECLINED"
                         for a in validated["acknowledgements"])
             and any(a["recipient_ref"] == incoming_commander_ref
                     and a["acknowledgement"] == "ACCEPTED"
