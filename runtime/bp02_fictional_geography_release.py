@@ -240,23 +240,41 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
     assessment_candidate_ids = [
         row["source_connector_candidate_id"] for row in engineering_register["records"]
     ]
-    asset_connector_ids = [row["candidate_connector_id"] for row in connector_candidates]
+    asset_connector_by_id = {
+        row["candidate_connector_id"]: row for row in connector_candidates
+    }
+    asset_connector_ids = list(asset_connector_by_id)
     if len(assessment_candidate_ids) != len(set(assessment_candidate_ids)):
         raise ValueError("Bridge engineering assessment connector IDs are not unique")
-    if len(asset_connector_ids) != len(set(asset_connector_ids)):
+    if len(asset_connector_ids) != len(connector_candidates):
         raise ValueError("Asset connector candidate IDs are not unique")
-    if set(assessment_candidate_ids) != set(asset_connector_ids):
-        raise ValueError("Asset connectors and engineering assessments do not form a one-to-one set")
-    access_point_ids = {
-        row.get("candidate_access_point_id") for row in access_points
+    # The physical inventory contains many unreviewed building-to-road
+    # candidates. Only the four source identities selected by the two bridge
+    # exception records belong in the bridge engineering/canonical set.
+    missing_asset_connectors = set(assessment_candidate_ids) - set(asset_connector_ids)
+    if missing_asset_connectors:
+        raise ValueError("A bridge engineering assessment has no matching asset connector")
+    access_point_by_id = {
+        row.get("candidate_access_point_id"): row for row in access_points
+    }
+    building_by_id = {
+        row.get("candidate_building_id"): row for row in asset_inventory.get("buildings", [])
     }
     connectors = []
-    for row in connector_candidates:
-        assessment = approved_by_candidate[row["candidate_connector_id"]]
+    for assessment in engineering_register["records"]:
+        row = asset_connector_by_id[assessment["source_connector_candidate_id"]]
         if not assessment.get("operational_access_approved") or assessment.get("operational_access_status") != "APPROVED_IN_GAME":
             raise ValueError("A bridge connector lacks fictional gameplay engineering approval")
-        if row.get("access_point_candidate_id") not in access_point_ids:
-            raise ValueError("A bridge connector references an absent canonical access point")
+        access_point = access_point_by_id.get(row.get("access_point_candidate_id"))
+        building = building_by_id.get(assessment.get("candidate_building_id"))
+        if not access_point or access_point.get("building_id") != assessment.get("candidate_building_id"):
+            raise ValueError("A bridge connector references an absent or mismatched canonical access point")
+        if (row.get("road_access_candidate_id") != assessment.get("road_access_candidate_id")
+                or row.get("road_id") != assessment.get("bridge_road_id")
+                or not building
+                or building.get("property_id") != assessment.get("candidate_property_id")
+                or building.get("source_candidate_parcel_id") != assessment.get("source_candidate_parcel_id")):
+            raise ValueError("A bridge asset connector does not match its engineering assessment lineage")
         connectors.append({
             **row,
             "engineering_assessment_id": assessment["assessment_id"],
