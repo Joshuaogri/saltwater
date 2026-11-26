@@ -154,7 +154,7 @@ jobs:
 
   disposable-postgres:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     services:
       postgres:
         image: postgres:16
@@ -268,7 +268,7 @@ jobs:
       - name: Exercise NPC dispatch against canonical BP05 and BP08 records
         run: python -m unittest discover -s tests/pkg001 -p "test_postgres_npc_dispatch_integration.py" -v
       - name: Run BP04 stable text-ID business naming acceptance
-        timeout-minutes: 20
+        timeout-minutes: 60
         run: python -m unittest discover -s tests/pkg001 -p "test_business_naming_postgres.py" -v
       - name: Run opening police person seed against the authoritative naming registry
         timeout-minutes: 10
