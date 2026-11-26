@@ -86,6 +86,17 @@ class BP02NoBuildingSiteCrossRegisterTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Duplicate review property identity"):
             reconcile_no_building_sites_and_frontage_exceptions(broken, self.exceptions)
 
+    def test_duplicate_property_across_frontage_exceptions_fails_closed(self):
+        broken = {
+            "exception_count": 2,
+            "records": [
+                self.exceptions["records"][0],
+                dict(self.exceptions["records"][1], property_id="PROP-1"),
+            ],
+        }
+        with self.assertRaisesRegex(ValueError, "Duplicate frontage exception property"):
+            reconcile_no_building_sites_and_frontage_exceptions(self.review, broken)
+
     def test_missing_exception_review_link_fails_closed(self):
         broken = {
             "exception_count": 1,
