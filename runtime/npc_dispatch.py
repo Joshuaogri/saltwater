@@ -51,7 +51,10 @@ class NPCDispatchSimulator:
         officer_rows = tuple(officers)
         self._officers = {officer.npc_id: officer for officer in officer_rows}
         self._units: dict[str, dict] = {}
-        self._officer_state = {officer.npc_id: "available" for officer in officer_rows}
+        self._officer_state = {
+            officer.npc_id: ("available" if officer.shift_group == current_shift else "off_duty")
+            for officer in officer_rows
+        }
         self._unit_state: dict[str, str] = {}
         self._deployments: dict[str, NPCDeployment] = {}
         self._incident_assignments: dict[str, str] = {}
@@ -82,6 +85,12 @@ class NPCDispatchSimulator:
         """Move to the next NPC shift group without disturbing deployed crews."""
         shifts = ("Alpha", "Bravo", "Charlie", "Delta")
         self.current_shift = shifts[(shifts.index(self.current_shift) + 1) % len(shifts)]
+        for officer in self._officers.values():
+            state = self._officer_state[officer.npc_id]
+            if state in {"available", "off_duty"}:
+                self._officer_state[officer.npc_id] = (
+                    "available" if officer.shift_group == self.current_shift else "off_duty"
+                )
         return self.current_shift
 
     def available_units(self) -> list[dict]:
@@ -179,7 +188,10 @@ class NPCDispatchSimulator:
         if next_state == "available":
             self._unit_state[current.unit_id] = "available"
             for npc_id in current.crew_ids:
-                self._officer_state[npc_id] = "available"
+                officer = self._officers[npc_id]
+                self._officer_state[npc_id] = (
+                    "available" if officer.shift_group == self.current_shift else "off_duty"
+                )
         return updated
 
     def deployment(self, deployment_id: str) -> NPCDeployment | None:
@@ -191,7 +203,8 @@ class NPCDispatchSimulator:
             "units": self.available_units(),
             "deployments": [asdict(item) for item in self._deployments.values()],
             "available_npc_count": sum(state == "available" for state in self._officer_state.values()),
-            "assigned_npc_count": sum(state != "available" for state in self._officer_state.values()),
+            "assigned_npc_count": sum(state in self._ACTIVE_STATES for state in self._officer_state.values()),
+            "off_duty_npc_count": sum(state == "off_duty" for state in self._officer_state.values()),
         }
 
     def _available_crew(self, unit_id: str, shift: str) -> list[NPCOfficer]:
