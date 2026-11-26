@@ -97,6 +97,7 @@ class PostgresDispatchLifecycle:
         )
         if not decision.allowed:
             raise PermissionError("Access denied.")
+        return decision
 
     def transition(
         self,
@@ -125,14 +126,8 @@ class PostgresDispatchLifecycle:
         if not isinstance(expected_status, str) or not expected_status:
             raise ValueError("expected_status is required.")
 
-        self._require(credential, f"bp11.dispatch.{command}", deployment_id)
-        decision = self._authorization.decide(
-            credential,
-            action=f"bp11.dispatch.{command}",
-            resource=f"dispatch-deployment:{deployment_id}",
-            purpose=self._purpose,
-            expected_principal_id=self._principal_id,
-            expected_principal_kind=PrincipalKind.OFFICER,
+        decision = self._require(
+            credential, f"bp11.dispatch.{command}", deployment_id
         )
         if type(decision.active_person_id) is not int or decision.active_person_id < 1:
             raise PermissionError("Access denied.")
