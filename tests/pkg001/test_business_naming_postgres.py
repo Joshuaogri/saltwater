@@ -95,23 +95,20 @@ class BusinessNamingPostgresTests(unittest.TestCase):
         self.assertEqual(len(ids), len(set(ids)))
 
     def test_bulk_reserves_10000_trading_and_legal_names(self):
+        reservations = []
+        for row in self.rows:
+            reservations.extend((
+                (row["business_id"], "trading", row["trading_name"], self.batch_id),
+                (row["business_id"], "legal", row["registered_name"], self.batch_id),
+            ))
         with connect() as conn:
             with conn.cursor() as cur:
-                for row in self.rows:
-                    cur.execute(
-                        """SELECT sw_names.reserve_business_name(
-                             %s,'trading',%s,'SW-BUSINESS-REGISTRY-V1',
-                             'ci-business-naming','bulk trading-name acceptance',0,%s)""",
-                        (row["business_id"], row["trading_name"], self.batch_id),
-                    )
-                    self.assertIsNotNone(cur.fetchone()[0])
-                    cur.execute(
-                        """SELECT sw_names.reserve_business_name(
-                             %s,'legal',%s,'SW-BUSINESS-REGISTRY-V1',
-                             'ci-business-naming','bulk legal-name acceptance',0,%s)""",
-                        (row["business_id"], row["registered_name"], self.batch_id),
-                    )
-                    self.assertIsNotNone(cur.fetchone()[0])
+                cur.executemany(
+                    """SELECT sw_names.reserve_business_name(
+                         %s,%s,%s,'SW-BUSINESS-REGISTRY-V1',
+                         'ci-business-naming','BP04 bulk name reservation acceptance',0,%s)""",
+                    reservations,
+                )
                 cur.execute(
                     """SELECT count(*) FILTER (WHERE name_form='trading'),
                               count(*) FILTER (WHERE name_form='legal'),
