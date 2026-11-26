@@ -439,3 +439,127 @@ def build_incident_command_handover_record(
         "record_status": "PROJECTED_NOT_PERSISTED",
         "read_only": True,
     }
+
+
+
+class PostgresIncidentCommandHandoverWriter:
+    """Persist a validated BP12 handover projection through the append-only SQL API."""
+
+    def __init__(self, connect: Callable[[], Any]):
+        if not callable(connect):
+            raise TypeError("connect must be a trusted PostgreSQL connection factory")
+        self._connect = connect
+
+    def record(self, document: dict, *, idempotency_key: str) -> int:
+        if not isinstance(document, dict):
+            raise TypeError("A validated command handover document is required.")
+        if document.get("record_status") != "PROJECTED_NOT_PERSISTED" or document.get("read_only") is not True:
+            raise ValueError("Only an unpersisted read-only handover projection may be submitted.")
+        if document.get("handover_ready") is not True:
+            raise ValueError("Only a reconciled, accepted and ready handover may be persisted.")
+        required = (
+            "handover_ref", "incident_id", "outgoing_commander_ref",
+            "incoming_commander_ref", "prepared_by_ref", "authority_ref",
+            "source_ref", "effective_world_tick", "assignment_reconciliation",
+            "commander_decisions", "outstanding_actions", "responsibility_transfers",
+            "acknowledgements",
+        )
+        if any(key not in document for key in required):
+            raise ValueError("Command handover projection is missing required fields.")
+        if type(document["incident_id"]) is not int or document["incident_id"] < 1:
+            raise ValueError("A positive incident ID is required.")
+        if type(document["effective_world_tick"]) is not int or document["effective_world_tick"] < 0:
+            raise ValueError("A non-negative effective world tick is required.")
+        if not isinstance(idempotency_key, str) or not idempotency_key.strip():
+            raise ValueError("A non-empty idempotency key is required.")
+        for key in ("commander_decisions", "outstanding_actions", "responsibility_transfers", "acknowledgements"):
+            if not isinstance(document[key], list):
+                raise ValueError(f"{key} must be a list.")
+        try:
+            with self._connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT sw_incident.record_command_handover("
+                        "%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s)",
+                        (
+                            document["incident_id"], document["handover_ref"],
+                            document["outgoing_commander_ref"], document["incoming_commander_ref"],
+                            document["prepared_by_ref"], document["authority_ref"],
+                            document["source_ref"], document["effective_world_tick"],
+                            __import__("json").dumps(document, separators=(",", ":"), sort_keys=True),
+                            idempotency_key,
+                        ),
+                    )
+                    row = cur.fetchone()
+                conn.commit()
+            if not row or type(row[0]) is not int or row[0] < 1:
+                raise RuntimeError("BP12 did not return a command handover record ID.")
+            return row[0]
+        except (TypeError, ValueError):
+            raise
+        except Exception as exc:
+            raise RuntimeError("Command handover could not be persisted.") from exc
+
+
+class PostgresIncidentCommandHandoverHistoryReader:
+    """Read the immutable BP12 command handover register in canonical chronology."""
+
+    def __init__(self, connect: Callable[[], Any]):
+        if not callable(connect):
+            raise TypeError("connect must be a trusted PostgreSQL connection factory")
+        self._connect = connect
+
+    def read(self, incident_id: int) -> list[dict]:
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        query = (
+            "SELECT command_handover_id,handover_ref,incident_id,"
+            "outgoing_commander_ref,incoming_commander_ref,prepared_by_ref,"
+            "authority_ref,source_ref,effective_world_tick,handover_document,"
+            "source_event_id,occurred_at,event_world_tick "
+            "FROM sw_incident.command_handover_history(%s)"
+        )
+        try:
+            with self._connect() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, (incident_id,))
+                    rows = cur.fetchall()
+            result = []
+            previous = None
+            for row in rows:
+                if len(row) != 13:
+                    raise ValueError("BP12 returned an invalid command handover history row.")
+                (record_id, handover_ref, row_incident_id, outgoing, incoming,
+                 prepared_by, authority, source_ref, effective_tick, document,
+                 event_id, occurred_at, event_tick) = row
+                if row_incident_id != incident_id:
+                    raise ValueError("BP12 returned a conflicting incident identity.")
+                if any(not isinstance(value, str) or not value.strip() for value in
+                       (handover_ref, outgoing, incoming, prepared_by, authority, source_ref)):
+                    raise ValueError("BP12 command handover history is missing provenance.")
+                if type(record_id) is not int or record_id < 1 or type(event_id) is not int or event_id < 1:
+                    raise ValueError("BP12 command handover history identity is invalid.")
+                if type(effective_tick) is not int or effective_tick < 0 or type(event_tick) is not int or event_tick < 0:
+                    raise ValueError("BP12 command handover history tick is invalid.")
+                if occurred_at is None or not isinstance(document, dict):
+                    raise ValueError("BP12 command handover history document or timestamp is invalid.")
+                if document.get("record_status") != "PERSISTED" or document.get("read_only") is not True:
+                    raise ValueError("BP12 persisted handover document status is inconsistent.")
+                order = (effective_tick, record_id)
+                if previous is not None and order < previous:
+                    raise ValueError("BP12 command handover history is not chronologically ordered.")
+                previous = order
+                result.append({
+                    "command_handover_id": record_id, "handover_ref": handover_ref,
+                    "incident_id": row_incident_id, "outgoing_commander_ref": outgoing,
+                    "incoming_commander_ref": incoming, "prepared_by_ref": prepared_by,
+                    "authority_ref": authority, "source_ref": source_ref,
+                    "effective_world_tick": effective_tick, "handover_document": document,
+                    "source_event_id": event_id, "occurred_at": occurred_at,
+                    "event_world_tick": event_tick,
+                })
+            return result
+        except (TypeError, ValueError):
+            raise
+        except Exception as exc:
+            raise RuntimeError("Command handover history is unavailable.") from exc
