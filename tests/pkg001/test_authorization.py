@@ -60,6 +60,18 @@ class AuthorizationTests(unittest.TestCase):
         self.assertEqual(len(self.audit.records), 1)
         self.assertEqual(self.audit.records[0].principal_id, self.player_id)
 
+    def test_decision_carries_person_id_from_verified_session(self):
+        from dataclasses import replace
+        person_id = 731
+        session = replace(self.session, active_person_id=person_id)
+        auth = AuthorizationService(FakeVerifier(session), self.audit, self.grants, policy_version="test-1")
+        decision = auth.decide(
+            "opaque-valid-session", action="read_case", resource="case/SM-TEST-1",
+            purpose="active_play", now=self.now,
+        )
+        self.assertTrue(decision.allowed)
+        self.assertEqual(decision.active_person_id, person_id)
+
     def test_expected_principal_mismatch_is_audited_as_denial(self):
         other_id = uuid4()
         decision = self.auth.decide(
