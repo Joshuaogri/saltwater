@@ -309,6 +309,93 @@ class BP04IncidentLocationResolver:
             "incident_location_id": location_id,
         }
 
+    def record_dispatch_acknowledgement(
+        self, credential: str, incident_id: int, *, dispatch_ref: str,
+        dispatch_incident_verifier, event_writer, actor_ref: str,
+        authority_ref: str, idempotency_key: str, acknowledgement_ref: str,
+        description: str,
+    ) -> dict:
+        """Mirror a verified BP11 acknowledgement into BP12 incident chronology."""
+        if not callable(dispatch_incident_verifier) or not callable(event_writer):
+            raise TypeError("Trusted BP11 verifier and BP12 event writer are required")
+        for name, value in (
+            ("dispatch_ref", dispatch_ref), ("actor_ref", actor_ref),
+            ("authority_ref", authority_ref), ("idempotency_key", idempotency_key),
+            ("acknowledgement_ref", acknowledgement_ref), ("description", description),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} is required")
+        self._access._require(
+            credential, "bp11.dispatch.acknowledgement.record", f"incident:{incident_id}"
+        )
+        self._access._require(
+            credential, "bp11.dispatch.inspect.assignment", f"dispatch:{dispatch_ref}"
+        )
+        if dispatch_incident_verifier(dispatch_ref, incident_id) is not True:
+            raise PermissionError("Access denied.")
+        event_id = event_writer(
+            incident_id=incident_id, event_code="DISPATCH_ACKNOWLEDGED",
+            actor_ref=actor_ref, authority_ref=authority_ref,
+            source_ref=f"dispatch-ack:{acknowledgement_ref}",
+            dispatch_ref=dispatch_ref, unit_ref=None, assignment_ref=None,
+            field_activity_ref=None, description=description,
+            idempotency_key=idempotency_key,
+        )
+        return {
+            "incident_id": incident_id, "dispatch_ref": dispatch_ref,
+            "acknowledgement_ref": acknowledgement_ref,
+            "event_code": "DISPATCH_ACKNOWLEDGED", "event_id": event_id,
+            "persisted": True,
+        }
+
+    def record_field_unit_arrival(
+        self, credential: str, incident_id: int, *, unit_ref: str,
+        assignment_ref: str, field_activity_ref: str,
+        deployment_activity_verifier, event_writer, actor_ref: str,
+        authority_ref: str, idempotency_key: str, description: str,
+    ) -> dict:
+        """Mirror a verified BP10 arrival; BP08/BP10 remain authoritative."""
+        if not callable(deployment_activity_verifier) or not callable(event_writer):
+            raise TypeError("Trusted BP08/BP10 verifier and BP12 event writer are required")
+        for name, value in (
+            ("unit_ref", unit_ref), ("assignment_ref", assignment_ref),
+            ("field_activity_ref", field_activity_ref), ("actor_ref", actor_ref),
+            ("authority_ref", authority_ref), ("idempotency_key", idempotency_key),
+            ("description", description),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"{name} is required")
+        self._access._require(
+            credential, "bp10.patrol.record_arrival", f"incident:{incident_id}"
+        )
+        self._access._require(
+            credential, "bp08.deployment.inspect.assignment", f"assignment:{assignment_ref}"
+        )
+        self._access._require(
+            credential, "bp10.patrol.inspect.field_activity",
+            f"field_activity:{field_activity_ref}",
+        )
+        if deployment_activity_verifier(
+            unit_ref, assignment_ref, field_activity_ref, incident_id
+        ) is not True:
+            raise PermissionError("Access denied.")
+        event_id = event_writer(
+            incident_id=incident_id, event_code="UNIT_ARRIVED",
+            actor_ref=actor_ref, authority_ref=authority_ref,
+            source_ref=f"bp10-arrival:{field_activity_ref}",
+            dispatch_ref=None, unit_ref=unit_ref,
+            assignment_ref=assignment_ref,
+            field_activity_ref=field_activity_ref, description=description,
+            idempotency_key=idempotency_key,
+        )
+        return {
+            "incident_id": incident_id, "unit_ref": unit_ref,
+            "assignment_ref": assignment_ref,
+            "field_activity_ref": field_activity_ref,
+            "event_code": "UNIT_ARRIVED", "event_id": event_id,
+            "persisted": True,
+        }
+
     def read_investigation_location_history(
         self, credential: str, incident_id: int, *, case_ref: str,
         case_incident_verifier, location_history_reader,
