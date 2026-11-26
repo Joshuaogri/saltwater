@@ -151,7 +151,7 @@ def run_full_bp02_acceptance_audit() -> dict:
     all_operational = all(operational_gates.values())
     return {
         "audit": "SW-BP02-FULL-PARCEL-ADDRESS-ACCESS-ACCEPTANCE",
-        "audit_version": "1.0",
+        "audit_version": "1.1",
         "source_geography": source.get("dataset_id"),
         "source_geography_status": source.get("status"),
         "structural_status": "PASS" if all_structural else "FAIL",
@@ -196,12 +196,11 @@ def run_full_bp02_acceptance_audit() -> dict:
             "resolved_address_road_associations": exception_resolution["resolved_address_road_associations"],
             "resolved_bridge_access_connection_candidates": exception_resolution["resolved_bridge_access_connection_candidates"],
             "unresolved_address_road_access_exceptions": exception_resolution["unresolved_exception_count"],
-            "canonical_addresses": address_source_integrity["canonical_address_identity_matches"],
             "operational_access_points": canonical_geography["building_access_point_count"],
             "canonical_parcels": canonical_geography["parcel_count"],
             "canonical_addresses": canonical_geography["address_count"],
             "canonical_bridge_connectors": canonical_geography["bridge_connector_count"],
-            "bridge_connector_engineering_work_items": bridge_engineering_register["engineering_work_item_count"],
+            "bridge_connector_engineering_assessments": bridge_engineering_register["assessment_count"],
             "bridge_connector_engineering_assessed": bridge_engineering_register["assessed_count"],
         },
         "authority": {
@@ -215,10 +214,7 @@ def run_full_bp02_acceptance_audit() -> dict:
             "All three source-road conflicts have one unique parcel frontage road association; original source values remain preserved as provenance.",
             "Both bridge properties have two feasible property-contained connector candidates to public bridges connected to public streets.",
         ],
-        "blockers": [
-            "SW-GEO-V1 is released as the fictional gameplay geography baseline.",
-            "All fictional gameplay access routes and bridge connectors are included in the canonical release register.",
-        ],
+        "blockers": [],
     }
 
 
@@ -258,8 +254,8 @@ def main() -> None:
         },
         "authority": report["authority"],
     }, indent=2, sort_keys=True))
-    if report["structural_status"] != "PASS":
-        raise SystemExit("BP-02 structural acceptance audit failed; see generated report")
+    if report["overall_status"] != "PASS":
+        raise SystemExit("BP-02 full gameplay acceptance failed; see generated report")
 
 
 if __name__ == "__main__":
