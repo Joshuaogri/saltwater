@@ -27,6 +27,11 @@ and available states. Specialist-domain matches are preferred; general patrol
 can cover general response. Repeated assignment of the same incident returns
 the existing deployment rather than duplicating it.
 
+A player-facing command console is now connected to this simulator. The player
+can use `dispatch`, `dispatch assign <incident-id>`, and deployment progress
+commands such as `dispatch arrive <deployment-id>`; no officer UUIDs,
+membership IDs or individual NPC administration are required.
+
 This dispatch layer is an in-memory gameplay simulator, not yet a persistent
 PostgreSQL workforce or a full autonomous world scheduler. It proves the
 player-facing game rule: no personnel UUIDs, separate NPC accounts or manual
