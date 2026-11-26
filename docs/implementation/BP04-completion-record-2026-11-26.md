@@ -2,7 +2,7 @@
 
 **Current decision: NOT COMPLETE.** The earlier declaration that BP04 was closed was premature and is formally withdrawn. The completed items below are deliverables, not proof that all BP04 acceptance criteria pass.
 
-The controlling assessment is [BP04 strict acceptance audit — 2026-11-26](BP04-strict-acceptance-audit-2026-11-26.md), which evaluates all 48 acceptance criteria in the BP04 specification. Its result is 5 PASS, 18 PARTIAL, 3 BLOCKED, 21 NOT VERIFIED and 1 FAIL. BP04 must remain open.
+The controlling assessment is [BP04 strict acceptance audit — 2026-11-26](BP04-strict-acceptance-audit-2026-11-26.md), which evaluates all 48 acceptance criteria in the BP04 specification. Its result is 5 PASS, 19 PARTIAL, 3 BLOCKED and 21 NOT VERIFIED. BP04 must remain open.
 
 ## Completed deliverables (not division closure)
 
@@ -26,3 +26,10 @@ The BP04 specification itself remains `DESIGNED_DRAFT` with eight open design de
 No production Neon writes, permission grants, canonical address promotions, operational access-point approvals or property inventory expansion occurred as part of the earlier premature closure declaration or this correction.
 
 **Final disposition:** BP04 is partially implemented and partially tested, but not complete. Do not use the earlier closure wording as an acceptance decision.
+
+
+## Business naming remediation — 2026-11-26
+
+The former sequential-number business-name defect has been corrected on `main`. A versioned SW-UNS vocabulary with 173 adjectives, 176 nouns and 16 business forms supplies 30,448 roots. The build screens 11,000 deterministic candidates, holds four internal near-duplicate candidates, and regenerates 10,000 names without numeric suffixes or exact collisions against the 102 adopted SW-GEO-V1 names. The 10,000-business JSON and deterministic gzip were regenerated; the business-registry build and nine regression tests passed.
+
+The generated records explicitly remain dry-run candidates, not persistently reserved names. Full global canon import, disposable PostgreSQL reservation acceptance and production naming-registry integration remain outstanding. No production Neon write was made.
