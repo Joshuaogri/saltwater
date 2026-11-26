@@ -1494,3 +1494,8 @@ BP04 source inventory is frozen for completion work. No further property/buildin
 ### BP04 player command integration — 2026-11-26
 
 The PostgreSQL 16/18 BP04 disposable workflow now includes a real-archive player-command integration test. It drives the player `find` and `inspect` interface against the compressed BP04 archives imported into disposable PostgreSQL, covering all supported inspect entity types, missing/malformed records and no world-time advancement. The test has been added and wired into CI; its first workflow result is pending. This does not change the frozen property inventory or write to production Neon. See [BP04 player/police integration](docs/implementation/BP04-player-police-geography-integration.md).
+
+
+### BP04 authenticated handover attribution — 2026-11-26
+
+Authorization decisions now expose the verified session's `active_person_id`. BP12 handover persistence checks the submitted preparer reference against a trusted injected personnel-reference verifier before reading owner snapshots or writing. Missing identity, missing resolver or mismatch is denied. The targeted officer-authorization test step passed in [workflow run 45825332438](https://github.com/Joshuaogri/saltwater/actions/runs/45825332438); full workflow is still running. Production use remains blocked until the personnel-service resolver is wired. No production grants or Neon writes were made. See [BP04 player/police integration](docs/implementation/BP04-player-police-geography-integration.md).
