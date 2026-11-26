@@ -28,7 +28,11 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         except Exception as exc:
             snapshot = console._simulator.snapshot()
             self.fail("{}; shift={}; units={}".format(exc, snapshot["current_shift"], snapshot["units"]))
-        self.assertEqual(len(deployments), 1)
+        snapshot = console._simulator.snapshot()
+        self.assertEqual(
+            len(deployments), 1,
+            "No NPC assignment; shift={}; units={}".format(snapshot["current_shift"], snapshot["units"]),
+        )
         result = "NPC dispatch assigned {} to {}. Crew: {}".format(
             deployments[0].unit_id, deployments[0].incident_id,
             ", ".join(deployments[0].crew_names),
