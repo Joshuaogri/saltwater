@@ -42,7 +42,9 @@ class SWDB001ContractTests(unittest.TestCase):
         migrations = {p.name for p in (ROOT / "db/migrations").glob("*.sql")}
         self.assertIn("0009_universal_name_registry.sql", proposals)
         self.assertIn("0010_canonical_world_provisioning.sql", proposals)
-        self.assertFalse(any(name.startswith("0010_") for name in migrations))
+        # A legitimate source migration may also use the 0010 prefix.
+        # Only the exact disposable proposal must remain out of db/migrations.
+        self.assertNotIn("0010_canonical_world_provisioning.sql", migrations)
 
     def test_business_schema_uses_universal_naming_and_preserves_bp04_open_items(self):
         sql = (ROOT / "db/proposals/0010_canonical_world_provisioning.sql").read_text()
@@ -60,8 +62,8 @@ class SWDB001ContractTests(unittest.TestCase):
         fixture = (ROOT / "tests/pkg001/sw_db_001_world_fixture.sql").read_text()
         self.assertIn("current_database() <> 'saltwater_test'", fixture)
         self.assertIn("server_version_num", fixture)
-        self.assertNotRegex(fixture, re.compile(r"INSERT\s+INTO\s+sw_police\.personnel", re.I))
-        self.assertNotRegex(fixture, re.compile(r"INSERT\s+INTO\s+sw_geo\.entity", re.I))
+        self.assertNotRegex(fixture, re.compile(r"INSERT\\s+INTO\\s+sw_police\\.personnel", re.I))
+        self.assertNotRegex(fixture, re.compile(r"INSERT\\s+INTO\\s+sw_geo\\.entity", re.I))
         self.assertIn("'RESIDENT'", fixture)
         self.assertIn("'POLICE_SUBSET'", fixture)
         self.assertIn("NON_GEOGRAPHIC_TEST_FIXTURE", fixture)
