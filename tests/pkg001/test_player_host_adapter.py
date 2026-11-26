@@ -63,11 +63,16 @@ class TrustedPlayerHostAdapterTests(unittest.TestCase):
         self.runtime.execute.assert_not_called()
 
     def test_multi_command_arguments_and_unknown_commands_rejected(self):
-        for command in ("profile;quit", "profile quit", "profile extra", "bingo", ""):
+        for command in ("profile;quit", "profile quit", "profile extra", "Bingo", " bingo", "bingo ", '"bingo"', "not bingo", ""):
             response = self.adapter.execute(self.context, HostCommandRequest(command))
             self.assertFalse(response.ok)
         self.assertEqual(self.provider.contexts, [])
         self.runtime.execute.assert_not_called()
+
+    def test_exact_bingo_command_is_forwarded_to_authenticated_runtime(self):
+        response = self.adapter.execute(self.context, HostCommandRequest("bingo"))
+        self.assertTrue(response.ok)
+        self.runtime.execute.assert_called_once_with("opaque-game-session", "bingo")
 
     def test_workspace_navigation_command_is_forwarded_but_other_arguments_fail(self):
         response = self.adapter.execute(self.context, HostCommandRequest("workspace evidence-scenes"))
