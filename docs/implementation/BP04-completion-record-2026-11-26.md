@@ -2,7 +2,7 @@
 
 **Current decision: NOT COMPLETE.** The earlier declaration that BP04 was closed was premature and is formally withdrawn. The completed items below are deliverables, not proof that all BP04 acceptance criteria pass.
 
-The controlling assessment is [BP04 strict acceptance audit — 2026-11-26](BP04-strict-acceptance-audit-2026-11-26.md), which evaluates all 48 acceptance criteria in the BP04 specification. Its result is 6 PASS, 17 PARTIAL, 3 BLOCKED, 21 NOT VERIFIED and 1 FAIL. BP04 must remain open.
+The controlling assessment is [BP04 strict acceptance audit — 2026-11-26](BP04-strict-acceptance-audit-2026-11-26.md), which evaluates all 48 acceptance criteria in the BP04 specification. Its result is 5 PASS, 18 PARTIAL, 3 BLOCKED, 21 NOT VERIFIED and 1 FAIL. BP04 must remain open.
 
 ## Completed deliverables (not division closure)
 
