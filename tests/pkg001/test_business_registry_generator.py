@@ -105,6 +105,15 @@ class BusinessRegistryTests(unittest.TestCase):
         generated_names = [row["trading_name"] for row in self.registry["businesses"]]
         self.assertEqual(persisted_names, generated_names)
         self.assertEqual(document["metadata"]["naming"]["standard"], "SW-UNS-001")
+        self.assertEqual(
+            document["metadata"]["naming"]["near_duplicate_screen"],
+            "PASS_WITHIN_GENERATED_BATCH_ONLY",
+        )
+        self.assertEqual(document["metadata"]["naming"]["reservation_status"],
+                         "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED")
+        compressed_path = path.with_suffix(path.suffix + ".gz")
+        with gzip.open(compressed_path, "rb") as compressed:
+            self.assertEqual(compressed.read(), path.read_bytes())
 
 
 if __name__ == "__main__":
