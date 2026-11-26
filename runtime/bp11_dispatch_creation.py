@@ -13,8 +13,8 @@ class DispatchCreationError(RuntimeError):
 
 class PostgresDispatchCreationService:
     def __init__(self, authorization: AuthorizationService, principal_id: UUID, deployment_port: Any):
-        if not isinstance(authorization, AuthorizationService):
-            raise TypeError("authorization must be an AuthorizationService")
+        if not callable(getattr(authorization, "decide", None)):
+            raise TypeError("authorization must provide a decide method")
         if not isinstance(principal_id, UUID):
             raise TypeError("principal_id must be a UUID")
         if not callable(getattr(deployment_port, "create_deployment", None)):
