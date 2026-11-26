@@ -116,17 +116,25 @@ class BP02FictionalGeographyReleaseTests(unittest.TestCase):
                 for i in range(420)
             ],
         }
+        selected_ids = {
+            f"SWAC-{road}-{suffix}"
+            for road in ("SWR-B1", "SWR-B2") for suffix in ("A", "B")
+        }
+        selected_connectors = [
+            row for row in self.corridors["route_corridors"]
+            if row["source_connector_candidate_id"] in selected_ids
+        ]
         assets = {
             "access_points": [
                 {"candidate_access_point_id": row["candidate_access_point_id"]}
-                for row in self.corridors["route_corridors"][:4]
+                for row in selected_connectors
             ] + [{"candidate_access_point_id": f"AP-EXTRA-{i}"} for i in range(416)],
             "access_connectors": [
                 {
                     "candidate_connector_id": row["source_connector_candidate_id"],
                     "access_point_candidate_id": row["candidate_access_point_id"],
                 }
-                for row in self.corridors["route_corridors"][:4]
+                for row in selected_connectors
             ],
         }
         dispositions = [
