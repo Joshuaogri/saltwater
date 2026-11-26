@@ -819,7 +819,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
         rows = [{
             "incident_id": 42, "event_id": 8801,
             "event_code": "UNIT_ARRIVED", "source_ref": "bp10-arrival:ACT-1",
-            "attributes": {"actor_ref": "officer:12", "authority_ref": "order:5"},
+            "attributes": {"source_ref": "bp10-arrival:ACT-1", "actor_ref": "officer:12", "authority_ref": "order:5", "unit_ref": "UNIT-7", "assignment_ref": "DEP-4", "field_activity_ref": "ACT-1"},
         }]
         self.assertEqual(
             resolver.read_operational_timeline(
@@ -859,7 +859,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
             def fetchall(self):
                 return [(8801, 42, "UNIT_ARRIVED", "2026-11-26T12:00:00Z", 17,
                          "bp10-arrival:ACT-1",
-                         {"actor_ref": "officer:12", "authority_ref": "order:5"})]
+                         {"source_ref": "bp10-arrival:ACT-1", "actor_ref": "officer:12", "authority_ref": "order:5", "unit_ref": "UNIT-7", "assignment_ref": "DEP-4", "field_activity_ref": "ACT-1"})]
         class Connection:
             def __init__(self, cursor): self._cursor = cursor
             def __enter__(self): return self
