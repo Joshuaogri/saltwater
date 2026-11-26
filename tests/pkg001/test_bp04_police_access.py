@@ -9,7 +9,7 @@ from runtime.bp04_police_access import (
     create_postgres_bp04_police_lookup_access,
 )
 from runtime.bp12_incident_location_history import PostgresIncidentLocationHistoryReader
-from runtime.bp12_incident_operational_events import PostgresIncidentOperationalEventWriter
+from runtime.bp12_incident_operational_events import (\n    PostgresIncidentOperationalEventWriter,\n    PostgresIncidentOperationalTimelineReader,\n)
 from runtime.security import (
     AuthorizationService, Effect, Grant, InMemoryAuditSink,
     PrincipalKind, PrincipalStatus, SessionStatus, VerifiedSession,
@@ -804,6 +804,73 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 "officer-session", 42, "SWADDR-1", source_ref="call:77"
             )
         self.assertEqual(len(self.audit.records), 1)
+
+    def test_operational_timeline_read_requires_dedicated_grant_and_validates_provenance(self):
+        grants = self.grants + (
+            Grant("bp12.incident.inspect.operational_timeline", "incident:*",
+                  "police_workflow", Effect.ALLOW,
+                  principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(access, lambda _id: None)
+        rows = [{
+            "incident_id": 42, "event_id": 8801,
+            "event_code": "UNIT_ARRIVED", "source_ref": "bp10-arrival:ACT-1",
+            "attributes": {"actor_ref": "officer:12", "authority_ref": "order:5"},
+        }]
+        self.assertEqual(
+            resolver.read_operational_timeline(
+                "officer-session", 42, operational_timeline_reader=lambda _id: rows
+            ),
+            rows,
+        )
+        self.assertEqual(self.audit.records[-1].action,
+                         "bp12.incident.inspect.operational_timeline")
+
+        with self.assertRaisesRegex(ValueError, "conflicting incident identity"):
+            resolver.read_operational_timeline(
+                "officer-session", 42,
+                operational_timeline_reader=lambda _id: [{**rows[0], "incident_id": 43}],
+            )
+
+    def test_operational_timeline_read_denies_without_grant_before_reader(self):
+        resolver = BP04IncidentLocationResolver(self.access, lambda _id: None)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.read_operational_timeline(
+                "officer-session", 42,
+                operational_timeline_reader=lambda _id: self.fail("timeline reader must not run"),
+            )
+        self.assertEqual(
+            self.audit.records[-1].action,
+            "bp12.incident.inspect.operational_timeline",
+        )
+        self.assertFalse(self.audit.records[-1].allowed)
+
+    def test_postgres_operational_timeline_reader_uses_parameterised_read(self):
+        class Cursor:
+            def __init__(self):
+                self.query = None
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def execute(self, query, params): self.query = (query, params)
+            def fetchall(self):
+                return [(8801, 42, "UNIT_ARRIVED", "2026-11-26T12:00:00Z", 17,
+                         "bp10-arrival:ACT-1",
+                         {"actor_ref": "officer:12", "authority_ref": "order:5"})]
+        class Connection:
+            def __init__(self, cursor): self._cursor = cursor
+            def __enter__(self): return self
+            def __exit__(self, *_args): return False
+            def cursor(self): return self._cursor
+        cursor = Cursor()
+        reader = PostgresIncidentOperationalTimelineReader(lambda: Connection(cursor))
+        rows = reader.read(42)
+        self.assertEqual(rows[0]["event_id"], 8801)
+        self.assertEqual(cursor.query[1], (42,))
+        self.assertIn("operational_timeline(%s)", cursor.query[0])
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
