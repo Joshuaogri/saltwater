@@ -84,7 +84,7 @@ class OpeningPolicePersonNameRegistryPostgresTests(unittest.TestCase):
                              source_ref,attributes,idempotency_key
                            ) VALUES (
                              %s,clock_timestamp(),0,'person',NULL,%s,
-                             jsonb_build_object('seed_candidate_ref',%s),
+                             jsonb_build_object('seed_candidate_ref',%s::text),
                              %s
                            ) RETURNING event_id""",
                         (
