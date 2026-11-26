@@ -105,4 +105,27 @@ Accordingly:
 - A future classification requires a source-backed site-use/state field or an explicitly authored fictional world-state decision, not inference from the absence of a generated footprint.
 
 This closes the current evidence review without expanding the frozen BP04 inventory. It does not change the BP02 structural pass or the operational geography release blocker. No database or Neon write, canonical promotion, operational access approval or permission grant was performed.
+## Bridge connector engineering-data completeness review — 2026-11-26
 
+The four geometric connector candidates associated with Customs Bridge (`SWR-B2`) and Harbour Bridge (`SWR-B1`) were checked against the Stage E connector generator, direct-connector audit, route-corridor candidate audit and terrain/obstacle source model.
+
+| Engineering item | Evidence available | Assessment |
+|---|---|---|
+| Connector geometry | Two-dimensional centreline coordinates and parent-property containment checks | Candidate geometry only; not a surveyed or constructed path |
+| Connector width / clear width | Route-corridor output has `available_width_m=null` and `corridor_width_m=null`; width assessment state is `NOT_ASSESSED_NO_WIDTH_OR_CLEARANCE_SOURCE` | Not assessed |
+| Gradient / slope | Connector `slope_state=not_assessed`; route-corridor gradient state is `not_assessed_no_elevation_source`; terrain source model has no elevation surfaces, contours or spot elevations | Not assessed |
+| Surface / construction | Connector `surface_code=unknown`; corridor `surface_state=unknown`; no construction or material inspection | Unknown |
+| Drainage | No verified connector drainage dimensions, structures, condition or flow data; source terrain inventory does not establish drainage at these connectors | Not assessed |
+| Vertical / overhead clearance | No verified vertical profile, overhead obstruction or clearance measurements | Not assessed |
+| Building / mapped-water clearance | Independent geometry audit checks mapped building and water intersections; route-corridor layer can calculate planar minimum clearances to mapped features | Two-dimensional geometric evidence only; not physical or vehicle clearance |
+| Access controls | Access-point `control_type=unknown`; directionality and access modes are unknown/empty | Not assessed |
+| Legal/public access and emergency egress | No rights, gates, operating controls, emergency egress or traversability evidence | Not established |
+| Entrance verification | No surveyed entrance, door/gate interface, construction record or field verification | Not verified |
+
+The generator explicitly states that each connector line is derived from generated building-boundary and parcel road-connection candidates; construction, legal access, surface, gradient and route usability are not assessed. The route-corridor audit deliberately produces a centreline rather than a corridor polygon because no supported width source exists. Successful geometric checks must not be interpreted as engineering acceptance.
+
+**Disposition:** all four connectors remain `UNREVIEWED_GEOMETRIC_LINE_ONLY`. The two bridge cases retain their previously established design-geometry connection to a public road network, but neither is engineering-ready nor operationally approved. No numerical width, gradient, surface, drainage, clearance or control values are invented.
+
+**Minimum evidence needed to advance:** a site-specific surveyed entrance and connector alignment; measured clear width and vertical clearance; level/elevation survey for longitudinal and crossfall gradients; documented surface and construction condition; drainage inspection; mapped and inspected physical obstacles; access-control/gate details; and a competent review of vehicle/emergency suitability and legal/public access. Evidence must be attached to each of the four candidate connector identities, not inferred from the bridge road segment generally.
+
+This review closes the current source-schema completeness check. It does not close the engineering work, approve an entrance, promote a canonical address or operational access point, or change BP02's `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED` status. No source data, property inventory or Neon data was changed.
