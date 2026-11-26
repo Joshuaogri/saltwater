@@ -170,17 +170,34 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
         }
         for row in asset_inventory.get("access_points", [])
     ]
+    connector_candidates = asset_inventory.get("access_connectors", [])
+    assessment_candidate_ids = [
+        row["source_connector_candidate_id"] for row in engineering_register["records"]
+    ]
+    asset_connector_ids = [row["candidate_connector_id"] for row in connector_candidates]
+    if len(assessment_candidate_ids) != len(set(assessment_candidate_ids)):
+        raise ValueError("Bridge engineering assessment connector IDs are not unique")
+    if len(asset_connector_ids) != len(set(asset_connector_ids)):
+        raise ValueError("Asset connector candidate IDs are not unique")
+    if set(assessment_candidate_ids) != set(asset_connector_ids):
+        raise ValueError("Asset connectors and engineering assessments do not form a one-to-one set")
+    access_point_ids = {
+        row.get("candidate_access_point_id") for row in access_points
+    }
     connectors = []
-    for row in asset_inventory.get("access_connectors", []):
-        assessment = approved_by_candidate.get(row["candidate_connector_id"])
-        if assessment:
-            connectors.append({
-                **row,
-                "engineering_assessment_id": assessment["assessment_id"],
-                "operational_status": "ACTIVE_IN_GAME",
-                "access_modes": assessment["approved_access_modes"],
-                "canonical": True,
-            })
+    for row in connector_candidates:
+        assessment = approved_by_candidate[row["candidate_connector_id"]]
+        if not assessment.get("operational_access_approved") or assessment.get("operational_access_status") != "APPROVED_IN_GAME":
+            raise ValueError("A bridge connector lacks fictional gameplay engineering approval")
+        if row.get("access_point_candidate_id") not in access_point_ids:
+            raise ValueError("A bridge connector references an absent canonical access point")
+        connectors.append({
+            **row,
+            "engineering_assessment_id": assessment["assessment_id"],
+            "operational_status": "ACTIVE_IN_GAME",
+            "access_modes": assessment["approved_access_modes"],
+            "canonical": True,
+        })
 
     if exception_resolution is not None:
         if exception_resolution.get("unresolved_exception_count") != 0:
@@ -201,6 +218,8 @@ def build_canonical_geography_register(identity_register: dict, asset_inventory:
         raise ValueError("Canonical address references an absent parcel")
     if len(engineering_register["records"]) != 4 or len(connectors) != 4:
         raise ValueError("All four bridge connector assessments must bind to source connectors")
+    if not access_points or any(row.get("operational_status") != "ACTIVE_IN_GAME" for row in access_points):
+        raise ValueError("Canonical building access points must be active in gameplay")
 
     released_identity_register = {
         **identity_register,
