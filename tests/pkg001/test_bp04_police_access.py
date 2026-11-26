@@ -1011,6 +1011,9 @@ class BP04PoliceAccessTests(unittest.TestCase):
                   "police_workflow", Effect.ALLOW,
                   principal_kind=PrincipalKind.OFFICER, role="property_reader"),
         )
+        from dataclasses import replace
+        self.session = replace(self.session, active_person_id=1)
+        self.verifier.session = self.session
         access = BP04PoliceLookupAccess(
             self.lookup, AuthorizationService(self.verifier, self.audit, grants),
             self.session.principal_id,
@@ -1019,6 +1022,9 @@ class BP04PoliceAccessTests(unittest.TestCase):
             access, lambda incident_id: {
                 "incident_id": incident_id, "status": "ACTIVE_MANAGEMENT",
             },
+            officer_ref_verifier=lambda person_id, ref: (
+                person_id == 1 and ref == "supervisor:1"
+            ),
         )
         result = resolver.build_authorised_command_handover(
             "officer-session", 42,
@@ -1275,6 +1281,49 @@ class BP04PoliceAccessTests(unittest.TestCase):
              "bp08.deployment.inspect.incident_assignments",
              "bp12.incident.inspect.operational_timeline"],
         )
+
+    def test_handover_preparer_must_match_verified_officer_identity(self):
+        from dataclasses import replace
+        grants = self.grants + (
+            Grant("bp12.incident.record.command_handover", "incident:*", "police_workflow", Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.command_handover", "incident:*", "police_workflow", Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp08.deployment.inspect.incident_assignments", "incident:*", "police_workflow", Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+            Grant("bp12.incident.inspect.operational_timeline", "incident:*", "police_workflow", Effect.ALLOW, principal_kind=PrincipalKind.OFFICER, role="property_reader"),
+        )
+        self.session = replace(self.session, active_person_id=7)
+        self.verifier.session = self.session
+        access = BP04PoliceLookupAccess(
+            self.lookup, AuthorizationService(self.verifier, self.audit, grants),
+            self.session.principal_id,
+        )
+        resolver = BP04IncidentLocationResolver(
+            access, lambda incident_id: {"incident_id": incident_id, "status": "ACTIVE_MANAGEMENT"},
+            officer_ref_verifier=lambda person_id, ref: person_id == 7 and ref == "officer:7",
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_authorised_command_handover(
+                "officer-session", 42,
+                assignment_snapshot_reader=lambda _id: self.fail("reader must not run"),
+                operational_timeline_reader=lambda _id: self.fail("reader must not run"),
+                handover_fields={"prepared_by_ref": "officer:8"},
+                handover_writer=object(), idempotency_key="HO-MISMATCH",
+            )
+        self.assertEqual(self.audit.records[-1].action, "bp12.incident.record.command_handover")
+        self.assertTrue(self.audit.records[-1].allowed)
+
+    def test_handover_fails_closed_when_session_has_no_active_person(self):
+        resolver = BP04IncidentLocationResolver(
+            self.access, lambda incident_id: {"incident_id": incident_id, "status": "ACTIVE_MANAGEMENT"},
+            officer_ref_verifier=lambda _person_id, _ref: True,
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            resolver.record_authorised_command_handover(
+                "officer-session", 42,
+                assignment_snapshot_reader=lambda _id: self.fail("reader must not run"),
+                operational_timeline_reader=lambda _id: self.fail("reader must not run"),
+                handover_fields={"prepared_by_ref": "officer:7"},
+                handover_writer=object(), idempotency_key="HO-NO-PERSON",
+            )
 
     def test_authorised_handover_record_denial_precedes_owner_readers(self):
         resolver = BP04IncidentLocationResolver(
