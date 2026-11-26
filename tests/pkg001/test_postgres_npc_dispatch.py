@@ -47,6 +47,8 @@ class PostgresNPCDispatchFactoryTests(unittest.TestCase):
         rendered = console.execute()
         self.assertIn("INC-1", rendered)
         self.assertIn("UNIT-PATROL", rendered)
+        assigned = console.execute(("assign", "INC-1"))
+        self.assertIn("NPC dispatch assigned UNIT-PATROL", assigned)
         self.assertEqual(len(cursor.calls), 2)
         self.assertTrue(all(call[0].lstrip().upper().startswith("SELECT") for call in cursor.calls))
 
