@@ -1219,6 +1219,9 @@ class BP04PoliceAccessTests(unittest.TestCase):
                   "police_workflow", Effect.ALLOW,
                   principal_kind=PrincipalKind.OFFICER, role="property_reader"),
         )
+        from dataclasses import replace
+        self.session = replace(self.session, active_person_id=1)
+        self.verifier.session = self.session
         access = BP04PoliceLookupAccess(
             self.lookup, AuthorizationService(self.verifier, self.audit, grants),
             self.session.principal_id,
@@ -1227,6 +1230,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
             access, lambda incident_id: {
                 "incident_id": incident_id, "status": "ACTIVE_MANAGEMENT",
             },
+            officer_ref_verifier=lambda person_id, ref: person_id == 1 and ref == "supervisor:1",
         )
         class Writer:
             def __init__(self):
@@ -1306,7 +1310,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 assignment_snapshot_reader=lambda _id: self.fail("reader must not run"),
                 operational_timeline_reader=lambda _id: self.fail("reader must not run"),
                 handover_fields={"prepared_by_ref": "officer:8"},
-                handover_writer=object(), idempotency_key="HO-MISMATCH",
+                handover_writer=type("Writer", (), {"record": lambda *_a, **_k: 1})(), idempotency_key="HO-MISMATCH",
             )
         self.assertEqual(self.audit.records[-1].action, "bp12.incident.record.command_handover")
         self.assertTrue(self.audit.records[-1].allowed)
@@ -1322,7 +1326,7 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 assignment_snapshot_reader=lambda _id: self.fail("reader must not run"),
                 operational_timeline_reader=lambda _id: self.fail("reader must not run"),
                 handover_fields={"prepared_by_ref": "officer:7"},
-                handover_writer=object(), idempotency_key="HO-NO-PERSON",
+                handover_writer=type("Writer", (), {"record": lambda *_a, **_k: 1})(), idempotency_key="HO-NO-PERSON",
             )
 
     def test_authorised_handover_record_denial_precedes_owner_readers(self):
