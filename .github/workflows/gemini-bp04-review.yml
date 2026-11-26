@@ -21,7 +21,7 @@ jobs:
   review:
     name: Read-only Gemini review
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Check out main
         uses: actions/checkout@v4
@@ -129,23 +129,49 @@ jobs:
 
           SOURCE AND RUN EVIDENCE:
           """ + "".join(sections)
+          headers = {"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]}
           body = {
               "model": os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
               "input": [{"type": "user_input", "content": prompt}],
-              "store": False
+              # Background interactions must be stored by Google's API.
+              "background": True,
+              "store": True
           }
-          req = urllib.request.Request(
-              "https://generativelanguage.googleapis.com/v1beta/interactions",
-              data=json.dumps(body).encode("utf-8"),
-              headers={"Content-Type": "application/json", "x-goog-api-key": os.environ["GEMINI_API_KEY"]},
-              method="POST",
-          )
-          try:
-              with urllib.request.urlopen(req, timeout=240) as response:
-                  data = json.loads(response.read().decode("utf-8"))
-          except urllib.error.HTTPError as exc:
-              detail = exc.read().decode("utf-8", "replace")[:3000]
-              raise SystemExit(f"Gemini API returned HTTP {exc.code}: {detail}")
+          def request_json(url, payload=None):
+              req = urllib.request.Request(
+                  url,
+                  data=json.dumps(payload).encode("utf-8") if payload is not None else None,
+                  headers=headers,
+                  method="POST" if payload is not None else "GET",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=45) as response:
+                      return json.loads(response.read().decode("utf-8"))
+              except urllib.error.HTTPError as exc:
+                  detail = exc.read().decode("utf-8", "replace")[:3000]
+                  raise SystemExit(f"Gemini API returned HTTP {exc.code}: {detail}")
+
+          base_url = "https://generativelanguage.googleapis.com/v1beta/interactions"
+          created = request_json(base_url, body)
+          interaction_id = created.get("id")
+          if not interaction_id:
+              raise SystemExit("Gemini background request returned no interaction ID.")
+          print(f"Gemini background interaction started: {interaction_id}", flush=True)
+
+          import time
+          deadline = time.monotonic() + 12 * 60
+          while True:
+              data = request_json(f"{base_url}/{interaction_id}")
+              status = data.get("status")
+              print(f"Gemini interaction status: {status}", flush=True)
+              if status == "completed":
+                  break
+              if status in ("failed", "cancelled", "incomplete"):
+                  raise SystemExit(f"Gemini interaction ended with status {status}: {data.get('error', 'no error detail')}")
+              if time.monotonic() >= deadline:
+                  raise SystemExit(f"Gemini interaction {interaction_id} remains {status}; it may continue server-side.")
+              time.sleep(10)
+
           report = data.get("output_text")
           if not report:
               chunks = []
@@ -157,7 +183,7 @@ jobs:
                           chunks.append(part.get("text", ""))
               report = "\\n".join(chunks)
           if not report.strip():
-              raise SystemExit("Gemini returned no text report.")
+              raise SystemExit("Gemini completed but returned no text report.")
           pathlib.Path("gemini-bp04-review.md").write_text(report.strip() + "\\n", encoding="utf-8")
           print("Gemini review completed.")
           PY
