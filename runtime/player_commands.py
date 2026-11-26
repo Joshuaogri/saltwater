@@ -112,6 +112,7 @@ _DEFINITIONS: Final[tuple[PlayerCommandDefinition, ...]] = (
     _definition("where", "Show current workspace and selected-record state", "BP-40 Interface", CommandClass.READ_ONLY),
     _definition("find", "Search public property, address or business records", "BP-04 Property Lookup", CommandClass.READ_ONLY, "address|property|business plus search text"),
     _definition("inspect", "Inspect one property, address, building, premises, unit, access point, business or establishment", "BP-04 Property Lookup", CommandClass.READ_ONLY, "one entity type and one stable ID"),
+    _definition("dispatch", "Open the officer-authorised live dispatcher console", "BP-11 Dispatch", CommandClass.READ_ONLY),
 )
 
 COMMAND_CATALOGUE: Final[tuple[PlayerCommandDefinition, ...]] = _DEFINITIONS
