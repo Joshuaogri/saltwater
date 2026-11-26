@@ -101,10 +101,10 @@
 
 | Result | Count |
 |---|---:|
-| PASS | 7 |
-| PARTIAL | 15 |
+| PASS | 6 |
+| PARTIAL | 17 |
 | BLOCKED | 3 |
-| NOT VERIFIED | 23 |
+| NOT VERIFIED | 22 |
 | **Total** | **48** |
 
 A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot be declared complete while any required criterion remains PARTIAL, BLOCKED or NOT VERIFIED.
