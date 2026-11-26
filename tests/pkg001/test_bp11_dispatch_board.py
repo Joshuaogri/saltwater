@@ -18,14 +18,17 @@ class Verifier:
 
 
 class Cursor:
-    def __init__(self, rows=()):
+    def __init__(self, rows=(), row_sets=None):
         self.rows = list(rows)
+        self.row_sets = [list(rows) for rows in (row_sets or [])]
         self.calls = []
 
     def execute(self, query, params=None):
         self.calls.append((query, params))
 
     def fetchall(self):
+        if self.row_sets:
+            return self.row_sets.pop(0)
         return self.rows
 
     def __enter__(self):
@@ -112,7 +115,7 @@ class BP11DispatchBoardTests(unittest.TestCase):
         unit = ("SWPS-UNIT-PATROL", "General Patrol", "general_patrol",
                 "frontline", True, 2, 6, 12, 5, "available", True,
                 False, "resource_readiness_not_integrated", ["patrol"])
-        cursor = Cursor([incident, unit])
+        cursor = Cursor(row_sets=[[incident], [unit]])
         board, _ = make_board(cursor)
         result = board.snapshot("dispatcher-session", incident_limit=5)
         self.assertEqual(result["incident_count"], 1)
