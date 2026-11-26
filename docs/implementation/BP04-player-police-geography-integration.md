@@ -194,3 +194,5 @@ The read-only `SW-BP02-ADDRESS-PLACEMENT-REVIEW-V1` register now consolidates ea
 
 
 The production read path is backed by `runtime/bp12_incident_location_history.py` (`PostgresIncidentLocationHistoryReader`). It calls the BP12 history function using a parameterised incident ID, returns the event-joined chronology as named fields, rejects invalid IDs and fails with a sanitised unavailable error. It performs no writes. The dispatch and investigation adapters accept this trusted reader's `read` method.
+
+Investigation access is case-scoped: the adapter first authorises `bp16.investigation.inspect.case`, then requires a trusted BP15 case-to-incident link verifier to confirm that the incident belongs to that case, before it checks the dedicated BP16 location-history grant and BP12 history grant. An unlinked incident is denied before history is read. This is a read-only handoff; it does not create or own BP15 case records or BP16 investigative work objects.
