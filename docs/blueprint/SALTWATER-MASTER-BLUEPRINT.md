@@ -75,7 +75,7 @@
 - All 44 BP division specification drafts are present.
 - The full S01–S52 semantic audit and integrated 44-division consistency audit are complete.
 - [Implementation sequence and dependency plan](../implementation/IMPLEMENTATION-SEQUENCE-AND-DEPENDENCY-PLAN.md)
-- The master framework is approved; individual division specifications remain DESIGNED_DRAFT pending individual review/approval.
+- The master framework is approved. BP-01 version 1.0 is reconciled and marked DESIGNED; BP-02–BP-44 remain DESIGNED_DRAFT pending their own reconciliation and review. Implementation, testing and verification remain separate statuses.
 - Platform foundation migration 0001 and database/benchmark workflows are implemented; the full domain simulation runtime is not yet implemented.
 - Blueprint acceptance-test execution and full-system verification remain incomplete; see the whole-blueprint audit for the verified current state.
 
