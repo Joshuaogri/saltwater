@@ -61,6 +61,27 @@ def normalize_name(value: str, *, road_suffixes: Mapping[str, str] | None = None
     return " ".join(tokens)
 
 
+def pg_trgm_similarity(left: str, right: str) -> float:
+    """Match PostgreSQL pg_trgm similarity for already-normalized name keys.
+
+    PostgreSQL pads each alphanumeric word with two leading spaces and one
+    trailing space, forms unique trigrams, and divides the common trigram
+    count by the larger trigram-set size.
+    """
+    def trigrams(value: str) -> set[str]:
+        result: set[str] = set()
+        for word in re.findall(r"\\w+", value.casefold(), flags=re.UNICODE):
+            padded = f"  {word} "
+            result.update(padded[index:index + 3] for index in range(len(padded) - 2))
+        return result
+
+    left_trigrams = trigrams(normalize_name(left))
+    right_trigrams = trigrams(normalize_name(right))
+    if not left_trigrams or not right_trigrams:
+        return 0.0
+    return len(left_trigrams & right_trigrams) / max(len(left_trigrams), len(right_trigrams))
+
+
 @dataclass(frozen=True, slots=True)
 class NameRecord:
     entity_type: str
