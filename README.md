@@ -40,9 +40,11 @@ personnel, membership or deployment rows to Neon.
 
 ## NPC shift and live-source validation
 
-The NPC workforce preserves sworn, civilian and mixed post types and rotates
-between four shifts. Only the active shift is available for dispatch; deployed
-crews remain occupied across shift changes. A disposable PostgreSQL integration
+The NPC workforce preserves sworn, civilian and mixed post types. Every authorised
+post receives a distinct NPC occupant on each of four shifts (Alpha, Bravo,
+Charlie and Delta), so shift rotation does not fragment a unit below its normal
+crew strength. Only the active shift is available for dispatch; deployed crews
+remain occupied across shift changes. A disposable PostgreSQL integration
 test now loads the actual 500 BP05 authorised posts and BP08 unit profiles,
 then assigns a test incident using NPC dispatch. This is read-only source
 integration and does not persist NPC personnel or deployments to production.
