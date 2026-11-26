@@ -1,0 +1,97 @@
+name: BP02 Independent Domain Migration — PostgreSQL 18.7
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "db/domain-migrations/bp02/**"
+      - "scripts/migrate_bp02.py"
+      - "runtime/bp02_geography_archive_importer.py"
+      - "runtime/geography_identity_reconciliation.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1-identity-map.json"
+      - "tests/pkg001/test_bp02_domain_migration.py"
+      - "tests/pkg001/bp02_geography_archive_acceptance.sql"
+      - ".github/workflows/bp02-independent-domain-migration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-bp02-postgres-18:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18.7
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Verify geography identities
+        run: python -m runtime.geography_identity_reconciliation
+      - name: Run independent migration contract tests
+        run: python -m unittest tests.pkg001.test_bp02_domain_migration tests.pkg001.test_bp02_geography_archive_importer -v
+      - name: Record PostgreSQL and clean database baseline
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -Atc "SHOW server_version;"
+          before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_before_bp02_schema=$before"
+      - name: Verify dry-run does not create schemas
+        run: |
+          python scripts/migrate_bp02.py
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM pg_namespace WHERE nspname='sw_geo';")" = "0"
+      - name: Apply BP02 only — independent domain ledger
+        run: python scripts/migrate_bp02.py --apply --expected-database saltwater_test
+      - name: Measure isolated BP02 schema growth
+        run: |
+          after_schema=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_after_bp02_schema=$after_schema"
+          echo "bp02_schema_growth_bytes=$((after_schema-$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());" 2>/dev/null || echo "$after_schema")))" || true
+          psql -X -v ON_ERROR_STOP=1 -c "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration;"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM sw_ops.schema_migration;")" = "0"
+      - name: Import and measure archive payload
+        run: |
+          before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          python -m runtime.bp02_geography_archive_importer --apply --expected-database saltwater_test
+          after=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_before_archive=$before"
+          echo "database_bytes_after_archive=$after"
+          echo "bp02_archive_insert_growth_bytes=$((after-before))"
+          psql -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp02_geography_archive_acceptance.sql
+      - name: Verify independent migration and archive idempotency
+        run: |
+          before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          python scripts/migrate_bp02.py --apply --expected-database saltwater_test
+          python -m runtime.bp02_geography_archive_importer --apply --expected-database saltwater_test
+          after=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "database_bytes_before_repeat=$before"
+          echo "database_bytes_after_repeat=$after"
+          echo "repeat_growth_bytes=$((after-before))"
+          test "$before" = "$after"
+          psql -X -v ON_ERROR_STOP=1 -f tests/pkg001/bp02_geography_archive_acceptance.sql
