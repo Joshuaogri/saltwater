@@ -134,7 +134,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
             with conn.cursor() as cur:
                 for left, right in pairs:
                     cur.execute(
-                        "SELECT similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
+                        "SELECT sw_names.similarity(sw_names.normalize_name(%s),sw_names.normalize_name(%s))",
                         (left, right),
                     )
                     database_similarity = cur.fetchone()[0]
