@@ -1,0 +1,45 @@
+name: Saltwater Opening Police Person Seed Build
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/opening_police_person_seed.py"
+      - "runtime/naming.py"
+      - "data/naming/saltwater-person-naming-v1.json"
+      - "tests/pkg001/test_opening_police_person_seed.py"
+      - ".github/workflows/saltwater-opening-police-person-seed-build.yml"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: saltwater-opening-police-person-seed-main
+  cancel-in-progress: true
+jobs:
+  build-and-persist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generate opening 500-person police identity candidates
+        run: python -m runtime.opening_police_person_seed
+      - name: Run opening police person seed regression tests
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed.py" -v
+      - name: Persist compressed and readable seed on main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/people/saltwater-opening-police-person-seed-v1.json data/people/saltwater-opening-police-person-seed-v1.json.gz
+          if git diff --cached --quiet; then
+            echo "Opening police person seed is unchanged."
+            exit 0
+          fi
+          git commit -m "Generate Saltwater opening police person identity candidates"
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
