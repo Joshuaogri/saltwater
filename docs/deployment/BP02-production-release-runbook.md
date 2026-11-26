@@ -12,6 +12,20 @@ Read-only query against Neon project `misty-breeze-20463094`, production branch 
 - Global ledger `sw_ops.schema_migration`: versions 1 and 2 only
 - BP-02 ledger `sw_geo.bp02_schema_migration`: absent
 - BP-02 archive table `sw_geo.source_archive`: absent
+
+## Recovery-point verification (2026-11-27)
+
+A read-only Neon control-plane check found one manual snapshot:
+
+- Snapshot: `snap-calm-credit-bdfp5tog`
+- Name: `Saltwater BP04 pre-production release 2026-11-25`
+- Created: `2026-11-25T17:37:13Z`
+- Source branch: `br-bitter-rain-bdz9ddid`
+- The current production branch metadata identifies this snapshot as its restore source.
+- The snapshot's source branch is no longer present (Neon returned branch-not-found when inspected).
+- The current production branch has no automatic snapshot schedule configured.
+
+This confirms a historical pre-production snapshot exists and was used to establish the current production branch. It does **not** establish a fresh recovery point taken from the current production branch immediately before this release. The release operator must create or otherwise confirm a current-production restore point and record its identifier/time before any migration or import. No snapshot was created during this audit.
 - BP04 global migrations 0003–0012: still pending; do not apply as part of this release
 
 ## Tested storage envelope
