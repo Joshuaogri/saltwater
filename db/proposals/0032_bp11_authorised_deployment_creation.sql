@@ -56,7 +56,7 @@ BEGIN
        OR v_existing.objective<>p_objective OR v_existing.priority<>p_priority
        OR v_existing.issuing_personnel_id IS DISTINCT FROM
           (SELECT personnel_id FROM sw_police.personnel_service_current
-           WHERE person_id=substring(p_actor_ref from 15)::integer LIMIT 1) THEN
+           WHERE person_id=substring(p_actor_ref from 16)::integer LIMIT 1) THEN
       RAISE EXCEPTION 'deployment idempotency key conflicts with prior definition';
     END IF;
     RETURN QUERY SELECT v_existing.deployment_id,v_existing.status,v_existing.unit_id,
@@ -118,7 +118,7 @@ BEGIN
      ORDER BY effective_tick DESC,incident_location_id DESC LIMIT 1),
     'SALTWATER_CITY_STATE',p_objective,
     (SELECT personnel_id FROM sw_police.personnel_service_current
-     WHERE person_id=substring(p_actor_ref from 15)::integer LIMIT 1),
+     WHERE person_id=substring(p_actor_ref from 16)::integer LIMIT 1),
     p_authority_ref,p_effective_tick,'authorised',p_priority,v_event_id,
     p_idempotency_key,p_source_ref
   );
