@@ -258,7 +258,22 @@ def generate_candidates(domain: str, count: int, *, seed: int, config: Generator
         elif domain == "business":
             if not config.business_roots:
                 raise ValueError("business_roots must not be empty")
-            candidate = f"{rng.choice(config.business_roots)} {rng.choice(config.business_forms)}"
+            # Business roots are sampled without replacement. A root is used once
+            # per batch, so uniqueness never depends on appending numeric IDs.
+            normalized_roots = [normalize_name(root) for root in config.business_roots]
+            if len(normalized_roots) != len(set(normalized_roots)):
+                raise NamingError("business root vocabulary contains normalized duplicates")
+            if count > len(config.business_roots):
+                raise NamingError("business root vocabulary is too small for requested batch")
+            selected_roots = rng.sample(list(config.business_roots), count)
+            output = [
+                f"{root} {rng.choice(config.business_forms)}"
+                for root in selected_roots
+            ]
+            normalized_candidates = [normalize_name(name) for name in output]
+            if len(normalized_candidates) != len(set(normalized_candidates)):
+                raise NamingError("business candidate batch contains normalized duplicates")
+            return tuple(output)
         elif domain == "building":
             roots = config.building_roots or config.place_roots
             if not roots:
