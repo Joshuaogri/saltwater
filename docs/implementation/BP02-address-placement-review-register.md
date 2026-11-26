@@ -109,6 +109,15 @@ This closes the current evidence review without expanding the frozen BP04 invent
 
 ## Explicit property identity lineage correction — 2026-11-26
 
+## No-building site / frontage-exception cross-register audit — 2026-11-26
+
+A separate read-only cross-register audit now reconciles the address review register against the five resolved frontage-exception records. It identifies no-building sites from the building-access evidence, not from the single primary review class. This distinction matters because a no-building site can be classified primarily as a P1 road-reference conflict rather than as a P2 no-building review item.
+
+The audit checks each exception's source address, explicit property ID, candidate parcel ID and original source road against the matching address-review row. It rejects duplicate property/address identities, missing review links, count mismatches and provenance conflicts. It reports the no-building population and the exception overlap separately, and includes a per-site/per-exception crosswalk.
+
+Acceptance expects 36 distinct no-building property sites, five frontage exceptions, three exceptions overlapping the no-building population, and two bridge exceptions on sites with building-access candidates. These are source-data reconciliation assertions, not new property records. The BP02 workflow now runs dedicated regression tests and includes the cross-register report in the full acceptance artifact. Workflow results are pending. No property, address, building or access inventory is modified; no Neon write or operational approval is performed.
+
+
 The five-exception reconciliation previously derived a candidate property ID by removing the `SWADDR-` prefix from a source address ID and adding `SWP-`. This relied on two independent identifiers sharing a suffix, rather than using the authoritative BP04 address-to-property relationship. That implicit naming convention has been removed.
 
 The BP04-to-BP02 reconciliation now carries the exact `property_id` from the validated address identity row into each frontage-exception evidence record. Bridge connector candidates are matched against that explicit property reference. A missing property reference fails closed and cannot resolve a bridge connector. The regression test deliberately uses a property ID unrelated to the source address ID suffix and confirms the explicit relationship is used.
