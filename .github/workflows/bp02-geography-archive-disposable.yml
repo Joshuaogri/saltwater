@@ -1,10 +1,11 @@
-name: BP02 Geography Archive-Only Disposable PostgreSQL
+name: BP02 Geography Archive-Only Disposable PostgreSQL (legacy PostgreSQL 16 regression)
 
 on:
   push:
     branches: [main]
     paths:
-      - "db/migrations/0013_bp02_source_archive.sql"
+      - "db/domain-migrations/bp02/**"
+      - "scripts/migrate_bp02.py"
       - "runtime/bp02_geography_archive_importer.py"
       - "runtime/geography_identity_reconciliation.py"
       - "data/geography/saltwater-geography-v1.json"
@@ -59,8 +60,8 @@ jobs:
         run: |
           before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "database_bytes_before_migrations=$before"
-      - name: Apply ordered platform and BP02 archive migrations
-        run: python scripts/migrate.py --apply
+      - name: Apply independent BP02 domain migration only
+        run: python scripts/migrate_bp02.py --apply --expected-database saltwater_test
       - name: Measure BP02 archive schema growth
         run: |
           after_schema=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
