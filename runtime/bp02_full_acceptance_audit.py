@@ -20,7 +20,10 @@ from runtime.bp04_geography_reconciliation import (
 from runtime.bp02_address_frontage_exception_resolution import (
     resolve_address_frontage_exceptions,
 )
-from runtime.bp02_bridge_connector_engineering_register import (\n    build_bridge_connector_engineering_register,\n)\nfrom runtime.bp02_no_building_site_reconciliation import (
+from runtime.bp02_bridge_connector_engineering_register import (
+    build_bridge_connector_engineering_register,
+)
+from runtime.bp02_no_building_site_reconciliation import (
     reconcile_no_building_sites_and_frontage_exceptions,
 )
 
@@ -42,6 +45,7 @@ def run_full_bp02_acceptance_audit() -> dict:
     connector_topology = audit_connector_topology(source, candidates, dossiers, assets)
     direct_connectors = audit_direct_access_connectors(source, candidates, dossiers, assets)
     route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
+    bridge_engineering_register = build_bridge_connector_engineering_register(route_corridors)
 
     reconciliation = build_reconciliation(source, identity_map, property_document)
     exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
@@ -118,6 +122,11 @@ def run_full_bp02_acceptance_audit() -> dict:
             address_source_integrity["canonical_address_identity_matches"] == 420
         ),
         "operational_access_points_approved": False,
+        "all_bridge_connectors_engineered_and_approved": (
+            bridge_engineering_register["engineering_work_item_count"] == 4
+            and bridge_engineering_register["assessed_count"] == 4
+            and bridge_engineering_register["operationally_approved_count"] == 4
+        ),
         "all_address_road_access_exceptions_resolved": (
             exception_resolution["unresolved_exception_count"] == 0
         ),
@@ -136,6 +145,7 @@ def run_full_bp02_acceptance_audit() -> dict:
         "address_source_integrity": address_source_integrity,
         "frontage_exception_resolution": exception_resolution,
         "no_building_site_cross_register_reconciliation": no_building_cross_register,
+        "bridge_connector_engineering_register": bridge_engineering_register,
         "layer_reports": {
             "geography_geometry": geometry,
             "parcel_geometry": parcel_geometry,
@@ -172,6 +182,8 @@ def run_full_bp02_acceptance_audit() -> dict:
             "unresolved_address_road_access_exceptions": exception_resolution["unresolved_exception_count"],
             "canonical_addresses": address_source_integrity["canonical_address_identity_matches"],
             "operational_access_points": 0,
+            "bridge_connector_engineering_work_items": bridge_engineering_register["engineering_work_item_count"],
+            "bridge_connector_engineering_assessed": bridge_engineering_register["assessed_count"],
         },
         "authority": {
             "operational_approval": False,
@@ -186,7 +198,7 @@ def run_full_bp02_acceptance_audit() -> dict:
         ],
         "blockers": [
             "SW-GEO-V1 remains a design baseline, not an approved operational geography release.",
-            "The four bridge connector candidates still require entrance engineering and operational approval.",
+            "The four bridge connector candidates still require site-specific engineering evidence and operational approval.",
             "No canonical numbered addresses or operational access points have been approved/materialised.",
             "Operational dispatch, patrol and emergency access require validated access routes and permissions beyond geometric candidate checks.",
         ],
