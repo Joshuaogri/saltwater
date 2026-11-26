@@ -59,13 +59,21 @@ def _valid_bridge_connector_rows(
     ]
     if not rows:
         return []
-    connector_ids = [row.get("candidate_road_connection_id") for row in rows]
-    if any(not isinstance(identifier, str) or not identifier for identifier in connector_ids):
+    connector_pairs = [
+        (row.get("candidate_access_point_id"), row.get("candidate_road_connection_id"))
+        for row in rows
+    ]
+    if any(
+        not isinstance(access_id, str) or not access_id
+        or not isinstance(road_connection_id, str) or not road_connection_id
+        for access_id, road_connection_id in connector_pairs
+    ):
         return []
-    if len(connector_ids) != len(set(connector_ids)):
-        return []
-    access_point_ids = [row.get("candidate_access_point_id") for row in rows]
-    if (any(not isinstance(identifier, str) or not identifier for identifier in access_point_ids)
+    # A road-reserve candidate may legitimately serve two distinct building
+    # access-point approaches. Identity belongs to the access-point/road-
+    # connection pair, not to the road-connection ID in isolation.
+    access_point_ids = [access_id for access_id, _ in connector_pairs]
+    if (len(connector_pairs) != len(set(connector_pairs))
             or len(access_point_ids) != len(set(access_point_ids))):
         return []
     valid = all(
