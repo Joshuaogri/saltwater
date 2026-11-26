@@ -155,6 +155,21 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                 )
                 return cur.fetchone()[0]
 
+    def test_business_reservation_uses_advisory_lock_before_owner_row_lock(self):
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """SELECT pg_get_functiondef(
+                         'sw_names.reserve_business_name(text,text,text,text,text,text,bigint,bigint)'::regprocedure
+                       )"""
+                )
+                definition = cur.fetchone()[0]
+        advisory_lock = definition.find("pg_advisory_xact_lock")
+        owner_row_lock = definition.find("FOR UPDATE")
+        self.assertGreaterEqual(advisory_lock, 0)
+        self.assertGreater(owner_row_lock, advisory_lock)
+        self.assertNotIn("LOCK TABLE sw_names.name_reservation", definition)
+
     def test_source_business_ids_remain_stable_text_keys(self):
         ids = [row["business_id"] for row in self.rows]
         self.assertEqual(len(ids), 10000)
