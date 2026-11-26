@@ -61,9 +61,10 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                 )
                 cur.execute(
                     """SELECT sw_names.record_generation_batch(
-                         'BUSINESS',1,1,%s,20261126,%s,10000,
-                         'SW-BUSINESS-REGISTRY-V1','ci-business-naming',
-                         'BP04 bulk naming acceptance')""",
+                         'BUSINESS'::text,1::smallint,1::smallint,%s::text,
+                         20261126::bigint,%s::bytea,10000::integer,
+                         'SW-BUSINESS-REGISTRY-V1'::text,'ci-business-naming'::text,
+                         'BP04 bulk naming acceptance'::text)""",
                     (naming["vocabulary_config_version"], cls.manifest_digest),
                 )
                 cls.batch_id = cur.fetchone()[0]
