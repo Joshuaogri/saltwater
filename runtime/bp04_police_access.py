@@ -396,6 +396,36 @@ class BP04IncidentLocationResolver:
             "persisted": True,
         }
 
+    def read_operational_timeline(
+        self, credential: str, incident_id: int, *, operational_timeline_reader
+    ) -> list[dict]:
+        """Read verified BP11/BP10 event mirrors under a dedicated BP12 grant."""
+        if type(incident_id) is not int or incident_id < 1:
+            raise ValueError("A positive incident ID is required.")
+        if not callable(operational_timeline_reader):
+            raise TypeError("A trusted BP12 operational timeline reader is required")
+        self._access._require(
+            credential,
+            "bp12.incident.inspect.operational_timeline",
+            f"incident:{incident_id}",
+        )
+        rows = operational_timeline_reader(incident_id)
+        if rows is None:
+            raise RuntimeError("Incident operational timeline reader returned no result.")
+        result = [dict(row) for row in rows]
+        allowed_codes = {"DISPATCH_ACKNOWLEDGED", "UNIT_ARRIVED"}
+        for row in result:
+            if row.get("incident_id") != incident_id:
+                raise ValueError("Operational timeline contains a conflicting incident identity.")
+            if row.get("event_code") not in allowed_codes:
+                raise ValueError("Operational timeline contains an unsupported event.")
+            if not row.get("source_ref") or not row.get("event_id"):
+                raise ValueError("Operational timeline is missing event provenance.")
+            attributes = row.get("attributes")
+            if not isinstance(attributes, dict) or not attributes.get("actor_ref") or not attributes.get("authority_ref"):
+                raise ValueError("Operational timeline is missing actor or authority provenance.")
+        return result
+
     def read_investigation_location_history(
         self, credential: str, incident_id: int, *, case_ref: str,
         case_incident_verifier, location_history_reader,
