@@ -42,7 +42,7 @@ def audit_geography(path: str | Path) -> dict:
     road_ids = {r.get("id") for r in roads}
     checks = {
         "canonical_dataset_id": data.get("dataset_id") == "SW-GEO-V1",
-        "not_operationally_approved": data.get("status") == "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
+        "gameplay_release_approved": data.get("status") == "APPROVED_FOR_OPERATIONAL_USE",
         "district_count": len(districts) == EXPECTED["districts"],
         "neighbourhood_count": len(hoods) == EXPECTED["neighbourhoods"],
         "road_count": len(roads) == EXPECTED["roads"],
@@ -74,7 +74,7 @@ def audit_geography(path: str | Path) -> dict:
         "Database spatial_id surrogates are generated per database and must be looked up by stable entity_code; they are not portable source identifiers.",
         "Parcel fabric and canonical numbered addresses do not yet exist in the approved operational BP-02 geography.",
         "Building footprints and entrances do not yet exist in the approved operational BP-02 geography.",
-        "SW-GEO-V1 is planning-grade and has not been approved for operational seeding.",
+        "The BP-02 gameplay release is approved, but SW-GEO-V1 has not been approved for operational database seeding.",
         "Graph structural checks do not constitute full geometry QA or operational routing acceptance.",
     ]
     return {
@@ -92,7 +92,7 @@ def audit_geography(path: str | Path) -> dict:
         "operational_seed_eligible": False,
         "geometry_import_performed": False,
         "database_write_performed": False,
-        "approval_note": "This audit is read-only. A passing structural audit cannot approve BP-02 geography or authorise production seeding.",
+        "approval_note": "This audit is read-only. A passing structural audit does not confer operational-seed approval or authorise production seeding.",
     }
 
 
