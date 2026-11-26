@@ -159,6 +159,9 @@ BEGIN
     RAISE EXCEPTION 'business names must use trading or legal name form';
   END IF;
 
+  -- Take the global namespace lock before any business-row lock. The insert
+  -- guard reacquires this transaction lock before checking exact/near matches.
+  PERFORM pg_advisory_xact_lock(725101001::bigint);
   PERFORM 1 FROM sw_property.business
     WHERE business_id=p_business_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'business identity does not exist'; END IF;
