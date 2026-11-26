@@ -162,10 +162,13 @@ def run_full_bp02_acceptance_audit() -> dict:
             "database_write_performed": False,
             "neon_write_performed": False,
         },
+        "resolved_findings": [
+            "All three source-road conflicts have one unique parcel frontage road association; original source values remain preserved as provenance.",
+            "Both bridge properties have two feasible property-contained connector candidates to public bridges connected to public streets.",
+        ],
         "blockers": [
             "SW-GEO-V1 remains a design baseline, not an approved operational geography release.",
-            "Three source-road conflicts have one unique parcel frontage road association; the original source values remain preserved as provenance.",
-            "Two bridge cases have feasible property-contained connector candidates to bridge road reserves connected to public streets; entrance engineering and operational approval remain outstanding.",
+            "The four bridge connector candidates still require entrance engineering and operational approval.",
             "No canonical numbered addresses or operational access points have been approved/materialised.",
             "Operational dispatch, patrol and emergency access require validated access routes and permissions beyond geometric candidate checks.",
         ],
