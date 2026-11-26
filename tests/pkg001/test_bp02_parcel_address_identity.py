@@ -60,6 +60,15 @@ class BP02ParcelAddressIdentityTests(unittest.TestCase):
         self.assertEqual(result["addresses"][0]["address_road_candidate_id"], "SW-R01")
         self.assertIsNone(result["addresses"][1]["address_road_candidate_id"])
 
+    def test_duplicate_parcel_candidate_assignment_fails_closed(self):
+        properties = [dict(row) for row in self.properties]
+        properties[1]["source_candidate_parcel_id"] = "BPC-001"
+        with self.assertRaisesRegex(ValueError, "one-to-one to properties"):
+            build_identity_register(
+                self.candidates, properties, self.addresses, self.codes,
+                {"SW-RSEG-1": "SW-R01"},
+            )
+
     def test_rebuild_is_deterministic(self):
         self.assertEqual(self.build(), self.build())
 
