@@ -1664,3 +1664,8 @@ BP-01 foundational contract run 0003 passed on 2026-11-26: 16 test steps, 156 te
 
 
 BP-01 next-step implementation: BP06 opening police cohort provisioning is now specified in [the implementation note](docs/implementation/BP06-opening-police-cohort-provisioning.md) and migration proposal [0033](db/proposals/0033_bp06_opening_personnel_cohort.sql). It links exactly 500 existing BP03 person IDs to BP06 service dossiers, excludes the human player, preserves the population count and leaves BP05 posts/BP07/BP08 assignments untouched. The first disposable PostgreSQL acceptance passed in [PKG-001 run 45868150806](docs/test-evidence/BP06-opening-personnel-cohort-run-0001.md); no 500-person seed data or production Neon write is included.
+
+
+## Opening police identity candidates — 2026-11-26
+
+A deterministic BP03 opening police identity candidate generator is now on `main`. It produces 500 varied three-part name candidates from a versioned SW-UNS vocabulary, screens internal exact/near-duplicate names, and writes readable plus gzip datasets under `data/people/`. Each row has a stable candidate reference but no canonical person ID, personnel category, demographic attributes or personnel appointment. Names are not reserved until checked against the authoritative SW-UNS database registry. This is the identity-seed preparation step, not a BP03 population import or a production Neon write. See [the generator](runtime/opening_police_person_seed.py).
