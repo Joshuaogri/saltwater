@@ -431,7 +431,9 @@ def build_incident_command_handover_record(
                         for a in validated["outstanding_actions"])
             and not any(a["acknowledgement"] != "ACCEPTED"
                         for a in validated["acknowledgements"])
-            and len(validated["acknowledgements"]) >= 1
+            and any(a["recipient_ref"] == incoming_commander_ref
+                    and a["acknowledgement"] == "ACCEPTED"
+                    for a in validated["acknowledgements"])
         ),
         "record_status": "PROJECTED_NOT_PERSISTED",
         "read_only": True,
