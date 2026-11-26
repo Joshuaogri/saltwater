@@ -75,9 +75,14 @@ class NPCDispatchSimulatorTests(unittest.TestCase):
         with self.assertRaisesRegex(NPCDispatchError, "No available NPC unit"):
             engine.assign_best_unit(DispatchIncident("INC-5", "incident"))
 
-    def test_shift_rotation_cycles_four_groups(self):
+    def test_shift_rotation_cycles_four_groups_and_tracks_off_duty_staff(self):
         engine = simulator()
+        before = engine.snapshot()
+        self.assertGreater(before["off_duty_npc_count"], 0)
+        alpha_available = before["available_npc_count"]
         self.assertEqual(engine.rotate_shift(), "Bravo")
+        bravo = engine.snapshot()
+        self.assertNotEqual(bravo["available_npc_count"], alpha_available)
         self.assertEqual(engine.rotate_shift(), "Charlie")
         self.assertEqual(engine.rotate_shift(), "Delta")
         self.assertEqual(engine.rotate_shift(), "Alpha")
