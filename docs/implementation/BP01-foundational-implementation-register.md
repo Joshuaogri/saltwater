@@ -38,7 +38,11 @@ The old BP-01 draft's references to unresolved population membership and foundat
 | Persistence/recovery | BP-39 recovery implementation | `test_recovery.py`, backup/restore SQL acceptance | Owner implementation exists; current-head evidence must be refreshed |
 | Text-first player surface | BP-40 command/workspace/interface | player command, workspace and interface suites | Existing text surface; full gameplay breadth remains in later divisions |
 
-## 3. Remaining BP-01 verification work
+## 3. Verified BP-01 contract test evidence
+
+The dedicated [BP-01 foundational contract test run 0001](../test-evidence/BP01-foundational-contracts-run-0001.md) passed on `main` at source commit `cb0499de5f48483c011124e8b29c36077c229c68`: 12 test steps, 128 tests, zero failures. It covers the immutable canon contract, exact `bingo` parsing and authorization through the ChatGPT and trusted-host boundaries, read-only interface behaviour, single-player command gateway, runtime absence freeze, causal event processing, scheduling and recovery. This is focused Python evidence; it does not satisfy the remaining hidden-truth non-leakage, NPC knowledge or live host-composition acceptance criteria.
+
+## 4. Remaining BP-01 verification work
 
 These are real outstanding items; they are not reasons to reopen settled canon:
 
@@ -53,11 +57,11 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 
 Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning services. BP-01 defines the invariant; it must not duplicate those divisions' substantive data models or algorithms.
 
-## 4. Acceptance and release boundary
+## 5. Acceptance and release boundary
 
 - Design: **DESIGNED**.
 - Implementation: **IN_PROGRESS**.
-- Testing: **IN_PROGRESS** pending current-head suite results.
+- Testing: **IN_PROGRESS** — focused BP-01 Python contract suite passed (128 tests); remaining cross-division acceptance evidence is outstanding.
 - Verification: **BLOCKED** pending the global evidence listed above.
 - No production Neon writes, migrations, seeds, grants or permission changes were performed.
 - No new BP division or branch was created.
