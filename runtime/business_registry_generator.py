@@ -214,7 +214,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         building = buildings[building_id]
         address = addresses[address_id]
         trade_name = trade_names[index]
-        registered_name = registered_names[index]"
+        registered_name = registered_names[index]
         for public_name in (trade_name, registered_name):
             key = normalize_name(public_name)
             if key in used_public_names:
