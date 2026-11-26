@@ -535,9 +535,9 @@ This requirement does not alter the fixed BP-01–BP-44 structure. Adoption of t
 
 ## 22. Completion statement
 
-**Design status:** `DESIGNED_DRAFT`; this is a complete first-pass BP-01 specification for user review, subject to the open decisions and cross-division contracts above.  
-**Implementation status:** `NOT_STARTED` unless independently established by linked code/schema evidence.  
-**Test status:** `NOT_STARTED` unless test results are independently recorded.  
-**Verification status:** `NOT_STARTED`.
+**Design status:** `DESIGNED` — version 1.0 reconciles the approved master canon, SW-CANON-001, SW-CANON-002 and SW-UNS-001. Domain-specific details listed in section 20 remain with their owning divisions and do not reopen BP-01 canon.  
+**Implementation status:** `IN_PROGRESS` — foundational runtime, player, authorization, naming, population, business and persistence components exist across the owning divisions; see the BP-01 implementation register.  
+**Test status:** `IN_PROGRESS` — distributed owner tests exist; BP-01-specific contract tests are added to PKG-001 CI and require a successful current-main run.  
+**Verification status:** `BLOCKED` until all BP-01 global acceptance criteria have linked, passing owner-level evidence, including hidden-information non-leakage and NPC knowledge boundaries.
 
 No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document. The user has separately reserved explicit approval for production Neon writes and permission changes.
