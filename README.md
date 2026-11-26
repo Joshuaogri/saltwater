@@ -21,6 +21,8 @@ Backup/restore verified 420 property assets, 180,733 units, 4,842 asset geometry
 
 ### BP04 gameplay lookup integrity — 2026-11-26
 
+The lookup integrity checks now extend through the corporate/business register: parent-company references must resolve and remain acyclic; registered addresses must exist; each declared primary establishment must belong to that business; and establishment property/building/premises/unit/address links must agree across the physical hierarchy. Added regression tests for missing parent companies, self-parenting/cycles, mismatched primary establishments, missing registered addresses and conflicting establishment location links. This remains read-only and process-local; no Neon writes or operational geography promotion occur.
+
 The archive-backed lookup now fails closed on dangling or inconsistent property/building/premises/unit/access-point relationships. It validates parent-child hierarchy across the detailed property stack before exposing records to gameplay, preventing an apparently valid address or establishment lookup from masking broken physical-location links. Regression coverage includes missing premises buildings, unit-to-premises conflicts and access-point-to-unit conflicts. This remains read-only and process-local; no Neon writes or operational geography promotion occur.
 
 **Release boundary:** Stage E's detailed disposable database acceptance now passes, but generated physical detail and connector geometry remain unapproved candidates. BP04/BP02 gameplay integration and operational geography release gates remain open. This result does not authorise Neon deployment.
