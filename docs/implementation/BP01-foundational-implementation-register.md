@@ -32,7 +32,7 @@ The old BP-01 draft's references to unresolved population membership and foundat
 | One authoritative runtime state and absence freeze | `runtime/kernel.py` | `test_runtime_kernel.py`, PostgreSQL runtime-store tests | Existing |
 | Causal event intake, idempotency and dispatch | `runtime/event_engine.py` | `test_event_engine.py`, disposable PostgreSQL acceptance | Existing |
 | Canonical clock and scheduled processing | `runtime/scheduling.py` | `test_scheduling.py`, disposable PostgreSQL acceptance | Existing; host composition and complete NPC scheduler integration remain open |
-| NPC workforce and autonomous dispatch | `runtime/npc_workforce.py`, `runtime/npc_dispatch.py`, `runtime/npc_dispatch_scheduler.py`, `runtime/postgres_npc_dispatch.py` | `test_npc_workforce.py`, `test_npc_dispatch.py`, `test_npc_dispatch_console.py`, `test_postgres_npc_dispatch_integration.py` | Production loads canonical active personnel, excludes the player, and requires active primary post/unit membership plus BP08 availability. It does not create NPCs from vacancies. The opening 500-person police population cohort has not yet been provisioned as BP06 personnel service records; the PKG-001 disposable fixture has zero active personnel service rows. Host registration and persistence remain open |
+| NPC workforce and autonomous dispatch | `runtime/npc_workforce.py`, `runtime/npc_dispatch.py`, `runtime/npc_dispatch_scheduler.py`, `runtime/postgres_npc_dispatch.py` | `test_npc_workforce.py`, `test_npc_dispatch.py`, `test_npc_dispatch_console.py`, `test_postgres_npc_dispatch_integration.py` | Production loads canonical active personnel, excludes the player, and requires active primary post/unit membership plus BP08 availability. It does not create NPCs from vacancies. The opening 500-person police population cohort has not yet been provisioned in live Neon; the new BP06 opening-cohort provisioner consumes 500 existing BP03 person IDs and creates service dossiers only. The separate PKG-001 disposable fixture starts with zero active personnel service rows. Host registration and persistence remain open |
 | Population identity/cap | BP-03 population schema and services | `test_population_concurrency.py`, population-cap SQL fixture and disposable acceptance | Owner implementation exists; current-head evidence must be refreshed |
 | Business minimum and registry integrity | BP-04 business generator/audit | `test_business_registry_generator.py`, `test_bp04_business_registry_audit.py`, business PostgreSQL acceptance | Owner implementation exists; current-head evidence must be refreshed |
 | Universal naming | SW-UNS-001 shared registry and adapters | naming Python/PostgreSQL suites | Owner implementation exists; business near-duplicate acceptance still requires current-head confirmation |
@@ -52,14 +52,18 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 3. Prove player questions and information-only commands do not mutate authoritative world state across the full command gateway. A focused player-interface regression now checks the read-only command set against runtime state and event history.
 4. Prove player choices are never silently selected or auto-completed, including investigation direction and consequential decisions.
 5. Complete the BP15/BP16 case-owned hidden-truth reveal provider and verify that all outward channels preserve the reveal gate.
-6. Provision the opening 500 police-subset person identities as canonical BP06 personnel service records without creating duplicate people; populate actual career/post/unit memberships through BP06–BP08 and verify dispatch readiness only after those records exist.
+6. Provision the opening 500 police-subset person identities as canonical BP06 personnel service records without creating duplicate people. The new BP06 opening-cohort provisioner is implemented and has disposable acceptance coverage; the actual 500-person BP03 seed manifest, BP07 career/post appointments and BP08 unit memberships remain to be connected.
 7. Wire the recurring NPC dispatch schedule into the actual game-session host, persist and restore NPC deployment/crew state, and prove scheduled work runs while the player is present and freezes during absence.
 8. Run the relevant Python and disposable PostgreSQL acceptance suites against the current main commit and retain reproducible evidence.
 9. Reconcile every BP-01 acceptance ID to its owner implementation, test and evidence reference; no criterion is marked verified from documentation alone.
 
 Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning services. BP-01 defines the invariant; it must not duplicate those divisions' substantive data models or algorithms.
 
-## 5. Acceptance and release boundary
+## 5. BP06 opening cohort provisioning increment
+
+`db/proposals/0033_bp06_opening_personnel_cohort.sql` adds a one-time, idempotent 500-person linkage from existing BP03 identities to BP06 personnel dossiers. It does not create people, alter population counts, fill authorised posts, or create BP07/BP08 assignments. The disposable acceptance fixture is `tests/pkg001/opening_personnel_cohort_acceptance.sql`; CI applies the proposal only to disposable PostgreSQL. The actual BP03 opening identity manifest remains to be generated and connected.
+
+## 6. Acceptance and release boundary
 
 - Design: **DESIGNED**.
 - Implementation: **IN_PROGRESS**.
