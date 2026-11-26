@@ -53,10 +53,16 @@ class ChatGPTToolHandlerTests(unittest.TestCase):
     def test_only_exact_single_command_allowlist_is_accepted(self):
         for command in (
             "", " profile", "profile ", "PROFILE", "profile quit",
-            "profile;quit", "bingo", "start now", "SELECT",
+            "profile;quit", "Bingo", " bingo", "bingo ", '"bingo"', "not bingo", "start now", "SELECT",
         ):
             self.assertFalse(self.call_handler({"command_text": command})["ok"])
         self.adapter.execute.assert_not_called()
+
+    def test_exact_bingo_command_is_allowed_and_forwarded(self):
+        result = self.call_handler({"command_text": "bingo"})
+        self.assertTrue(result["ok"])
+        self.adapter.execute.assert_called_once()
+        self.assertEqual(self.adapter.execute.call_args.args[1].command_text, "bingo")
 
     def test_exact_workspace_navigation_arguments_are_allowed(self):
         result = self.call_handler({"command_text": "workspace reports-notifications"})
