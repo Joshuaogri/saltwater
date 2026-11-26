@@ -15,6 +15,11 @@ The revised full acceptance audit passed in [run 45831361588](https://github.com
 
 ### BP02 no-building-site review — 2026-11-26
 
+### BP02 bridge connector engineering review — 2026-11-26
+
+The four Customs Bridge/Harbour Bridge connector candidates have 2D geometric centreline evidence only. Width/corridor width are null; gradient has no elevation source; surface is unknown; drainage and vertical clearance are unassessed; access-control type is unknown; and no constructed entrance, legal access, traversability or emergency-egress evidence exists. Planar building/water clearance checks do not establish engineering clearance. All four remain `UNREVIEWED_GEOMETRIC_LINE_ONLY`; bridge-to-public-road connectivity remains a design-geometry finding, not operational approval. The required next evidence is site-specific survey and engineering assessment. BP02 remains `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`; no inventory changes or Neon writes were made. See [BP-02 address placement review register](docs/implementation/BP02-address-placement-review-register.md).
+
+
 The 36 property sites without generated building candidates have been reviewed against the Stage E generator. Their generated site state remains unknown and boundaries remain unverified. The generator can omit a building because no feasible footprint was found or because the generated land-use class is open space; the current evidence does not preserve a per-site reason code. These sites therefore remain **NO_BUILDING_CANDIDATE — CAUSE UNCLASSIFIED**. They are not assumed vacant, undeveloped or unoccupied, and no buildings or other property assets have been added. The frozen BP04 inventory is unchanged. This evidence review does not alter BP02's structural pass or operational-release blocker. See [BP-02 address placement review register](docs/implementation/BP02-address-placement-review-register.md). No Neon writes, canonical promotions, operational access approvals or grants were made.
 
 ### BP04-03 Stage E — detailed asset import verified — 2026-11-26
