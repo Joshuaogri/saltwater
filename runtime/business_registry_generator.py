@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import gzip
 import hashlib
+from difflib import SequenceMatcher
 import json
 from runtime.dataset_io import load_json
 from pathlib import Path
@@ -82,15 +83,15 @@ def _load_business_name_config() -> tuple[GeneratorConfig, tuple[str, ...], tupl
     return config, forms, legal_suffixes
 
 
-def _generate_business_names(source: dict) -> tuple[str, ...]:
+def _generate_business_names_report(source: dict) -> dict:
     config, _, _ = _load_business_name_config()
+    candidate_pool_count = TARGET_BUSINESSES + 1000
     candidates = generate_candidates(
-        "business", TARGET_BUSINESSES, seed=BUSINESS_NAME_SEED, config=config
+        "business", candidate_pool_count, seed=BUSINESS_NAME_SEED, config=config
     )
-    # Existing adopted geography names are a reserved comparison set. Existing
-    # canon conflicts remain conflicts; this dry-run never renames or imports them.
     geography = inventory_geography_names(source)
-    reserved = {normalize_name(item.display_name) for item in geography.candidates}
+    geography_names = tuple(item.display_name for item in geography.candidates)
+    reserved = {normalize_name(name) for name in geography_names}
     normalized = [normalize_name(name) for name in candidates]
     if len(normalized) != len(set(normalized)):
         raise ValueError("generated business trading names are not globally unique")
@@ -99,7 +100,58 @@ def _generate_business_names(source: dict) -> tuple[str, ...]:
         raise ValueError("generated business names collide with adopted geography canon: " + ", ".join(collision))
     if any(any(ch.isdigit() for ch in name) for name in candidates):
         raise ValueError("generated business names must not contain numeric placeholder suffixes")
-    return candidates
+
+    # Match the shared registry's 0.90 near-duplicate review threshold. Candidate
+    # roots are adjective+noun pairs; compare only roots whose component words
+    # are themselves similar, avoiding an O(n^2) scan across the full batch.
+    adjective_vocab = tuple(dict.fromkeys(root.split(" ", 1)[0] for root in config.business_roots))
+    noun_vocab = tuple(dict.fromkeys(root.split(" ", 1)[1] for root in config.business_roots))
+    def similar_words(words: tuple[str, ...]) -> dict[str, tuple[str, ...]]:
+        return {
+            word: tuple(
+                other for other in words
+                if SequenceMatcher(None, word.casefold(), other.casefold()).ratio() >= 0.90
+            )
+            for word in words
+        }
+    similar_adjectives = similar_words(adjective_vocab)
+    similar_nouns = similar_words(noun_vocab)
+    accepted_by_root: dict[tuple[str, str], str] = {}
+    accepted: list[str] = []
+    held_near_duplicates = 0
+    for candidate in candidates:
+        adjective, noun, *_ = candidate.split()
+        near = False
+        for other_adjective in similar_adjectives[adjective]:
+            for other_noun in similar_nouns[noun]:
+                other = accepted_by_root.get((other_adjective, other_noun))
+                if other and SequenceMatcher(None, candidate.casefold(), other.casefold()).ratio() >= 0.90:
+                    near = True
+                    break
+            if near:
+                break
+        if near:
+            held_near_duplicates += 1
+            continue
+        accepted_by_root[(adjective, noun)] = candidate
+        accepted.append(candidate)
+        if len(accepted) == TARGET_BUSINESSES:
+            break
+    if len(accepted) != TARGET_BUSINESSES:
+        raise ValueError(
+            f"business vocabulary produced only {len(accepted)} names after exact and near-duplicate review"
+        )
+    return {
+        "names": tuple(accepted),
+        "candidate_pool_count": candidate_pool_count,
+        "near_duplicate_candidates_held": held_near_duplicates,
+        "near_duplicate_threshold": 0.90,
+        "geography_names_checked": len(geography_names),
+    }
+
+
+def _generate_business_names(source: dict) -> tuple[str, ...]:
+    return _generate_business_names_report(source)["names"]
 
 
 def build_business_registry(source: dict, property_world: dict | None = None) -> dict:
@@ -119,7 +171,8 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         raise ValueError("Not enough canonical units to host the business registry")
     selected_units = ordered_units[:TARGET_BUSINESSES]
 
-    trade_names = _generate_business_names(source)
+    name_report = _generate_business_names_report(source)
+    trade_names = name_report["names"]
     _, _, legal_suffixes = _load_business_name_config()
     businesses, establishments, occupancy_links = [], [], []
     sector_counts = {}
@@ -235,6 +288,11 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
             "generator_version": 1,
             "seed": BUSINESS_NAME_SEED,
             "candidate_count": len(trade_names),
+            "candidate_pool_count": name_report["candidate_pool_count"],
+            "near_duplicate_candidates_held": name_report["near_duplicate_candidates_held"],
+            "near_duplicate_threshold": name_report["near_duplicate_threshold"],
+            "near_duplicate_screen": "PASS",
+            "geography_names_checked": name_report["geography_names_checked"],
             "reservation_status": "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED",
             "exact_geography_collision_check": "PASS",
             "numeric_placeholder_check": "PASS",
