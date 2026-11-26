@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from runtime.bp04_police_access import (
     BP04PoliceLookupAccess,
+    BP04IncidentLocationResolver,
     create_postgres_bp04_police_lookup_access,
 )
 from runtime.security import (
@@ -147,10 +148,10 @@ class BP04PoliceAccessTests(unittest.TestCase):
             access.search("officer-session", "address", "Harbour Avenue")
         
     def test_revoked_session_is_denied_and_audited(self):
-        self.verifier.session = make_session()
-        revoked = self.verifier.session
         from dataclasses import replace
-        self.verifier.session = replace(revoked, session_status=SessionStatus.REVOKED)
+        self.verifier.session = replace(
+            self.session, session_status=SessionStatus.REVOKED
+        )
         with self.assertRaisesRegex(PermissionError, "Access denied"):
             self.access.search("officer-session", "address", "Harbour Avenue")
         self.assertEqual(self.audit.records[-1].reason, "session_not_active")
