@@ -331,6 +331,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
             "candidate_count": len(trade_names),
             "candidate_pool_count": name_report["candidate_pool_count"],
             "near_duplicate_candidates_held": name_report["near_duplicate_candidates_held"],
+            "geography_near_duplicate_candidates_held": name_report["geography_near_duplicate_candidates_held"],
             "exact_collision_candidates_held": name_report["exact_collision_candidates_held"],
             "near_duplicate_threshold": name_report["near_duplicate_threshold"],
             "similarity_algorithm": name_report["similarity_algorithm"],
