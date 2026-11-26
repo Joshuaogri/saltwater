@@ -75,6 +75,15 @@ BEGIN
        ) THEN
       RAISE EXCEPTION 'BP12 incident location event/provenance recording failed';
     END IF;
+    IF (SELECT count(*) FROM sw_incident.incident_location_history(v_incident_id))<>2
+       OR NOT EXISTS(
+         SELECT 1 FROM sw_incident.incident_location_history(v_incident_id)
+         WHERE incident_location_id=v_location_id
+           AND event_attributes->>'address_source_ref'='bp04-address:SWADDR-TEST-002'
+           AND event_source_ref='caller-stated:BP12-ACCEPTANCE-LOCATION-001'
+       ) THEN
+      RAISE EXCEPTION 'BP12 incident location history reader lost provenance or chronology';
+    END IF;
     v_second_location_id:=sw_incident.add_incident_location(
       v_incident_id,'secondary','property','SWADDR-TEST-002',NULL,
       'Fictional secondary test address','unverified',
