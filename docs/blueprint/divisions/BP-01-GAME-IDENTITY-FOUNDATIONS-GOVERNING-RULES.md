@@ -2,10 +2,10 @@
 
 **Project:** Saltwater  
 **Blueprint:** Saltwater Master Blueprint BP-01–BP-44  
-**Version:** 0.1  
-**Status:** `DESIGNED_DRAFT` — awaiting user review/approval  
+**Version:** 1.0  
+**Status:** `DESIGNED` — reconciled against adopted Saltwater canon and approved for implementation  
 **Date:** 2026-11-22  
-**Authority:** User-owned canon and final design approval. This document is a full division specification draft, not evidence of implementation.  
+**Authority:** User-owned canon and final design approval. The master framework and binding canon were approved 2026-11-23; BP-01 was reconciled and directed for completion on 2026-11-26. Design approval is distinct from implementation, testing and verification.  
 **Parent:** `docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md`  
 **Traceability:** 52→44 crosswalk v1.1; source IDs retained below.
 
@@ -41,7 +41,7 @@ The game models:
 - Crime, incidents, investigations, evidence, forensic work, justice outcomes and their long-term consequences.
 - A persistent causal world whose records, identities and history remain coherent across all 44 divisions.
 
-All people, organisations, places, laws, offences, procedures, evidence, records and events are fictional game-world content. Real-world entities are not implicitly part of Saltwater.
+All people, organisations, places, laws, offences, procedures, evidence, records and events are fictional game-world content. The user is the sole human player; every other person is an NPC. NPCs act autonomously according to their roles, knowledge, schedules, capabilities and world conditions. Real-world entities are not implicitly part of Saltwater. Real-world legal, regulatory, staffing, approval or verification requirements do not govern fictional gameplay; the adopted fictional game rules do. External production database writes and permission changes remain separate real-system actions and retain their explicit approval boundary.
 
 **Traceability:** C01–C02; S01.R01; S43.R01.
 
@@ -504,7 +504,7 @@ The complete 52-division mapping remains in `SALTWATER-52-TO-44-CROSSWALK.md`. T
 
 ## 20. Open decisions and non-assumptions
 
-The following details are not invented by BP-01 and must be resolved in the owning divisions or by explicit user decision:
+The following are implementation details owned by the named divisions, not unresolved BP-01 canon decisions:
 - exact city geometry, districts, roads, parcels and address register (BP-02);
 - population membership definitions for transient persons and the exact atomic admission/exit event model (BP-03);
 - business sector distribution, operating premises and generation method for the 10,000+ registry (BP-04);
@@ -540,4 +540,4 @@ This requirement does not alter the fixed BP-01–BP-44 structure. Adoption of t
 **Test status:** `NOT_STARTED` unless test results are independently recorded.  
 **Verification status:** `NOT_STARTED`.
 
-No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document.
+No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document. The user has separately reserved explicit approval for production Neon writes and permission changes.
