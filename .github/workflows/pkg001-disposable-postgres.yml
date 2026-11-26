@@ -38,6 +38,7 @@ on:
       - "tests/pkg001/test_naming_postgres.py"
       - "tests/pkg001/test_business_naming_postgres.py"
       - "data/business/saltwater-business-registry-v1.json"
+      - "data/business/saltwater-business-registry-v1.json.gz"
       - "tests/pkg001/naming_acceptance.sql"
       - "tests/pkg001/test_recruitment.py"
       - "tests/pkg001/recruit_entry_acceptance.sql"
