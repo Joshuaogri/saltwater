@@ -1,6 +1,6 @@
-# BP04 full acceptance audit — 2026-11-25
+# BP04 full acceptance audit — 2026-11-25 (status updated 2026-11-26)
 
-**Result: NOT PASSED — BP04 is partially implemented and must not be marked COMPLETED.**
+**Result: NOT PASSED — BP04 is partially implemented and must not be marked COMPLETED.** BP02's full structural parcel/address/access audit subsequently passed in [run 45831361588](https://github.com/Joshuaogri/saltwater/actions/runs/45831361588); this resolves the structural exception blocker but does not approve operational geography or complete BP04. See the appended BP02 result below.
 
 **Audit source:** `main` at commit `881b9531aa609811bef5eb7fd306a4bc6be11145`  
 **Production release:** [GitHub Actions run 45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) — completed successfully  
