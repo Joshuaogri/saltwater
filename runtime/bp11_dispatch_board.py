@@ -123,7 +123,7 @@ class PostgresDispatchBoard:
                 "functional_domain", "dispatchable", "minimum_crew_size",
                 "target_crew_size", "maximum_crew_size", "active_members",
                 "operational_status", "staffing_eligible", "dispatch_eligible",
-                "readiness_reason", "capability_codes",
+                "readiness_reason", "resources_ready", "capability_codes",
             )
             return [dict(zip(keys, row)) for row in rows]
         except PermissionError:
