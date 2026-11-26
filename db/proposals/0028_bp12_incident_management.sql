@@ -618,14 +618,7 @@ BEGIN
      OR p_source_ref IS NULL OR length(trim(p_source_ref))=0
      OR p_address_source_ref IS NULL OR length(trim(p_address_source_ref))=0
      OR p_idempotency_key IS NULL
-     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
-SELECT i.*,
-       (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
-       (SELECT count(*) FROM sw_incident.incident_source_link s WHERE s.incident_id=i.incident_id)::integer AS source_count
-FROM sw_incident.incident i;
-
-COMMIT;
- THEN
+     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$' THEN
     RAISE EXCEPTION 'invalid incident location request';
   END IF;
   IF p_location_type='canonical_spatial' AND p_spatial_id IS NULL THEN
