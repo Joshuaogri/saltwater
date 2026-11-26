@@ -11,6 +11,8 @@ from enum import StrEnum
 from typing import Protocol
 from uuid import UUID
 
+from runtime.bp01_foundations import is_exact_hidden_truth_reveal_trigger
+
 
 class PrincipalKind(StrEnum):
     PLAYER = "player"
