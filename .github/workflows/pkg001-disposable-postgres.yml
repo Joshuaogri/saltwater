@@ -19,6 +19,7 @@ on:
       - "db/proposals/0026_bp08_unit_deployment.sql"
       - "db/proposals/0027_bp09_police_resource_readiness.sql"
       - "db/proposals/0028_bp12_incident_management.sql"
+      - "db/proposals/0029_bp12_command_handover.sql"
       - "tests/pkg001/police_architecture_acceptance.sql"
       - "tests/pkg001/personnel_service_acceptance.sql"
       - "tests/pkg001/career_history_acceptance.sql"
@@ -155,6 +156,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0026_bp08_unit_deployment.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0027_bp09_police_resource_readiness.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0028_bp12_incident_management.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0029_bp12_command_handover.sql
           after_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "sw_nam_001_database_bytes_before=$before_naming"
           echo "sw_nam_001_database_bytes_after=$after_naming"
