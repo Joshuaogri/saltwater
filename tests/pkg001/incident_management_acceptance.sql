@@ -308,13 +308,14 @@ BEGIN
         v_incident_id,'BP12-HANDOVER-INVALID-002','commander:outgoing','commander:incoming',
         'supervisor:prepared','command-authority:test','command-room:handover-test',
         (SELECT world_tick FROM sw_runtime.state WHERE singleton=1),
-        jsonb_set(v_handover_document,'{handover_ready}','false'::jsonb,true),
+        jsonb_set(jsonb_set(v_handover_document,'{handover_ready}','false'::jsonb,true),
+          '{assignment_reconciliation,handover_ready}','false'::jsonb,true),
         'BP12-HANDOVER-INVALID-IDEMPOTENCY'
       );
       RAISE EXCEPTION 'unready command handover was accepted';
     EXCEPTION WHEN OTHERS THEN
       GET STACKED DIAGNOSTICS v_error = MESSAGE_TEXT;
-      IF v_error<>'command handover is not accepted and ready for transfer' THEN RAISE; END IF;
+      IF v_error<>'command handover document identity or register shape does not reconcile' THEN RAISE; END IF;
     END;
   ELSE
     BEGIN
