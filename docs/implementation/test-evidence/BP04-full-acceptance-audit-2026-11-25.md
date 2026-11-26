@@ -135,3 +135,38 @@ The 26 intersections were not waived. `runtime/physical_asset_inventory_generato
 The route-corridor regression now expects the full 2,948 connector set (2,944 frontage candidates and four point-contact/proximity candidates). The full BP-02 workflow also runs the building-access and route-corridor regression suites. The new consolidated run is [45691636832](https://github.com/Joshuaogri/saltwater/actions/runs/45691636832); its result must be checked before structural acceptance is claimed.
 
 This remediation changes generated design candidates only. It does not create operational routes, addresses or access points. The five P1 address/frontage exceptions remain dispositioned but unresolved for operational purposes; no canonical address or operational access-point approval has been made. No Neon writes or property archive uploads occurred.
+
+
+## BP04 closure reassessment — 2026-11-26
+
+**Current decision: NOT COMPLETED.** The production archive release remains verified as recorded above. The latest work advances player command integration and the authenticated handover boundary, but it does not remove the separately owned operational release blockers.
+
+### New verified implementation
+
+- Real archive-backed player command tests now exercise find for property, address and business and inspect for all eight supported entity types. They also check missing/malformed records and prove lookup does not advance the world tick. The PostgreSQL 16/18 workflow has passed the player command, ChatGPT contract, officer authorization and BP04/BP02 lookup/reconciliation contract steps; the full workflow is still running its 420-address BP02 reconciliation at the time of this reassessment: [run 45825332438](https://github.com/Joshuaogri/saltwater/actions/runs/45825332438).
+- AuthorizationDecision.active_person_id is now propagated from the verified session. The BP12 handover path requires a trusted personnel-reference verifier to match prepared_by_ref to that verified person before it reads the owner snapshots or calls the writer. Missing active-person identity, absent verifier or mismatched reference is denied. Regression cases cover a matching reference, mismatched caller-supplied reference and missing active person. The targeted officer-authorization workflow step passed.
+- The migration-validation workflow passed on the latest tested code commit: [run 45825332455](https://github.com/Joshuaogri/saltwater/actions/runs/45825332455).
+- The Python-kernel job in the full PKG-001 regression workflow passed. Its disposable PostgreSQL job was still exercising the 9,999-person population fill at the time of this reassessment: [run 45825332524](https://github.com/Joshuaogri/saltwater/actions/runs/45825332524).
+
+### Updated criterion-to-evidence matrix
+
+| Criterion | Status | Evidence / remaining condition |
+|---|---|---|
+| Compressed source deployment, digest, counts, archive-only storage and idempotent repeat import | PASS | Production archive deployment and prior PostgreSQL 16/18 archive acceptance recorded above |
+| Frozen property-world source inventory and generated hierarchy | PASS for source generation | Existing generator and source-ledger tests; no further inventory expansion is authorised or needed for closure |
+| Player find/inspect against actual imported archives | PASS for targeted test steps; full run pending | Run 45825332438 has passed command and lookup steps; complete 420-address reconciliation still running |
+| Officer authorization, default-deny and durable audit boundary | PASS for tested adapter contract | Targeted officer authorization step passed; production grants remain unprovisioned |
+| Verified officer identity in command handover | PASS for fail-closed contract tests; production integration BLOCKED | Session person identity is propagated and mismatch/missing-identity tests are present. Actual personnel-reference resolver is still an injected dependency and is not wired to the production personnel service |
+| BP02 canonical parcel/address operational release | BLOCKED | 420/420 design identities are not operationally approved; five priority frontage exceptions remain unresolved for operational use |
+| Production officer grants / BP42 policy | BLOCKED | No approved grants provisioned; default-deny remains correct |
+| Full dispatch/CAD and investigation service consumers | NOT IMPLEMENTED / owner dependency | BP04 adapters and handoff contracts exist; they do not constitute complete BP11 or BP16 applications |
+| Business schedule, healthcare, transport and utility operational interfaces | NOT VERIFIED / owner dependencies | Source archives exist; no claim of complete service-level consumer integration |
+| Cross-register, representative performance, failure/rollback/recovery consolidated acceptance | NOT PASSED | Earlier archive/source tests pass, but the full BP04 criterion-to-test suite has not been executed and accepted as one release gate |
+
+### Closure boundary
+
+The following are completed deliverables: production compressed archive deployment; frozen source-world inventory; bounded archive-backed lookup implementation; player find/inspect integration tests; and a fail-closed officer-attribution contract for BP12 handover.
+
+The following are not silently waived: BP02 operational geography approval; five frontage/access exceptions; production BP42 officer grants; wiring the trusted personnel-reference resolver to the authoritative BP06 personnel service; BP11/BP16 operational consumers; applicable business/healthcare/transport/utility consumers; and consolidated cross-register/performance/recovery acceptance.
+
+No production Neon writes, permission grants, operational geography promotions or data promotions were made by this work. Do not mark BP04 COMPLETED until required BP04-owned criteria pass and external dependencies are either completed or explicitly accepted by the user.
