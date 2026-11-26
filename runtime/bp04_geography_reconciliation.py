@@ -283,6 +283,7 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict)
         "bp02_design_parcel_identity_count": identity_register["parcel_identity_count"],
         "bp02_design_address_identity_count": identity_register["address_identity_count"],
         "bp02_design_identity_register": identity_register["register_id"],
+        "bp02_design_identity_register_data": identity_register,
         "operational_identity_release_approved": identity_register["operational_approval"],
         "audit": "BP04-TO-BP02-ADDRESS-RECONCILIATION",
         "source_geography_dataset": geo.get("dataset_id"),
