@@ -1765,3 +1765,12 @@ The full BP02 audit now checks the fictional release and canonical counts. Regre
 - Corrected `tests/pkg001/test_sw_db_001_contract.py` so proposal isolation checks reject the exact disposable proposal `0010_canonical_world_provisioning.sql`, rather than rejecting every source migration with the `0010_` prefix.
 - The broader prefix assertion incorrectly rejected the legitimate source migration `0010_bp04_lawful_use_building_control.sql`.
 - Fix committed on `main`: `34c72d0ce3057740a8f9c9f268697d8fbb2e1afe`. The new SW-DB-001 Python regression job passed all tests, including the previously failing contract check.
+
+
+## Claude independent engineering review — 2026-11-26
+
+A separate, manually triggered GitHub Actions workflow, [Claude independent engineering review](.github/workflows/claude-bp04-review.yml), is available alongside the Gemini BP04 reviewer. It accepts a PKG-001 run ID and a Claude model ID (default: `claude-sonnet-5-5`), collects the available BP04 workflow evidence and relevant source files, and publishes a Markdown report plus a 14-day artifact. The workflow uses the Anthropic Messages API and requires the repository Actions secret `ANTHROPIC_API_KEY`.
+
+The Claude workflow has read-only `actions: read` and `contents: read` permissions. It does not write repository files, access production Neon, or make database changes. If a selected PKG-001 run is still active and its full logs are unavailable, Claude receives the available job/step metadata and is instructed not to infer runtime measurements. Keep all universal naming, duplicate-screening, provenance, immutability, idempotency, atomicity and population-cap safeguards intact. Configure the API key under [GitHub Actions secrets](https://github.com/Joshuaogri/saltwater/settings/secrets/actions) as `ANTHROPIC_API_KEY`; never put the key in source code or chat.
+
+To run it, open [Actions → Claude independent engineering review](https://github.com/Joshuaogri/saltwater/actions/workflows/claude-bp04-review.yml), choose **Run workflow**, enter a PKG-001 run ID, and optionally change the model ID. Current model IDs are listed in [Anthropic's model overview](https://platform.claude.com/docs/en/models/overview). The default Sonnet model is intended as a balanced code-review option; API access and billing must be enabled for the Anthropic account.
