@@ -720,6 +720,129 @@ LANGUAGE sql STABLE AS $bp12$
   ORDER BY l.effective_tick,l.incident_location_id
 $bp12$;
 
+INSERT INTO sw_core.event_type(event_code,description) VALUES
+ ('DISPATCH_ACKNOWLEDGED','Dispatch assignment acknowledged by a responding unit'),
+ ('UNIT_ARRIVED','Assigned field unit reported arrival at an incident')
+ON CONFLICT(event_code) DO NOTHING;
+
+CREATE FUNCTION sw_incident.record_operational_timeline_event(
+  p_incident_id integer,
+  p_event_code text,
+  p_actor_ref text,
+  p_authority_ref text,
+  p_source_ref text,
+  p_dispatch_ref text,
+  p_unit_ref text,
+  p_assignment_ref text,
+  p_field_activity_ref text,
+  p_description text,
+  p_idempotency_key text
+) RETURNS bigint
+LANGUAGE plpgsql AS $bp12$
+DECLARE
+  v_runtime sw_runtime.state%ROWTYPE;
+  v_incident sw_incident.incident%ROWTYPE;
+  v_event_id bigint;
+  v_event_type_id smallint;
+BEGIN
+  IF p_incident_id IS NULL OR p_incident_id<1
+     OR p_event_code NOT IN ('DISPATCH_ACKNOWLEDGED','UNIT_ARRIVED')
+     OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
+     OR p_authority_ref IS NULL OR length(trim(p_authority_ref))=0
+     OR p_source_ref IS NULL OR length(trim(p_source_ref))=0
+     OR p_description IS NULL OR length(trim(p_description))=0
+     OR p_idempotency_key IS NULL
+     OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
+SELECT i.*,
+       (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
+       (SELECT count(*) FROM sw_incident.incident_source_link s WHERE s.incident_id=i.incident_id)::integer AS source_count
+FROM sw_incident.incident i;
+
+COMMIT;
+ THEN
+    RAISE EXCEPTION 'invalid incident operational timeline event';
+  END IF;
+  IF p_event_code='DISPATCH_ACKNOWLEDGED'
+     AND (p_dispatch_ref IS NULL OR length(trim(p_dispatch_ref))=0) THEN
+    RAISE EXCEPTION 'dispatch acknowledgement requires a dispatch reference';
+  END IF;
+  IF p_event_code='UNIT_ARRIVED'
+     AND (p_unit_ref IS NULL OR length(trim(p_unit_ref))=0
+          OR p_assignment_ref IS NULL OR length(trim(p_assignment_ref))=0
+          OR p_field_activity_ref IS NULL OR length(trim(p_field_activity_ref))=0) THEN
+    RAISE EXCEPTION 'unit arrival requires unit, deployment and field activity references';
+  END IF;
+
+  SELECT se.event_id INTO v_event_id
+  FROM sw_core.simulation_event se
+  WHERE se.idempotency_key=p_idempotency_key;
+  IF FOUND THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM sw_core.simulation_event se
+      JOIN sw_core.event_type et USING(event_type_id)
+      WHERE se.event_id=v_event_id AND et.event_code=p_event_code
+        AND se.subject_kind='incident' AND se.subject_id=p_incident_id
+        AND se.attributes->>'source_ref'=p_source_ref
+    ) THEN
+      RAISE EXCEPTION 'operational timeline idempotency key conflicts with another event';
+    END IF;
+    RETURN v_event_id;
+  END IF;
+
+  SELECT * INTO v_runtime FROM sw_runtime.state WHERE singleton=1 FOR UPDATE;
+  IF NOT FOUND OR v_runtime.state<>2 OR NOT v_runtime.player_present THEN
+    RAISE EXCEPTION 'operational event recording requires running player-present simulation';
+  END IF;
+  SELECT * INTO v_incident FROM sw_incident.incident
+  WHERE incident_id=p_incident_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'incident not found'; END IF;
+  IF v_incident.status IN ('CLOSED','CANCELLED','DUPLICATE_LINKED') THEN
+    RAISE EXCEPTION 'incident is not open for operational updates';
+  END IF;
+
+  SELECT event_type_id INTO v_event_type_id FROM sw_core.event_type
+  WHERE event_code=p_event_code;
+  INSERT INTO sw_core.simulation_event(
+    event_type_id,occurred_at,world_tick,subject_kind,subject_id,
+    source_ref,attributes,idempotency_key
+  ) VALUES (
+    v_event_type_id,now(),v_runtime.world_tick,'incident',p_incident_id,
+    p_source_ref,
+    jsonb_strip_nulls(jsonb_build_object(
+      'actor_ref',p_actor_ref,'authority_ref',p_authority_ref,
+      'source_ref',p_source_ref,'dispatch_ref',p_dispatch_ref,
+      'unit_ref',p_unit_ref,'assignment_ref',p_assignment_ref,
+      'field_activity_ref',p_field_activity_ref,'description',p_description
+    )),
+    p_idempotency_key
+  ) RETURNING event_id INTO v_event_id;
+
+  UPDATE sw_runtime.state SET last_event_id=v_event_id,updated_at=now()
+  WHERE singleton=1;
+  RETURN v_event_id;
+END
+$bp12$;
+
+CREATE FUNCTION sw_incident.operational_timeline(p_incident_id integer)
+RETURNS TABLE (
+  event_id bigint,
+  incident_id integer,
+  event_code text,
+  occurred_at timestamptz,
+  world_tick bigint,
+  source_ref text,
+  attributes jsonb
+)
+LANGUAGE sql STABLE AS $bp12$
+  SELECT se.event_id,se.subject_id,et.event_code,se.occurred_at,se.world_tick,
+         se.source_ref,se.attributes
+  FROM sw_core.simulation_event se
+  JOIN sw_core.event_type et USING(event_type_id)
+  WHERE se.subject_kind='incident' AND se.subject_id=p_incident_id
+    AND et.event_code IN ('DISPATCH_ACKNOWLEDGED','UNIT_ARRIVED')
+  ORDER BY se.world_tick,se.event_id
+$bp12$;
+
 CREATE VIEW sw_incident.incident_current AS
 SELECT i.*,
        (SELECT count(*) FROM sw_incident.incident_location l WHERE l.incident_id=i.incident_id)::integer AS location_count,
