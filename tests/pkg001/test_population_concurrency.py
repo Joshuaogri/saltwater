@@ -17,12 +17,17 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                 dbname=os.environ["PGDATABASE"],
             )
 
+        # Synchronise before either worker writes. Person creation invokes the
+        # universal name registry's transaction-scoped advisory lock; placing
+        # the barrier after person insertion deadlocks the test because the
+        # first worker holds that lock while waiting for the second worker.
         barrier = threading.Barrier(2)
 
         def attempt(number):
             conn = connect()
             try:
                 with conn:
+                    barrier.wait(timeout=30)
                     with conn.cursor() as cur:
                         cur.execute(
                             "SELECT world_tick FROM sw_runtime.state "
@@ -49,7 +54,6 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                             (current_tick, number),
                         )
                         population_event = cur.fetchone()[0]
-                        barrier.wait(timeout=15)
                         cur.execute(
                             "INSERT INTO sw_people.population_state "
                             "(person_id,life_status,scope_status,effective_tick,last_event_id) "
