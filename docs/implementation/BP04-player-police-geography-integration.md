@@ -207,3 +207,8 @@ Dispatch write-through also requires a trusted BP11 assignment verifier and a se
 ## Dispatcher and incident-commander chronology projection
 
 `build_incident_operational_timeline_view` converts rows obtained through `BP04IncidentLocationResolver.read_operational_timeline` into a compact chronological view. It presents dispatch acknowledgement and unit arrival entries with their timestamps, world ticks, dispatch/deployment/field-activity references, source references, actor and authority. It rejects unsupported event types, incomplete provenance and noncanonical ordering. This is a presentation projection only: it performs no authorisation itself and must only receive rows after the audited officer access method; dispatch, deployment and field activity remain owned by BP11/BP08/BP10.
+
+
+## Incident command handover reconciliation
+
+`reconcile_incident_command_handover` accepts the canonical BP12 incident status, an authorised BP08 assignment snapshot and the BP12 operational timeline. It validates the snapshot source reference and world-tick context, duplicate assignment identities, arrival ordering and cross-domain unit/assignment references. It reports unresolved active assignments, arrivals without current assignments, unit mismatches, arrival/assignment-state conflicts and active deployments on terminal incidents. `handover_ready` is true only when the reconciliation finds neither unresolved assignments nor discrepancies. The function is a pure read-only reconciliation step; callers remain responsible for obtaining incident, deployment and timeline snapshots through their respective authorised readers. No source system is mutated.
