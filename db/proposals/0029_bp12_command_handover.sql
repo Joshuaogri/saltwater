@@ -24,6 +24,10 @@ CREATE TRIGGER command_handover_immutable
 BEFORE UPDATE OR DELETE ON sw_incident.command_handover
 FOR EACH ROW EXECUTE FUNCTION sw_incident.reject_incident_history_mutation();
 
+CREATE TRIGGER command_handover_no_truncate
+BEFORE TRUNCATE ON sw_incident.command_handover
+FOR EACH STATEMENT EXECUTE FUNCTION sw_incident.reject_incident_history_mutation();
+
 INSERT INTO sw_core.event_type(event_code,description)
 VALUES ('INCIDENT_COMMAND_HANDOVER_RECORDED','Append-only incident command handover recorded')
 ON CONFLICT(event_code) DO NOTHING;
