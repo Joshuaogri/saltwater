@@ -231,7 +231,7 @@ class BP04IncidentLocationResolver:
 
     def prepare_dispatch_address_candidate(
         self, credential: str, incident_id: int, address_id: str, *,
-        incident_reader, location_role: str = "primary",
+        location_role: str = "primary",
         confidence: str = "unverified", source_ref: str,
     ) -> dict:
         """BP11 dispatch handoff: authorise dispatch intent, then BP12/BP04 reads."""
