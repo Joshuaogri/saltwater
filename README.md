@@ -1648,3 +1648,6 @@ The five-digit sequence-suffix defect has been corrected. The generator now crea
 ## BP-01 foundations — 2026-11-26
 
 BP-01 version 1.0 has been reconciled against the approved Saltwater master canon, adopted population/geography decision SW-CANON-001, primate-city decision SW-CANON-002 and universal naming standard SW-UNS-001. Its machine-readable immutable canon contract is in `runtime/bp01_foundations.py`; the exact standalone lowercase `bingo` reveal trigger is shared with the authorization service. The dedicated BP01 contract suite is included in PKG-001 disposable validation. BP-01 is design-complete, while implementation and tests remain in progress and global verification remains blocked pending linked evidence for all cross-division requirements, especially NPC knowledge boundaries and hidden-information non-leakage. No production Neon writes or permission changes were made.
+
+
+The exact `bingo` command is now recognised only as a standalone lowercase token. It is intentionally omitted from ordinary help. The authenticated player gateway maps it to the player-only `reveal_hidden_truth` authorization action and passes the exact raw trigger to the gate before dispatch. A trusted reveal provider can be injected through the durable application/runtime composition; no case-owned provider or production hidden-truth records have been created yet.
