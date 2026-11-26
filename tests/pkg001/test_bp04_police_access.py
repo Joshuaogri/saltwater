@@ -1147,6 +1147,51 @@ class BP04PoliceAccessTests(unittest.TestCase):
                 outstanding_actions=[], responsibility_transfers=[], acknowledgements=[],
             )
 
+    def test_command_handover_requires_command_transfer_and_rejects_declined_ack(self):
+        reconciliation = reconcile_incident_command_handover(
+            42, incident_status="ACTIVE_MANAGEMENT",
+            snapshot_source_ref="bp08:snapshot:44", as_of_world_tick=8,
+            assignment_snapshot=[], timeline_rows=[],
+        )
+        common = dict(
+            reconciliation=reconciliation, handover_ref="HO-42-9",
+            outgoing_commander_ref="commander:old",
+            incoming_commander_ref="commander:new",
+            prepared_by_ref="dispatcher:4", authority_ref="command-order:79",
+            source_ref="command-console:handover:9", effective_world_tick=9,
+            commander_decisions=[], outstanding_actions=[], acknowledgements=[{
+                "record_ref": "ACK-9", "handover_ref": "HO-42-9",
+                "recipient_ref": "commander:new", "acknowledgement": "ACCEPTED",
+                "notes": "", "actor_ref": "commander:new",
+                "source_ref": "bp12:ack:9", "world_tick": 9,
+            }],
+        )
+        no_transfer = build_incident_command_handover_record(
+            **common,
+            responsibility_transfers=[{
+                "record_ref": "TR-9", "responsibility_ref": "scene-command",
+                "from_ref": "commander:other", "to_ref": "commander:new",
+                "actor_ref": "commander:other", "source_ref": "bp12:transfer:9",
+                "world_tick": 9,
+            }],
+        )
+        self.assertFalse(no_transfer["handover_ready"])
+        declined = build_incident_command_handover_record(
+            **{**common, "acknowledgements": [{
+                "record_ref": "ACK-10", "handover_ref": "HO-42-9",
+                "recipient_ref": "commander:old", "acknowledgement": "DECLINED",
+                "notes": "Disputes transfer", "actor_ref": "commander:old",
+                "source_ref": "bp12:ack:10", "world_tick": 9,
+            }]},
+            responsibility_transfers=[{
+                "record_ref": "TR-10", "responsibility_ref": "scene-command",
+                "from_ref": "commander:old", "to_ref": "commander:new",
+                "actor_ref": "commander:old", "source_ref": "bp12:transfer:10",
+                "world_tick": 9,
+            }],
+        )
+        self.assertFalse(declined["handover_ready"])
+
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
             self.access.inspect("officer-session", "property", "SWPROP-1")
