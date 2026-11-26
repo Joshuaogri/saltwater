@@ -272,6 +272,11 @@ This removes the previous structural exception blocker; it does not approve oper
 
 ### Explicit property identity lineage correction — 2026-11-26
 
+### No-building / frontage-exception cross-register audit — 2026-11-26
+
+BP02 now independently reconciles the 36-site no-building population with the five frontage exceptions. It does not infer the no-building total from P2 review classifications: P1 road-reference conflicts may also be no-building sites. Every exception is cross-checked against the address review row using exact source address, property, parcel and source-road identities. The acceptance report will expose the overlap and individual crosswalk, with expected source counts of 36 no-building sites, three overlapping exceptions and two bridge exceptions on sites with building candidates. Dedicated tests and the full BP02 workflow are running; no operational promotion or database write is involved.
+
+
 Bridge exception resolution no longer derives a connector's property ID from the source address ID suffix. The BP04 reconciliation now passes the validated `property_id` directly from the address-to-property link, and connector matching uses that exact reference. Missing property identity fails closed. A regression test uses deliberately unrelated address/property identifiers to prevent reintroduction of suffix-based assumptions. The updated full BP02 acceptance run is pending; operational geography remains blocked.
 
 
