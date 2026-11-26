@@ -6,7 +6,7 @@ adapter so roster generation never writes to Neon implicitly.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 import random
 from typing import Iterable
 from uuid import NAMESPACE_URL, uuid5
@@ -115,6 +115,33 @@ class NPCWorkforceGenerator:
                 position_type=post["position_type"],
             ))
         return tuple(officers)
+
+
+    def generate_shift_roster(self, posts: Iterable[dict]) -> tuple[NPCOfficer, ...]:
+        """Staff every authorised post on all four shifts.
+
+        An authorised post is a position, not a single 24-hour body. Each shift
+        therefore receives its own deterministic NPC occupant for every post.
+        """
+        source = list(posts)
+        expanded = []
+        for row in source:
+            if not isinstance(row, dict) or not isinstance(row.get("post_id"), str):
+                raise NPCWorkforceError("Every post requires a stable post_id.")
+            for shift in _SHIFT_GROUPS:
+                expanded.append({**row, "post_id": f'{row["post_id"]}::{shift}'})
+        generated = self.generate(expanded)
+        result = []
+        for index, officer in enumerate(generated, start=1):
+            original_post, shift = officer.post_id.rsplit("::", 1)
+            result.append(replace(
+                officer,
+                npc_id=str(uuid5(NAMESPACE_URL, f"saltwater:npc:{self.seed}:{original_post}:{shift}")),
+                service_number=f"SWNPC-{index:06d}",
+                post_id=original_post,
+                shift_group=shift,
+            ))
+        return tuple(result)
 
     @staticmethod
     def as_records(officers: Iterable[NPCOfficer]) -> list[dict]:
