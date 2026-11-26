@@ -253,6 +253,8 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_and_aux_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 4 DESC;"
       - name: Install PostgreSQL Python driver
         run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Exercise NPC dispatch against canonical BP05 and BP08 records
+        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_npc_dispatch_integration.py" -v
       - name: Run BP04 stable text-ID business naming acceptance
         timeout-minutes: 20
         run: python -m unittest discover -s tests/pkg001 -p "test_business_naming_postgres.py" -v
