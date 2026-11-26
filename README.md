@@ -1843,3 +1843,8 @@ This implementation is a deployment-path change only. **No production Neon write
 
 
 **Production release preparation (2026-11-27):** Reconfirmed the live Neon production database read-only at 9,781,248 bytes on PostgreSQL 18.7, with global migrations 1–2 only and no BP-02 schema/archive tables. The corrected global database migration validation passed in [run 45910255603](https://github.com/Joshuaogri/saltwater/actions/runs/45910255603). A gated [BP-02 production release runbook](docs/deployment/BP02-production-release-runbook.md) now records preflight checks, the measured storage envelope, execution order, post-release verification and recovery handling. It is a prepared procedure only: no production Neon writes have been made, and explicit user approval is still required before execution.
+
+
+### BP02 current-production recovery-point check — 2026-11-27
+
+A read-only Neon control-plane audit found one manual snapshot, `snap-calm-credit-bdfp5tog` (created 2026-11-25 17:37:13 UTC), named “Saltwater BP04 pre-production release 2026-11-25”. The production branch metadata identifies it as the source used to create the current production branch. Its source branch is no longer present, and the current production branch has no automatic snapshot schedule configured. This is historical restore provenance, not a fresh snapshot of the current production branch immediately before the BP02 release. The runbook now records this finding; a current-production recovery point must be created or otherwise confirmed and its ID/time recorded before any production migration/import. No snapshot or production database write was made during this audit.
