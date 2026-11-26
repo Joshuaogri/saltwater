@@ -1,5 +1,9 @@
 # Saltwater
 
+## Gemini usage rule — 2026-11-26
+
+Gemini is to be used **only when something is not working**: for example, a failing component, broken workflow, failing test, reproducible defect or unresolved technical problem that needs independent diagnosis. Do not invoke Gemini for routine successful work, ordinary progress checks or proactive reviews when nothing is broken. When a real failure occurs, use Gemini to seek a fast, evidence-backed fix, then validate the fix before accepting it.
+
 ## Gemini independent engineering review
 
 A read-only Gemini reviewer is available through
@@ -1733,6 +1737,10 @@ A deterministic BP03 opening police identity candidate generator is now on `main
 
 The initial evidence-only connector register was superseded by the fictional gameplay engineering assessments in the BP-02 fictional geography release below. The current canonical register uses site-specific, internally consistent Saltwater game-world specifications for all four Customs Bridge and Harbour Bridge approaches, links them to the source access points and route corridors, and promotes them for gameplay. The earlier `NOT_ASSESSED` / `HOLD_NOT_APPROVED` status is historical and is not the current BP-02 state.
 
+
+### BP-02 completion confirmed — 2026-11-26
+
+The user accepted BP-02 as complete after the full acceptance workflow passed: [run 45889071983](https://github.com/Joshuaogri/saltwater/actions/runs/45889071983), job `140146960703`. The blueprint and division register now record **DESIGNED / IMPLEMENTED / TESTED / VERIFIED** for the fictional gameplay geography release. This covers the canonical geography source, 420 parcel identities, 420 linked address identities, generated building access-point inventory, five resolved address/frontage dispositions and four bridge connector assessments. The source and evidence are on GitHub `main`; **no BP-02 geography data has been uploaded to production Neon**. Database seeding remains separate.
 
 ## BP-02 fictional gameplay geography release — 2026-11-26
 
