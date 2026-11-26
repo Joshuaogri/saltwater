@@ -61,6 +61,7 @@ jobs:
           set -euo pipefail
           psql -X -v ON_ERROR_STOP=1 -Atc "SHOW server_version;"
           before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "BP02_BASELINE=$before" >> "$GITHUB_ENV"
           echo "database_bytes_before_bp02_schema=$before"
       - name: Verify dry-run does not create schemas
         run: |
@@ -72,9 +73,9 @@ jobs:
         run: |
           after_schema=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "database_bytes_after_bp02_schema=$after_schema"
-          echo "bp02_schema_growth_bytes=$((after_schema-$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());" 2>/dev/null || echo "$after_schema")))" || true
+          echo "bp02_schema_growth_bytes=$((after_schema-BP02_BASELINE))"
           psql -X -v ON_ERROR_STOP=1 -c "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration;"
-          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT count(*) FROM sw_ops.schema_migration;")" = "0"
+          test "$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT to_regclass('sw_ops.schema_migration') IS NULL;")" = "t"
       - name: Import and measure archive payload
         run: |
           before=$(psql -X -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
