@@ -17,6 +17,10 @@ DECLARE
   v_event_id bigint;
   i integer;
 BEGIN
+  UPDATE sw_runtime.state
+  SET state=1,player_present=false
+  WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
+
   IF NOT EXISTS (
     SELECT 1 FROM sw_runtime.state
     WHERE singleton=1 AND state=1 AND player_present=false
