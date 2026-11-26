@@ -21,6 +21,8 @@ on:
       - "tests/pkg001/test_player_interface.py"
       - "tests/pkg001/test_player_application.py"
       - "tests/pkg001/test_player_command_runtime.py"
+      - "tests/pkg001/test_chatgpt_tool_handler.py"
+      - "tests/pkg001/test_player_host_adapter.py"
       - "tests/pkg001/test_runtime_kernel.py"
       - "tests/pkg001/test_event_engine.py"
       - "tests/pkg001/test_scheduling.py"
@@ -53,6 +55,10 @@ jobs:
         run: python -m unittest discover -s tests/pkg001 -p "test_player_application.py" -v
       - name: Test authenticated player command runtime composition
         run: python -m unittest discover -s tests/pkg001 -p "test_player_command_runtime.py" -v
+      - name: Test exact bingo through ChatGPT tool boundary
+        run: python -m unittest discover -s tests/pkg001 -p "test_chatgpt_tool_handler.py" -v
+      - name: Test exact bingo through trusted host adapter
+        run: python -m unittest discover -s tests/pkg001 -p "test_player_host_adapter.py" -v
       - name: Test absence freeze and authoritative runtime lifecycle
         run: python -m unittest discover -s tests/pkg001 -p "test_runtime_kernel.py" -v
       - name: Test causal event processing and idempotency
