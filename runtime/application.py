@@ -77,6 +77,8 @@ def create_postgres_player_application(
         raise TypeError("connect must be a trusted PostgreSQL connection factory")
     if not isinstance(profile, PlayerProfile):
         raise TypeError("profile must be a PlayerProfile")
+    if hidden_truth_revealer is not None and not callable(hidden_truth_revealer):
+        raise TypeError("hidden_truth_revealer must be a trusted callable")
 
     kernel = RuntimeKernel(PostgresRuntimeStore(connect))
     recruitment = PostgresRecruitmentService(connect)
