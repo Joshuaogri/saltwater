@@ -229,6 +229,48 @@ class BP04IncidentLocationResolver:
         return result
 
 
+    def prepare_dispatch_address_candidate(
+        self, credential: str, incident_id: int, address_id: str, *,
+        incident_reader, location_role: str = "primary",
+        confidence: str = "unverified", source_ref: str,
+    ) -> dict:
+        """BP11 dispatch handoff: authorise dispatch intent, then BP12/BP04 reads."""
+        self._access._require(
+            credential, "bp11.dispatch.location.resolve", f"incident:{incident_id}"
+        )
+        candidate = self.prepare_address_candidate(
+            credential, incident_id, address_id,
+            location_role=location_role, confidence=confidence,
+            source_ref=source_ref,
+        )
+        # Dispatch consumes a reference and confidence, not a copied address record.
+        return {
+            "record_type": "dispatch_incident_location",
+            "incident_id": incident_id,
+            "incident_ref": candidate["incident_ref"],
+            "location_role": candidate["location_role"],
+            "address_id": candidate["address_id"],
+            "confidence": candidate["confidence"],
+            "source_ref": candidate["source_ref"],
+            "address_source_ref": candidate["address_source_ref"],
+            "dispatch_use_only": True,
+        }
+
+    def read_investigation_location_history(
+        self, credential: str, incident_id: int, *, location_history_reader
+    ) -> list[dict]:
+        """BP16 handoff: require case-work permission as well as BP12 history access."""
+        self._access._require(
+            credential,
+            "bp16.investigation.incident.location.history",
+            f"incident:{incident_id}",
+        )
+        return self.read_location_history(
+            credential, incident_id,
+            location_history_reader=location_history_reader,
+        )
+
+
 def create_postgres_bp04_police_lookup_access(
     connect,
     lookup: Any,
