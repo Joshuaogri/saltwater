@@ -236,14 +236,14 @@ class PostgresIncidentService:
                     cur.execute(
                         """
                         SELECT sw_incident.create_incident(
-                          %s,%s,%s,%s,%s,NULL,%s,%s,%s,%s,%s,%s,%s,%s
+                          %s,%s,%s,%s,%s,NULL,%s,%s,%s,%s,%s,%s,%s,%s,NULL
                         )
                         """,
                         (
                             source_type, source_record_id, narrative, actor_ref,
                             idempotency_key, caller_identity_state, category_code,
                             priority, severity_code, location_raw, location_ref,
-                            location_type, location_confidence, None,
+                            location_type, location_confidence,
                         ),
                     )
                     row = cur.fetchone()
