@@ -49,11 +49,11 @@ The five exceptions were cross-checked against the actual SW-GEO-V1 road IDs, ro
 
 | Source address | Source road | Geometry candidate | Disposition |
 |---|---|---|---|
-| `SWADDR-BPCSWD03N301701` | Dock Street (`SWR-V16`) | North Coast Road (`SWR-H17`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
-| `SWADDR-BPCSWD03N301801` | Ropewalk Road (`SWR-V17`) | North Coast Road (`SWR-H17`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
-| `SWADDR-BPCSWD05N100201` | West Coast Road (`SWR-V01`) | South Coast Road (`SWR-H01`) | Unique parcel frontage candidate; no candidate building, so source address is not corrected |
-| `SWADDR-BPCSWD04N100402` | Customs Bridge (`SWR-B2`) | Point-contact bridge-reserve proximity only | Not street frontage; requires an addressable-street connection/design resolution |
-| `SWADDR-BPCSWD08N101802` | Harbour Bridge (`SWR-B1`) | Point-contact bridge-reserve proximity only | Not street frontage; requires an addressable-street connection/design resolution |
+| `SWADDR-BPCSWD03N301701` | Dock Street (`SWR-V16`) | North Coast Road (`SWR-H17`) | Unique parcel-frontage road association identified; source value retained as provenance |
+| `SWADDR-BPCSWD03N301801` | Ropewalk Road (`SWR-V17`) | North Coast Road (`SWR-H17`) | Unique parcel-frontage road association identified; source value retained as provenance |
+| `SWADDR-BPCSWD05N100201` | West Coast Road (`SWR-V01`) | South Coast Road (`SWR-H01`) | Unique parcel-frontage road association identified; source value retained as provenance |
+| `SWADDR-BPCSWD04N100402` | Customs Bridge (`SWR-B2`) | Two feasible property-contained connector candidates to bridge reserve | Bridge endpoints connect to public streets; entrance engineering and operational verification remain outstanding |
+| `SWADDR-BPCSWD08N101802` | Harbour Bridge (`SWR-B1`) | Two feasible property-contained connector candidates to bridge reserve | Bridge endpoints connect to public streets; entrance engineering and operational verification remain outstanding |
 
 The first three are resolved to a unique geometric frontage candidate, not to a final address. The last two cannot be promoted as bridge-frontage addresses. All five original road references are retained. No canonical address or operational access point is approved.
 
@@ -62,3 +62,14 @@ The first three are resolved to a unique geometric frontage candidate, not to a 
 `runtime/bp02_full_acceptance_audit.py` consolidates the existing independent geometry audits for city/neighbourhood/road topology, parcel polygons/frontages/adjacency, property/building/access-point hierarchy, connector topology and route-corridor candidates, then adds the BP04 address/property reconciliation and exception dispositions. CI runs the audit and publishes a JSON evidence artifact. Structural pass and operational release are separate outcomes. The operational gate remains blocked while SW-GEO-V1 is unapproved, canonical addresses are unmaterialised and no operational access points are approved.
 
 See `runtime/bp02_address_frontage_exception_resolution.py`, `runtime/bp02_full_acceptance_audit.py`, and `.github/workflows/bp02-full-acceptance-audit.yml`.
+
+## Follow-up connector and road-network evidence review — 2026-11-26
+
+The full BP02 acceptance audit previously used only parcel-frontage candidates and the `POINT_CONTACT_ONLY` bridge classification when disposing the five exceptions. That omitted the separately generated direct access-connector audit and the bridge endpoint topology. The resolver now consumes both evidence layers:
+
+- The three source-road conflicts each have exactly one parcel-frontage road candidate. The derived road association is therefore resolved to North Coast Road (`SWR-H17`) for two records and South Coast Road (`SWR-H01`) for one. Original source-road values remain immutable provenance; canonical address promotion is still separate.
+- Customs Bridge (`SWR-B2`) and Harbour Bridge (`SWR-B1`) each have two direct connector candidates from building-boundary access points. All four are classified `DIRECT_GEOMETRY_FEASIBLE_UNREVIEWED`, remain within their property, and do not cross mapped buildings or water.
+- Both bridge segments connect at both endpoints to public motor-vehicle/emergency street segments. The connector candidates therefore reach a connected public road network at design-geometry level.
+- The two bridge access associations can be dispositioned as geometric access-connection candidates, rather than left as unexplained point contacts. They are not confirmed entrances: width, gradient, surface, drainage, clearance, access controls and operational approval remain outstanding.
+
+The updated resolver and regression tests are committed on `main`; the full acceptance workflow must pass before these revised dispositions are treated as verified. No source geography, BP04 source address, canonical address, operational access point or Neon record is changed by this review.
