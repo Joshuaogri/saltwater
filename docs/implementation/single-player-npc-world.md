@@ -20,9 +20,20 @@ a given seed and post catalogue, so repeated runs produce the same NPC roster.
 
 The generator is an in-memory source adapter only. It does not silently create
 people, personnel records, appointments, unit memberships or Neon writes.
-A later persistence adapter can materialise this roster into the game's
-authoritative records. NPC staffing is fictional game state; real-world
-employment, legal and compliance processes are not gameplay prerequisites.
+The NPC dispatch simulator now selects an available unit for an incident,
+automatically assembles an available same-shift crew, identifies a crew lead,
+and tracks the unit and officers through responding, on-scene, busy, returning
+and available states. Specialist-domain matches are preferred; general patrol
+can cover general response. Repeated assignment of the same incident returns
+the existing deployment rather than duplicating it.
+
+This dispatch layer is an in-memory gameplay simulator, not yet a persistent
+PostgreSQL workforce or a full autonomous world scheduler. It proves the
+player-facing game rule: no personnel UUIDs, separate NPC accounts or manual
+staff-by-staff assignments are needed to create a response. A later persistence
+adapter can materialise this roster into authoritative game records. NPC
+staffing is fictional game state; real-world employment, legal and compliance
+processes are not gameplay prerequisites.
 
 ## Design principles
 
