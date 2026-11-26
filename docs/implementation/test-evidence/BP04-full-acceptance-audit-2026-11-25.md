@@ -194,3 +194,17 @@ The earlier `officer_ref_verifier` placeholder is now backed by a repository imp
 
 
 **Final PKG-001 result for the latest identity-propagation change:** [run 45826915217](https://github.com/Joshuaogri/saltwater/actions/runs/45826915217) completed successfully. The Python-kernel job passed all 26 steps, including the new `AuthorizationDecision.active_person_id` propagation test and the BP06 personnel-reference verifier suite. The disposable PostgreSQL job passed all 31 steps, including BP06 dossier acceptance, population-cap boundary, database access boundary, checkpoint and backup/restore. The separate BP04 geography run 45826915157 remains in progress at the 420-address reconciliation stage; no final result is claimed for it yet.
+
+
+## BP02 full structural acceptance result — 2026-11-26
+
+The BP02 dependency status in this audit is updated by the completed full parcel/address/access acceptance run [45831361588](https://github.com/Joshuaogri/saltwater/actions/runs/45831361588). The audit artifact reports `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`:
+
+- Structural status PASS; all 12 structural checks true.
+- Six geometry/access layers passed with zero failed checks.
+- All 420 property/address links resolve.
+- All five former P1 exceptions have evidence-based design-geometry dispositions; zero address-road/access exceptions remain unresolved.
+- The three unique frontage road associations are resolved to candidate associations; the two bridge cases have two property-contained connector candidates each reaching a public bridge connected to the public street network.
+- The 2,926 geometrically feasible direct connector lines remain unreviewed candidates; 22 direct lines remain blocked. Neither category is an operational entrance approval.
+
+The operational geography release remains BLOCKED: SW-GEO-V1 is still a design baseline, canonical parcel/address records have not been materialised, no operational access points have been approved, and the four bridge connector candidates still require entrance engineering and operational validation. No production Neon writes or grants were made. BP04 remains NOT COMPLETED pending its own remaining integration and consolidated acceptance criteria.
