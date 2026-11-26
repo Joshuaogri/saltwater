@@ -4,7 +4,7 @@ Saltwater is a fictional sovereign city-state and a single-city police simulatio
 
 ## Single-player NPC world
 
-Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates one stable NPC occupant per supplied post, retaining the existing unit and position identities. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
+Saltwater has one human player. Every other person is an NPC: police staff, commanders, dispatchers, residents, business owners, officials, witnesses and suspects. NPCs are world actors, not separate player accounts, and are intended to operate autonomously. The initial police establishment contains 500 authorised posts; a deterministic NPC workforce generator now creates one stable NPC occupant per authorised post on each of four shifts, retaining the existing unit and position identities. This is an in-memory generation layer only; it does not create player accounts or silently write to Neon. See [single-player NPC world architecture](docs/implementation/single-player-npc-world.md).
 
 ## NPC-led police dispatch
 
@@ -14,8 +14,11 @@ current NPC shift, selects a crew lead and tracks the deployment through
 responding, on-scene, busy, returning and available. Specialist units are
 preferred when their domain matches; general patrol can cover general
 response. The player does not enter officer IDs or manage crew membership.
-This is currently an in-memory gameplay layer, not a production Neon write or
-a claim that persistent staffing is complete. See
+The console also exposes a priority-ordered autonomous dispatch tick: the game
+host can call it to allocate pending incidents without a player command, while
+unserviceable incidents remain queued. The simulation host/tick scheduler wiring
+is still outstanding. This is an in-memory gameplay layer, not a production Neon
+write or a claim that persistent staffing is complete. See
 [the NPC world design](docs/implementation/single-player-npc-world.md).
 
 ## Player-operated NPC dispatch commands
@@ -34,9 +37,10 @@ separate future step.
 
 The NPC dispatch factory now loads its 500-post workforce and active unit
 profiles from the existing BP05/BP08 PostgreSQL records using read-only
-queries. Unit capability codes guide specialist selection. The roster and
-deployments remain in-memory gameplay state; the factory does not write
-personnel, membership or deployment rows to Neon.
+queries. Each of the 500 authorised posts is staffed by a distinct NPC on each
+of four shifts, producing 2,000 shift occupants. Unit capability codes guide
+specialist selection. The roster and deployments remain in-memory gameplay
+state; the factory does not write personnel, membership or deployment rows to Neon.
 
 ## NPC shift and live-source validation
 
