@@ -46,11 +46,13 @@ class AuthorizedPlayerCommandGateway:
         if not parsed.ok:
             return CommandResult(False, "Invalid command.")
         command = parsed.command
+        reveal = command.token == "bingo"
         decision = self.authorization.decide(
             credential,
-            action=command.permission_action,
+            action="reveal_hidden_truth" if reveal else command.permission_action,
             resource=self.player_resource,
-            purpose=self.purpose,
+            purpose="player_requested_reveal" if reveal else self.purpose,
+            reveal_trigger=command.original_text if reveal else None,
             expected_principal_id=self.principal_id,
         )
         if not decision.allowed:
@@ -62,6 +64,7 @@ def create_postgres_player_application(
     connect: Callable[[], Any],
     profile: PlayerProfile,
     bp04_lookup=None,
+    hidden_truth_revealer=None,
 ) -> PostgresPlayerApplication:
     """Build the durable application using one trusted connection factory.
 
@@ -79,7 +82,10 @@ def create_postgres_player_application(
     recruitment = PostgresRecruitmentService(connect)
     sessions = PostgresSessionLifecycle(connect)
     activation = PostgresPlayerActivationService(connect, sessions)
-    commands = PlayerCommandInterface(kernel, profile, recruitment, bp04_lookup)
+    command_options = {}
+    if hidden_truth_revealer is not None:
+        command_options["hidden_truth_revealer"] = hidden_truth_revealer
+    commands = PlayerCommandInterface(kernel, profile, recruitment, bp04_lookup, **command_options)
     return PostgresPlayerApplication(
         kernel=kernel,
         recruitment=recruitment,
