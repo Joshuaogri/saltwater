@@ -41,7 +41,7 @@ The old BP-01 draft's references to unresolved population membership and foundat
 
 ## 3. Verified BP-01 contract test evidence
 
-The dedicated [BP-01 foundational contract test run 0001](../test-evidence/BP01-foundational-contracts-run-0001.md) passed (128 tests). [Run 0002](../test-evidence/BP01-foundational-contracts-run-0002.md) passed 155 tests. The latest [run 0003](../test-evidence/BP01-foundational-contracts-run-0003.md) passed 16 test steps and 156 tests at source commit `6a7ccc6408ce1aa60a43d6e6a362d3d1d6ff7b67`. Run 0003 covers the production personnel-source adapter contract, player exclusion, vacancy boundary, BP08 status and unassigned/recruit handling. This is focused Python evidence; disposable PostgreSQL integration is validated separately, and hidden-truth non-leakage, NPC knowledge and live host-composition acceptance remain outstanding.
+The dedicated [BP-01 foundational contract test run 0001](../test-evidence/BP01-foundational-contracts-run-0001.md) passed (128 tests). [Run 0002](../test-evidence/BP01-foundational-contracts-run-0002.md) passed 155 tests. The latest [run 0003](../test-evidence/BP01-foundational-contracts-run-0003.md) passed 16 test steps and 156 tests at source commit `6a7ccc6408ce1aa60a43d6e6a362d3d1d6ff7b67`. Run 0003 covers the production personnel-source adapter contract, player exclusion, vacancy boundary, BP08 status and unassigned/recruit handling. This is focused Python evidence. The canonical NPC source integration step also passed in [PKG-001 run 45865031957](https://github.com/Joshuaogri/saltwater/actions/runs/45865031957), proving the opening vacant establishment does not fabricate NPCs or dispatch readiness; that overall workflow remains in progress. Hidden-truth non-leakage, NPC knowledge and live host-composition acceptance remain outstanding.
 
 ## 4. Remaining BP-01 verification work
 
@@ -63,7 +63,7 @@ Items 1–5 depend partly on BP-15–BP-24, BP-35–BP-42 and their owning servi
 
 - Design: **DESIGNED**.
 - Implementation: **IN_PROGRESS**.
-- Testing: **IN_PROGRESS** — focused BP-01 Python contract suite passed (155 tests across 16 steps in run 0002); full disposable PostgreSQL and cross-division acceptance evidence is still being completed.
+- Testing: **IN_PROGRESS** — focused BP-01 Python contract suite passed (156 tests across 16 steps in run 0003). The separate PKG-001 run 45865031957 has also passed the canonical NPC source integration step; the overall disposable workflow and remaining cross-division acceptance evidence are still being completed.
 - Verification: **BLOCKED** pending the global evidence listed above.
 - No production Neon writes, migrations, seeds, grants or permission changes were performed.
 - No new BP division or branch was created.
