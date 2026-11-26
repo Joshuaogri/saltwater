@@ -23,7 +23,11 @@ class PostgresNPCDispatchIntegrationTests(unittest.TestCase):
         console = factory.build([
             DispatchIncident("CI-NPC-INC-001", "routine patrol call", "patrol", 3, "CI-LOCATION-1")
         ], current_shift="Alpha")
-        result = console.execute(("assign", "CI-NPC-INC-001"))
+        try:
+            result = console.execute(("assign", "CI-NPC-INC-001"))
+        except Exception as exc:
+            snapshot = console._simulator.snapshot()
+            self.fail("{}; shift={}; units={}".format(exc, snapshot["current_shift"], snapshot["units"]))
         self.assertIn("NPC dispatch assigned", result)
         self.assertIn("SWPS-UNIT-PATROL", result)
         self.assertIn("Crew:", result)
