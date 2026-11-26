@@ -9,9 +9,17 @@ BP04's **compressed archive-only production release is deployed and verified**, 
 
 The BP04-to-BP02 reconciliation now emits a deterministic 420-address placement review register (`runtime/bp02_address_review_register.py`). It preserves all source road references, joins parcel-frontage and building-access evidence, and classifies the five P1 frontage/address exceptions, 33 P2 no-building-only cases and 382 P3 coherent candidates (36 no-building sites total, including three P1 conflicts). All 420 remain unapproved for operational use. The complete review-register and source reconciliation passed in the dedicated integration workflow; see [BP-02 address placement review register](docs/implementation/BP02-address-placement-review-register.md).
 
-### Current BP04-03 Stage E blocker — 2026-11-26
+### BP04-03 Stage E — detailed asset import verified — 2026-11-26
 
-The detailed Stage E disposable PostgreSQL workflow runs #38 and #39 passed generator/importer regression tests, PostgreSQL foundation setup, parcel/dossier acceptance and candidate generation/import. Both were cancelled during step 12, the large detailed physical-asset import, after the workflow's 35-minute job limit. The immediate blocker is therefore the disposable import execution budget; the earlier geometry-constraint defect has been corrected. The workflow timeout is now 120 minutes, and the importer emits phase-level elapsed-time markers so the next run can identify the expensive insert group. This remains disposable PostgreSQL validation only: no Stage E data has been written to Neon, and BP04 is not declared complete until the required gameplay integration and acceptance gates are closed.
+The complete Stage E disposable PostgreSQL workflow passed in [run 45736034489](https://github.com/Joshuaogri/saltwater/actions/runs/45736034489). All 35 steps succeeded, including detailed asset generation/import, same-manifest idempotency, full database acceptance, indexed representative lookups, storage measurement, backup/restore and artifact preservation.
+
+The inventory contains 420 properties, 1,474 buildings, 27,730 premises, 180,733 units, 2,948 access points/connectors, 213,305 profiles, 421,768 physical measurements, 27,730 building levels, 17,688 building components, 83,190 premises rooms, 453,706 utility systems, 246,297 physical features, 251,773 condition assessments and 644,337 asset assertions. Manifest SHA-256: `f67e0493b580e01e2cb655c9fee4077dc0b6da8ca3f55880b9ac0843557d062c`.
+
+The detailed import reported **1,525,071,872 bytes** of disposable database growth. Re-importing the identical manifest produced **0 bytes** of additional growth and 0 new relationships. The generated gzip manifest was 17,788,176 bytes; the retained GitHub Actions artifact ZIP is 6,466,165 bytes. These are CI/disposable measurements, not production Neon storage. **No Stage E data was written to Neon.**
+
+Backup/restore verified 420 property assets, 180,733 units, 4,842 asset geometry candidates, 2,948 access connector candidates and the same manifest checksum. See [BP04-03 Stage E acceptance evidence](docs/implementation/test-evidence/BP04-03-stage-e-run-45736034489.md).
+
+**Release boundary:** Stage E's detailed disposable database acceptance now passes, but generated physical detail and connector geometry remain unapproved candidates. BP04/BP02 gameplay integration and operational geography release gates remain open. This result does not authorise Neon deployment.
 
 ## Canonical constraints
 
