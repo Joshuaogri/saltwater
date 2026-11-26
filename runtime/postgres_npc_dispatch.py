@@ -64,7 +64,7 @@ class PostgresNPCDispatchFactory:
                 raise ValueError("The police establishment contains no authorised NPC posts.")
             if not units:
                 raise ValueError("The police establishment contains no active unit profiles.")
-            officers = self._generator.generate(posts)
+            officers = self._generator.generate_shift_roster(posts)
             simulator = NPCDispatchSimulator(
                 officers, units, current_shift=current_shift
             )
