@@ -268,6 +268,13 @@ This removes the previous structural exception blocker; it does not approve oper
 
 ### BP02 no-building-site evidence review — 2026-11-26
 
+### BP02 bridge connector engineering evidence review — 2026-11-26
+
+The four Customs Bridge/Harbour Bridge connector candidates have been checked against the connector generator and geometry/terrain source models. The records contain 2D centreline geometry only: width and corridor width are null; gradient has no elevation source; surface is unknown; drainage and vertical clearance are unassessed; access-control type is unknown; and no entrance construction, legal-access, traversability or emergency-egress evidence exists. Building/water intersection checks are planar geometry checks, not engineering clearance measurements.
+
+All four remain `UNREVIEWED_GEOMETRIC_LINE_ONLY`. Their public-road network connection is a design-geometry finding only. The review defines the evidence needed next—site-specific survey, clear width, levels/gradient, surface/construction, drainage, vertical clearance, obstacle and gate/control inspection, and vehicle/emergency suitability review—without inventing values or approving access. BP02 remains `STRUCTURAL_PASS_OPERATIONAL_RELEASE_BLOCKED`; no Neon writes or operational promotions were made.
+
+
 The 36 property sites without generated building candidates were reviewed against the Stage E generator logic. The available generated property records retain `site_state=unknown` and `boundary_status=unverified`. Zero-building output can result either from the footprint search finding no feasible footprint or from the generated `open_space` land-use class; the current summary does not retain a per-site reason code. It therefore cannot support a reliable classification of any site as vacant, undeveloped, open space, occupied or reserved.
 
 The 36 are retained as `NO_BUILDING_CANDIDATE — CAUSE UNCLASSIFIED`. No properties or physical assets are added, and no land-use, occupancy, access or address facts are inferred. The frozen BP04 inventory remains unchanged. See [BP-02 address placement review register](BP02-address-placement-review-register.md). This resolves the evidence question as far as current source data permits; it does not approve operational geography or change BP04 completion status. No Neon writes or production grants were made.
