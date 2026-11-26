@@ -595,6 +595,7 @@ CREATE FUNCTION sw_incident.add_incident_location(
   p_actor_ref text,
   p_authority_ref text,
   p_source_ref text,
+  p_address_source_ref text,
   p_idempotency_key text
 ) RETURNS bigint
 LANGUAGE plpgsql AS $bp12$
@@ -615,6 +616,7 @@ BEGIN
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref))=0
      OR p_authority_ref IS NULL OR length(trim(p_authority_ref))=0
      OR p_source_ref IS NULL OR length(trim(p_source_ref))=0
+     OR p_address_source_ref IS NULL OR length(trim(p_address_source_ref))=0
      OR p_idempotency_key IS NULL
      OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}
 SELECT i.*,
@@ -678,7 +680,7 @@ COMMIT;
       'location_role',p_location_role,'location_type',p_location_type,
       'location_ref',p_location_ref,'spatial_id',p_spatial_id,
       'confidence',p_confidence,'authority_ref',p_authority_ref,
-      'source_ref',p_source_ref
+      'source_ref',p_source_ref,'address_source_ref',p_address_source_ref
     ),
     p_idempotency_key
   ) RETURNING event_id INTO v_event_id;
