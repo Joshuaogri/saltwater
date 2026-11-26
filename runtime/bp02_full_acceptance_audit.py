@@ -130,7 +130,7 @@ def run_full_bp02_acceptance_audit() -> dict:
         "operational_access_points_approved": canonical_geography["building_access_point_count"] > 0
             and canonical_geography["bridge_connector_count"] == 4,
         "all_bridge_connectors_engineered_and_approved": (
-            bridge_engineering_register["engineering_work_item_count"] == 4
+            bridge_engineering_register["assessment_count"] == 4
             and bridge_engineering_register["assessed_count"] == 4
             and bridge_engineering_register["operationally_approved_count"] == 4
         ),
