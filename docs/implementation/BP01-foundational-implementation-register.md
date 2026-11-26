@@ -2,7 +2,7 @@
 
 **Project:** Saltwater  
 **Division:** BP-01 — Game Identity, Foundations and Governing Rules  
-**Baseline commit:** 73a0faf4abbc19fe38295648c51367e8cc58a6ae  
+**Initial audit base:** 73a0faf4abbc19fe38295648c51367e8cc58a6ae; implementation changes are committed on the current `main` branch.  
 **Updated:** 2026-11-26  
 **Branch:** main only  
 **Production Neon:** unchanged
@@ -25,7 +25,7 @@ The old BP-01 draft's references to unresolved population membership and foundat
 | BP-01 obligation | Existing implementation | Existing test coverage | Current assessment |
 |---|---|---|---|
 | Machine-readable core canon | `runtime/bp01_foundations.py` | `test_bp01_foundations.py` | Added in this change |
-| Exact hidden-truth reveal trigger and player-only authorization | `runtime/security.py` | `test_authorization.py` | Implemented; cross-channel leak coverage still required |
+| Exact hidden-truth reveal command, parser and player-only authorization | `runtime/bp01_foundations.py`, `runtime/player_commands.py`, `runtime/application.py`, `runtime/security.py` | `test_bp01_foundations.py`, `test_player_commands.py`, `test_player_application.py`, `test_authorization.py` | Command is exact, omitted from help, gated before dispatch and routed to an injected trusted provider; case-owned provider and cross-channel leak coverage remain outstanding |
 | One player application and authenticated command gateway | `runtime/application.py`, `runtime/player_command_runtime.py` | `test_player_application.py`, `test_player_command_runtime.py` | Existing |
 | Player identity activation and recruit entry | `runtime/player_activation.py`, `runtime/recruitment.py` | `test_player_activation.py`, `test_recruitment.py` | Existing |
 | Canonical command parsing and action classification | `runtime/player_commands.py`, `runtime/player_interface.py` | `test_player_commands.py`, `test_player_interface.py` | Existing |
@@ -44,7 +44,7 @@ These are real outstanding items; they are not reasons to reopen settled canon:
 
 1. Add end-to-end tests proving hidden culprit identity cannot leak through reports, summaries, search, notifications, generated dialogue, metadata or tool responses before the exact trigger.
 2. Add NPC knowledge-history tests proving NPCs cannot know facts without a plausible perception, access or communication path.
-3. Prove player questions and information-only commands do not mutate authoritative world state across the full command gateway.
+3. Prove player questions and information-only commands do not mutate authoritative world state across the full command gateway. A focused player-interface regression now checks the read-only command set against runtime state and event history.
 4. Prove player choices are never silently selected or auto-completed, including investigation direction and consequential decisions.
 5. Complete the BP15/BP16 case-owned hidden-truth reveal provider and verify that all outward channels preserve the reveal gate.
 6. Prove the running game host registers and runs all required NPC schedules while the player is present, and freezes all scheduled work during absence.
