@@ -34,6 +34,10 @@ class BusinessNamingPostgresTests(unittest.TestCase):
         cls.rows = [dict(zip(columns, values)) for values in table["rows"]]
         cls.by_id = {row["business_id"]: row for row in cls.rows}
         naming = document["metadata"]["naming"]
+        if naming.get("similarity_algorithm") != "POSTGRES_PG_TRGM_COMPATIBLE":
+            raise AssertionError("business registry must use PostgreSQL-compatible similarity screening")
+        if naming.get("public_name_count") != 20000:
+            raise AssertionError("all 20,000 business public names must be screened")
         manifest = {
             "dataset_id": "SW-BUSINESS-REGISTRY-V1",
             "generator_version": naming["generator_version"],
