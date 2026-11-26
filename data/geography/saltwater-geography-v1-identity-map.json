@@ -1,9 +1,9 @@
 {
   "schema": "saltwater-spatial-identity-map/1.0",
   "dataset_id": "SW-GEO-V1",
-  "source_dataset_status": "DESIGN_BASELINE_NOT_YET_USER_APPROVED_FOR_OPERATIONAL_SEED",
-  "mapping_status": "SOURCE_IDENTITY_MAPPINGS_RESOLVED",
-  "operational_seed_approved": false,
+  "source_dataset_status": "APPROVED_FOR_OPERATIONAL_USE",
+  "mapping_status": "SOURCE_IDENTITY_MAPPINGS_RESOLVED_AND_GAMEPLAY_RELEASED",
+  "operational_seed_approved": true,
   "root_entities": [
     {
       "source_id": "saltwater-state",
