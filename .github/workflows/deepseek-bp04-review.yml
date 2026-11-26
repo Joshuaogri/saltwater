@@ -115,6 +115,7 @@ jobs:
           - This is fictional game data; do not introduce real-world legal or police approval requirements.
 
           TASK:
+0. Prioritise the fastest safe, evidence-backed resolution. If the supplied evidence proves a specific defect, lead with the smallest concrete code/configuration patch that fixes it; name exact files and changes, explain why it resolves the defect, and give the focused tests needed. Separate immediately actionable fixes from hypotheses. Do not delay a clear fix behind broad redesign or unnecessary extra investigation. If the evidence does not prove the cause, specify the single fastest targeted experiment that will.
           1. Identify what the actual run evidence proves and what it does not prove. Do not infer a bottleneck without measurements.
           2. Trace the hot path from Python batching through SQL functions and triggers. Quantify repeated per-name work where possible.
           3. Rank likely bottlenecks and propose a safe optimisation plan, explaining correctness risks.
