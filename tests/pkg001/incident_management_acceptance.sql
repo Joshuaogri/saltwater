@@ -52,7 +52,7 @@ BEGIN
       v_incident_id,'secondary','property','SWADDR-TEST-002',NULL,
       'Fictional secondary test address','unverified',
       'test:bp12','test-authority','caller-stated:BP12-ACCEPTANCE-LOCATION-001',
-      'BP12-ACCEPTANCE-LOCATION-001'
+      'bp04-address:SWADDR-TEST-002','BP12-ACCEPTANCE-LOCATION-001'
     );
     IF (SELECT count(*) FROM sw_incident.incident_location WHERE incident_id=v_incident_id)<>2
        OR NOT EXISTS(
@@ -61,6 +61,9 @@ BEGIN
            AND location_ref='SWADDR-TEST-002'
            AND confidence='unverified'
            AND source_ref='caller-stated:BP12-ACCEPTANCE-LOCATION-001'
+           AND (SELECT attributes->>'address_source_ref' FROM sw_core.simulation_event
+                WHERE event_id=sw_incident.incident_location.source_event_id)
+                ='bp04-address:SWADDR-TEST-002'
        )
        OR NOT EXISTS(
          SELECT 1 FROM sw_core.simulation_event se
@@ -86,7 +89,7 @@ BEGIN
       PERFORM sw_incident.add_incident_location(
         v_incident_id,'primary','canonical_spatial',NULL,NULL,
         'Missing canonical spatial identity','unknown',
-        'test:bp12','test-authority','test-source','BP12-ACCEPTANCE-INVALID-SPATIAL'
+        'test:bp12','test-authority','test-source','bp04-address:invalid','BP12-ACCEPTANCE-INVALID-SPATIAL'
       );
       RAISE EXCEPTION 'canonical spatial location without spatial ID was accepted';
     EXCEPTION WHEN OTHERS THEN
