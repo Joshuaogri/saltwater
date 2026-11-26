@@ -131,8 +131,8 @@ class BP12IncidentServiceTests(unittest.TestCase):
             "police_call", "CALL-71", "Caller reports a disturbance",
             "officer-person:42", "incident:CALL-71",
         ))
-        self.assertEqual(params[9], "unassessed")
-        self.assertEqual(params[10], "outside the terminal")
+        self.assertEqual(params[8], "unassessed")
+        self.assertEqual(params[9], "outside the terminal")
         self.assertTrue(connection.committed)
         self.assertTrue(audit.records[-1].allowed)
 
