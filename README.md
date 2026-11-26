@@ -1471,3 +1471,8 @@ Command handover reconciliation now compares authorised BP08 deployment-assignme
 
 
 A command-handover record projection now brings together the incident reconciliation, outgoing and incoming commanders, commander decisions and rationales, outstanding actions with named owners, responsibility transfers, and handover acknowledgements. It validates identity, authority/source provenance, chronology, duplicate references, commander attribution and acknowledgement recipients. Readiness requires a clean assignment reconciliation, a recorded transfer from the outgoing to incoming commander, and explicit acceptance by the incoming commander; outstanding actions may remain open when they have named owners and are carried into the handover. The result is explicitly `PROJECTED_NOT_PERSISTED`: no durable handover register or production Neon write is claimed by this projection.
+
+
+## BP12 durable command handover — implementation in validation
+
+A durable append-only command-handover register has been added in proposal migration `0029_bp12_command_handover.sql`. It records the validated commander handover projection against a BP12 simulation event, preserves outgoing/incoming command identities, effective world tick and source/authority provenance, enforces incoming acceptance and responsibility transfer, supports idempotent replay, and exposes chronological immutable history. PostgreSQL writer/reader adapters and SQL/Python acceptance tests are included. The change is repository/disposable-test only; it has not been applied to production Neon. See [BP12 durable command handover](docs/implementation/BP12-durable-command-handover.md).
