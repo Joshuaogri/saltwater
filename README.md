@@ -1520,3 +1520,6 @@ The BP06 personnel-reference verifier's four unit tests have passed in [PKG-001 
 
 
 BP04/BP06 update: the repository-side handover identity resolver is now implemented against `sw_police.personnel_service_current`, matching the authenticated session person to an active sworn personnel UUID. Its tests and the full PKG-001 disposable PostgreSQL workflow passed in [run 45826593214](https://github.com/Joshuaogri/saltwater/actions/runs/45826593214). A further session-person propagation test also passed in the Python job of [run 45826915217](https://github.com/Joshuaogri/saltwater/actions/runs/45826915217); the full disposable PostgreSQL and BP04 geography runs remain underway. Production wiring still depends on BP06 schema deployment and production application composition; grants remain default-deny. No production Neon changes were made.
+
+
+The latest PKG-001 run [45826915217](https://github.com/Joshuaogri/saltwater/actions/runs/45826915217) completed successfully: 26 Python-kernel and 31 disposable-PostgreSQL steps passed, including verified session person-ID propagation, BP06 personnel-reference matching, population-cap, database access and backup/restore checks. The separate BP04 420-address reconciliation run 45826915157 remains in progress. BP04 is not yet declared complete.
