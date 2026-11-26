@@ -22,6 +22,8 @@ It does not create people, alter population state/counters, allocate ranks, fill
 
 ## Verification
 
+The first disposable acceptance passed in [PKG-001 run 45868150806](../test-evidence/BP06-opening-personnel-cohort-run-0001.md). The successful schema-application step includes migration 0033 and the opening-cohort acceptance script. This is step-level evidence; the wider PKG-001 workflow was still running when recorded.
+
 `tests/pkg001/opening_personnel_cohort_acceptance.sql` creates 500 disposable canonical people inside a transaction, provisions them, checks one-to-one personnel/service records, idempotency, category preservation, unchanged population count and unchanged vacant posts, then rolls back.
 
 This is a proposal and disposable acceptance test only. The live Neon database currently has no BP03/BP06 tables or person rows, and no production write has been made. The eventual 500-person input manifest must be generated from the approved BP03 opening population seed, not from authorised-post vacancies.
