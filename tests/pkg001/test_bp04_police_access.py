@@ -21,6 +21,11 @@ class FakeVerifier:
         return self.session if credential == "officer-session" else None
 
 
+class FailingAuditSink:
+    def append(self, _record):
+        raise RuntimeError("audit storage unavailable")
+
+
 class FakeLookup:
     def search(self, kind, query, limit=20):
         return [{"address_id": "SWADDR-1", "address_label": "10 Harbour Avenue"}]
@@ -130,6 +135,26 @@ class BP04PoliceAccessTests(unittest.TestCase):
         verifier.assert_called_once()
         audit.assert_called_once()
         grants.assert_called_once()
+
+    def test_audit_storage_failure_denies_authorized_lookup(self):
+        authorization = AuthorizationService(
+            self.verifier, FailingAuditSink(), self.grants
+        )
+        access = BP04PoliceLookupAccess(
+            self.lookup, authorization, self.session.principal_id
+        )
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            access.search("officer-session", "address", "Harbour Avenue")
+        
+    def test_revoked_session_is_denied_and_audited(self):
+        self.verifier.session = make_session()
+        revoked = self.verifier.session
+        from dataclasses import replace
+        self.verifier.session = replace(revoked, session_status=SessionStatus.REVOKED)
+        with self.assertRaisesRegex(PermissionError, "Access denied"):
+            self.access.search("officer-session", "address", "Harbour Avenue")
+        self.assertEqual(self.audit.records[-1].reason, "session_not_active")
+        self.assertFalse(self.audit.records[-1].allowed)
 
     def test_resource_scoped_inspection_is_not_broader_than_grant(self):
         with self.assertRaises(PermissionError):
