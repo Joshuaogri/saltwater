@@ -82,7 +82,9 @@ class NPCDispatchSimulatorTests(unittest.TestCase):
         alpha_available = before["available_npc_count"]
         self.assertEqual(engine.rotate_shift(), "Bravo")
         bravo = engine.snapshot()
-        self.assertNotEqual(bravo["available_npc_count"], alpha_available)
+        self.assertEqual(bravo["current_shift"], "Bravo")
+        self.assertEqual(bravo["available_npc_count"], alpha_available)
+        self.assertEqual(bravo["off_duty_npc_count"], before["off_duty_npc_count"])
         self.assertEqual(engine.rotate_shift(), "Charlie")
         self.assertEqual(engine.rotate_shift(), "Delta")
         self.assertEqual(engine.rotate_shift(), "Alpha")
