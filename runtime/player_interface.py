@@ -50,13 +50,15 @@ class PlayerCommandInterface:
                  recruitment: PostgresRecruitmentService | None = None,
                  bp04_lookup: Any | None = None,
                  dispatch_console: Any | None = None,
-                 npc_dispatch_console: Any | None = None):
+                 npc_dispatch_console: Any | None = None,
+                 hidden_truth_revealer: Callable[[str], str] | None = None):
         self.kernel = kernel
         self.profile = profile
         self.recruitment = recruitment
         self.bp04_lookup = bp04_lookup
         self.dispatch_console = dispatch_console
         self.npc_dispatch_console = npc_dispatch_console
+        self.hidden_truth_revealer = hidden_truth_revealer
         self.workspace_navigation = WorkspaceNavigation()
         self._commands: dict[str, Callable[[], CommandResult]] = {
             "help": self._help,
@@ -73,6 +75,7 @@ class PlayerCommandInterface:
             "back": self._back,
             "where": self._where,
             "dispatch": self._dispatch,
+            "bingo": self._bingo,
         }
 
     def execute(self, line: str) -> CommandResult:
@@ -200,7 +203,19 @@ class PlayerCommandInterface:
         except Exception:
             return CommandResult(False, "Property lookup unavailable.")
 
-    def _dispatch(self, arguments: tuple[str, ...] = ()) -> CommandResult:
+    def _bingo(self) -> CommandResult:
+        """Reveal case truth only through the trusted, gateway-authorised service."""
+        if self.hidden_truth_revealer is None:
+            return CommandResult(False, "Hidden-truth reveal service is not connected.")
+        try:
+            result = self.hidden_truth_revealer(self.profile.player_id)
+            if not isinstance(result, str) or not result.strip():
+                return CommandResult(False, "No revealable hidden truth is available.")
+            return CommandResult(True, result)
+        except Exception:
+            return CommandResult(False, "Hidden-truth reveal is unavailable.")
+
+    def _dispatch(self, arguments: tuple[str, ...] = ()):
         if self.npc_dispatch_console is not None:
             try:
                 return CommandResult(True, self.npc_dispatch_console.execute(arguments))
