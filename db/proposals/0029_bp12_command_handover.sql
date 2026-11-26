@@ -71,9 +71,11 @@ BEGIN
      OR p_handover_document->>'authority_ref' IS DISTINCT FROM p_authority_ref
      OR p_handover_document->>'source_ref' IS DISTINCT FROM p_source_ref
      OR (p_handover_document->>'effective_world_tick')::bigint IS DISTINCT FROM p_effective_world_tick
-     OR (p_handover_document->>'record_status' IS DISTINCT FROM 'PROJECTED_NOT_PERSISTED'
-         AND p_handover_document->>'record_status' IS DISTINCT FROM 'PERSISTED')
+     OR p_handover_document->>'record_status' IS DISTINCT FROM 'PROJECTED_NOT_PERSISTED'
+     OR p_handover_document->'read_only' IS DISTINCT FROM 'true'::jsonb
      OR jsonb_typeof(p_handover_document->'assignment_reconciliation') IS DISTINCT FROM 'object'
+     OR (p_handover_document->'assignment_reconciliation'->>'incident_id')::integer IS DISTINCT FROM p_incident_id
+     OR coalesce((p_handover_document->'assignment_reconciliation'->>'handover_ready')::boolean,false) IS NOT TRUE
      OR jsonb_typeof(p_handover_document->'commander_decisions') IS DISTINCT FROM 'array'
      OR jsonb_typeof(p_handover_document->'outstanding_actions') IS DISTINCT FROM 'array'
      OR jsonb_typeof(p_handover_document->'responsibility_transfers') IS DISTINCT FROM 'array'
