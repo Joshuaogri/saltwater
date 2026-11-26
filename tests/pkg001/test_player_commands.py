@@ -19,7 +19,7 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         expected = {
             "help", "status", "profile", "recruit", "career", "start",
             "pause", "resume", "quit", "home", "workspaces", "workspace",
-            "back", "where", "find", "inspect",
+            "back", "where", "find", "inspect", "dispatch",
         }
         self.assertEqual(set(COMMAND_BY_TOKEN), expected)
         self.assertEqual(len(COMMAND_CATALOGUE), len(expected))
@@ -46,11 +46,11 @@ class PlayerCommandCatalogueTests(unittest.TestCase):
         second = [(x.token, x.command_id) for x in COMMAND_CATALOGUE]
         self.assertEqual(first, second)
         self.assertEqual(first[0], ("help", "player.help.v1"))
-        self.assertEqual(first[-1], ("inspect", "player.inspect.v1"))
+        self.assertEqual(first[-1], ("dispatch", "player.dispatch.v1"))
 
     def test_classification_distinguishes_all_reads_navigation_and_mutations(self):
         expected = {
-            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect"},
+            CommandClass.READ_ONLY: {"help", "status", "profile", "career", "workspaces", "where", "find", "inspect", "dispatch"},
             CommandClass.PRESENTATION_STATE: {"home", "workspace", "back"},
             CommandClass.DOMAIN_MUTATION: {"recruit", "start", "pause", "resume", "quit"},
         }
