@@ -14,7 +14,7 @@ BEGIN
  VALUES('BP03-HH-TEST:ADDRESS','BP03-HH-TEST:PARCEL','ACTIVE_IN_GAME','{"test_fixture":true}');
  INSERT INTO sw_property.property_site(
   property_id,display_name,address_id,use_class,lifecycle_status,source_dataset,source_record
- ) VALUES('BP03-HH-TEST:PROPERTY','Fixture dwelling',NULL,'dwelling','active',
+ ) VALUES('BP03-HH-TEST:PROPERTY','Fixture mixed-use dwelling',NULL,'mixed_use','active',
   'BP03-HH-TEST','{"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_property.street_address(
   address_id,property_id,display_name,source_dataset,source_record
@@ -24,7 +24,7 @@ BEGIN
  WHERE property_id='BP03-HH-TEST:PROPERTY';
  INSERT INTO sw_property.building(
   building_id,property_id,display_name,building_use,lifecycle_status,source_dataset,source_record
- ) VALUES('BP03-HH-TEST:BUILDING','BP03-HH-TEST:PROPERTY','Fixture residential building',
+ ) VALUES('BP03-HH-TEST:BUILDING','BP03-HH-TEST:PROPERTY','Fixture mixed-use residential building',
   'residential','active','BP03-HH-TEST','{"test_fixture":true}');
  INSERT INTO sw_property.premises(
   premises_id,property_id,building_id,display_name,premises_use,lifecycle_status,source_dataset,source_record
