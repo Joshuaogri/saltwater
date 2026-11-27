@@ -59,8 +59,19 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'restored generator manifest is not linked to a reserved name';
   END IF;
-  IF (SELECT count(*) FROM sw_people.population_history) <> 10000 THEN
-    RAISE EXCEPTION 'restored population history row count mismatch';
+  IF (SELECT count(*) FROM sw_people.population_history) < n_population THEN
+    RAISE EXCEPTION 'restored population history is incomplete: history rows %, population states %',
+      (SELECT count(*) FROM sw_people.population_history), n_population;
+  END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM sw_people.population_state ps
+    LEFT JOIN sw_people.population_history ph
+      ON ph.event_id=ps.last_event_id
+     AND ph.person_id=ps.person_id
+    WHERE ph.event_id IS NULL
+  ) THEN
+    RAISE EXCEPTION 'restored population state has no matching latest immutable history event';
   END IF;
   IF (SELECT count(*) FROM sw_people.profile_history) <> 10000 THEN
     RAISE EXCEPTION 'restored profile history row count mismatch';
