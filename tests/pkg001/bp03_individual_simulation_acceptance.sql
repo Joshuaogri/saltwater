@@ -10,8 +10,12 @@ BEGIN
  v_person:=sw_people.create_person('Avery','Example','BP03-TIER-ACCEPTANCE:PERSON',
   'test:bp03','Disposable BP03 tier and promotion acceptance');
  IF NOT EXISTS(SELECT 1 FROM sw_people.person_simulation_summary
-   WHERE person_id=v_person AND detail_tier=0 AND NOT permanently_promoted) THEN
-  RAISE EXCEPTION 'new person must default to registry tier 0';
+   WHERE person_id=v_person AND detail_tier=0 AND NOT permanently_promoted)
+  OR NOT EXISTS(SELECT 1 FROM sw_people.person_simulation_state
+   WHERE person_id=v_person AND detail_tier=0)
+  OR NOT EXISTS(SELECT 1 FROM sw_people.person_simulation_history
+   WHERE person_id=v_person AND prior_tier IS NULL AND new_tier=0 AND trigger_kind='person_created') THEN
+  RAISE EXCEPTION 'new person must persist registry tier 0 and its creation history';
  END IF;
  v_tier:=sw_people.set_person_detail_tier(v_person,1::smallint,'routine_profile',
   'fixture:routine-1','Routine simulation enabled','test:bp03','BP03-TIER:ROUTINE');
@@ -35,8 +39,8 @@ BEGIN
  EXCEPTION WHEN raise_exception THEN
   IF SQLERRM='tier 3 downgrade unexpectedly succeeded' THEN RAISE; END IF;
  END;
- IF (SELECT count(*) FROM sw_people.person_simulation_history WHERE person_id=v_person)<>2 THEN
-  RAISE EXCEPTION 'expected tier 0->1 and 1->3 append-only history';
+ IF (SELECT count(*) FROM sw_people.person_simulation_history WHERE person_id=v_person)<>3 THEN
+  RAISE EXCEPTION 'expected initial tier 0, 0->1 and 1->3 append-only history';
  END IF;
  IF (SELECT count(*) FROM sw_people.person_relevance_promotion WHERE person_id=v_person)<>1 THEN
   RAISE EXCEPTION 'expected exactly one permanent promotion record';
