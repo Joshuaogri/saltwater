@@ -145,7 +145,7 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                          FROM bp03_civilian_seed_stage a
                          JOIN bp03_civilian_seed_stage b
                            ON a.candidate_ref < b.candidate_ref
-                          AND a.normalized_name % b.normalized_name
+                          AND a.normalized_name OPERATOR(sw_names.%) b.normalized_name
                        )"""
                 )
                 self.assertFalse(cur.fetchone()[0], "civilian batch contains near-duplicate canonical names")
@@ -154,7 +154,7 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                          SELECT 1
                          FROM bp03_civilian_seed_stage c
                          JOIN sw_names.name_reservation r
-                           ON r.normalized_key % c.normalized_name
+                           ON r.normalized_key OPERATOR(sw_names.%) c.normalized_name
                          WHERE r.normalized_key <> c.normalized_name
                        )"""
                 )
