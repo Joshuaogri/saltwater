@@ -59,6 +59,7 @@ CREATE INDEX name_reservation_trgm_idx
 CREATE TABLE sw_names.generation_batch_candidate (
   batch_id bigint NOT NULL REFERENCES sw_names.generation_batch(batch_id),
   normalized_key text NOT NULL CHECK (length(normalized_key) BETWEEN 1 AND 200),
+  preflight_xid xid8 NOT NULL,
   PRIMARY KEY (batch_id,normalized_key)
 );
 CREATE INDEX generation_batch_candidate_trgm_idx
@@ -186,11 +187,14 @@ BEGIN
     IF v_mismatch THEN
       RAISE EXCEPTION 'generation batch preflight manifest cannot be changed';
     END IF;
+    UPDATE sw_names.generation_batch_candidate
+    SET preflight_xid=pg_current_xact_id()
+    WHERE batch_id=p_batch_id;
     RETURN v_total;
   END IF;
 
-  INSERT INTO sw_names.generation_batch_candidate(batch_id,normalized_key)
-  SELECT p_batch_id,sw_names.normalize_name(u.display_name)
+  INSERT INTO sw_names.generation_batch_candidate(batch_id,normalized_key,preflight_xid)
+  SELECT p_batch_id,sw_names.normalize_name(u.display_name),pg_current_xact_id()
   FROM unnest(p_display_names) AS u(display_name);
 
   IF EXISTS (
@@ -288,25 +292,23 @@ BEGIN
     RAISE EXCEPTION 'generator manifest domain does not match the owning entity type';
   END IF;
 
-  -- High-similarity candidates are held for review before any domain row can
-  -- claim them. The GIN trigram index keeps the check bounded as the registry grows.
-  PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
-  IF EXISTS (
-    SELECT 1 FROM sw_names.name_reservation r
-    WHERE r.normalized_key <> NEW.normalized_key
-      -- Exclude earlier rows from this batch only when this exact normalized
-      -- name was registered by the privileged batch-preflight function.
-      AND (
-        NOT EXISTS (
-          SELECT 1 FROM sw_names.generation_batch_candidate c
-          WHERE c.batch_id=NEW.generation_batch_id
-            AND c.normalized_key=NEW.normalized_key
-        )
-        OR r.generation_batch_id IS DISTINCT FROM NEW.generation_batch_id
-      )
-      AND r.normalized_key % NEW.normalized_key
+  -- A complete batch preflight holds the global advisory lock until commit.
+  -- Only rows preflighted in this exact transaction may skip per-row similarity
+  -- checks; a preflight from an earlier transaction never grants a bypass.
+  IF NOT EXISTS (
+    SELECT 1 FROM sw_names.generation_batch_candidate c
+    WHERE c.batch_id=NEW.generation_batch_id
+      AND c.normalized_key=NEW.normalized_key
+      AND c.preflight_xid=pg_current_xact_id()
   ) THEN
-    RAISE EXCEPTION 'near-duplicate name requires review before reservation';
+    PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
+    IF EXISTS (
+      SELECT 1 FROM sw_names.name_reservation r
+      WHERE r.normalized_key <> NEW.normalized_key
+        AND r.normalized_key % NEW.normalized_key
+    ) THEN
+      RAISE EXCEPTION 'near-duplicate name requires review before reservation';
+    END IF;
   END IF;
 
   IF NEW.name_form='canonical' AND EXISTS (
