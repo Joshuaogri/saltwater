@@ -8,8 +8,12 @@ DECLARE
   phase_started timestamptz;
 BEGIN
   UPDATE sw_runtime.state
-    SET state=1,player_present=false,bootstrap_open=false
-    WHERE singleton=1 AND state IN (0,1) AND bootstrap_open=true AND world_tick=0;
+    SET state=1,player_present=false
+    WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
+  UPDATE sw_runtime.state
+    SET bootstrap_open=false
+    WHERE singleton=1 AND state=1 AND player_present=false
+      AND bootstrap_open=true AND world_tick=0;
   -- Re-enter ready/running after prior adapter tests without reopening bootstrap.
   UPDATE sw_runtime.state SET state=1,player_present=false
     WHERE singleton=1 AND state=0 AND bootstrap_open=false;
