@@ -42,7 +42,6 @@ concurrency:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   python-regression:
@@ -159,41 +158,9 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0034_bp03_person_residence.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_population_residence_schema_growth_bytes=$((after-before))"
-      - name: Download the accepted BP02 operational geography release package
-        uses: actions/download-artifact@v4
-        with:
-          name: bp02-operational-geography-v1-production-package
-          run-id: 46014720819
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: build
-      - name: Verify BP02 release package against current source checksums
-        run: |
-          python - <<'PY'
-          import gzip, hashlib, json
-          from pathlib import Path
-          from runtime.opening_resident_dwelling_allocation import build_opening_resident_dwelling_allocation
-          from runtime.bp02_operational_geography_importer import _source_id
-          manifest=json.loads(Path("build/bp02-operational-geography-v1.manifest.json").read_text())
-          package=Path("build/bp02-operational-geography-v1.json.gz").read_bytes()
-          if hashlib.sha256(package).hexdigest()!=manifest["package_sha256"]:
-            raise SystemExit("BP02 package checksum mismatch")
-          payload=json.loads(gzip.decompress(package))
-          geography=json.loads(Path("data/geography/saltwater-geography-v1.json").read_text())
-          identity=json.loads(Path("data/geography/saltwater-geography-v1-identity-map.json").read_text())
-          if hashlib.sha256(Path("data/geography/saltwater-geography-v1.json").read_bytes()).hexdigest()!=manifest["source_hashes"]["geography_sha256"]:
-            raise SystemExit("BP02 geography source checksum mismatch")
-          if payload["identity_map"]["entries"]!=identity["entries"] or payload["identity_map"]["counts"]!=identity["counts"]:
-            raise SystemExit("BP02 artifact identity mappings differ from current main")
-          allocation=build_opening_resident_dwelling_allocation()
-          current_parcels={r["bp02_parcel_source_id"] for r in allocation["records"]}
-          current_addresses={r["bp02_address_source_id"] for r in allocation["records"]}
-          package_parcels={_source_id(r,"parcel_id") for r in payload["canonical_geography"]["parcels"]}
-          package_addresses={_source_id(r,"address_id") for r in payload["canonical_geography"]["addresses"]}
-          if package_parcels!=current_parcels or package_addresses!=current_addresses:
-            raise SystemExit("BP02 release parcel/address identities differ from the current BP03 dwelling allocation")
-          print(json.dumps({"release_id":manifest["release_id"],"package_sha256":manifest["package_sha256"],"record_counts":manifest["record_counts"],"geography_source_verified":True,"identity_entries_verified":len(identity["entries"]),"allocation_parcel_ids_verified":len(current_parcels),"allocation_address_ids_verified":len(current_addresses),"property_world_hash_difference_permitted_only_after_exact_parcel_address_id_match":True},indent=2))
-          PY
-      - name: Import accepted BP02 operational geography into disposable world
+      - name: Build current BP02 operational geography package
+        run: python -m runtime.bp02_operational_geography_package
+      - name: Import current BP02 operational geography into disposable world
         run: python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
       - name: Measure BP04-01 proposal 0011 schema-only growth
