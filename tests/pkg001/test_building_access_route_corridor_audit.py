@@ -6,8 +6,11 @@ from pathlib import Path
 from runtime.parcel_candidate_generator import build_candidates
 from runtime.parcel_dossier_generator import build_parcel_dossiers
 from runtime.physical_asset_inventory_generator import build_asset_inventory, _visibility_path
-from shapely.geometry import Point, box
-from runtime.building_access_route_corridor_audit import build_route_corridor_candidates
+from shapely.geometry import LineString, Point, box
+from shapely.strtree import STRtree
+from runtime.building_access_route_corridor_audit import (
+    _nearest_other_building_clearance, build_route_corridor_candidates,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text())
@@ -22,6 +25,22 @@ class BuildingAccessRouteCorridorTests(unittest.TestCase):
         cls.report = build_route_corridor_candidates(
             SOURCE, cls.candidates, cls.dossiers, cls.inventory
         )
+
+    def test_indexed_clearance_is_exact_and_excludes_origin_building(self):
+        geometries = [box(0, 0, 1, 1), box(5, 0, 6, 1), box(9, 0, 10, 1)]
+        ids = ["origin", "nearest", "farther"]
+        line = LineString([(1, 0.5), (2, 0.5)])
+        self.assertAlmostEqual(
+            _nearest_other_building_clearance(line, "origin", STRtree(geometries), ids, geometries),
+            3.0,
+        )
+
+    def test_indexed_clearance_returns_none_without_other_buildings(self):
+        geometries = [box(0, 0, 1, 1)]
+        self.assertIsNone(_nearest_other_building_clearance(
+            LineString([(1, 0.5), (2, 0.5)]), "origin", STRtree(geometries),
+            ["origin"], geometries,
+        ))
 
     def test_all_connectors_have_route_corridor_centreline_candidates(self):
         summary = self.report["summary"]

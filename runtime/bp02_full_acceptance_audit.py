@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from time import perf_counter
 
 from runtime.geography_geometry_audit import audit_geometry
 from runtime.parcel_candidate_generator import build_candidates
@@ -31,23 +32,35 @@ from runtime.bp02_no_building_site_reconciliation import (
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _timed_stage(name: str, function, *args):
+    started = perf_counter()
+    print(f"BP02_STAGE_START name={name}", flush=True)
+    try:
+        result = function(*args)
+    except Exception:
+        print(f"BP02_STAGE_FAILED name={name} elapsed_seconds={perf_counter() - started:.3f}", flush=True)
+        raise
+    print(f"BP02_STAGE_DONE name={name} elapsed_seconds={perf_counter() - started:.3f}", flush=True)
+    return result
+
+
 def run_full_bp02_acceptance_audit() -> dict:
-    source = json.loads(GEO_PATH.read_text(encoding="utf-8"))
-    identity_map = json.loads(IDENTITY_MAP_PATH.read_text(encoding="utf-8"))
-    property_document = _read_columnar_gzip(PROPERTY_WORLD_PATH)
+    source = _timed_stage("load_geography_source", lambda: json.loads(GEO_PATH.read_text(encoding="utf-8")))
+    identity_map = _timed_stage("load_identity_map", lambda: json.loads(IDENTITY_MAP_PATH.read_text(encoding="utf-8")))
+    property_document = _timed_stage("load_property_world", _read_columnar_gzip, PROPERTY_WORLD_PATH)
 
-    geometry = audit_geometry(GEO_PATH)
-    candidates = build_candidates(source)
-    dossiers = build_parcel_dossiers(source, candidates)
-    assets = build_asset_inventory(source, candidates, dossiers)
+    geometry = _timed_stage("source_geometry_audit", audit_geometry, GEO_PATH)
+    candidates = _timed_stage("parcel_candidate_generation", build_candidates, source)
+    dossiers = _timed_stage("parcel_dossier_generation", build_parcel_dossiers, source, candidates)
+    assets = _timed_stage("physical_asset_inventory_generation", build_asset_inventory, source, candidates, dossiers)
 
-    parcel_geometry = audit_parcel_dossiers(source, candidates, dossiers)
-    building_access = audit_building_access_candidates(candidates, dossiers, assets)
-    connector_topology = audit_connector_topology(source, candidates, dossiers, assets)
-    direct_connectors = audit_direct_access_connectors(source, candidates, dossiers, assets)
-    route_corridors = build_route_corridor_candidates(source, candidates, dossiers, assets)
-    reconciliation = build_reconciliation(source, identity_map, property_document)
-    exception_resolution = resolve_address_frontage_exceptions(reconciliation, source, direct_connectors)
+    parcel_geometry = _timed_stage("parcel_dossier_geometry_audit", audit_parcel_dossiers, source, candidates, dossiers)
+    building_access = _timed_stage("building_access_candidate_audit", audit_building_access_candidates, candidates, dossiers, assets)
+    connector_topology = _timed_stage("access_connector_topology_audit", audit_connector_topology, source, candidates, dossiers, assets)
+    direct_connectors = _timed_stage("direct_access_connector_audit", audit_direct_access_connectors, source, candidates, dossiers, assets)
+    route_corridors = _timed_stage("route_corridor_candidate_audit", build_route_corridor_candidates, source, candidates, dossiers, assets)
+    reconciliation = _timed_stage("bp04_geography_reconciliation", build_reconciliation, source, identity_map, property_document)
+    exception_resolution = _timed_stage("address_frontage_exception_resolution", resolve_address_frontage_exceptions, reconciliation, source, direct_connectors)
     if exception_resolution["unresolved_exception_count"]:
         unresolved_ids = {
             row["source_address_id"] for row in exception_resolution["records"]
@@ -83,16 +96,18 @@ def run_full_bp02_acceptance_audit() -> dict:
                 "property_direct_connector_candidates": property_connectors,
             })
         print("BP02_UNRESOLVED_FRONTAGE_EXCEPTION_DIAGNOSTICS=" + json.dumps(diagnostic, sort_keys=True))
-    bridge_engineering_register = build_fictional_bridge_assessments(
+    bridge_engineering_register = _timed_stage(
+        "fictional_bridge_engineering_register", build_fictional_bridge_assessments,
         route_corridors, exception_resolution,
     )
-    canonical_geography = build_canonical_geography_register(
+    canonical_geography = _timed_stage(
+        "canonical_geography_register", build_canonical_geography_register,
         reconciliation["bp02_design_identity_register_data"], assets,
         bridge_engineering_register, exception_resolution,
     )
-    no_building_cross_register = reconcile_no_building_sites_and_frontage_exceptions(
-        reconciliation["bp02_address_placement_review_register"],
-        exception_resolution,
+    no_building_cross_register = _timed_stage(
+        "no_building_frontage_cross_register", reconcile_no_building_sites_and_frontage_exceptions,
+        reconciliation["bp02_address_placement_review_register"], exception_resolution,
     )
 
     address_source_integrity = {

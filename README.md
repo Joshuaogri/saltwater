@@ -1,3 +1,23 @@
+## BP02 geometry audit performance and diagnostics (2026-11-28)
+
+The BP02 release gate remains a full structural and operational acceptance audit;
+no acceptance checks are skipped. Parcel generation now builds the combined
+road/water exclusion geometry once rather than re-unioning it for each 500m grid
+cell. Route-corridor clearance uses the existing STRtree with expanding exact
+distance queries instead of evaluating every connector against every building.
+Focused regressions protect exact nearest-building clearance and the no-other-
+building case.
+
+The full audit emits stage start, completion, failure and elapsed-time records.
+The integrated BP03 workflow pins Shapely to 2.1.2, uses unbuffered output and
+limits the BP02 package step to 45 minutes. The package CLI emits Python stack
+traces every five minutes if a geometry operation stalls. These changes improve
+runtime and diagnosis without weakening release gates, changing canonical
+counts, or writing to production Neon. BP03 still requires a passing integrated
+run through BP02 import, BP04 acceptance, exact 9,000-resident materialisation,
+tampered replay rejection, idempotency and final population/residence
+reconciliation before completion can be claimed.
+
 # Saltwater
 
 ## Gemini active-blueprint engineering collaboration

@@ -113,7 +113,11 @@ def build_candidates(source: dict) -> dict:
     water_union = unary_union([g for _, g in water_features]) if water_features else Polygon()
     if not water_union.is_valid:
         raise ValueError("Water union is invalid")
-    water_ids = [(fid, geom) for fid, geom in water_features]
+    # Reuse one exact exclusion overlay instead of re-unioning road and water
+    # geometry for every 500m source cell.
+    excluded_geometry = unary_union([road_reserve, water_union])
+    if not excluded_geometry.is_valid:
+        raise ValueError("Combined road/water exclusion geometry is invalid")
 
     parcels, cell_audit, coverage = [], [], []
     occupied_names: set[str] = set()
@@ -140,10 +144,11 @@ def build_candidates(source: dict) -> dict:
                 cell_index += 1
                 source_cell_count += 1
                 cell = box(x, y, min(x + GRID_M, maxx), min(y + GRID_M, maxy))
-                cell_land = cell.intersection(hood_geom).difference(unary_union([road_reserve, water_union]))
+                cell_clip = cell.intersection(hood_geom)
+                cell_land = cell_clip.difference(excluded_geometry)
                 parts = _polygon_parts(cell_land)
-                water_area = cell.intersection(hood_geom).intersection(water_union).area
-                road_area = cell.intersection(hood_geom).intersection(road_reserve).area
+                water_area = cell_clip.intersection(water_union).area
+                road_area = cell_clip.intersection(road_reserve).area
                 cell_audit.append({
                     "source_neighbourhood_id": hood["id"],
                     "source_cell_index": cell_index,

@@ -9,7 +9,8 @@ import hashlib
 import json
 from pathlib import Path
 
-from shapely import distance as shapely_distance
+from math import hypot
+
 from shapely.geometry import LineString, Polygon, shape
 from shapely.strtree import STRtree
 
@@ -24,6 +25,29 @@ GENERATOR = "BP04-03-ROUTE-CORRIDOR-CANDIDATE-AUDIT-V1"
 
 def _polygon(rings):
     return Polygon(rings[0], rings[1:])
+
+
+def _nearest_other_building_clearance(line, origin_building_id, tree, building_ids, geometries):
+    """Return exact nearest non-origin clearance using indexed radius queries."""
+    if len(building_ids) <= 1:
+        return None
+    min_x = min(geometry.bounds[0] for geometry in geometries)
+    min_y = min(geometry.bounds[1] for geometry in geometries)
+    max_x = max(geometry.bounds[2] for geometry in geometries)
+    max_y = max(geometry.bounds[3] for geometry in geometries)
+    maximum_radius = hypot(max_x - min_x, max_y - min_y) + line.length + 1.0
+    radius = 1.0
+    while True:
+        indexes = tree.query(line, predicate="dwithin", distance=radius)
+        candidates = [int(index) for index in indexes
+                      if building_ids[int(index)] != origin_building_id]
+        if candidates:
+            # Any geometry outside this radius is farther than every returned
+            # candidate, so this is the exact global nearest other building.
+            return min(float(line.distance(geometries[index])) for index in candidates)
+        if radius >= maximum_radius:
+            return None
+        radius = min(radius * 2.0, maximum_radius)
 
 
 def build_route_corridor_candidates(source: dict, candidates: dict | None = None,
@@ -139,13 +163,10 @@ def build_route_corridor_candidates(source: dict, candidates: dict | None = None
             exceptions["other_building_intersections"].append({
                 "connector_id": cid, "building_ids": other_building_hits
             })
-        all_clearances = shapely_distance(line, building_geometry_values)
-        other_clearances = [
-            float(all_clearances[index])
-            for index, other_id in enumerate(building_geometry_ids)
-            if other_id != origin_building_id
-        ]
-        min_building_clearance = min(other_clearances) if other_clearances else None
+        min_building_clearance = _nearest_other_building_clearance(
+            line, origin_building_id, building_geometry_tree,
+            building_geometry_ids, building_geometry_values,
+        )
         if min_building_clearance is not None:
             clearance_values.append(min_building_clearance)
 

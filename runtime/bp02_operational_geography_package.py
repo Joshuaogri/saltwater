@@ -5,6 +5,7 @@ The complete BP02 gameplay acceptance audit is rerun before packaging.
 """
 from __future__ import annotations
 
+import faulthandler
 import gzip
 import hashlib
 import json
@@ -131,11 +132,16 @@ def build_release() -> tuple[bytes, dict]:
 
 
 def main() -> None:
-    compressed, manifest = build_release()
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_bytes(compressed)
-    MANIFEST.write_bytes(canonical_json(manifest) + b"\n")
-    print(json.dumps(manifest, indent=2, sort_keys=True))
+    # Emit recurring Python stacks if a geometry operation stalls in CI.
+    faulthandler.dump_traceback_later(300, repeat=True)
+    try:
+        compressed, manifest = build_release()
+        OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+        OUTPUT.write_bytes(compressed)
+        MANIFEST.write_bytes(canonical_json(manifest) + b"\n")
+        print(json.dumps(manifest, indent=2, sort_keys=True))
+    finally:
+        faulthandler.cancel_dump_traceback_later()
 
 
 if __name__ == "__main__":
