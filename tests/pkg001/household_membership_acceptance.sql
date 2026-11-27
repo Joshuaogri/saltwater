@@ -11,7 +11,7 @@ BEGIN
  INSERT INTO sw_geo.bp02_parcel(source_id,operational_status,record)
  VALUES('SWP-BP03-HH-TEST','ACTIVE_IN_GAME','{"test_fixture":true,"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_geo.bp02_address(source_id,parcel_source_id,operational_status,record)
- VALUES('BP03-HH-TEST:ADDRESS','SWP-BP03-HH-TEST','ACTIVE_IN_GAME','{"test_fixture":true,"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
+ VALUES('SWA-BP03-HH-TEST','SWP-BP03-HH-TEST','ACTIVE_IN_GAME','{"test_fixture":true,"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_property.property_site(
   property_id,display_name,address_id,use_class,lifecycle_status,source_dataset,source_record
  ) VALUES('BP03-HH-TEST:PROPERTY','Fixture mixed-use dwelling',NULL,'mixed_use','active',

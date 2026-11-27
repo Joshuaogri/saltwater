@@ -20,7 +20,8 @@ CREATE FUNCTION sw_geo.link_bp04_bp02_address(
 LANGUAGE plpgsql SECURITY DEFINER
 SET search_path=pg_catalog,sw_geo,sw_property
 AS $$
-DECLARE v_parcel text; v_address_parcel text; v_existing sw_geo.bp04_bp02_address_link%ROWTYPE;
+DECLARE v_parcel text; v_address_parcel text; v_bp02_candidate_parcel text;
+ v_bp02_parcel_source_id text; v_existing sw_geo.bp04_bp02_address_link%ROWTYPE;
 BEGIN
  IF p_bp04_address_id IS NULL OR p_bp02_address_source_id IS NULL
   OR p_source_ref IS NULL OR length(btrim(p_source_ref)) NOT BETWEEN 1 AND 200
@@ -28,13 +29,17 @@ BEGIN
   RAISE EXCEPTION 'both canonical addresses and bounded mapping provenance are required';
  END IF;
  SELECT p.source_record->>'source_candidate_parcel_id',
-        replace(a.source_record->>'source_ref','SW-GEO-V1:','')
- INTO v_parcel,v_address_parcel
+        replace(a.source_record->>'source_ref','SW-GEO-V1:',''),
+        b.record->>'source_candidate_parcel_id',b.parcel_source_id
+ INTO v_parcel,v_address_parcel,v_bp02_candidate_parcel,v_bp02_parcel_source_id
  FROM sw_property.street_address a
  JOIN sw_property.property_site p ON p.property_id=a.property_id
+ LEFT JOIN sw_geo.bp02_address b ON b.source_id=p_bp02_address_source_id
  WHERE a.address_id=p_bp04_address_id;
  IF NOT FOUND THEN RAISE EXCEPTION 'BP04 address identity does not exist'; END IF;
- IF v_parcel IS NULL OR v_address_parcel IS NULL OR v_parcel<>v_address_parcel THEN
+ IF v_parcel IS NULL OR v_address_parcel IS NULL OR v_parcel<>v_address_parcel
+  OR v_bp02_candidate_parcel IS DISTINCT FROM v_parcel
+  OR v_bp02_parcel_source_id IS NULL THEN
   RAISE EXCEPTION 'BP04 address and property source parcel identity are inconsistent';
  END IF;
  IF NOT EXISTS(
@@ -46,6 +51,7 @@ BEGIN
     AND p.operational_status='ACTIVE_IN_GAME'
     AND a.record->>'source_candidate_parcel_id'=v_parcel
     AND p.record->>'source_candidate_parcel_id'=v_parcel
+    AND p.source_id=v_bp02_parcel_source_id
  ) THEN
   RAISE EXCEPTION 'BP02 address and its stable parcel identity do not resolve to the same source parcel';
  END IF;
@@ -54,12 +60,12 @@ BEGIN
  IF FOUND THEN
   IF v_existing.bp04_address_id=p_bp04_address_id
    AND v_existing.bp02_address_source_id=p_bp02_address_source_id
-   AND v_existing.parcel_source_id=v_parcel THEN RETURN true; END IF;
+   AND v_existing.parcel_source_id=v_bp02_parcel_source_id THEN RETURN true; END IF;
   RAISE EXCEPTION 'address crosswalk source identity conflicts with an existing mapping';
  END IF;
  INSERT INTO sw_geo.bp04_bp02_address_link(
   bp04_address_id,bp02_address_source_id,parcel_source_id,source_ref,evidence_ref
- ) VALUES(p_bp04_address_id,p_bp02_address_source_id,v_parcel,p_source_ref,p_evidence_ref);
+ ) VALUES(p_bp04_address_id,p_bp02_address_source_id,v_bp02_parcel_source_id,p_source_ref,p_evidence_ref);
  RETURN true;
 END $$;
 
