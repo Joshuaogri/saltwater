@@ -143,7 +143,7 @@ def materialise(database_url: str) -> dict:
                 staged.append((
                     candidate["candidate_ref"], candidate["source_ref"], candidate["given_name"],
                     candidate.get("middle_name"), candidate["family_name"], candidate["display_name"],
-                    "SWDB001-P-" + suffix.zfill(5),
+                    "SWDB001-P-" + str(int(suffix)).zfill(5),
                 ))
             conn.execute("""
                 CREATE TEMP TABLE bp03_candidate_stage (
@@ -188,7 +188,9 @@ def materialise(database_url: str) -> dict:
                 raise RuntimeError(f"separate 500-person police cohort changed: {police_count}")
 
             # Preflight every candidate against the global registry before profile updates.
+            conn.execute("SET LOCAL search_path = pg_catalog, sw_names, public")
             conn.execute("SET LOCAL pg_trgm.similarity_threshold = '0.90'")
+            conn.execute("CREATE INDEX bp03_candidate_stage_trgm_idx ON bp03_candidate_stage USING gin(normalized_name sw_names.gin_trgm_ops)")
             conflicts = conn.execute("""
                 SELECT count(*) FROM bp03_candidate_stage c
                 JOIN sw_names.name_reservation r
