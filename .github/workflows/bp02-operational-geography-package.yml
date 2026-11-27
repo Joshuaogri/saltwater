@@ -61,6 +61,27 @@ jobs:
               print("postgres_version=" + conn.execute("SHOW server_version").fetchone()[0])
               print("database_bytes_before=" + str(conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]))
           PY
+      - name: Measure incremental 0002 schema storage over existing 0001 foundation
+        run: |
+          python - <<'PY'
+          import os, psycopg
+          from pathlib import Path
+          from runtime.migrate_bp02 import migration_plan, _migration_body
+          plan = migration_plan()
+          assert len(plan) == 2 and plan[0]["migration_name"] == "0001_source_archive" and plan[1]["migration_name"] == "0002_operational_geography"
+          with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as conn:
+              with conn.transaction():
+                  conn.execute(_migration_body(plan[0]["path"]))
+                  conn.execute("INSERT INTO sw_geo.bp02_schema_migration(version,migration_name,checksum_sha256) VALUES (%s,%s,%s)", (1, plan[0]["migration_name"], plan[0]["checksum_sha256"]))
+              after_0001 = conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]
+              with conn.transaction():
+                  conn.execute(_migration_body(plan[1]["path"]))
+                  conn.execute("INSERT INTO sw_geo.bp02_schema_migration(version,migration_name,checksum_sha256) VALUES (%s,%s,%s)", (2, plan[1]["migration_name"], plan[1]["checksum_sha256"]))
+              after_0002 = conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]
+              print(f"schema_bytes_after_0001={after_0001}")
+              print(f"schema_bytes_after_0002={after_0002}")
+              print(f"incremental_0002_schema_growth_bytes={after_0002-after_0001}")
+          PY
       - name: Run BP02 acceptance once and build the package
         run: python -m runtime.bp02_operational_geography_package
       - name: Verify package and manifest integrity
