@@ -156,6 +156,7 @@ jobs:
           echo "bp03_population_residence_schema_growth_bytes=$((after-before))"
       - name: Import accepted BP02 operational geography into disposable world
         run: |
+          python -m pip install 'shapely>=2,<3'
           python -m runtime.bp02_operational_geography_package
           python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
