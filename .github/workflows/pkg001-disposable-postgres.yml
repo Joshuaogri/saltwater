@@ -298,6 +298,9 @@ jobs:
       - name: Run opening police person seed against the authoritative naming registry
         timeout-minutes: 10
         run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed_postgres.py" -v
+      - name: Run opening 9,000 civilian resident names against the authoritative naming registry
+        timeout-minutes: 20
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_resident_person_seed_postgres.py" -v
       - name: Run SW-NAM-001 PostgreSQL concurrency and rollback tests
         run: python -m unittest discover -s tests/pkg001 -p "test_naming_postgres.py" -v
       - name: Test persistent session verifier and durable audit sink

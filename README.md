@@ -81,6 +81,9 @@ active police-service member. No production Neon migration or population
 seed has been run. BP03 remains in progress pending disposable PostgreSQL
 acceptance and later BP02 address / BP06 service integration.
 
+
+
+The 9,000-person civilian candidate set now has a disposable PostgreSQL SW-UNS acceptance test. It stages all candidates, creates canonical person identities in one transaction, verifies that all 9,000 receive unique canonical reservations against the existing global registry, checks the exact 9,000 + 500 opening arithmetic and civilian/police name separation, then rolls back the entire test. The separate 500-person police registry preflight remains in place. These are preflight-only records; no production identities or population qualifications are created.
 ## BP03 opening identity candidate cohorts — 2026-11-27
 
 BP03 now has deterministic, source-controlled candidate datasets for both exact
