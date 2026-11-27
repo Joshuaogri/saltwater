@@ -54,6 +54,14 @@ CREATE INDEX name_reservation_owner_idx
 CREATE INDEX name_reservation_trgm_idx
   ON sw_names.name_reservation USING gin(normalized_key sw_names.gin_trgm_ops);
 
+-- Candidate names are preflighted once per generated manifest. This makes
+-- large deterministic imports bounded without weakening cross-batch checks.
+CREATE TABLE sw_names.generation_batch_candidate (
+  batch_id bigint NOT NULL REFERENCES sw_names.generation_batch(batch_id),
+  normalized_key text NOT NULL CHECK (length(normalized_key) BETWEEN 1 AND 200),
+  PRIMARY KEY (batch_id,normalized_key)
+);
+
 CREATE TABLE sw_names.name_event (
   name_event_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   reservation_id bigint NOT NULL REFERENCES sw_names.name_reservation(reservation_id),
@@ -103,6 +111,101 @@ BEGIN
   RETURN v;
 END
 $$;
+
+CREATE FUNCTION sw_names.preflight_generation_batch(
+  p_batch_id bigint,p_display_names text[]
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=pg_catalog,sw_names,public AS $
+DECLARE
+  v_expected integer;
+  v_total integer;
+  v_distinct integer;
+  v_existing integer;
+  v_mismatch boolean;
+BEGIN
+  -- Hold the same transaction lock as individual reservations throughout
+  -- preflight and subsequent reservation writes.
+  PERFORM pg_advisory_xact_lock(725101001::bigint);
+  SELECT candidate_count INTO v_expected
+  FROM sw_names.generation_batch WHERE batch_id=p_batch_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'generation batch does not exist'; END IF;
+  IF p_display_names IS NULL OR cardinality(p_display_names)<>v_expected
+     OR array_position(p_display_names,NULL) IS NOT NULL THEN
+    RAISE EXCEPTION 'preflight name count must match the generation manifest';
+  END IF;
+
+  SELECT count(*),count(DISTINCT normalized_key)
+    INTO v_total,v_distinct
+  FROM (
+    SELECT sw_names.normalize_name(u.display_name) AS normalized_key
+    FROM unnest(p_display_names) AS u(display_name)
+  ) candidate;
+  IF v_total<>v_expected OR v_distinct<>v_total THEN
+    RAISE EXCEPTION 'generated batch contains duplicate or invalid normalized names';
+  END IF;
+
+  PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
+  IF EXISTS (
+    WITH candidate AS (
+      SELECT sw_names.normalize_name(u.display_name) AS normalized_key,
+             u.ordinality
+      FROM unnest(p_display_names) WITH ORDINALITY AS u(display_name,ordinality)
+    )
+    SELECT 1 FROM candidate a JOIN candidate b
+      ON a.ordinality<b.ordinality
+     AND a.normalized_key OPERATOR(sw_names.%) b.normalized_key
+  ) THEN
+    RAISE EXCEPTION 'generated batch contains near-duplicate names';
+  END IF;
+
+  IF EXISTS (
+    WITH candidate AS (
+      SELECT sw_names.normalize_name(u.display_name) AS normalized_key
+      FROM unnest(p_display_names) AS u(display_name)
+    )
+    SELECT 1
+    FROM candidate c
+    JOIN sw_names.name_reservation r
+      ON (r.normalized_key=c.normalized_key
+          OR r.normalized_key OPERATOR(sw_names.%) c.normalized_key)
+    WHERE r.generation_batch_id IS DISTINCT FROM p_batch_id
+  ) THEN
+    RAISE EXCEPTION 'generated batch conflicts with the existing global name registry';
+  END IF;
+
+  SELECT count(*) INTO v_existing
+  FROM sw_names.generation_batch_candidate
+  WHERE batch_id=p_batch_id;
+  IF v_existing>0 THEN
+    WITH candidate AS (
+      SELECT sw_names.normalize_name(u.display_name) AS normalized_key
+      FROM unnest(p_display_names) AS u(display_name)
+    ), differences AS (
+      (SELECT normalized_key FROM candidate
+       EXCEPT
+       SELECT normalized_key FROM sw_names.generation_batch_candidate
+       WHERE batch_id=p_batch_id)
+      UNION ALL
+      (SELECT normalized_key FROM sw_names.generation_batch_candidate
+       WHERE batch_id=p_batch_id
+       EXCEPT
+       SELECT normalized_key FROM candidate)
+    )
+    SELECT EXISTS(SELECT 1 FROM differences) OR v_existing<>v_expected
+      INTO v_mismatch;
+    IF v_mismatch THEN
+      RAISE EXCEPTION 'generation batch preflight manifest cannot be changed';
+    END IF;
+    RETURN v_total;
+  END IF;
+
+  INSERT INTO sw_names.generation_batch_candidate(batch_id,normalized_key)
+  SELECT p_batch_id,sw_names.normalize_name(u.display_name)
+  FROM unnest(p_display_names) AS u(display_name);
+  RETURN v_total;
+END
+$;
 
 CREATE FUNCTION sw_names.record_generation_batch(
   p_domain text,p_generator_version smallint,p_normalizer_version smallint,
@@ -190,11 +293,16 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM sw_names.name_reservation r
     WHERE r.normalized_key <> NEW.normalized_key
-      -- Generated batches are preflighted as a set before insertion; avoid
-      -- quadratic comparisons with earlier rows from the same manifest.
-      -- Exact duplicates remain protected by the namespace unique constraint.
-      AND (NEW.generation_batch_id IS NULL
-           OR r.generation_batch_id IS DISTINCT FROM NEW.generation_batch_id)
+      -- Exclude earlier rows from this batch only when this exact normalized
+      -- name was registered by the privileged batch-preflight function.
+      AND (
+        NOT EXISTS (
+          SELECT 1 FROM sw_names.generation_batch_candidate c
+          WHERE c.batch_id=NEW.generation_batch_id
+            AND c.normalized_key=NEW.normalized_key
+        )
+        OR r.generation_batch_id IS DISTINCT FROM NEW.generation_batch_id
+      )
       AND r.normalized_key % NEW.normalized_key
   ) THEN
     RAISE EXCEPTION 'near-duplicate name requires review before reservation';
@@ -573,6 +681,7 @@ GRANT EXECUTE ON FUNCTION sw_names.search_name(text) TO sw_game_readonly;
 GRANT EXECUTE ON FUNCTION sw_names.latest_status(bigint) TO sw_game_readonly;
 GRANT EXECUTE ON FUNCTION sw_names.reserve_name(text,bigint,text,text,text,text,text,bigint,bigint) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.record_generation_batch(text,smallint,smallint,text,bigint,bytea,integer,text,text,text) TO sw_game_command;
+GRANT EXECUTE ON FUNCTION sw_names.preflight_generation_batch(bigint,text[]) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.add_alias(text,bigint,text,text,text,text,bigint) TO sw_game_command;
 GRANT EXECUTE ON FUNCTION sw_names.change_status(bigint,text,bigint,text,text,text) TO sw_game_command;
 
