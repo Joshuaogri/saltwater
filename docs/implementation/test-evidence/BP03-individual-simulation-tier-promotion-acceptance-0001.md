@@ -2,14 +2,14 @@
 
 **Date:** 2026-11-27  
 **Blueprint:** BP03 — Population and Individual Simulation  
-**Workflow:** [BP03 Individual Simulation Acceptance](https://github.com/Joshuaogri/saltwater/actions/runs/46039112729)  
+**Workflow:** [BP03 Individual Simulation Acceptance](https://github.com/Joshuaogri/saltwater/actions/runs/46040104903)  
 **Result:** PASS  
 **PostgreSQL:** Disposable PostgreSQL 16.16  
 **Main commit under test:** `05696a91bd7892903a8e9812305c432d3fce60f8`
 
 ## Implemented
 
-- Canonical people have a registry-level tier (0) in the simulation summary.
+- Every canonical person is automatically assigned a persisted registry-level tier (0) and an initial tier-history record at identity creation.
 - Event-backed tier transitions support tiers 0–3.
 - Tier history is append-only and records prior/new tier, trigger, source, reason, actor and effective simulation tick.
 - Material police relevance can permanently promote a person to tier 3.
@@ -21,13 +21,13 @@
 ## Acceptance exercised
 
 - Create a canonical person using the SW-UNS name reservation path.
-- Verify default tier 0.
+- Verify persisted default tier 0 and its initial creation-history event.
 - Advance tier 0 → 1.
 - Promote a material witness to tier 3.
 - Verify promotion trigger provenance and permanent flag.
 - Retry promotion without creating a second promotion.
 - Attempt tier 3 → 2 and verify rejection.
-- Verify exactly two tier-change history rows and one promotion record.
+- Verify the initial tier-zero record, tier 0 → 1 and tier 1 → 3 history, and exactly one promotion record.
 - Test ran in a transaction and rolled back; no persistent game population was created.
 
 ## Storage measurement
