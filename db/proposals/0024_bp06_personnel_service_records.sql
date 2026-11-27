@@ -246,6 +246,7 @@ DECLARE
   v_event_kind text;
 BEGIN
   IF p_appointment_id IS NULL
+     OR p_new_state IS NULL
      OR p_new_state NOT IN ('pending_start','probationary','active','leave','suspended',
        'secondment_out','secondment_in','notice','separated','retired','deceased','rescinded')
      OR p_source_ref IS NULL OR length(btrim(p_source_ref)) NOT BETWEEN 1 AND 200
