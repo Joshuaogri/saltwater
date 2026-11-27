@@ -371,9 +371,11 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
 
             name_batch_id = conn.execute("""
                 SELECT sw_names.record_generation_batch(
-                    'PERSON',1,1,'saltwater-opening-civilian-resident-seed-v1',
-                    %s,%s,9000,'SW-OPENING-CIVILIAN-RESIDENT-SEED-V1',%s,
-                    'BP03 disposable identity materialisation; exact 9,000-person civilian cohort'
+                    'PERSON'::text,1::smallint,1::smallint,
+                    'saltwater-opening-civilian-resident-seed-v1'::text,
+                    %s::bigint,%s::bytea,9000::integer,
+                    'SW-OPENING-CIVILIAN-RESIDENT-SEED-V1'::text,%s::text,
+                    'BP03 disposable identity materialisation; exact 9,000-person civilian cohort'::text
                 )
             """, (candidate_payload["seed"], bytes.fromhex(candidate_payload["manifest_sha256"]), ACTOR)).fetchone()[0]
             conn.execute("""
