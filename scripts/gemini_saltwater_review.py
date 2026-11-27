@@ -96,8 +96,13 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
             changed = git("diff", "--name-only", f"{before}...{head}").splitlines()
         else:
             changed = tracked
+        active_bp = os.environ.get("ACTIVE_BP", "BP02").strip().upper()
         core = [p for p in tracked if p == "README.md" or p.startswith("docs/blueprint/") or p.startswith("docs/implementation/")]
-        chosen = set(p for p in changed if p in tracked) | set(core)
+        bp_prefixes = {
+            "BP02": ("runtime/bp02", "data/geography/", "data/property/", "tests/pkg001/test_bp02", ".github/workflows/bp02-", "docs/deployment/BP02"),
+        }.get(active_bp, ())
+        active_bp_files = [p for p in tracked if any(p.startswith(prefix) for prefix in bp_prefixes)]
+        chosen = set(p for p in changed if p in tracked) | set(core) | set(active_bp_files)
         omitted = [p for p in tracked if p not in chosen]
         return sorted(chosen), omitted
     return sorted(tracked), omitted
