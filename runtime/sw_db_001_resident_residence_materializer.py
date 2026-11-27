@@ -419,20 +419,62 @@ def materialise(database_url: str) -> dict:
                 raise RuntimeError(f"materialised {len(inserted)} residence links, expected 9,000")
 
             counts = conn.execute("""
-                SELECT count(*),count(DISTINCT a.person_id),count(DISTINCT a.unit_id),
+                SELECT count(*) AS assignment_rows,
+                       count(DISTINCT a.person_id),
+                       count(DISTINCT a.unit_id),
                        count(DISTINCT a.bp02_address_source_id),
-                       count(*) FILTER (WHERE r.residence_status='current'),
+                       count(DISTINCT a.candidate_ref),
+                       count(*) FILTER (WHERE r.residence_status='current'
+                         AND r.person_id=a.person_id
+                         AND r.address_source_id=a.bp02_address_source_id
+                         AND r.residence_kind='permanent'),
                        count(*) FILTER (WHERE ps.usual_resident),
-                       count(*) FILTER (WHERE p.source_ref LIKE 'SW-OPENING-CIVILIAN-RESIDENT-SEED-V1:%'
-                         AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=s.display_name)
+                       count(*) FILTER (WHERE p.source_ref=s.source_ref
+                         AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=s.display_name),
+                       count(*) FILTER (WHERE a.source_ref=
+                         'SW-BP03:DISPOSABLE-RESIDENCE:'||a.allocation_ref)
                 FROM sw_test.opening_resident_dwelling_assignment a
-                JOIN sw_people.person_residence r ON r.residence_id=a.residence_id
-                JOIN sw_people.population_state ps ON ps.person_id=a.person_id
-                JOIN sw_people.person p ON p.person_id=a.person_id
-                JOIN bp03_candidate_stage s ON s.candidate_ref=a.candidate_ref AND s.source_ref=p.source_ref
+                LEFT JOIN sw_people.person_residence r ON r.residence_id=a.residence_id
+                LEFT JOIN sw_people.population_state ps ON ps.person_id=a.person_id
+                LEFT JOIN sw_people.person p ON p.person_id=a.person_id
+                LEFT JOIN bp03_candidate_stage s
+                  ON s.candidate_ref=a.candidate_ref AND s.source_ref=p.source_ref
                 WHERE a.batch_id=%s
             """, (batch_id,)).fetchone()
-            if counts != (9000, 9000, 9000, expected_addresses, 9000, 9000, 9000):
+            exact = conn.execute("""
+                SELECT count(*)
+                FROM sw_test.opening_resident_dwelling_assignment a
+                JOIN bp03_allocation_expected x
+                  ON x.allocation_ref=a.allocation_ref
+                 AND x.candidate_ref=a.candidate_ref
+                 AND x.person_source_ref=a.source_ref -- assignment source_ref is separately checked below
+                 AND x.unit_id=a.unit_id
+                 AND x.bp04_address_id=a.bp04_address_id
+                 AND x.bp02_address_source_id=a.bp02_address_source_id
+                 AND x.neighbourhood_id=a.neighbourhood_id
+                JOIN bp03_candidate_stage s
+                  ON s.candidate_ref=a.candidate_ref
+                 AND s.source_ref=x.person_source_ref
+                 AND s.display_name=x.display_name
+                JOIN sw_people.person p
+                  ON p.person_id=a.person_id AND p.source_ref=x.person_source_ref
+                 AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=x.display_name
+                JOIN sw_people.person_residence r
+                  ON r.residence_id=a.residence_id AND r.person_id=a.person_id
+                 AND r.address_source_id=x.bp02_address_source_id
+                 AND r.residence_kind='permanent' AND r.residence_status='current'
+                WHERE a.batch_id=%s
+            """, (batch_id,)).fetchone()[0]
+            if counts[0] != EXPECTED_RESIDENTS or exact != EXPECTED_RESIDENTS:
+                raise RuntimeError(
+                    f"first-run allocation manifest mismatch: assignments={counts[0]}, "
+                    f"exact_manifest_and_person_residence_matches={exact}, expected=9000"
+                )
+            if counts[1:] != (
+                EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, expected_addresses,
+                EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS,
+                EXPECTED_RESIDENTS, EXPECTED_RESIDENTS
+            ):
                 raise RuntimeError(f"residence materialisation failed reconciliation: {counts!r}")
             return {
                 "status": "materialised",
