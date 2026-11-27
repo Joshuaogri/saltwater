@@ -98,9 +98,8 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
             changed = tracked
         active_bp = os.environ.get("ACTIVE_BP", "BP02").strip().upper()
         core = [p for p in tracked if p == "README.md"]
-        # Keep each Gemini request within a deliberately small, high-signal BP02
-        # evidence pack. Do not send every property dataset or every historical
-        # review file on each push; changed files are still included separately.
+        # Keep each Gemini request within a small, high-signal evidence pack
+        # for the selected active BP. Changed files are included separately.
         active_bp_files = {
             "BP02": (
                 "docs/blueprint/divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md",
@@ -118,6 +117,24 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
                 ".github/workflows/bp02-operational-geography-package.yml",
                 "data/geography/saltwater-geography-v1.json",
                 "data/geography/saltwater-geography-v1-identity-map.json",
+            ),
+            "BP03": (
+                "docs/blueprint/divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md",
+                "docs/blueprint/decisions/SW-CANON-001-population-scope-and-foundational-geography.md",
+                "docs/implementation/approval-packages/PKG-001-runtime-city-population.md",
+                "docs/implementation/test-evidence/PKG-001-run-0001.md",
+                "docs/implementation/test-evidence/PKG-001-run-0004.md",
+                "docs/implementation/test-evidence/PKG-001-run-0005.md",
+                "docs/implementation/test-evidence/BP03-opening-police-person-seed-build-0001.md",
+                "docs/implementation/BP01-foundational-implementation-register.md",
+                "db/proposals/0002_runtime_city_population.sql",
+                "db/proposals/0033_bp06_opening_personnel_cohort.sql",
+                "runtime/opening_police_person_seed.py",
+                "tests/pkg001/test_population_concurrency.py",
+                "tests/pkg001/population_cap_fixture.sql",
+                "tests/pkg001/test_opening_police_person_seed.py",
+                "data/naming/saltwater-person-naming-v1.json",
+                "data/people/saltwater-opening-police-person-seed-v1.json",
             ),
         }.get(active_bp, ())
         active_bp_files = [p for p in active_bp_files if p in tracked]
@@ -183,7 +200,7 @@ MANDATORY SCOPE CONTROL:
 - Identify the exact BP title from the repository's authoritative blueprint documents. If this active BP cannot be identified unambiguously, state that and stop short of guessing.
 - Review implementation, source data, migration/package design, tests, acceptance evidence, storage/performance, and deployment readiness belonging to {active_bp}.
 - Examine other blueprint divisions only where a concrete dependency or interface affects {active_bp}; name the dependency and explain the impact. Do not audit those divisions independently.
-- For this current BP02 task, the immediate focus is operational geography: operational deployment package, source-to-table mapping, identity preservation, districts/neighbourhoods/features/roads/network nodes/segments/routes/parcels/addresses/access-point locators, referential integrity, deterministic packaging, test coverage, measured Neon storage impact, and safe separation from the already completed archive-only release. Do not claim operational geography is already deployed.
+- For BP02, focus on operational geography deployment, source-to-table mapping, identity preservation, spatial/network records, referential integrity, deterministic packaging, tests and measured Neon storage. For BP03, focus on population accounting and individual simulation: one canonical person identity, binding scope/countability rules, 9,500-person opening arithmetic, the 10,000 hard cap, atomic admission/lifecycle history, residence links, demographic provenance, detail tiers and irreversible police-relevance promotion. Review only the active division's concrete implementation and its dependencies. Do not claim an opening population seed or production population deployment exists unless evidence proves it.
 - Distinguish verified evidence, source-level observations, hypotheses and unknowns. Never claim you ran tests, queried Neon, accessed secrets or executed code.
 - Prioritise the fastest safe, evidence-backed fix. For proven defects give exact files, minimal changes and focused regression tests. If evidence is insufficient, specify the single best targeted experiment.
 - Preserve main-only GitHub development. Never recommend branches or PRs.
