@@ -29,7 +29,8 @@ class BP02DomainMigrationTests(unittest.TestCase):
             self.assertIn(f"sw_geo.{table}", sql)
         self.assertIn("production_seed_approved boolean not null default false", sql)
         self.assertIn("operational_status='active_in_game'", sql)
-        self.assertNotIn("postgis", sql)
+        self.assertNotIn("create extension postgis", sql)
+        self.assertIn("geometry jsonb not null", sql)
 
     def test_checksum_is_sha256_of_exact_migration_bytes(self):
         self.assertEqual(migration_checksum(), hashlib.sha256(MIGRATION.read_bytes()).hexdigest())
