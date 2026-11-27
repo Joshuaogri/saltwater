@@ -71,7 +71,7 @@ The versioned person vocabulary and deterministic candidate generator now produc
 
 ### BP03 identity-registry evidence update (2026-11-27)
 
-The dedicated disposable PostgreSQL workflow [46060309607](https://github.com/Joshuaogri/saltwater/actions/runs/46060309607) passed the 500-person police and 9,000-person civilian SW-UNS candidate identity tests on commit `04ae2929afd8c60ae332251399f8e2e1e01521f5`. This establishes candidate registry preflight and rollback only; it does not establish the 9,000-person canonical residence materialisation. The follow-up trigger correction is on `main` as [d1ea709](https://github.com/Joshuaogri/saltwater/commit/d1ea7093d611c2bf8df85eccc90fc4f0b10a27bd), and the latest identity rerun was still executing its 9,000-person step when inspected. BP03 remains in progress.
+The dedicated disposable PostgreSQL workflow [46060309607](https://github.com/Joshuaogri/saltwater/actions/runs/46060309607) passed the 500-person police and 9,000-person civilian SW-UNS candidate identity tests on commit `04ae2929afd8c60ae332251399f8e2e1e01521f5`. The follow-up trigger correction is on `main` as [d1ea709](https://github.com/Joshuaogri/saltwater/commit/d1ea7093d611c2bf8df85eccc90fc4f0b10a27bd); the identity workflow rerun [46060745398](https://github.com/Joshuaogri/saltwater/actions/runs/46060745398) also passed all 500 police and 9,000 civilian tests on that commit. This establishes candidate registry preflight and rollback only, not canonical residence materialisation. BP03 remains in progress.
 
 ## 6. Acceptance and release boundary
 
