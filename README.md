@@ -1,44 +1,35 @@
 # Saltwater
 
-## Gemini project-wide engineering collaboration
+## Gemini active-blueprint engineering collaboration
 
-Gemini is incorporated as Saltwater's independent engineering reviewer across the
-**entire project**, not only BP04. The project-wide workflow
-[gemini-saltwater-project-review.yml](.github/workflows/gemini-saltwater-project-review.yml)
-runs automatically on every push to `main`, performs a scheduled full-repository
-review every Monday, and supports a manually requested full or changed-scope
-review. The specialised
-[Gemini BP04 review](.github/workflows/gemini-bp04-review.yml) remains available
-for focused business-name/PostgreSQL performance diagnosis.
+Gemini is used as an independent engineering collaborator for the **currently active
+blueprint division**. Every review is explicitly told the active BP identifier and
+must focus on that BP rather than conducting an unfocused whole-project audit.
+The active division is selected through the workflow's `active_bp` input; the
+current default is **BP02 — Sovereign City-State Geography**. When project work
+moves to another BP, update the default so automatic push and scheduled reviews
+target the new active division. Manual runs can select a different BP.
 
-The project-wide remit covers all 44 blueprint divisions and their integration:
-game canon and runtime; population and NPC simulation; geography and property;
-businesses and economy; police command, personnel, patrol, dispatch,
-investigations and evidence; justice and custody; world time and persistence;
-database schemas, migrations and storage; authentication and security; tests,
-CI/CD, deployment, interfaces and documentation.
+For BP02, Gemini's primary review scope is operational geography: deployment
+package, source-to-table mapping, stable identity, districts, neighbourhoods,
+features, roads, network nodes and segments, routes, parcels, addresses,
+access-point locators, referential integrity, deterministic packaging, tests,
+measured Neon storage impact, and separation from the completed archive-only
+release. Other BPs are examined only for concrete dependencies affecting the
+active BP; they are not independently audited.
 
-On ordinary pushes, Gemini reviews changed files together with the complete
-blueprint and implementation documentation. The weekly/manual full audit reviews
-all tracked text-based source and documentation in bounded context slices.
-Large JSON datasets are represented by structural summaries, bounded samples
-and SHA-256 hashes; compressed and binary artifacts are not sent. The report
-explicitly identifies material outside a run's scope and distinguishes verified
-evidence from hypotheses. This is independent review, not a claim that Gemini
-executed tests or inspected live Neon.
+The workflow runs on pushes to `main`, weekly, and on manual dispatch. It can
+collect changed or full repository context, but the review mandate remains
+focused on the selected BP. Large JSON datasets are structurally summarised
+with bounded samples and hashes; compressed and binary artifacts are excluded.
+Gemini must distinguish evidence from hypotheses and must not claim it ran
+tests or inspected live Neon.
 
-The reviewer is read-only: it has no repository write permission, no Neon
-credentials and no authority to change code. ChatGPT evaluates Gemini's findings,
-checks them against source and test evidence, implements justified fixes on
-`main`, and verifies the result. Production Neon writes remain subject to the
-existing explicit-approval and measured-storage rules.
-
-The workflow reads the existing repository Actions secret named
-`GEMINI_API_KEY`; no key belongs in source code or chat. If the secret is
-present, the first automatic review runs after this workflow is committed to
-`main`. Reports appear in the GitHub Actions run summary and as a 30-day
-artifact. Gemini's temporary background interaction is deleted after its report
-is retrieved; the report itself is retained as the workflow artifact.
+Gemini is read-only and has no repository write permission or Neon credentials.
+ChatGPT checks its findings, implements justified fixes directly on `main`,
+and validates them. Production Neon writes remain subject to explicit approval
+and a measured storage estimate. The workflow uses the existing
+`GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
 ## BP02 bridge identity and business-naming lock remediation — 2026-11-26
 
