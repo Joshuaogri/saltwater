@@ -22,6 +22,7 @@ DECLARE
   existing_business_name text;
   existing_geography_name text;
   existing_person_name text;
+  test_person_id integer;
   v_tick bigint;
 BEGIN
   IF current_database()<>'saltwater_test' THEN
@@ -207,8 +208,14 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='geography/property global name collision unexpectedly succeeded' THEN RAISE; END IF;
   END;
+  -- The opening population is seeded later. Create a temporary person through
+  -- the canonical BP03 service so this collision check is independent of seed order.
+  test_person_id := sw_people.create_person(
+    'BP04Test', 'Collision', 'bp04-test:person-name-collision',
+    'test-runner', 'temporary person for global naming collision acceptance'
+  );
   SELECT concat_ws(' ',given_name,middle_name,family_name) INTO STRICT existing_person_name
-  FROM sw_people.person WHERE given_name IS NOT NULL AND family_name IS NOT NULL LIMIT 1;
+  FROM sw_people.person WHERE person_id=test_person_id;
   BEGIN
     INSERT INTO sw_property.property_asset
       (entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
