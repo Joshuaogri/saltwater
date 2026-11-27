@@ -1,0 +1,25 @@
+{
+  "allocated_candidate_count": 9000,
+  "candidate_count": 9000,
+  "compressed_bytes": 244187,
+  "dataset_id": "SW-OPENING-RESIDENT-DWELLING-ALLOCATION-V1",
+  "eligible_dwelling_count": 55558,
+  "manifest_sha256": "256d2471eb62a97cd4cacb444aa194d54ba0765b17a3dd0763f460712d8ed993",
+  "materialisation_status": "CANDIDATE_DWELLING_MATCHES_ONLY_NO_CANONICAL_PERSON_RESIDENCE_OR_HOUSEHOLD_ROWS",
+  "neighbourhood_count": 8,
+  "occupancy_capacity_status": "NOT_ASSESSED",
+  "production_seed_authorized": false,
+  "source_datasets": {
+    "bp02_identity_rule": "SWP- + first 16 uppercase SHA-256 hex characters of source_candidate_parcel_id; SWA- + first 16 uppercase SHA-256 hex characters of BP04 address_id",
+    "property_world": {
+      "compressed_sha256": "7223d8eb4dfa9b2473bf1424f08d345e2edfcd642155fb51fab23734c05c36b7",
+      "dataset_id": "SW-PROPERTY-WORLD-V1"
+    },
+    "resident_candidates": {
+      "compressed_sha256": "33ca630aa39940f8fb4455de9b5afc6eeaab1f0c38bb48fe202468109b13f5cb",
+      "dataset_id": "SW-OPENING-CIVILIAN-RESIDENT-SEED-V1",
+      "manifest_sha256": "e8dcfca02f7a3f2d80d53a90a79eae1b572be135d68653f57a3c451f014dbe43"
+    }
+  },
+  "unallocated_eligible_dwelling_count": 46558
+}
