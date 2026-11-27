@@ -8,7 +8,10 @@ on:
       - 'data/people/saltwater-opening-civilian-resident-seed-v1.json.gz'
       - 'tests/pkg001/test_opening_police_person_seed_postgres.py'
       - 'tests/pkg001/test_opening_resident_person_seed_postgres.py'
+      - 'db/proposals/0009_universal_name_registry.sql'
       - 'db/proposals/0036_bp03_individual_simulation_promotion.sql'
+      - 'runtime/sw_db_001_resident_residence_materializer.py'
+      - 'tests/pkg001/test_opening_resident_person_seed_postgres.py'
       - '.github/workflows/bp03-opening-identity-name-acceptance.yml'
   workflow_dispatch:
 
