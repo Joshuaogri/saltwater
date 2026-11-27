@@ -15,6 +15,9 @@ DECLARE
   v_missing jsonb;
   v_person_id integer;
   v_event_id bigint;
+  v_lifecycle_appointment uuid;
+  v_lifecycle_person integer;
+  v_lifecycle_population integer;
   i integer;
 BEGIN
   UPDATE sw_runtime.state
@@ -184,6 +187,45 @@ BEGIN
   IF (SELECT count(*) FROM sw_police.career_post_appointment)<>0
      OR (SELECT count(*) FROM sw_police.unit_membership)<>0 THEN
     RAISE EXCEPTION 'personnel provisioning must not silently create BP07 appointments or BP08 memberships';
+  END IF;
+
+  -- Exercise BP06 service lifecycle while the 500-person disposable fixture exists.
+  SELECT e.appointment_id,p.person_id INTO STRICT v_lifecycle_appointment,v_lifecycle_person
+  FROM sw_police.personnel_service_engagement e
+  JOIN sw_police.personnel p USING(personnel_id)
+  JOIN opening_police_fixture_person f USING(person_id)
+  ORDER BY p.service_number LIMIT 1;
+  SELECT living_included INTO v_lifecycle_population
+  FROM sw_people.population_counter WHERE singleton=1;
+
+  PERFORM sw_police.transition_personnel_service_engagement(
+    v_lifecycle_appointment,'leave','BP06-LIFECYCLE-TEST:LEAVE','bp06-ci','temporary leave');
+  IF NOT (SELECT active_police_service FROM sw_people.population_state WHERE person_id=v_lifecycle_person)
+     OR (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>v_lifecycle_population THEN
+    RAISE EXCEPTION 'leave must preserve police membership and the single-person population count';
+  END IF;
+
+  PERFORM sw_police.transition_personnel_service_engagement(
+    v_lifecycle_appointment,'suspended','BP06-LIFECYCLE-TEST:SUSPEND','bp06-ci','suspension pending review');
+  IF NOT (SELECT active_police_service FROM sw_people.population_state WHERE person_id=v_lifecycle_person) THEN
+    RAISE EXCEPTION 'suspension must preserve police service membership';
+  END IF;
+
+  PERFORM sw_police.transition_personnel_service_engagement(
+    v_lifecycle_appointment,'separated','BP06-LIFECYCLE-TEST:SEPARATE','bp06-ci','service ended');
+  IF (SELECT active_police_service FROM sw_people.population_state WHERE person_id=v_lifecycle_person)
+     OR (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>v_lifecycle_population-1
+     OR (SELECT life_status FROM sw_people.population_state WHERE person_id=v_lifecycle_person)<>1 THEN
+    RAISE EXCEPTION 'separation must remove only police qualification while preserving living identity';
+  END IF;
+  IF sw_police.transition_personnel_service_engagement(
+    v_lifecycle_appointment,'separated','BP06-LIFECYCLE-TEST:SEPARATE','bp06-ci','idempotent replay')
+     <>v_lifecycle_population-1 THEN
+    RAISE EXCEPTION 'service transition replay changed population count';
+  END IF;
+  IF (SELECT count(*) FROM sw_police.personnel_service_event
+      WHERE source_ref LIKE 'BP06-LIFECYCLE-TEST:%')<>3 THEN
+    RAISE EXCEPTION 'service lifecycle must retain exactly three immutable transition events';
   END IF;
 
   RAISE NOTICE 'BP06_OPENING_COHORT_PASS people=500 personnel=500 service_engagements=500 population_delta=0 posts_filled=0';
