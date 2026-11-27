@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from runtime.bp04_business_registry_audit import audit_business_registry
+from runtime.property_tenure_generator import _expand_columnar
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -14,7 +15,7 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         with gzip.open(ROOT / "data/business/saltwater-business-registry-v1.json.gz", "rt", encoding="utf-8") as handle:
-            cls.registry = json.load(handle)
+            cls.registry = _expand_columnar(json.load(handle))
         cls.audit = audit_business_registry(cls.registry)
 
     def test_full_ten_thousand_local_business_population_and_lifecycle_counts(self):
