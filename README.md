@@ -1937,3 +1937,10 @@ The GitHub Actions Gemini reviewer is explicitly assigned the current active blu
 ### BP02 simplification — single acceptance pass
 
 The operational-geography package workflow now runs the complete BP02 acceptance audit once, builds the deterministic package from that result, then performs only lightweight checksum/decompression checks before uploading the artifact. The previous separate regression step rebuilt the full audit twice more and was removed from this release workflow. Focused unit tests remain available for code changes that specifically need them; they are not redundantly run alongside the full acceptance build on every package release. This is a CI-efficiency change only: acceptance criteria and production-write protections are unchanged.
+
+
+## BP02 operational geography schema — preparation
+
+The BP02-owned migration stream now includes `0002_operational_geography.sql`, a compact gameplay schema for districts, neighbourhoods, geographic features, roads, junction nodes, road segments, named routes and ordered route links, plus canonical parcel, address, access-point and bridge-connector records. It uses stable source identifiers, JSON geometry/payloads and ordinary PostgreSQL indexes; it does not require PostGIS or alter the global/BP04 migration ledger.
+
+The BP02 migration runner applies numbered domain migrations in order and verifies each exact SHA-256 checksum. Gameplay records are explicitly labelled `ACTIVE_IN_GAME`; the release record keeps `production_seed_approved=false` unless separately authorised. This is schema preparation only: no production Neon write or operational geography import has been performed. The PostgreSQL 18.7 disposable workflow measures schema growth before the data importer is built.
