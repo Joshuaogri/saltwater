@@ -45,7 +45,14 @@ BP06 service-appointment events now update the BP03 canonical population ledger 
 
 Countable service states are active, leave, suspended, secondment-out, secondment-in and notice for primary sworn, civilian, technical-professional and auxiliary appointments. Contractors and terminal/non-service states do not qualify as active police-service members. The sync is driven by the append-only BP06 personnel service event, not by an independently maintained headcount.
 
-Disposable acceptance now reconciles BP06 personnel dossiers against BP03 active-police membership. Production Neon remains unchanged. Residence/address linkage to BP02 is the next integration slice.
+Disposable acceptance now reconciles BP06 personnel dossiers against BP03 active-police membership, including leave, suspension, separation, event history and idempotent replay. Production Neon remains unchanged.
+
+
+## BP03 household membership and residential unit linkage
+
+BP03 now has a disposable-only household service linking canonical people to BP04 residential dwelling units and BP02 operational addresses. The BP04↔BP02 address crosswalk is accepted only when the BP04 property's source parcel identity, the BP04 address provenance and the BP02 address all resolve to the same canonical parcel; no street-name or approximate-location matching is used. A household is limited to one current household per dwelling unit, and a person can have only one current household membership. Membership requires the person's current BP02 residence to match the household address.
+
+Household creation, membership additions and departures retain append-only event history. Household membership does not itself create or remove a person's population qualification: two people in one household remain two canonical people, and ending a household membership does not silently end residence. Disposable acceptance covers exact parcel crosswalk, dwelling validation, two-member household reconciliation, contact uniqueness, membership departure and unchanged population count. No production household, unit or resident records have been imported.
 
 ## BP03 population service — qualification union implementation in CI
 
