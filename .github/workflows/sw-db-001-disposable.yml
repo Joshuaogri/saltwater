@@ -40,6 +40,12 @@ on:
       - ".github/workflows/sw-db-001-disposable.yml"
       - "docs/implementation/approval-packages/SW-DB-001-canonical-world-provisioning-and-capacity-proof.md"
   workflow_dispatch:
+    inputs:
+      full_bp03_residence_materialisation:
+        description: "Run the opt-in full 9,000-resident disposable materialisation and replay checks"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: sw-db-001-${{ github.ref }}
@@ -212,6 +218,24 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY 5 DESC;"
       - name: Run BP03 residence integration acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
+      - name: Provision deterministic opening population and business fixture (opt-in full BP03)
+        if: ${{ inputs.full_bp03_residence_materialisation }}
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -v source_revision="$GITHUB_SHA" -f tests/pkg001/sw_db_001_world_fixture.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "full_fixture_database_growth_bytes=$((after-before))"
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS people, count(*) FILTER (WHERE cohort='RESIDENT') AS residents, count(*) FILTER (WHERE cohort='POLICE_SUBSET') AS police_subset FROM sw_test.person_cohort;"
+      - name: Materialise exactly 9,000 residents and reject tampered allocation replay (opt-in full BP03)
+        if: ${{ inputs.full_bp03_residence_materialisation }}
+        run: python -m runtime.sw_db_001_resident_residence_materializer --negative-replay-test
+      - name: Verify BP03 resident materialisation idempotency (opt-in full BP03)
+        if: ${{ inputs.full_bp03_residence_materialisation }}
+        run: python -m runtime.sw_db_001_resident_residence_materializer
+      - name: Reconcile exact BP03 resident assignments and population (opt-in full BP03)
+        if: ${{ inputs.full_bp03_residence_materialisation }}
+        run: |
+          psql -v ON_ERROR_STOP=1 -c "DO \$\$ DECLARE n_people bigint; n_residences bigint; n_assignments bigint; n_units bigint; n_usual bigint; n_population bigint; BEGIN SELECT count(*) INTO n_people FROM sw_test.person_cohort WHERE cohort='RESIDENT'; SELECT count(*) INTO n_residences FROM sw_people.person_residence r JOIN sw_test.person_cohort c USING (person_id) WHERE c.cohort='RESIDENT' AND r.residence_kind='permanent' AND r.residence_status='current'; SELECT count(*) INTO n_assignments FROM sw_test.opening_resident_dwelling_assignment; SELECT count(DISTINCT unit_id) INTO n_units FROM sw_test.opening_resident_dwelling_assignment; SELECT count(*) INTO n_usual FROM sw_people.population_state ps JOIN sw_test.person_cohort c USING (person_id) WHERE c.cohort='RESIDENT' AND ps.usual_resident; SELECT living_included INTO n_population FROM sw_people.population_counter WHERE singleton=1; IF n_people<>9000 OR n_residences<>9000 OR n_assignments<>9000 OR n_units<>9000 OR n_usual<>9000 OR n_population<>9500 THEN RAISE EXCEPTION 'BP03 full residence reconciliation failed: people %, residences %, assignments %, units %, usual residents %, population %',n_people,n_residences,n_assignments,n_units,n_usual,n_population; END IF; RAISE NOTICE 'BP03 FULL RESIDENCE PASS: 9000 residents, residences, assignments, unique units and usual-resident states; population counter 9500', n_population; END \$\$;"
       - name: Fast opening-world smoke check
         run: |
           psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS people FROM sw_people.person;"
