@@ -22,6 +22,10 @@ BEGIN
 
   IF (SELECT count(*) FROM sw_people.person)<>9500
      OR (SELECT count(*) FROM sw_people.population_state WHERE life_status=1 AND scope_status=1)<>9500
+     OR (SELECT count(*) FROM sw_people.population_state WHERE usual_resident)<>9000
+     OR (SELECT count(*) FROM sw_people.population_state WHERE physically_present)<>500
+     OR (SELECT count(*) FROM sw_people.population_state WHERE active_police_service)<>0
+     OR (SELECT total_living_countable FROM sw_people.population_summary)<>9500
      OR (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>9500 THEN
     RAISE EXCEPTION 'opening population does not reconcile to 9,500';
   END IF;
@@ -68,7 +72,8 @@ BEGIN
   SELECT event_type_id,now(),0,'SW-DB-001:test-exit' FROM sw_core.event_type
   WHERE event_code='POPULATION_STATE_CHANGED' RETURNING event_id INTO v_event;
   UPDATE sw_people.population_state
-  SET scope_status=2,effective_tick=0,last_event_id=v_event
+  SET scope_status=2,usual_resident=false,physically_present=false,active_police_service=false,
+      effective_tick=0,last_event_id=v_event
   WHERE person_id=v_person;
   IF (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>9499
      OR NOT EXISTS (SELECT 1 FROM sw_people.person WHERE person_id=v_person)
@@ -79,7 +84,8 @@ BEGIN
   SELECT event_type_id,now(),0,'SW-DB-001:test-reentry' FROM sw_core.event_type
   WHERE event_code='POPULATION_STATE_CHANGED' RETURNING event_id INTO v_event;
   UPDATE sw_people.population_state
-  SET scope_status=1,effective_tick=0,last_event_id=v_event
+  SET scope_status=1,usual_resident=true,physically_present=false,active_police_service=false,
+      effective_tick=0,last_event_id=v_event
   WHERE person_id=v_person;
   IF (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>9500 THEN
     RAISE EXCEPTION 're-entry did not restore exactly one population slot';
