@@ -1,5 +1,31 @@
 # BP-02 Operational Geography Deployment — Readiness Assessment
 
+> **Current status correction — 2026-11-27:** This document records the historical
+> pre-deployment readiness assessment below. BP02 operational geography has since
+> been explicitly approved and successfully deployed to production Neon. The
+> production release is complete; the preparation-only status and statements that
+> production has no operational geography are historical, not current.
+>
+> Current production verification: GitHub Actions
+> [run 46014720819](https://github.com/Joshuaogri/saltwater/actions/runs/46014720819)
+> passed. Migration 0002 is applied; package
+> `SW-BP02-OPERATIONAL-GEOGRAPHY-V1` is recorded with SHA-256
+> `ee250551239292e16808eb2d063d54dd290a04d001ab2127f2dd3773686ecc10`.
+> Production has 8 districts, 24 neighbourhoods, 54 features, 42 roads, 367
+> nodes, 685 road segments, 5 routes, 116 route-node links, 111 route-segment
+> links, 420 parcels, 420 addresses, 2,948 access-point locators and 4 bridge
+> connector records. All 685 road-segment endpoint/parent-road links and all
+> 420 address/parcel links were independently verified. Access-point and bridge
+> statuses remain the approved in-game statuses; this does not claim physical
+> entrance or legal-access verification.
+>
+> Production size was 16,728,064 bytes in the release workflow and 16,752,640
+> bytes in a subsequent independent read-only query. The guarded pre-release
+> baseline was 9,961,472 bytes. The repeat import added 0 bytes. The recovery
+> branch `br-gentle-moon-bdtc0y32` remains preserved. See the current
+> [production release record](../../README.md#bp02-operational-geography--production-release-completed-2026-11-27).
+
+
 **Status:** PREPARATION — production deployment not yet authorised  
 **Assessment date:** 2026-11-27  
 **Target:** Production Neon `neondb`, PostgreSQL 18.7  
