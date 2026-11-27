@@ -66,7 +66,9 @@ jobs:
           python - <<'PY'
           import os, psycopg
           from pathlib import Path
-          from runtime.migrate_bp02 import migration_plan, _migration_body
+          import sys
+          sys.path.insert(0, "scripts")
+          from migrate_bp02 import migration_plan, _migration_body
           plan = migration_plan()
           assert len(plan) == 2 and plan[0]["migration_name"] == "0001_source_archive" and plan[1]["migration_name"] == "0002_operational_geography"
           with psycopg.connect(os.environ["DATABASE_URL"], autocommit=True) as conn:
