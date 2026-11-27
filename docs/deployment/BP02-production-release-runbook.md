@@ -250,3 +250,12 @@ candidate-only schema and is not suitable for production operational seeding.
 
 No production schema or data was changed during this preparation. The existing
 recovery branch br-gentle-moon-bdtc0y32 remains untouched.
+
+
+## Operational geography package builder — 2026-11-27
+
+The source package builder is now implemented at `runtime/bp02_operational_geography_package.py`. It reruns `run_full_bp02_acceptance_audit()`, requires both structural and operational acceptance to pass, verifies the approved 8/24/42/367/685/5 geography and 420/420/2,948/4 gameplay-layer counts, checks the 100-entry portable identity map, and pins SHA-256 hashes for the geography, identity map and property-world source. It creates deterministic gzip JSON plus a manifest in the local `build/` directory. It does not connect to Neon or write to any database.
+
+The package regression and CI artifact workflow are in `tests/pkg001/test_bp02_operational_geography_package.py` and `.github/workflows/bp02-operational-geography-package.yml`. Workflow run [45994846380](https://github.com/Joshuaogri/saltwater/actions/runs/45994846380) was running when this update was prepared; measured package sizes and pass/fail status will be added only after verified completion.
+
+The next engineering stage is a separate PostgreSQL 18.7 disposable operational-schema/import benchmark. It must report schema-only growth, per-layer insertion growth, total database growth, relation/index sizes, repeat-import growth and representative road/address/parcel lookup plans. No production Neon schema or data write is included or authorised by this package stage.
