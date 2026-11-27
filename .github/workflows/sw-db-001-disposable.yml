@@ -13,6 +13,10 @@ on:
       - "db/proposals/0037_bp03_person_routines_and_movement.sql"
       - "db/proposals/0038_bp03_person_knowledge_boundary.sql"
       - "db/proposals/0039_bp03_person_attribute_claims.sql"
+      - "tests/pkg001/bp03_individual_simulation_acceptance.sql"
+      - "tests/pkg001/bp03_person_attribute_claims_acceptance.sql"
+      - "tests/pkg001/bp03_person_knowledge_acceptance.sql"
+      - "tests/pkg001/bp03_person_routines_movement_acceptance.sql"
       - "tests/pkg001/person_residence_acceptance.sql"
       - "runtime/sw_db_001_resident_residence_materializer.py"
       - "runtime/opening_resident_dwelling_allocation.py"
@@ -189,6 +193,14 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0039_bp03_person_attribute_claims.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_household_individual_simulation_schema_growth_bytes=$((after-before))"
+      - name: Run BP03 individual tier and permanent promotion acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_individual_simulation_acceptance.sql
+      - name: Run BP03 sourced person attribute claims acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_attribute_claims_acceptance.sql
+      - name: Run BP03 person knowledge-boundary acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_knowledge_acceptance.sql
+      - name: Run BP03 person routines and movement acceptance
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_routines_movement_acceptance.sql
       - name: Verify BP03 residence integration before world seed
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
       - name: Provision deterministic opening population and business fixture
