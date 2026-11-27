@@ -97,7 +97,7 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
         else:
             changed = tracked
         active_bp = os.environ.get("ACTIVE_BP", "BP03").strip().upper()
-        core = [p for p in tracked if p == "README.md"]
+        core = []
         # Keep each Gemini request within a small, high-signal evidence pack
         # for the selected active BP. Changed files are included separately.
         active_bp_files = {
@@ -122,14 +122,25 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
                 "docs/blueprint/divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md",
                 "docs/blueprint/decisions/SW-CANON-001-population-scope-and-foundational-geography.md",
                 "docs/implementation/approval-packages/PKG-001-runtime-city-population.md",
-                "docs/implementation/test-evidence/PKG-001-run-0001.md",
-                "docs/implementation/test-evidence/PKG-001-run-0004.md",
-                "docs/implementation/test-evidence/PKG-001-run-0005.md",
-                "docs/implementation/test-evidence/BP03-opening-police-person-seed-build-0001.md",
                 "docs/implementation/BP01-foundational-implementation-register.md",
                 "db/proposals/0002_runtime_city_population.sql",
-                "db/proposals/0033_bp06_opening_personnel_cohort.sql",
+                "db/proposals/0009_universal_name_registry.sql",
+                "db/proposals/0010_bp03_population_qualification_union.sql",
+                "db/proposals/0034_bp03_person_residence.sql",
+                "db/proposals/0036_bp03_individual_simulation_promotion.sql",
+                "db/proposals/0037_bp03_person_routines_and_movement.sql",
+                "db/proposals/0038_bp03_person_knowledge_boundary.sql",
+                "db/proposals/0039_bp03_person_attribute_claims.sql",
+                "runtime/opening_resident_person_seed.py",
+                "runtime/opening_resident_dwelling_allocation.py",
+                "runtime/sw_db_001_resident_residence_materializer.py",
                 "runtime/opening_police_person_seed.py",
+                "tests/pkg001/sw_db_001_world_fixture.sql",
+                "tests/pkg001/person_residence_acceptance.sql",
+                "tests/pkg001/bp03_individual_simulation_acceptance.sql",
+                "tests/pkg001/bp03_person_attribute_claims_acceptance.sql",
+                "tests/pkg001/bp03_person_knowledge_acceptance.sql",
+                "tests/pkg001/bp03_person_routines_movement_acceptance.sql",
                 "tests/pkg001/test_population_concurrency.py",
                 "tests/pkg001/population_cap_fixture.sql",
                 "tests/pkg001/test_opening_police_person_seed.py",
