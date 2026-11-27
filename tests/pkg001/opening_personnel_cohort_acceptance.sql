@@ -189,6 +189,16 @@ BEGIN
     RAISE EXCEPTION 'personnel provisioning must not silently create BP07 appointments or BP08 memberships';
   END IF;
 
+  -- Switch the disposable fixture from tick-zero bootstrap into a player-present
+  -- running session before emitting ordinary service lifecycle events.
+  UPDATE sw_runtime.state
+  SET bootstrap_open=false,state=2,player_present=true
+  WHERE singleton=1 AND state=1 AND bootstrap_open=true AND world_tick=0;
+  IF NOT EXISTS (SELECT 1 FROM sw_runtime.state
+    WHERE singleton=1 AND state=2 AND bootstrap_open=false AND player_present=true) THEN
+    RAISE EXCEPTION 'could not activate disposable runtime for service lifecycle acceptance';
+  END IF;
+
   -- Exercise BP06 service lifecycle while the 500-person disposable fixture exists.
   SELECT e.appointment_id,p.person_id INTO STRICT v_lifecycle_appointment,v_lifecycle_person
   FROM sw_police.personnel_service_engagement e
