@@ -1,0 +1,53 @@
+name: BP03 Individual Simulation Acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'db/proposals/0036_bp03_individual_simulation_promotion.sql'
+      - 'tests/pkg001/bp03_individual_simulation_acceptance.sql'
+      - '.github/workflows/bp03-individual-simulation-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply canonical person foundation and naming
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
+      - name: Apply BP03 individual simulation tier and promotion service
+        run: |
+          before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0036_bp03_individual_simulation_promotion.sql
+          after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp03_individual_simulation_schema_growth_bytes=$((after-before))"
+      - name: Verify tier progression, permanent promotion and history
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_individual_simulation_acceptance.sql
