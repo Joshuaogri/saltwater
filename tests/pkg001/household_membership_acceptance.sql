@@ -1,3 +1,4 @@
+-- BP03 household disposable acceptance: exercised by PKG-001.
 \set ON_ERROR_STOP on
 BEGIN;
 UPDATE sw_runtime.state SET state=1,player_present=false
