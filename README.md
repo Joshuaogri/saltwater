@@ -84,6 +84,16 @@ acceptance and later BP02 address / BP06 service integration.
 
 
 The 9,000-person civilian candidate set now has a disposable PostgreSQL SW-UNS acceptance test. It stages all candidates, creates canonical person identities in one transaction, verifies that all 9,000 receive unique canonical reservations against the existing global registry, checks the exact 9,000 + 500 opening arithmetic and civilian/police name separation, then rolls back the entire test. The separate 500-person police registry preflight remains in place. These are preflight-only records; no production identities or population qualifications are created.
+## BP03 stable BP04-to-BP02 parcel/address crosswalk
+
+The BP03 household crosswalk now validates the shared immutable source parcel identity carried in the BP04 property/address provenance and the BP02 address/parcel records. It separately retains the BP02 stable hashed parcel source ID in the crosswalk; it no longer incorrectly compares that hash with the raw BP04 candidate parcel ID. The disposable household acceptance fixture now uses distinct stable BP02 parcel/address IDs and the matching source-candidate parcel provenance. This is a source/acceptance correction only; it does not alter the already released BP02 production records or create BP03 production links.
+
+## BP03 opening resident-to-dwelling allocation — candidate build
+
+A deterministic allocation builder is now on `main`. It maps the 9,000 civilian identity candidates to unique active dwelling-unit candidates, allocating by largest-remainder proportional shares of eligible dwelling inventory across neighbourhoods and stable unit ordering. It derives the released BP02 stable parcel/address IDs from the same source-identity hashing rules used by BP02. Multiple dwellings may correctly share one site-level BP04/BP02 address.
+
+The allocation is strictly a planning manifest: no canonical person IDs, residence records, household records, occupancy assignments or production imports are created. The builder validates source hashes, parcel/address provenance, property/building/premises/unit eligibility, and exact population arithmetic. Its workflow generates the compressed manifest and summary alongside the canonical property-world build; final counts are recorded after that run completes.
+
 ## BP03 residential dwelling inventory — 2026-11-27
 
 The canonical property-world manifest reports **55,558 household-eligible dwelling units**: **31,785** in pure-residential properties and **23,773** in mixed-use properties. These are active inventory classifications for allocation planning, not a verified person-capacity figure. Physical occupancy capacity remains **NOT_ASSESSED**; resident allocation remains **NOT_ASSIGNED**; the manifest records zero people created and `production_seed_authorized=false`. The 9,000-person civilian candidate cohort must therefore not be described as housed or resident-linked until deterministic BP04-unit/BP04-address/BP02-address mapping and its acceptance checks are complete.
