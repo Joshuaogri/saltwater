@@ -40,7 +40,7 @@ BEFORE UPDATE OR DELETE ON sw_people.population_qualification_history
 FOR EACH ROW EXECUTE FUNCTION sw_people.reject_qualification_history_mutation();
 
 CREATE OR REPLACE FUNCTION sw_people.record_qualification_history()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
  IF TG_OP='INSERT' THEN
   IF NEW.usual_resident OR NEW.physically_present OR NEW.active_police_service THEN
@@ -69,7 +69,7 @@ BEGIN
   );
  END IF;
  RETURN NEW;
-END $;
+END $$;
 CREATE TRIGGER population_qualification_history_append
 AFTER INSERT OR UPDATE OF usual_resident,physically_present,active_police_service
 ON sw_people.population_state
