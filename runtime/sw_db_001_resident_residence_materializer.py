@@ -6,6 +6,7 @@ create households, infer demographics, or write to production.
 from __future__ import annotations
 
 import argparse
+import gzip
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,8 @@ from runtime.opening_resident_dwelling_allocation import (
     build_opening_resident_dwelling_allocation,
 )
 
+ROOT = Path(__file__).resolve().parents[1]
+CANDIDATE_PATH = ROOT / "data/people/saltwater-opening-civilian-resident-seed-v1.json.gz"
 EXPECTED_RESIDENTS = 9000
 ACTOR = "disposable-ci-generator"
 REASON = (
@@ -26,6 +29,17 @@ REASON = (
 
 def materialise(database_url: str) -> dict:
     allocation = build_opening_resident_dwelling_allocation()
+    with gzip.open(CANDIDATE_PATH, "rt", encoding="utf-8") as stream:
+        candidate_payload = json.load(stream)
+    candidates = candidate_payload["records"]
+    if candidate_payload.get("dataset_id") != "SW-OPENING-CIVILIAN-RESIDENT-SEED-V1":
+        raise ValueError("unexpected BP03 civilian identity candidate dataset")
+    if len(candidates) != EXPECTED_RESIDENTS or candidate_payload.get("candidate_count") != EXPECTED_RESIDENTS:
+        raise ValueError("BP03 civilian identity dataset must contain exactly 9,000 candidates")
+    if len({row["candidate_ref"] for row in candidates}) != EXPECTED_RESIDENTS:
+        raise ValueError("BP03 civilian identity dataset contains reused candidate references")
+    if len({row["source_ref"] for row in candidates}) != EXPECTED_RESIDENTS:
+        raise ValueError("BP03 civilian identity dataset contains reused source references")
     records = allocation["records"]
     if allocation["dataset_id"] != "SW-OPENING-RESIDENT-DWELLING-ALLOCATION-V1":
         raise ValueError("unexpected BP03 dwelling allocation dataset")
@@ -120,6 +134,127 @@ def materialise(database_url: str) -> dict:
             if residents != EXPECTED_RESIDENTS:
                 raise RuntimeError(f"expected 9,000 resident fixture people, found {residents}")
 
+            # Stable candidate_ref -> fixture key mapping; never use row-number pairing.
+            staged = []
+            for candidate in candidates:
+                suffix = candidate["candidate_ref"].removeprefix("SWCIV-")
+                if not suffix.isdigit():
+                    raise ValueError(f"invalid civilian candidate reference: {candidate['candidate_ref']!r}")
+                staged.append((
+                    candidate["candidate_ref"], candidate["source_ref"], candidate["given_name"],
+                    candidate.get("middle_name"), candidate["family_name"], candidate["display_name"],
+                    "SWDB001-P-" + suffix.zfill(5),
+                ))
+            conn.execute("""
+                CREATE TEMP TABLE bp03_candidate_stage (
+                    candidate_ref text PRIMARY KEY, source_ref text NOT NULL UNIQUE,
+                    given_name text NOT NULL, middle_name text, family_name text NOT NULL,
+                    display_name text NOT NULL, fixture_person_key text NOT NULL UNIQUE,
+                    normalized_name text NOT NULL
+                ) ON COMMIT DROP
+            """)
+            conn.executemany("""
+                INSERT INTO bp03_candidate_stage(
+                    candidate_ref,source_ref,given_name,middle_name,family_name,
+                    display_name,fixture_person_key,normalized_name
+                ) VALUES (%s,%s,%s,%s,%s,%s,%s,sw_names.normalize_name(%s))
+            """, [(*row, row[5]) for row in staged])
+            if conn.execute("SELECT count(*) FROM bp03_candidate_stage").fetchone()[0] != EXPECTED_RESIDENTS:
+                raise RuntimeError("candidate identity staging did not reconcile to 9,000")
+            if conn.execute("""
+                SELECT count(*) FROM (
+                    SELECT normalized_name FROM bp03_candidate_stage
+                    GROUP BY normalized_name HAVING count(*)>1
+                ) d
+            """).fetchone()[0]:
+                raise RuntimeError("civilian candidate cohort contains duplicate normalized names")
+            mapped = conn.execute("""
+                SELECT count(*),count(DISTINCT p.person_id),
+                       count(*) FILTER (WHERE pc.cohort='RESIDENT'),
+                       count(*) FILTER (WHERE p.source_ref='SW-DB-001:person:'||right(s.fixture_person_key,5))
+                FROM bp03_candidate_stage s
+                JOIN sw_test.person_cohort pc ON pc.fixture_person_key=s.fixture_person_key AND pc.batch_id=%s
+                JOIN sw_people.person p ON p.person_id=pc.person_id
+            """, (batch_id,)).fetchone()
+            if mapped != (9000,9000,9000,9000):
+                raise RuntimeError(f"explicit candidate-to-fixture identity crosswalk failed: {mapped!r}")
+            police_count = conn.execute("""
+                SELECT count(*) FROM sw_test.person_cohort pc
+                JOIN sw_people.person p USING(person_id)
+                WHERE pc.batch_id=%s AND pc.cohort='POLICE_SUBSET'
+                  AND p.source_ref LIKE 'SW-DB-001:person:%%'
+            """, (batch_id,)).fetchone()[0]
+            if police_count != 500:
+                raise RuntimeError(f"separate 500-person police cohort changed: {police_count}")
+
+            # Preflight every candidate against the global registry before profile updates.
+            conn.execute("SET LOCAL pg_trgm.similarity_threshold = '0.90'")
+            conflicts = conn.execute("""
+                SELECT count(*) FROM bp03_candidate_stage c
+                JOIN sw_names.name_reservation r
+                  ON r.normalized_key=c.normalized_name OR r.normalized_key % c.normalized_name
+            """).fetchone()[0]
+            if conflicts:
+                raise RuntimeError(f"{conflicts} civilian names conflict with exact/near SW-UNS reservations")
+            near_pairs = conn.execute("""
+                SELECT count(*) FROM bp03_candidate_stage a
+                JOIN bp03_candidate_stage b
+                  ON a.candidate_ref<b.candidate_ref AND a.normalized_name % b.normalized_name
+            """).fetchone()[0]
+            if near_pairs:
+                raise RuntimeError(f"{near_pairs} near-duplicate pairs exist in civilian candidates")
+
+            name_batch_id = conn.execute("""
+                SELECT sw_names.record_generation_batch(
+                    'PERSON',1,1,'saltwater-opening-civilian-resident-seed-v1',
+                    %s,%s,9000,'SW-OPENING-CIVILIAN-RESIDENT-SEED-V1',%s,
+                    'BP03 disposable identity materialisation; exact 9,000-person civilian cohort'
+                )
+            """, (candidate_payload["seed"], bytes.fromhex(candidate_payload["manifest_sha256"]), ACTOR)).fetchone()[0]
+            conn.execute("""
+                INSERT INTO sw_core.simulation_event(
+                    event_type_id,occurred_at,world_tick,subject_kind,subject_id,
+                    source_ref,attributes,idempotency_key
+                )
+                SELECT et.event_type_id,clock_timestamp(),0,'person',p.person_id,
+                       s.source_ref||':profile-materialised',
+                       jsonb_build_object('operation','opening_civilian_identity_materialised',
+                         'candidate_ref',s.candidate_ref,'actor_ref',%s),
+                       'SW-BP03:PERSON_PROFILE:'||p.person_id||':'||s.source_ref
+                FROM bp03_candidate_stage s
+                JOIN sw_test.person_cohort pc ON pc.fixture_person_key=s.fixture_person_key
+                  AND pc.batch_id=%s AND pc.cohort='RESIDENT'
+                JOIN sw_people.person p ON p.person_id=pc.person_id
+                CROSS JOIN sw_core.event_type et
+                WHERE et.event_code='PERSON_PROFILE_CHANGED'
+            """, (ACTOR,batch_id))
+            updated = conn.execute("""
+                UPDATE sw_people.person p
+                SET given_name=s.given_name,middle_name=s.middle_name,
+                    family_name=s.family_name,source_ref=s.source_ref,last_event_id=e.event_id
+                FROM bp03_candidate_stage s
+                JOIN sw_test.person_cohort pc ON pc.fixture_person_key=s.fixture_person_key
+                  AND pc.batch_id=%s AND pc.cohort='RESIDENT'
+                JOIN sw_core.simulation_event e ON e.source_ref=s.source_ref||':profile-materialised'
+                WHERE p.person_id=pc.person_id
+                RETURNING p.person_id
+            """, (batch_id,)).fetchall()
+            if len(updated) != EXPECTED_RESIDENTS:
+                raise RuntimeError(f"materialised {len(updated)} canonical civilian profiles, expected 9,000")
+            reserved = conn.execute("""
+                SELECT count(*) FROM (
+                    SELECT sw_names.reserve_name(
+                        'PERSON',p.person_id,'canonical',s.display_name,s.source_ref,
+                        %s,'BP03 opening civilian identity materialisation',0,%s
+                    )
+                    FROM bp03_candidate_stage s
+                    JOIN sw_people.person p ON p.source_ref=s.source_ref
+                    ORDER BY p.person_id
+                ) names
+            """, (ACTOR,name_batch_id)).fetchone()[0]
+            if reserved != EXPECTED_RESIDENTS:
+                raise RuntimeError(f"reserved {reserved} canonical civilian names, expected 9,000")
+
             address_ids = [r["bp02_address_source_id"] for r in records]
             expected_addresses = len(set(address_ids))
             available = conn.execute("""
@@ -135,6 +270,8 @@ def materialise(database_url: str) -> dict:
                 {
                     "allocation_ref": r["allocation_ref"],
                     "candidate_ref": r["candidate_ref"],
+                    "person_source_ref": r["person_source_ref"],
+                    "display_name": r["display_name"],
                     "unit_id": r["unit_id"],
                     "bp04_address_id": r["bp04_address_id"],
                     "bp02_address_source_id": r["bp02_address_source_id"],
@@ -145,24 +282,23 @@ def materialise(database_url: str) -> dict:
 
             inserted = conn.execute("""
                 WITH allocation AS MATERIALIZED (
-                    SELECT row_number() OVER (ORDER BY allocation_ref) AS seq,
-                           a.*
+                    SELECT a.*
                     FROM jsonb_to_recordset(%s::jsonb) AS a(
-                        allocation_ref text,candidate_ref text,unit_id text,
-                        bp04_address_id text,bp02_address_source_id text,
-                        neighbourhood_id text
+                        allocation_ref text,candidate_ref text,person_source_ref text,
+                        display_name text,unit_id text,bp04_address_id text,
+                        bp02_address_source_id text,neighbourhood_id text
                     )
                 ),
-                residents AS MATERIALIZED (
-                    SELECT row_number() OVER (ORDER BY fixture_person_key) AS seq,
-                           fixture_person_key,person_id
-                    FROM sw_test.person_cohort
-                    WHERE batch_id=%s AND cohort='RESIDENT'
-                ),
                 joined AS MATERIALIZED (
-                    SELECT a.*,r.fixture_person_key,r.person_id,
+                    SELECT a.*,pc.fixture_person_key,p.person_id,
                            'SW-BP03:DISPOSABLE-RESIDENCE:'||a.allocation_ref AS source_ref
-                    FROM allocation a JOIN residents r USING(seq)
+                    FROM allocation a
+                    JOIN bp03_candidate_stage s ON s.candidate_ref=a.candidate_ref
+                      AND s.source_ref=a.person_source_ref AND s.display_name=a.display_name
+                    JOIN sw_people.person p ON p.source_ref=s.source_ref
+                    JOIN sw_test.person_cohort pc ON pc.person_id=p.person_id
+                      AND pc.fixture_person_key=s.fixture_person_key
+                      AND pc.cohort='RESIDENT' AND pc.batch_id=%s
                 ),
                 assigned AS MATERIALIZED (
                     SELECT j.*,
@@ -191,13 +327,17 @@ def materialise(database_url: str) -> dict:
                 SELECT count(*),count(DISTINCT a.person_id),count(DISTINCT a.unit_id),
                        count(DISTINCT a.bp02_address_source_id),
                        count(*) FILTER (WHERE r.residence_status='current'),
-                       count(*) FILTER (WHERE p.usual_resident)
+                       count(*) FILTER (WHERE ps.usual_resident),
+                       count(*) FILTER (WHERE p.source_ref LIKE 'SW-OPENING-CIVILIAN-RESIDENT-SEED-V1:%'
+                         AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=s.display_name)
                 FROM sw_test.opening_resident_dwelling_assignment a
-                JOIN sw_people.person_residence r USING(residence_id)
-                JOIN sw_people.population_state p USING(person_id)
+                JOIN sw_people.person_residence r ON r.residence_id=a.residence_id
+                JOIN sw_people.population_state ps ON ps.person_id=a.person_id
+                JOIN sw_people.person p ON p.person_id=a.person_id
+                JOIN bp03_candidate_stage s ON s.candidate_ref=a.candidate_ref AND s.source_ref=p.source_ref
                 WHERE a.batch_id=%s
             """, (batch_id,)).fetchone()
-            if counts != (9000, 9000, 9000, expected_addresses, 9000, 9000):
+            if counts != (9000, 9000, 9000, expected_addresses, 9000, 9000, 9000):
                 raise RuntimeError(f"residence materialisation failed reconciliation: {counts!r}")
             return {
                 "status": "materialised",
@@ -211,7 +351,10 @@ def materialise(database_url: str) -> dict:
                 "household_rows_created": 0,
                 "production_database_written": False,
                 "allocation_manifest_sha256": allocation["manifest_sha256"],
-                "fixture_person_identity_matches_candidate_identity": False,
+                "fixture_person_identity_matches_candidate_identity": True,
+                "canonical_person_names_reserved": reserved,
+                "candidate_person_identity_matches": counts[6],
+                "police_subset_preserved": police_count,
             }
 
 
