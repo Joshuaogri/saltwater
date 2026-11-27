@@ -83,7 +83,7 @@ Expected before deployment: database `neondb`, PostgreSQL 18.7, baseline near 9,
 
 ## Production execution (only after explicit approval)
 
-Set `DATABASE_URL` in the protected execution environment; never paste credentials into chat or commit them.
+Run both commands from the exact, clean GitHub `main` checkout being released. The importer command records `git rev-parse HEAD` as the source commit, avoiding the misleading `local-build` default. Set `DATABASE_URL` in the protected execution environment; never paste credentials into chat or commit them.
 
 First apply the independent BP-02 schema migration:
 
@@ -100,7 +100,8 @@ Then insert the archive-only source package:
 python -m runtime.bp02_geography_archive_importer \
   --apply \
   --expected-database neondb \
-  --allow-production
+  --allow-production \
+  --source-commit "$(git rev-parse HEAD)"
 ```
 
 The independent migration runner verifies its own checksum ledger and never updates `sw_ops.schema_migration`. The importer is idempotent for the same release and checksum. A checksum mismatch for an existing release must stop the process for investigation; do not overwrite immutable archive data.
