@@ -630,3 +630,20 @@ The first naming implementation slice attaches a `PERSON` canonical full-name re
 **Verification status:** `NOT_STARTED`.
 
 No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document.
+
+
+## 20.1 Implemented BP03 service slices (2026-11-27)
+
+The following source-only implementation slices are now present on `main`:
+
+- `0010_bp03_population_qualification_union.sql`: distinct living-person union count, atomic 10,000-person cap, qualification history, canonical person creation and death transition.
+- `0034_bp03_person_residence.sql`: effective-dated person residence linked to BP02 canonical addresses.
+- `0035_bp03_household_membership.sql`: dwelling-linked household and person membership, with exact BP04↔BP02 address crosswalk.
+- `0036_bp03_individual_simulation_promotion.sql`: persisted tier 0 at person creation, event-backed tier history, permanent tier-3 police-relevance promotion.
+- `0037_bp03_person_routines_and_movement.sql`: effective-dated routines, explicit supersession, sourced movement with certainty/confidence and chronology checks.
+- `0038_bp03_person_knowledge_boundary.sql`: source-event-bound NPC knowledge acquisition with chronology and append-only history.
+- `0039_bp03_person_attribute_claims.sql`: sourced, effective-dated non-sensitive attribute claims, retaining conflicting and disputed values without silent resolution.
+
+Focused disposable PostgreSQL acceptance for proposals 0036–0039 passed in [run 46040104903](https://github.com/Joshuaogri/saltwater/actions/runs/46040104903). The routine/movement acceptance also passed with successor-chain and current-tick checks in [run 46039460668](https://github.com/Joshuaogri/saltwater/actions/runs/46039460668). The opening police-name registry check passed in the current dedicated opening-identity workflow; the 9,000-person civilian registry check remains in progress at the time of this update.
+
+These are source and disposable acceptance results. The 9,000 civilian and 500 police cohorts remain candidate identities; no canonical opening population or BP03 production seed has been written. Residence/household materialisation depends on BP04 production property records and canonical address crosswalks. The 500 police cohort also depends on production BP05/BP06 service structures and subsequent BP07/BP08 assignments.
