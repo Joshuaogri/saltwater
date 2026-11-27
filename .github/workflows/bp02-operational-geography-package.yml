@@ -1,0 +1,73 @@
+name: BP02 Operational Geography Package — PostgreSQL 18.7 Source Validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/bp02_operational_geography_package.py"
+      - "runtime/bp02_full_acceptance_audit.py"
+      - "runtime/bp02_fictional_geography_release.py"
+      - "runtime/parcel_candidate_generator.py"
+      - "runtime/parcel_dossier_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/bp02_parcel_address_identity.py"
+      - "runtime/bp02_address_frontage_exception_resolution.py"
+      - "runtime/bp02_bridge_connector_engineering_register.py"
+      - "data/geography/**"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "tests/pkg001/test_bp02_operational_geography_package.py"
+      - ".github/workflows/bp02-operational-geography-package.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-operational-geography-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run full BP02 gameplay acceptance and package regression
+        run: python -m unittest tests.pkg001.test_bp02_operational_geography_package -v
+      - name: Build deterministic operational geography package
+        run: python -m runtime.bp02_operational_geography_package
+      - name: Verify package compression and manifest integrity
+        run: |
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          package = Path("build/bp02-operational-geography-v1.json.gz").read_bytes()
+          manifest = json.loads(Path("build/bp02-operational-geography-v1.manifest.json").read_text())
+          assert len(package) == manifest["compressed_bytes"]
+          assert hashlib.sha256(package).hexdigest() == manifest["package_sha256"]
+          raw = gzip.decompress(package)
+          assert len(raw) == manifest["uncompressed_bytes"]
+          payload = json.loads(raw)
+          assert payload["acceptance"]["overall_status"] == "PASS"
+          assert payload["database_write_performed"] is False
+          print(json.dumps({
+              "compressed_bytes": len(package),
+              "uncompressed_bytes": len(raw),
+              "package_sha256": manifest["package_sha256"],
+              "source_hashes": manifest["source_hashes"],
+              "record_counts": manifest["record_counts"],
+              "production_database_written": False
+          }, indent=2, sort_keys=True))
+          PY
+      - name: Upload measured package and manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp02-operational-geography-v1-package
+          path: |
+            build/bp02-operational-geography-v1.json.gz
+            build/bp02-operational-geography-v1.manifest.json
+          if-no-files-found: error
+          retention-days: 30
