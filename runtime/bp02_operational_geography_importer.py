@@ -140,31 +140,31 @@ def import_package(conn, payload: dict, manifest: dict, compressed: bytes,
              Jsonb(payload["source_hashes"]), True,
              payload["production_seed_approved"], Jsonb(counts)),
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_district(source_id,name,bounds,record) VALUES (%s,%s,%s,%s)",
             [(r["id"], r["name"], Jsonb({k:r[k] for k in ("x0","x1","y0","y1")}), Jsonb(r))
              for r in geo["districts"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_neighbourhood(source_id,district_source_id,name,geometry,record) VALUES (%s,%s,%s,%s,%s)",
             [(r["id"], r["district_id"], r["name"], Jsonb(r["geometry"]), Jsonb(r))
              for r in geo["neighbourhoods"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_feature(source_id,entity_type,name,geometry,properties) VALUES (%s,%s,%s,%s,%s)",
             [(r["id"], r["properties"]["entity_type"], r["properties"]["name"],
               Jsonb(r["geometry"]), Jsonb(r["properties"])) for r in geo["features"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_road(source_id,name,road_class,record) VALUES (%s,%s,%s,%s)",
             [(r["id"], r["name"], r["class"], Jsonb(r)) for r in geo["roads"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_node(source_id,x,y,degree,node_kind,record) VALUES (%s,%s,%s,%s,%s,%s)",
             [(r["id"], r["x"], r["y"], r["degree"], r["kind"], Jsonb(r))
              for r in network["nodes"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             """INSERT INTO sw_geo.bp02_segment
                (source_id,road_source_id,from_node_source_id,to_node_source_id,length_m,
                 geometry,road_class,segment_kind,direction,modes,access,surface,water_crossing,record)
@@ -174,7 +174,7 @@ def import_package(conn, payload: dict, manifest: dict, compressed: bytes,
               r["access"], r["surface"], r.get("water_crossing", False), Jsonb(r))
              for r in network["segments"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_route(source_id,name,route_type,record) VALUES (%s,%s,%s,%s)",
             [(r["id"], r["name"], r["type"], Jsonb(r)) for r in network["routes"]],
         )
@@ -184,30 +184,30 @@ def import_package(conn, payload: dict, manifest: dict, compressed: bytes,
                                for i, node_id in enumerate(route["node_ids"], start=1))
             route_segments.extend((route["id"], i, segment_id)
                                   for i, segment_id in enumerate(route["segment_ids"], start=1))
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_route_node(route_source_id,sequence_no,node_source_id) VALUES (%s,%s,%s)",
             route_nodes,
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_route_segment(route_source_id,sequence_no,segment_source_id) VALUES (%s,%s,%s)",
             route_segments,
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_parcel(source_id,operational_status,record) VALUES (%s,%s,%s)",
             [(_source_id(r,"parcel_id"), r["operational_status"], Jsonb(r))
              for r in canonical["parcels"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_address(source_id,parcel_source_id,operational_status,record) VALUES (%s,%s,%s,%s)",
             [(_source_id(r,"address_id"), r["parcel_id"], r["operational_status"], Jsonb(r))
              for r in canonical["addresses"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_access_point(source_id,operational_status,record) VALUES (%s,%s,%s)",
             [(_source_id(r,"candidate_access_point_id","access_point_id","id"),
               r["operational_status"], Jsonb(r)) for r in canonical["access_points"]],
         )
-        conn.executemany(
+        conn.cursor().executemany(
             "INSERT INTO sw_geo.bp02_bridge_connector(source_id,operational_status,engineering_assessment_id,record) VALUES (%s,%s,%s,%s)",
             [(_source_id(r,"candidate_connector_id","connector_id","source_connector_candidate_id"),
               r["operational_status"], r["engineering_assessment_id"], Jsonb(r))
