@@ -1928,3 +1928,7 @@ This is a release-package build and measurement stage only. It does not create o
 
 
 BP02 release-authority correction (2026-11-27): the operational geography package now distinguishes fictional gameplay acceptance from production database seed authority. Canonical `ACTIVE_IN_GAME` statuses and fictional bridge assessments remain intact; the immutable identity map's `operational_seed_approved=false` is preserved as `production_seed_approved=false`. No production operational-geography write is authorised by gameplay acceptance. See [BP02 readiness assessment](docs/deployment/BP02-operational-geography-readiness.md).
+
+### Gemini collaboration — active-blueprint review sizing
+
+The GitHub Actions Gemini reviewer is explicitly assigned the current active blueprint on every run (BP02 at present). Its BP02 evidence pack is deliberately curated to the operational-geography blueprint, readiness/runbook, package and acceptance code, focused tests, workflow, and canonical geography/identity data. Changed files are added to that pack. Requests are capped at 45,000 characters per slice, and transient Gemini capacity failures use longer exponential retry waits. The reviewer remains read-only and cannot write to production Neon. This reduces request size and irrelevant context; successful Gemini review still depends on the API account's available capacity.
