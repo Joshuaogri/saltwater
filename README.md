@@ -1944,3 +1944,18 @@ The operational-geography package workflow now runs the complete BP02 acceptance
 The BP02-owned migration stream now includes `0002_operational_geography.sql`, a compact gameplay schema for districts, neighbourhoods, geographic features, roads, junction nodes, road segments, named routes and ordered route links, plus canonical parcel, address, access-point and bridge-connector records. It uses stable source identifiers, JSON geometry/payloads and ordinary PostgreSQL indexes; it does not require PostGIS or alter the global/BP04 migration ledger.
 
 The BP02 migration runner applies numbered domain migrations in order and verifies each exact SHA-256 checksum. Gameplay records are explicitly labelled `ACTIVE_IN_GAME`; the release record keeps `production_seed_approved=false` unless separately authorised. This is schema preparation only: no production Neon write or operational geography import has been performed. The PostgreSQL 18.7 disposable workflow measures schema growth before the data importer is built.
+
+
+
+
+## BP02 operational geography — disposable end-to-end acceptance passed (2026-11-27)
+
+The complete [BP02 operational geography workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46001930271) completed successfully on main commit `554da810c7136ebc6c9c113e4ccc26e40c40b14d`. This supersedes the earlier preparation notes above that described the importer and disposable import benchmark as future work.
+
+The workflow built and checksum-verified package SHA-256 `872c1829826336b0901c3de60086038aa4fad324ef289762418b3bcb1a384f03`: 227,468 compressed bytes and 5,353,853 uncompressed bytes. Full BP02 acceptance status was PASS. The package contained 8 districts, 24 neighbourhoods, 54 features, 42 roads, 367 network nodes, 685 road segments, 5 routes, 420 parcels, 420 addresses, 2,948 access-point locators and 4 bridge connector candidates.
+
+Both BP02 domain migrations applied successfully to disposable PostgreSQL 18.7. The operational importer inserted all expected records, including 116 ordered route-node links and 111 route-segment links. The workflow verified per-table counts: districts 8; neighbourhoods 24; features 54; roads 42; nodes 367; segments 685; routes 5; route nodes 116; route segments 111; parcels 420; addresses 420; access points 2,948; bridge connectors 4. The first import produced a measured disposable database size of 14,915,263 bytes from a pre-migration baseline of 7,935,679 bytes (net increase 7,979,584 bytes across schema and data). A repeat import returned `already_present` and added exactly 0 bytes.
+
+The workflow artifact `bp02-operational-geography-v1-package` (211,841-byte ZIP) is available from [run 46001930271](https://github.com/Joshuaogri/saltwater/actions/runs/46001930271). The release record explicitly retains `production_seed_approved=false`; this successful disposable import is not a production authorisation. No production Neon writes were performed. Production sizing and any production release remain a separate decision, using the measured production baseline and avoiding double-counting the already-installed BP02 archive/migration foundation.
+
+The BP02 Gemini review on the same commit did not produce a report: the API returned `RESOURCE_EXHAUSTED` after its configured retries. This is a reviewer-capacity failure, not a BP02 acceptance failure; no Gemini approval is claimed. The main database-migration validation workflow also passed. The wider PKG-001 disposable PostgreSQL workflow was still running when this note was written.
