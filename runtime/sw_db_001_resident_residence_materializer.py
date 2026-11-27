@@ -447,7 +447,6 @@ def materialise(database_url: str) -> dict:
                 JOIN bp03_allocation_expected x
                   ON x.allocation_ref=a.allocation_ref
                  AND x.candidate_ref=a.candidate_ref
-                 AND x.person_source_ref=a.source_ref -- assignment source_ref is separately checked below
                  AND x.unit_id=a.unit_id
                  AND x.bp04_address_id=a.bp04_address_id
                  AND x.bp02_address_source_id=a.bp02_address_source_id
@@ -464,6 +463,7 @@ def materialise(database_url: str) -> dict:
                  AND r.address_source_id=x.bp02_address_source_id
                  AND r.residence_kind='permanent' AND r.residence_status='current'
                 WHERE a.batch_id=%s
+                  AND a.source_ref='SW-BP03:DISPOSABLE-RESIDENCE:'||a.allocation_ref
             """, (batch_id,)).fetchone()[0]
             if counts[0] != EXPECTED_RESIDENTS or exact != EXPECTED_RESIDENTS:
                 raise RuntimeError(
