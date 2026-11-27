@@ -1,0 +1,135 @@
+name: BP02 Operational Geography — Approved Neon Production Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/deployment/BP02-operational-geography-production-release-approved.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saltwater-neon-bp02-operational-geography-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pinned geometry engine and PostgreSQL driver
+        run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
+      - name: Build and validate approved BP02 production package
+        run: |
+          set -euo pipefail
+          python -m runtime.bp02_operational_geography_package
+          python - <<'PY'
+          import gzip, hashlib, json
+          from pathlib import Path
+          p=Path("build/bp02-operational-geography-v1.json.gz").read_bytes()
+          m=json.loads(Path("build/bp02-operational-geography-v1.manifest.json").read_text())
+          d=json.loads(gzip.decompress(p))
+          assert hashlib.sha256(p).hexdigest()==m["package_sha256"]
+          assert d["acceptance"]["overall_status"]=="PASS"
+          assert d["gameplay_release_accepted"] is True
+          assert d["production_seed_approved"] is True
+          assert m["production_seed_approved"] is True
+          assert len(p)==m["compressed_bytes"]
+          print(json.dumps({"package_sha256":m["package_sha256"],"compressed_bytes":len(p),"uncompressed_bytes":m["uncompressed_bytes"],"record_counts":m["record_counts"],"production_seed_approved":True},indent=2))
+          PY
+      - name: Verify exact production target, recovery reference, baseline and ledgers
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "${DATABASE_URL:-}" || { echo "::error::DATABASE_URL secret is missing"; exit 1; }
+          python - <<'PY'
+          import hashlib, json, os
+          import psycopg
+          from pathlib import Path
+          from scripts.migrate_bp02 import migration_plan
+          plan=migration_plan()
+          assert len(plan)==2
+          with psycopg.connect(os.environ["DATABASE_URL"]) as c:
+              db,version,size=c.execute("SELECT current_database(),current_setting('server_version'),pg_database_size(current_database())").fetchone()
+              assert db=="neondb", db
+              assert version.startswith("18.7"), version
+              assert size==9961472, f"Production baseline changed: {size}"
+              ledger=c.execute("SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration ORDER BY version").fetchall()
+              assert ledger==[(1,plan[0]["migration_name"],plan[0]["checksum_sha256"])], ledger
+              global_versions=c.execute("SELECT array_agg(version ORDER BY version) FROM sw_ops.schema_migration").fetchone()[0]
+              assert global_versions==[1,2], global_versions
+              archive=c.execute("SELECT release_code,archive_sha256,release_scope FROM sw_geo.source_archive").fetchall()
+              assert len(archive)==1 and archive[0][0]=="SW-GEO-V1" and archive[0][2]=="SOURCE_ARCHIVE_ONLY", archive
+              operational=[r[0] for r in c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='sw_geo' AND table_name LIKE 'bp02_%'").fetchall()]
+              assert operational==[], operational
+              print(json.dumps({"preflight":"PASS","database":db,"postgres_version":version,"database_bytes_before":size,"existing_bp02_ledger":ledger,"global_migration_versions":global_versions,"archive":archive,"operational_tables_before":0,"recovery_branch_reference":"br-gentle-moon-bdtc0y32 (preserve unchanged)"},default=str,indent=2))
+          PY
+      - name: Apply BP02 migration 0002 to production Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python scripts/migrate_bp02.py --apply --expected-database neondb --allow-production
+      - name: Import approved operational geography package into production Neon
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python -m runtime.bp02_operational_geography_importer --apply --expected-database neondb --allow-production
+      - name: Verify production counts, relationships, statuses and storage
+        id: verify
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import gzip, hashlib, json, os
+          from pathlib import Path
+          import psycopg
+          p=Path("build/bp02-operational-geography-v1.json.gz").read_bytes()
+          m=json.loads(Path("build/bp02-operational-geography-v1.manifest.json").read_text())
+          d=json.loads(gzip.decompress(p))
+          with psycopg.connect(os.environ["DATABASE_URL"]) as c:
+              assert c.execute("SELECT pg_database_size(current_database())").fetchone()[0] > 9961472
+              ledger=c.execute("SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration ORDER BY version").fetchall()
+              assert [x[0] for x in ledger]==[1,2], ledger
+              release=c.execute("SELECT release_id,package_sha256,production_seed_approved,record_counts FROM sw_geo.bp02_release").fetchone()
+              assert release and release[0]=="SW-BP02-OPERATIONAL-GEOGRAPHY-V1" and release[1]==m["package_sha256"] and release[2] is True, release
+              expected={"bp02_district":8,"bp02_neighbourhood":24,"bp02_feature":54,"bp02_road":42,"bp02_node":367,"bp02_segment":685,"bp02_route":5,"bp02_route_node":116,"bp02_route_segment":111,"bp02_parcel":420,"bp02_address":420,"bp02_access_point":2948,"bp02_bridge_connector":4}
+              actual={t:c.execute(f"SELECT count(*) FROM sw_geo.{t}").fetchone()[0] for t in expected}
+              assert actual==expected,(actual,expected)
+              assert c.execute("SELECT count(*) FROM sw_geo.bp02_segment s JOIN sw_geo.bp02_node n ON n.source_id=s.from_node_source_id JOIN sw_geo.bp02_node t ON t.source_id=s.to_node_source_id JOIN sw_geo.bp02_road r ON r.source_id=s.road_source_id").fetchone()[0]==685
+              assert c.execute("SELECT count(*) FROM sw_geo.bp02_address a JOIN sw_geo.bp02_parcel p ON p.source_id=a.parcel_source_id").fetchone()[0]==420
+              assert c.execute("SELECT count(*) FROM sw_geo.bp02_access_point WHERE operational_status='ACTIVE_IN_GAME'").fetchone()[0]==2948
+              assert c.execute("SELECT count(*) FROM sw_geo.bp02_bridge_connector WHERE operational_status='ACTIVE_IN_GAME'").fetchone()[0]==4
+              global_versions=c.execute("SELECT array_agg(version ORDER BY version) FROM sw_ops.schema_migration").fetchone()[0]
+              assert global_versions==[1,2],global_versions
+              size=c.execute("SELECT pg_database_size(current_database())").fetchone()[0]
+              print(json.dumps({"acceptance":"PASS","database_bytes_after":size,"database_growth_bytes":size-9961472,"database_growth_MB":round((size-9961472)/1000000,3),"database_growth_MiB":round((size-9961472)/1048576,3),"package_compressed_bytes":len(p),"package_compressed_MB":round(len(p)/1000000,3),"package_uncompressed_bytes":m["uncompressed_bytes"],"package_uncompressed_MB":round(m["uncompressed_bytes"]/1000000,3),"package_sha256":m["package_sha256"],"record_counts":actual,"global_migration_versions":global_versions,"production_seed_approved":True},indent=2))
+          PY
+      - name: Verify repeat import adds zero bytes
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          before="$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')"
+          python -m runtime.bp02_operational_geography_importer --apply --expected-database neondb --allow-production
+          after="$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')"
+          echo "database_bytes_before_repeat=$before"
+          echo "database_bytes_after_repeat=$after"
+          test "$before" = "$after"
+      - name: Upload exact deployed package and manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: bp02-operational-geography-v1-production-package
+          path: |
+            build/bp02-operational-geography-v1.json.gz
+            build/bp02-operational-geography-v1.manifest.json
+          if-no-files-found: error
+          retention-days: 90
