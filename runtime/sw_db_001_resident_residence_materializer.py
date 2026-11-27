@@ -124,12 +124,13 @@ def materialise(database_url: str) -> dict:
                     normalized_name text NOT NULL
                 ) ON COMMIT DROP
             """)
-            conn.executemany("""
-                INSERT INTO bp03_candidate_stage(
-                    candidate_ref,source_ref,given_name,middle_name,family_name,
-                    display_name,fixture_person_key,normalized_name
-                ) VALUES (%s,%s,%s,%s,%s,%s,%s,sw_names.normalize_name(%s))
-            """, [(*row, row[5]) for row in staged])
+            with conn.cursor() as cursor:
+                cursor.executemany("""
+                    INSERT INTO bp03_candidate_stage(
+                        candidate_ref,source_ref,given_name,middle_name,family_name,
+                        display_name,fixture_person_key,normalized_name
+                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,sw_names.normalize_name(%s))
+                """, [(*row, row[5]) for row in staged])
             if conn.execute("SELECT count(*) FROM bp03_candidate_stage").fetchone()[0] != EXPECTED_RESIDENTS:
                 raise RuntimeError("candidate identity staging did not reconcile to 9,000")
             if conn.execute("""
