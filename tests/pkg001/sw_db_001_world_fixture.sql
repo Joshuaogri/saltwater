@@ -161,8 +161,12 @@ BEGIN
     );
 
   INSERT INTO sw_people.population_state
-    (person_id,life_status,scope_status,effective_tick,last_event_id)
-  SELECT p.person_id,1,1,0,e.event_id
+    (person_id,life_status,scope_status,effective_tick,last_event_id,
+     usual_resident,physically_present,active_police_service)
+  SELECT p.person_id,1,1,0,e.event_id,
+         split_part(p.source_ref,':',3)::integer<=9000,
+         split_part(p.source_ref,':',3)::integer>9000,
+         false
   FROM sw_people.person p
   JOIN sw_core.simulation_event e
     ON e.source_ref='SW-DB-001:population-state:'||split_part(p.source_ref,':',3)
