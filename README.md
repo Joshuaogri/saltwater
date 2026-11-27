@@ -1932,3 +1932,8 @@ BP02 release-authority correction (2026-11-27): the operational geography packag
 ### Gemini collaboration — active-blueprint review sizing
 
 The GitHub Actions Gemini reviewer is explicitly assigned the current active blueprint on every run (BP02 at present). Its BP02 evidence pack is deliberately curated to the operational-geography blueprint, readiness/runbook, package and acceptance code, focused tests, workflow, and canonical geography/identity data. Changed files are added to that pack. Requests are capped at 45,000 characters per slice, and transient Gemini capacity failures use longer exponential retry waits. The reviewer remains read-only and cannot write to production Neon. This reduces request size and irrelevant context; successful Gemini review still depends on the API account's available capacity.
+
+
+### BP02 simplification — single acceptance pass
+
+The operational-geography package workflow now runs the complete BP02 acceptance audit once, builds the deterministic package from that result, then performs only lightweight checksum/decompression checks before uploading the artifact. The previous separate regression step rebuilt the full audit twice more and was removed from this release workflow. Focused unit tests remain available for code changes that specifically need them; they are not redundantly run alongside the full acceptance build on every package release. This is a CI-efficiency change only: acceptance criteria and production-write protections are unchanged.
