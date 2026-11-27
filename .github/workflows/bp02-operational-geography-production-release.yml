@@ -70,7 +70,7 @@ jobs:
               assert global_versions==[1,2], global_versions
               archive=c.execute("SELECT release_code,archive_sha256,release_scope FROM sw_geo.source_archive").fetchall()
               assert len(archive)==1 and archive[0][0]=="SW-GEO-V1" and archive[0][2]=="SOURCE_ARCHIVE_ONLY", archive
-              operational=[r[0] for r in c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='sw_geo' AND table_name LIKE 'bp02_%'").fetchall()]
+              operational=[r[0] for r in c.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='sw_geo' AND table_name LIKE 'bp02_%' AND table_name <> 'bp02_schema_migration'").fetchall()]
               assert operational==[], operational
               print(json.dumps({"preflight":"PASS","database":db,"postgres_version":version,"database_bytes_before":size,"existing_bp02_ledger":ledger,"global_migration_versions":global_versions,"archive":archive,"operational_tables_before":0,"recovery_branch_reference":"br-gentle-moon-bdtc0y32 (preserve unchanged)"},default=str,indent=2))
           PY
