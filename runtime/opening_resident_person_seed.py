@@ -106,19 +106,28 @@ def _has_near_duplicate(
 def build_opening_resident_person_seed() -> dict[str, Any]:
     config = _load_config()
     police_keys = _police_name_keys()
-    # Generate a deterministic oversupply, then exclude every exact police name.
-    # SW-UNS remains the authoritative global and near-duplicate reservation gate.
+    # Use a deterministic oversupply and the exact pg_trgm threshold enforced by
+    # SW-UNS. This screens the 500 police names and all earlier civilian candidates.
     candidates = generate_candidates(
-        "person", TARGET_COUNT * 2, seed=SEED, config=config
+        "person", TARGET_COUNT * 4, seed=SEED, config=config
     )
     accepted: list[dict[str, Any]] = []
     seen = set(police_keys)
+    indexed_names: list[str] = []
+    signatures: list[frozenset[str]] = []
+    postings: dict[str, list[int]] = {}
+    for police_name in sorted(police_keys):
+        indexed_names.append(police_name)
+        _add_to_similarity_index(police_name, signatures, postings)
+
     for full_name in candidates:
         parts = full_name.split()
         if len(parts) != 3:
             continue
         key = normalize_name(full_name)
-        if key in seen:
+        if key in seen or _has_near_duplicate(
+            full_name, signatures, postings, indexed_names
+        ):
             continue
         given, middle, family = parts
         candidate_ref = f"SWCIV-{len(accepted) + 1:06d}"
@@ -136,6 +145,8 @@ def build_opening_resident_person_seed() -> dict[str, Any]:
             "person_id": None,
         })
         seen.add(key)
+        indexed_names.append(full_name)
+        _add_to_similarity_index(full_name, signatures, postings)
         if len(accepted) == TARGET_COUNT:
             break
 
