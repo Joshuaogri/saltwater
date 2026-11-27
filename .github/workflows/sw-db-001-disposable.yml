@@ -166,7 +166,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0038_bp03_person_knowledge_boundary.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0039_bp03_person_attribute_claims.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
-          echo "bp03_household_individual_simulation_schema_growth_bytes=$((after-before))"
+          echo "bp03_individual_simulation_schema_growth_bytes=$((after-before))"
       - name: Run BP03 individual tier and permanent promotion acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_individual_simulation_acceptance.sql
       - name: Run BP03 sourced person attribute claims acceptance
@@ -175,11 +175,13 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_knowledge_acceptance.sql
       - name: Run BP03 person routines and movement acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_routines_movement_acceptance.sql
-      - name: Verify BP03 residence integration before world seed
       - name: Build current BP02 operational geography package
-        run: python -m runtime.bp02_operational_geography_package
+        run: |
+          python -m pip install 'shapely>=2,<3'
+          python -m runtime.bp02_operational_geography_package
       - name: Import current BP02 operational geography into disposable world
-        run: python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
+        run: |
+          python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
       - name: Measure BP04-01 proposal 0011 schema-only growth
         run: |
@@ -201,6 +203,7 @@ jobs:
           echo "bp04_02_schema_incremental_bytes=$((after-before))"
           echo "bp04_02_proposal_source_bytes=$(wc -c < db/proposals/0012_bp04_physical_asset_detail_profiles.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY 5 DESC;"
+      - name: Run BP03 residence integration acceptance
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
       - name: Provision deterministic opening population and business fixture
         run: |
