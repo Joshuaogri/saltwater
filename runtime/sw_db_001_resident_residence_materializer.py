@@ -121,13 +121,14 @@ def materialise(database_url: str) -> dict:
                 raise RuntimeError(f"expected 9,000 resident fixture people, found {residents}")
 
             address_ids = [r["bp02_address_source_id"] for r in records]
+            expected_addresses = len(set(address_ids))
             available = conn.execute("""
-                SELECT count(*) FROM sw_geo.bp02_address
+                SELECT count(DISTINCT source_id) FROM sw_geo.bp02_address
                 WHERE source_id = ANY(%s) AND operational_status='ACTIVE_IN_GAME'
             """, (address_ids,)).fetchone()[0]
-            if available != EXPECTED_RESIDENTS:
+            if available != expected_addresses:
                 raise RuntimeError(
-                    f"only {available} of 9,000 allocation address references resolve to active BP02 addresses"
+                    f"only {available} of {expected_addresses} distinct allocation address references resolve to active BP02 addresses"
                 )
 
             rows_json = json.dumps([
@@ -196,7 +197,7 @@ def materialise(database_url: str) -> dict:
                 JOIN sw_people.population_state p USING(person_id)
                 WHERE a.batch_id=%s
             """, (batch_id,)).fetchone()
-            if counts != (9000, 9000, 9000, counts[3], 9000, 9000):
+            if counts != (9000, 9000, 9000, expected_addresses, 9000, 9000):
                 raise RuntimeError(f"residence materialisation failed reconciliation: {counts!r}")
             return {
                 "status": "materialised",
@@ -210,6 +211,7 @@ def materialise(database_url: str) -> dict:
                 "household_rows_created": 0,
                 "production_database_written": False,
                 "allocation_manifest_sha256": allocation["manifest_sha256"],
+                "fixture_person_identity_matches_candidate_identity": False,
             }
 
 
