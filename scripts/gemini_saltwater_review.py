@@ -138,7 +138,7 @@ def make_chunks(paths: list[str], omitted: list[str]) -> list[str]:
     header = (
         "SALTWATER PROJECT REVIEW CONTEXT\n"
         + json.dumps(inventory, indent=2)
-        + "\nReview the whole fictional Saltwater project as one integrated system.\n"
+        + "\nReview only the explicitly selected active blueprint division and its concrete dependencies; do not perform an unfocused whole-project review.\n"
     )
     chunks, current = [], header
     for name in paths:
