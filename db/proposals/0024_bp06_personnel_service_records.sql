@@ -244,6 +244,7 @@ DECLARE
   v_event_id bigint;
   v_event_type smallint;
   v_event_kind text;
+  v_person_id integer;
 BEGIN
   IF p_appointment_id IS NULL
      OR p_new_state IS NULL
@@ -260,6 +261,8 @@ BEGIN
   WHERE appointment_id=p_appointment_id
   FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'personnel service engagement does not exist'; END IF;
+  SELECT person_id INTO STRICT v_person_id
+  FROM sw_police.personnel WHERE personnel_id=v_engagement.personnel_id;
 
   IF EXISTS(SELECT 1 FROM sw_police.personnel_service_event WHERE source_ref=p_source_ref) THEN
     IF EXISTS(SELECT 1 FROM sw_police.personnel_service_event
@@ -286,7 +289,7 @@ BEGIN
   INSERT INTO sw_core.simulation_event(
     event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key
   ) VALUES (
-    v_event_type,clock_timestamp(),v_tick,'personnel',v_engagement.personnel_id::text,p_source_ref,
+    v_event_type,clock_timestamp(),v_tick,'person',v_person_id,p_source_ref,
     jsonb_build_object('appointment_id',p_appointment_id,'prior_state',v_engagement.service_state,
       'new_state',p_new_state,'actor_ref',p_actor_ref,'reason',p_reason),
     'SW-BP06:SERVICE-STATE:'||p_source_ref
