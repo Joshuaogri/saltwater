@@ -27,7 +27,74 @@ REASON = (
 )
 
 
-def materialise(database_url: str) -> dict:
+
+def _assert_exact_allocation_manifest(conn, batch_id: int) -> tuple[int, int]:
+    """Require every persisted assignment and residence to match its source manifest."""
+    total = conn.execute("""
+        SELECT count(*) FROM sw_test.opening_resident_dwelling_assignment
+        WHERE batch_id=%s
+    """, (batch_id,)).fetchone()[0]
+    exact = conn.execute("""
+        SELECT count(*)
+        FROM sw_test.opening_resident_dwelling_assignment a
+        JOIN bp03_allocation_expected x
+          ON x.allocation_ref=a.allocation_ref
+         AND x.candidate_ref=a.candidate_ref
+         AND x.unit_id=a.unit_id
+         AND x.bp04_address_id=a.bp04_address_id
+         AND x.bp02_address_source_id=a.bp02_address_source_id
+         AND x.neighbourhood_id=a.neighbourhood_id
+        JOIN bp03_candidate_stage s
+          ON s.candidate_ref=a.candidate_ref
+         AND s.source_ref=x.person_source_ref
+         AND s.display_name=x.display_name
+         AND s.fixture_person_key=a.fixture_person_key
+        JOIN sw_people.person p
+          ON p.person_id=a.person_id AND p.source_ref=x.person_source_ref
+         AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=x.display_name
+        JOIN sw_people.person_residence r
+          ON r.residence_id=a.residence_id AND r.person_id=a.person_id
+         AND r.address_source_id=x.bp02_address_source_id
+         AND r.residence_kind='permanent' AND r.residence_status='current'
+        WHERE a.batch_id=%s
+          AND a.source_ref='SW-BP03:DISPOSABLE-RESIDENCE:'||a.allocation_ref
+    """, (batch_id,)).fetchone()[0]
+    if total != EXPECTED_RESIDENTS or exact != EXPECTED_RESIDENTS:
+        raise RuntimeError(
+            f"allocation manifest mismatch: assignment_rows={total}, "
+            f"exact_manifest_identity_and_residence_matches={exact}, expected={EXPECTED_RESIDENTS}"
+        )
+    return total, exact
+
+
+def _assert_negative_replay_rejected(conn, batch_id: int) -> None:
+    """Prove a tampered dwelling reference fails reconciliation, then restore it."""
+    conn.execute("SAVEPOINT bp03_negative_replay")
+    try:
+        changed = conn.execute("""
+            UPDATE sw_test.opening_resident_dwelling_assignment
+            SET unit_id=unit_id||':TAMPERED'
+            WHERE batch_id=%s AND allocation_ref=(
+                SELECT min(allocation_ref)
+                FROM sw_test.opening_resident_dwelling_assignment WHERE batch_id=%s
+            )
+            RETURNING allocation_ref
+        """, (batch_id, batch_id)).fetchone()
+        if not changed:
+            raise RuntimeError("negative replay test could not locate an assignment to tamper")
+        try:
+            _assert_exact_allocation_manifest(conn, batch_id)
+        except RuntimeError as exc:
+            if "allocation manifest mismatch" not in str(exc):
+                raise
+        else:
+            raise RuntimeError("negative replay test failed: altered dwelling assignment was accepted")
+    finally:
+        conn.execute("ROLLBACK TO SAVEPOINT bp03_negative_replay")
+        conn.execute("RELEASE SAVEPOINT bp03_negative_replay")
+
+
+def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
     allocation = build_opening_resident_dwelling_allocation()
     with gzip.open(CANDIDATE_PATH, "rt", encoding="utf-8") as stream:
         candidate_payload = json.load(stream)
@@ -238,6 +305,9 @@ def materialise(database_url: str) -> dict:
                         f'reconciliation: counts={counts!r}, expected={expected!r}, '
                         f'police_subset={police_count}'
                     )
+                _assert_exact_allocation_manifest(conn, batch_id)
+                if negative_replay_test:
+                    _assert_negative_replay_rejected(conn, batch_id)
                 return {
                     'status': 'already_materialised_idempotently',
                     'batch_id': batch_id,
@@ -441,35 +511,10 @@ def materialise(database_url: str) -> dict:
                   ON s.candidate_ref=a.candidate_ref AND s.source_ref=p.source_ref
                 WHERE a.batch_id=%s
             """, (batch_id,)).fetchone()
-            exact = conn.execute("""
-                SELECT count(*)
-                FROM sw_test.opening_resident_dwelling_assignment a
-                JOIN bp03_allocation_expected x
-                  ON x.allocation_ref=a.allocation_ref
-                 AND x.candidate_ref=a.candidate_ref
-                 AND x.unit_id=a.unit_id
-                 AND x.bp04_address_id=a.bp04_address_id
-                 AND x.bp02_address_source_id=a.bp02_address_source_id
-                 AND x.neighbourhood_id=a.neighbourhood_id
-                JOIN bp03_candidate_stage s
-                  ON s.candidate_ref=a.candidate_ref
-                 AND s.source_ref=x.person_source_ref
-                 AND s.display_name=x.display_name
-                JOIN sw_people.person p
-                  ON p.person_id=a.person_id AND p.source_ref=x.person_source_ref
-                 AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=x.display_name
-                JOIN sw_people.person_residence r
-                  ON r.residence_id=a.residence_id AND r.person_id=a.person_id
-                 AND r.address_source_id=x.bp02_address_source_id
-                 AND r.residence_kind='permanent' AND r.residence_status='current'
-                WHERE a.batch_id=%s
-                  AND a.source_ref='SW-BP03:DISPOSABLE-RESIDENCE:'||a.allocation_ref
-            """, (batch_id,)).fetchone()[0]
-            if counts[0] != EXPECTED_RESIDENTS or exact != EXPECTED_RESIDENTS:
-                raise RuntimeError(
-                    f"first-run allocation manifest mismatch: assignments={counts[0]}, "
-                    f"exact_manifest_and_person_residence_matches={exact}, expected=9000"
-                )
+            total, exact = _assert_exact_allocation_manifest(conn, batch_id)
+            if negative_replay_test:
+                _assert_negative_replay_rejected(conn, batch_id)
+
             if counts[1:] != (
                 EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, expected_addresses,
                 EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS,
@@ -498,10 +543,11 @@ def materialise(database_url: str) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
+    parser.add_argument("--negative-replay-test", action="store_true")
     args = parser.parse_args()
     if not args.database_url:
         parser.error("DATABASE_URL or --database-url is required")
-    print(json.dumps(materialise(args.database_url), indent=2, sort_keys=True))
+    print(json.dumps(materialise(args.database_url, negative_replay_test=args.negative_replay_test), indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
