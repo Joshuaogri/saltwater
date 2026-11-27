@@ -2240,3 +2240,7 @@ The follow-up trigger correction is committed on `main` as [d1ea709](https://git
 ## BP03 individual-simulation disposable acceptance — passed (2026-11-27)
 
 The PostgreSQL portion of SW-DB-001 run [46060435097](https://github.com/Joshuaogri/saltwater/actions/runs/46060435097) has passed the BP03 proposal 0036–0039 acceptance steps: tier progression and irreversible police-relevance promotion, sourced/conflicting attribute claims, event-bounded person knowledge, and effective-dated routines with sourced movement. The same run's Python regression job passed 28/28. The integrated job was still building the current BP02 operational geography package and had not yet reached residence integration or the 9,000-person materialiser; no full SW-DB-001 pass is claimed.
+
+## BP03 residence integration — passed (2026-11-27)
+
+The disposable PostgreSQL job in [SW-DB-001 run 46060435097](https://github.com/Joshuaogri/saltwater/actions/runs/46060435097) has now passed BP03 individual simulation acceptance (proposals 0036–0039), the full BP02 operational geography package build/import, BP04-01 and BP04-02 schema growth measurements, and **BP03 residence integration acceptance**. Its Python regression job also passed 28/28. The run is now provisioning the deterministic opening population and business fixture. Full-scale resident materialisation, tampered-dwelling replay rejection, idempotency, backup/restore, capacity and final reconciliation have not yet run; BP03 is not marked complete.
