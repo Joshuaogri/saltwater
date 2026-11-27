@@ -1912,3 +1912,12 @@ profile schema and is not an approved production migration. A separate
 PostgreSQL 18.7 disposable schema-and-seed benchmark is required before any
 production storage estimate or release approval. No production write is
 authorised by this preparation note.
+
+
+## BP02 operational geography package preparation — 2026-11-27
+
+Added `runtime/bp02_operational_geography_package.py`, which reruns the complete BP02 gameplay acceptance audit and builds a deterministic, gzip-compressed, source-hash-pinned operational geography release package. It includes the canonical geography source, identity map, gameplay parcels and addresses, building access points, bridge connectors and their acceptance evidence. The builder refuses to package unless the full acceptance and operational authority gates pass and all expected record counts match. It writes only local build artifacts and explicitly records that no database write occurred.
+
+The package validation workflow is [BP02 Operational Geography Package — PostgreSQL 18.7 Source Validation](.github/workflows/bp02-operational-geography-package.yml). It runs the package regression, measures compressed/uncompressed bytes, verifies source and package checksums, and uploads the package and manifest as a CI artifact. Run [45994846380](https://github.com/Joshuaogri/saltwater/actions/runs/45994846380) was still running at the time this note was added; no package size or test success is claimed until it completes.
+
+This is a release-package build and measurement stage only. It does not create operational Neon tables, write production data, or authorise a production deployment. The next stage is a separate PostgreSQL 18.7 disposable schema/import benchmark, including per-layer growth, total growth, index/relation sizes, idempotency and lookup-plan tests. Production Neon remains at the last independently verified baseline of 9,961,472 bytes until any separately approved deployment.
