@@ -84,6 +84,10 @@ acceptance and later BP02 address / BP06 service integration.
 
 
 The 9,000-person civilian candidate set now has a disposable PostgreSQL SW-UNS acceptance test. It stages all candidates, creates canonical person identities in one transaction, verifies that all 9,000 receive unique canonical reservations against the existing global registry, checks the exact 9,000 + 500 opening arithmetic and civilian/police name separation, then rolls back the entire test. The separate 500-person police registry preflight remains in place. These are preflight-only records; no production identities or population qualifications are created.
+## BP03 residential dwelling inventory — 2026-11-27
+
+The canonical property-world manifest reports **55,558 household-eligible dwelling units**: **31,785** in pure-residential properties and **23,773** in mixed-use properties. These are active inventory classifications for allocation planning, not a verified person-capacity figure. Physical occupancy capacity remains **NOT_ASSESSED**; resident allocation remains **NOT_ASSIGNED**; the manifest records zero people created and `production_seed_authorized=false`. The 9,000-person civilian candidate cohort must therefore not be described as housed or resident-linked until deterministic BP04-unit/BP04-address/BP02-address mapping and its acceptance checks are complete.
+
 ## BP03 opening identity candidate cohorts — 2026-11-27
 
 BP03 now has deterministic, source-controlled candidate datasets for both exact
