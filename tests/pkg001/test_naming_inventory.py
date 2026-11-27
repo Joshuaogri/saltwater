@@ -53,6 +53,7 @@ class GeographyNameInventoryTests(unittest.TestCase):
         )
         identity_map = build_spatial_identity_map(payload)
         self.assertEqual(len(identity_map.entries), 100)
+        # Gameplay approval is not the separate operational-seed approval gate.
         self.assertFalse(identity_map.operational_seed_approved)
         self.assertEqual(
             {row.source_id for row in identity_map.entries},
