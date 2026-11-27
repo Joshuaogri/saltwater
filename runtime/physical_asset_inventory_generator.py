@@ -11,6 +11,7 @@ import hashlib
 import json
 import heapq
 from pathlib import Path
+from time import perf_counter
 from shapely.geometry import LineString, Point, Polygon, box, shape
 from shapely.ops import nearest_points, unary_union
 from shapely.strtree import STRtree
@@ -280,6 +281,8 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
     occupied: set[str] = set()
     properties, buildings, premises, units, access_points, access_connectors = [], [], [], [], [], []
     geometries = []
+    estate_started = perf_counter()
+    print("BP04_STAGE_E_START name=estate_design", flush=True)
     for parcel in sorted(candidates["parcels"], key=lambda p: p["candidate_parcel_id"]):
         parcel_id = parcel["candidate_parcel_id"]
         slug = _slug(parcel_id)
@@ -585,6 +588,8 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 "footprint_inside_property": bool(site.covers(footprint)),
             })
 
+    print(f"BP04_STAGE_E_DONE name=estate_design elapsed_seconds={perf_counter() - estate_started:.3f}", flush=True)
+
     # Final geometry reconciliation runs after every building footprint is known.
     # The initial per-building pass can only see its own footprint; this second
     # pass prevents a connector from crossing a building generated later in the
@@ -603,11 +608,35 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
     building_geometry_ids = list(building_geometry_by_id)
     building_geometry_values = [building_geometry_by_id[key] for key in building_geometry_ids]
     building_geometry_tree = STRtree(building_geometry_values)
+    # Cache the 128 deterministic boundary samples once per building. Each
+    # building has multiple access-point connectors; recomputing the same
+    # points and querying the STRtree for each connector duplicated this work.
+    boundary_samples_by_building = {}
+    for building_id, geometry in building_geometry_by_id.items():
+        boundary = geometry.boundary
+        perimeter = boundary.length
+        safe_samples = []
+        for sample_no in range(128):
+            sample = boundary.interpolate(perimeter * sample_no / 128)
+            indexes = building_geometry_tree.query(sample, predicate="intersects")
+            if any(building_geometry_ids[int(index)] != building_id for index in indexes):
+                continue
+            safe_samples.append((sample_no + 1, sample))
+        boundary_samples_by_building[building_id] = safe_samples
+
+    access_points_by_building = {}
+    for row in access_points:
+        if row.get("building_id"):
+            access_points_by_building.setdefault(row["building_id"], []).append((
+                row["candidate_access_point_id"], Point(row["point_m"]),
+            ))
     access_by_id = {row["candidate_access_point_id"]: row for row in access_points}
     building_by_id = {row["candidate_building_id"]: row for row in buildings}
     dossier_by_parcel = {
         row["dossier"]["candidate_parcel_id"]: row for row in dossiers["parcels"]
     }
+    connector_started = perf_counter()
+    print("BP04_STAGE_E_START name=connector_reconciliation", flush=True)
     for connector in access_connectors:
         access = access_by_id.get(connector["access_point_candidate_id"])
         building = building_by_id.get(access.get("building_id")) if access else None
@@ -626,29 +655,19 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         # Retain the original proposal where possible; otherwise test deterministic
         # alternatives along this building's own boundary and preserve the original
         # coordinate as provenance when a replacement is selected.
-        start_candidates = [(0, original_start)]
-        boundary = own_geom.boundary
-        perimeter = boundary.length
-        for sample_no in range(128):
-            sample = boundary.interpolate(perimeter * sample_no / 128)
-            if sample.distance(original_start) <= 0.01:
-                continue
-            start_candidates.append((sample_no + 1, sample))
+        start_candidates = [(0, original_start), *boundary_samples_by_building.get(own_id, [])]
         choices = []
         same_building_accesses = [
-            Point(row["point_m"]) for row in access_points
-            if row.get("building_id") == own_id
-            and row["candidate_access_point_id"] != access["candidate_access_point_id"]
+            point for access_id, point in access_points_by_building.get(own_id, [])
+            if access_id != access["candidate_access_point_id"]
         ]
         for start_order, start in start_candidates:
             if any(start.distance(other) < 5.0 for other in same_building_accesses):
                 continue
-            point_indexes = building_geometry_tree.query(start, predicate="intersects")
-            if any(
-                building_geometry_ids[int(index)] != own_id
-                for index in point_indexes
-            ):
-                continue
+            if start_order == 0:
+                point_indexes = building_geometry_tree.query(start, predicate="intersects")
+                if any(building_geometry_ids[int(index)] != own_id for index in point_indexes):
+                    continue
             for candidate in dossier.get("access_candidates", []):
                 end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
                 line = LineString([start, end])
@@ -690,9 +709,10 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                     continue
                 if not property_geom.covers(start):
                     continue
-                point_indexes = building_geometry_tree.query(start, predicate="intersects")
-                if any(building_geometry_ids[int(index)] != own_id for index in point_indexes):
-                    continue
+                if start_order == 0:
+                    point_indexes = building_geometry_tree.query(start, predicate="intersects")
+                    if any(building_geometry_ids[int(index)] != own_id for index in point_indexes):
+                        continue
                 for candidate in sorted(dossier.get("access_candidates", []),
                                         key=lambda row: row["access_candidate_id"]):
                     end = Point(candidate["candidate_x_m"], candidate["candidate_y_m"])
@@ -757,6 +777,10 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
             "geometry_coordinates": [[round(x, 6), round(y, 6)]
                                      for x, y in line.coords],
         })
+
+    print(f"BP04_STAGE_E_DONE name=connector_reconciliation elapsed_seconds={perf_counter() - connector_started:.3f}", flush=True)
+    profiles_started = perf_counter()
+    print("BP04_STAGE_E_START name=profile_generation", flush=True)
 
     # Full BP04-02 profile and typed child-record layer. Design-derived values
     # are explicitly labelled; unavailable physical facts are not fabricated.
@@ -954,6 +978,7 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
         for attribute in ("access_mode", "emergency_egress", "loading_capability", "public_access"):
             assertion("ACCESS_POINT", aid, attribute, "not_assessed", ref)
 
+    print(f"BP04_STAGE_E_DONE name=profile_generation elapsed_seconds={perf_counter() - profiles_started:.3f}", flush=True)
     properties_with_buildings = {row["property_id"] for row in buildings}
     properties_without_buildings = sum(
         1 for row in properties
