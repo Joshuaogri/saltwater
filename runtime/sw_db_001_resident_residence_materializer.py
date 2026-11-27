@@ -386,7 +386,7 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                 SELECT et.event_type_id,clock_timestamp(),0,'person',p.person_id,
                        s.source_ref||':profile-materialised',
                        jsonb_build_object('operation','opening_civilian_identity_materialised',
-                         'candidate_ref',s.candidate_ref,'actor_ref',%s),
+                         'candidate_ref',s.candidate_ref,'actor_ref',%s::text),
                        'SW-BP03:PERSON_PROFILE:'||p.person_id||':'||s.source_ref
                 FROM bp03_candidate_stage s
                 JOIN sw_test.person_cohort pc ON pc.fixture_person_key=s.fixture_person_key
