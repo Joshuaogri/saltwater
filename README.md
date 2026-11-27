@@ -1,31 +1,44 @@
 # Saltwater
 
-## Gemini usage rule — 2026-11-26
+## Gemini project-wide engineering collaboration
 
-Gemini is to be used **only when something is not working**: for example, a failing component, broken workflow, failing test, reproducible defect or unresolved technical problem that needs independent diagnosis. Do not invoke Gemini for routine successful work, ordinary progress checks or proactive reviews when nothing is broken. When a real failure occurs, use Gemini to seek a fast, evidence-backed fix, then validate the fix before accepting it.
+Gemini is incorporated as Saltwater's independent engineering reviewer across the
+**entire project**, not only BP04. The project-wide workflow
+[gemini-saltwater-project-review.yml](.github/workflows/gemini-saltwater-project-review.yml)
+runs automatically on every push to `main`, performs a scheduled full-repository
+review every Monday, and supports a manually requested full or changed-scope
+review. The specialised
+[Gemini BP04 review](.github/workflows/gemini-bp04-review.yml) remains available
+for focused business-name/PostgreSQL performance diagnosis.
 
-## Gemini independent engineering review
+The project-wide remit covers all 44 blueprint divisions and their integration:
+game canon and runtime; population and NPC simulation; geography and property;
+businesses and economy; police command, personnel, patrol, dispatch,
+investigations and evidence; justice and custody; world time and persistence;
+database schemas, migrations and storage; authentication and security; tests,
+CI/CD, deployment, interfaces and documentation.
 
-A read-only Gemini reviewer is available through
-[the Gemini BP04 review workflow](.github/workflows/gemini-bp04-review.yml).
-It reviews a selected PKG-001 disposable PostgreSQL run alongside the BP04
-business-name acceptance test, Python reservation adapter and authoritative SQL
-reservation/trigger implementation. Its remit is performance diagnosis and
-independent engineering critique; it cannot commit code, alter workflow
-requirements, disable registry safeguards, or access production Neon.
+On ordinary pushes, Gemini reviews changed files together with the complete
+blueprint and implementation documentation. The weekly/manual full audit reviews
+all tracked text-based source and documentation in bounded context slices.
+Large JSON datasets are represented by structural summaries, bounded samples
+and SHA-256 hashes; compressed and binary artifacts are not sent. The report
+explicitly identifies material outside a run's scope and distinguishes verified
+evidence from hypotheses. This is independent review, not a claim that Gemini
+executed tests or inspected live Neon.
 
-To enable it, add a repository Actions secret named `GEMINI_API_KEY` using a
-key created in [Google AI Studio](https://aistudio.google.com/app/apikey).
-Then open **Actions → Gemini independent engineering review → Run workflow**,
-enter the PKG-001 run ID, and leave the model as `gemini-3.8-flash`. The report
-appears in the workflow summary and as a downloadable artifact. The workflow uses the Gemini Interactions API in background mode because the
-synchronous request exceeded its 240-second client timeout. Background mode
-requires `store: true`: Google temporarily stores the interaction while it runs.
-After a successful report is retrieved, the workflow attempts to delete that
-interaction record. If the run fails or times out before cleanup, Google's
-standard retention policy applies (currently one day on the free tier and up to
-55 days on paid tiers). The review is read-only and no Gemini request is made
-until the workflow is manually run and the secret is configured.
+The reviewer is read-only: it has no repository write permission, no Neon
+credentials and no authority to change code. ChatGPT evaluates Gemini's findings,
+checks them against source and test evidence, implements justified fixes on
+`main`, and verifies the result. Production Neon writes remain subject to the
+existing explicit-approval and measured-storage rules.
+
+The workflow reads the existing repository Actions secret named
+`GEMINI_API_KEY`; no key belongs in source code or chat. If the secret is
+present, the first automatic review runs after this workflow is committed to
+`main`. Reports appear in the GitHub Actions run summary and as a 30-day
+artifact. Gemini's temporary background interaction is deleted after its report
+is retrieved; the report itself is retained as the workflow artifact.
 
 ## BP02 bridge identity and business-naming lock remediation — 2026-11-26
 
