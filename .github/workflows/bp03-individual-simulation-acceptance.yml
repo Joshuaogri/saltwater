@@ -13,8 +13,6 @@ on:
       - 'tests/pkg001/bp03_person_knowledge_acceptance.sql'
       - 'db/proposals/0039_bp03_person_attribute_claims.sql'
       - 'tests/pkg001/bp03_person_attribute_claims_acceptance.sql'
-      - 'tests/pkg001/population_cap_fixture.sql'
-      - 'tests/pkg001/test_population_concurrency.py'
       - '.github/workflows/bp03-individual-simulation-acceptance.yml'
   workflow_dispatch:
 
