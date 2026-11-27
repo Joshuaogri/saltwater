@@ -148,6 +148,10 @@ BEGIN
     RAISE EXCEPTION 'generated batch contains duplicate or invalid normalized names';
   END IF;
 
+  SELECT count(*) INTO v_existing
+  FROM sw_names.generation_batch_candidate
+  WHERE batch_id=p_batch_id;
+
   PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
   IF EXISTS (
     WITH candidate AS (
@@ -159,14 +163,11 @@ BEGIN
     JOIN sw_names.name_reservation r
       ON (r.normalized_key=c.normalized_key
           OR r.normalized_key OPERATOR(sw_names.%) c.normalized_key)
-    WHERE r.generation_batch_id IS DISTINCT FROM p_batch_id
+    WHERE v_existing=0
+       OR r.generation_batch_id IS DISTINCT FROM p_batch_id
   ) THEN
     RAISE EXCEPTION 'generated batch conflicts with the existing global name registry';
   END IF;
-
-  SELECT count(*) INTO v_existing
-  FROM sw_names.generation_batch_candidate
-  WHERE batch_id=p_batch_id;
   IF v_existing>0 THEN
     WITH candidate AS (
       SELECT sw_names.normalize_name(u.display_name) AS normalized_key
