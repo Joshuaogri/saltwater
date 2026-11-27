@@ -5,8 +5,6 @@ import unittest
 from pathlib import Path
 
 from runtime.bp04_business_registry_audit import audit_business_registry
-from runtime.business_registry_generator import build_business_registry
-from runtime.property_tenure_generator import _expand_columnar
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -15,10 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 class BP04BusinessRegistryAuditTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        geography = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
-        with gzip.open(ROOT / "data/property/saltwater-property-world-v1.json.gz", "rt", encoding="utf-8") as handle:
-            property_world = _expand_columnar(json.load(handle))
-        cls.registry = build_business_registry(geography, property_world=property_world)
+        with gzip.open(ROOT / "data/business/saltwater-business-registry-v1.json.gz", "rt", encoding="utf-8") as handle:
+            cls.registry = json.load(handle)
         cls.audit = audit_business_registry(cls.registry)
 
     def test_full_ten_thousand_local_business_population_and_lifecycle_counts(self):
