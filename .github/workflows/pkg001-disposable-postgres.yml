@@ -15,6 +15,10 @@ on:
       - "db/proposals/0008_bp39_checkpoint_recovery.sql"
       - "db/proposals/0009_universal_name_registry.sql"
       - "db/proposals/0010_bp03_population_qualification_union.sql"
+      - "db/proposals/0034_bp03_person_residence.sql"
+      - "db/domain-migrations/bp02/0001_source_archive.sql"
+      - "db/domain-migrations/bp02/0002_operational_geography.sql"
+      - "tests/pkg001/person_residence_acceptance.sql"
       - "tests/pkg001/population_union_acceptance.sql"
       - "db/proposals/0012_bp04_canonical_property_stack.sql"
       - "db/proposals/0030_bp04_business_text_id_naming.sql"
@@ -202,6 +206,13 @@ jobs:
           before_bp03_population=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_union_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f db/domain-migrations/bp02/0001_source_archive.sql
+          psql -v ON_ERROR_STOP=1 -f db/domain-migrations/bp02/0002_operational_geography.sql
+          before_bp03_residence=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0034_bp03_person_residence.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
+          after_bp03_residence=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp03_bp02_residence_schema_growth_bytes=$((after_bp03_residence-before_bp03_residence))"
           after_bp03_population=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_population_service_schema_growth_bytes=$((after_bp03_population-before_bp03_population))"
           psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql

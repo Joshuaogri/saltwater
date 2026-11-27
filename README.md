@@ -33,6 +33,12 @@ and validates them. Production Neon writes remain subject to explicit approval
 and a measured storage estimate. The workflow uses the existing
 `GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
+## BP03 ↔ BP02 canonical residence linkage
+
+BP03 now has a residence record linked by foreign key to the operational BP02 address identity (sw_geo.bp02_address.source_id). A person has one current residence link with effective-dated history; assigning or moving residence updates the same canonical person and usual-resident qualification. Ending residence removes only the residence qualification: a person still physically present or serving in the police remains counted once.
+
+The disposable acceptance fixture creates two BP02 addresses, tests idempotent assignment, moves a person between addresses, confirms the previous residence is closed, and verifies that ending residence does not remove a physically present person. It then removes physical presence and checks the count returns to zero. No production address or resident records have been imported or written.
+
 ## BP03 ↔ BP06 police population integration
 
 BP06 service-appointment events now update the BP03 canonical population ledger automatically. The integration uses the existing canonical person ID, preserves resident and physical-presence qualifications, and toggles only the overlapping active-police-service qualification. A person already counted as a resident or physically present remains one person; police membership does not add a second headcount.
