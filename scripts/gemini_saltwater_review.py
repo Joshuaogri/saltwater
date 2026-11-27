@@ -14,11 +14,11 @@ import urllib.request
 ROOT = pathlib.Path(".")
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 API = "https://generativelanguage.googleapis.com/v1beta/interactions"
-CHUNK_CHARS = 180_000
+CHUNK_CHARS = 45_000
 POLL_SECONDS = 10
 POLL_LIMIT_SECONDS = 12 * 60
 RETRY_LIMIT = 3
-RETRY_BACKOFF_SECONDS = 20
+RETRY_BACKOFF_SECONDS = 60
 TEXT_SUFFIXES = {".md", ".py", ".sql", ".yml", ".yaml", ".toml", ".ini", ".txt", ".sh", ".js", ".ts", ".html", ".css", ".json"}
 EXCLUDED_PARTS = {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".pytest_cache"}
 SECRET_PARTS = {".env", "secrets", "credentials"}
@@ -98,20 +98,29 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
             changed = tracked
         active_bp = os.environ.get("ACTIVE_BP", "BP02").strip().upper()
         core = [p for p in tracked if p == "README.md"]
-        bp_prefixes = {
-            "BP02": (
-                "runtime/bp02", "data/geography/", "data/property/",
-                "tests/pkg001/test_bp02", ".github/workflows/bp02-",
-                "docs/deployment/BP02",
-            ),
-        }.get(active_bp, ())
-        bp_docs = {
+        # Keep each Gemini request within a deliberately small, high-signal BP02
+        # evidence pack. Do not send every property dataset or every historical
+        # review file on each push; changed files are still included separately.
+        active_bp_files = {
             "BP02": (
                 "docs/blueprint/divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md",
-                "docs/implementation/BP02-operational-geography-implementation-register.md",
+                "docs/deployment/BP02-operational-geography-readiness.md",
+                "docs/deployment/BP02-production-release-runbook.md",
+                "docs/implementation/BP02-address-placement-review-register.md",
+                "runtime/bp02_operational_geography_package.py",
+                "runtime/bp02_full_acceptance_audit.py",
+                "runtime/bp02_fictional_geography_release.py",
+                "runtime/bp02_geography_archive_importer.py",
+                "runtime/bp02_parcel_address_identity.py",
+                "tests/pkg001/test_bp02_operational_geography_package.py",
+                "tests/pkg001/test_bp02_domain_migration.py",
+                "tests/pkg001/test_bp02_geography_archive_importer.py",
+                ".github/workflows/bp02-operational-geography-package.yml",
+                "data/geography/saltwater-geography-v1.json",
+                "data/geography/saltwater-geography-v1-identity-map.json",
             ),
         }.get(active_bp, ())
-        active_bp_files = [p for p in tracked if any(p.startswith(prefix) for prefix in bp_prefixes) or p in bp_docs]
+        active_bp_files = [p for p in active_bp_files if p in tracked]
         chosen = set(p for p in changed if p in tracked) | set(core) | set(active_bp_files)
         omitted = [p for p in tracked if p not in chosen]
         return sorted(chosen), omitted
@@ -250,7 +259,7 @@ def main() -> None:
                 transient = ("RESOURCE_EXHAUSTED", "UNAVAILABLE", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504")
                 if not any(code in str(exc) for code in transient) or attempt == RETRY_LIMIT:
                     raise
-                wait = RETRY_BACKOFF_SECONDS * attempt
+                wait = RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
                 print(f"Gemini capacity limit on slice {index}; retry {attempt + 1}/{RETRY_LIMIT} in {wait}s", flush=True)
                 time.sleep(wait)
         if last_error is not None:
