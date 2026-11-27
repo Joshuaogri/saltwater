@@ -154,7 +154,7 @@ BEGIN
  INSERT INTO sw_people.person_relevance_promotion(person_id,promoted_tick,trigger_kind,trigger_ref,
   reason,actor_ref,event_id)
  VALUES(p_person_id,v_tick,p_trigger_kind,p_trigger_ref,p_reason,p_actor_ref,v_event);
- PERFORM sw_people.set_person_detail_tier(p_person_id,3,p_trigger_kind,p_trigger_ref,
+ PERFORM sw_people.set_person_detail_tier(p_person_id,3::smallint,p_trigger_kind,p_trigger_ref,
   'Permanent police-relevance promotion: '||p_reason,p_actor_ref,p_source_ref||':tier3');
  RETURN true;
 END $$;
