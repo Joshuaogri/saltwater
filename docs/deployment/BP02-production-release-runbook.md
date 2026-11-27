@@ -259,3 +259,10 @@ The source package builder is now implemented at `runtime/bp02_operational_geogr
 The package regression and CI artifact workflow are in `tests/pkg001/test_bp02_operational_geography_package.py` and `.github/workflows/bp02-operational-geography-package.yml`. Workflow run [45994846380](https://github.com/Joshuaogri/saltwater/actions/runs/45994846380) was running when this update was prepared; measured package sizes and pass/fail status will be added only after verified completion.
 
 The next engineering stage is a separate PostgreSQL 18.7 disposable operational-schema/import benchmark. It must report schema-only growth, per-layer insertion growth, total database growth, relation/index sizes, repeat-import growth and representative road/address/parcel lookup plans. No production Neon schema or data write is included or authorised by this package stage.
+
+
+### Authority separation for operational geography package (2026-11-27)
+
+The package builder preserves the canonical fictional gameplay release: accepted gameplay records may carry `ACTIVE_IN_GAME`, and the four bridge connectors retain their explicit fictional engineering assessments. These are game-world states only.
+
+The package and manifest now expose separate fields: `gameplay_release_accepted=true` and `production_seed_approved`, derived only from the immutable identity-map flag. The current identity map says `operational_seed_approved=false`, so the package must report `production_seed_approved=false`. This does not invalidate the fictional gameplay canon; it prevents game approval from being mistaken for production database authorization. A separate explicit production-seed decision remains required before any operational Neon write.
