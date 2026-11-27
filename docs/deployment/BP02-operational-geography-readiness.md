@@ -75,6 +75,12 @@ The source JSON labels `SW-GEO-V1` as `APPROVED_FOR_OPERATIONAL_USE`, and BP-02 
 
 These statements are not equivalent. BP-02 design/gameplay acceptance and the source archive release do not, by themselves, authorize production seeding. The operational release manifest must explicitly distinguish the approved road-network layer from parcel/address/access candidates. No source status is silently changed in this preparation.
 
+### Authority interpretation — gameplay release is not database seed approval
+
+The canonical BP02 release assigns fictional gameplay states such as `ACTIVE_IN_GAME` and records the four bridge approaches as fictional engineering assessments. Those decisions are valid within Saltwater's game world and are not claims about real-world physical or legal conditions.
+
+They do not grant production database seeding authority. The immutable identity map still records `operational_seed_approved=false`. The operational package therefore records two independent facts: `gameplay_release_accepted=true` and `production_seed_approved=false`. The latter remains false until a separate production-seeding decision is explicitly made. No workflow may infer database permission from an in-game status.
+
 ## 5. Existing storage measurements — interpretation
 
 Two prior disposable measurements are relevant but must not be confused with a geography-only production estimate:
