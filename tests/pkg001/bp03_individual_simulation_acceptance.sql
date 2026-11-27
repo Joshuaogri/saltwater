@@ -2,6 +2,8 @@
 BEGIN;
 UPDATE sw_runtime.state SET state=1,player_present=false
 WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
+UPDATE sw_runtime.state SET state=2,player_present=true,bootstrap_open=false
+WHERE singleton=1 AND state=1 AND bootstrap_open=true AND world_tick=0;
 DO $$
 DECLARE v_person integer; v_tier smallint; v_promoted boolean;
 BEGIN
