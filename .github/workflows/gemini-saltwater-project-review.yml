@@ -1,0 +1,88 @@
+name: Saltwater project-wide Gemini review
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Review changed files or the complete Saltwater repository"
+        required: true
+        type: choice
+        options:
+          - full
+          - changed
+        default: full
+      model:
+        description: "Gemini model"
+        required: true
+        default: "gemini-3.8-flash"
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: saltwater-gemini-review-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  project-review:
+    name: Independent whole-project engineering review
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - name: Check out the reviewed main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Select review scope
+        id: scope
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_SCOPE: ${{ inputs.scope }}
+          DISPATCH_MODEL: ${{ inputs.model }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "schedule" ]]; then
+            echo "scope=full" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "scope=${DISPATCH_SCOPE:-full}" >> "$GITHUB_OUTPUT"
+          else
+            echo "scope=changed" >> "$GITHUB_OUTPUT"
+          fi
+          echo "model=${DISPATCH_MODEL:-gemini-3.8-flash}" >> "$GITHUB_OUTPUT"
+
+      - name: Run Gemini across Saltwater
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ steps.scope.outputs.model }}
+          REVIEW_SCOPE: ${{ steps.scope.outputs.scope }}
+          GITHUB_EVENT_PATH: ${{ github.event_path }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: python scripts/gemini_saltwater_review.py
+
+      - name: Publish project review in workflow summary
+        if: always() && hashFiles('gemini-saltwater-project-review.md') != ''
+        run: cat gemini-saltwater-project-review.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload complete review report
+        if: always() && hashFiles('gemini-saltwater-project-review.md') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-saltwater-project-review-${{ github.run_id }}
+          path: gemini-saltwater-project-review.md
+          if-no-files-found: error
+          retention-days: 30
