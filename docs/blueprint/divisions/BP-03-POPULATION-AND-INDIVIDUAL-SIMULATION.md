@@ -650,3 +650,6 @@ These are source and disposable acceptance results. The 9,000 civilian and 500 p
 
 
 The full 10,000-person boundary passed in [BP03 run 46042030165](https://github.com/Joshuaogri/saltwater/actions/runs/46042030165): at 9,999, two concurrent admissions for the final slot produced exactly one success and one cap rejection. Final count, counter, canonical person rows and tier states reconciled at 10,000. Disposable database size was 37,592,087 bytes; this is not a Neon estimate. Evidence: [BP03 10,000-person cap and concurrency](../../implementation/test-evidence/BP03-10000-person-cap-concurrency-acceptance-0001.md).
+
+
+The integrated disposable opening-world run [46041993980](https://github.com/Joshuaogri/saltwater/actions/runs/46041993980) passed: 9,500 canonical people (9,000 usual residents and 500 physically present police-subset cohort members), 10,000 businesses, lifecycle and qualification history, BP02-linked residence acceptance, final cap at 10,000, idempotency, backup/restore and zero clock advance. The police-subset people were not provisioned as BP06 personnel. The resident dwelling allocation remains candidate-only; the integrated world did not materialise all 9,000 residence/household rows. Evidence: [BP03 integrated opening world](../../implementation/test-evidence/BP03-integrated-opening-world-acceptance-0001.md).
