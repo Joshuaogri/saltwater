@@ -18,7 +18,7 @@ BEGIN
  INSERT INTO sw_property.street_address(
   address_id,property_id,display_name,source_dataset,source_record
  ) VALUES('BP03-HH-TEST:BP04-ADDRESS','BP03-HH-TEST:PROPERTY','Fixture dwelling address',
-  'BP03-HH-TEST','{"test_fixture":true}');
+  'BP03-HH-TEST','{"test_fixture":true,"source_ref":"SW-GEO-V1:BP03-HH-TEST:PARCEL"}');
  UPDATE sw_property.property_site SET address_id='BP03-HH-TEST:BP04-ADDRESS'
  WHERE property_id='BP03-HH-TEST:PROPERTY';
  INSERT INTO sw_property.building(

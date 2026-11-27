@@ -216,6 +216,11 @@ jobs:
           after_bp03_residence=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_bp02_residence_schema_growth_bytes=$((after_bp03_residence-before_bp03_residence))"
           psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
+          before_bp03_households=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0035_bp03_household_membership.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/household_membership_acceptance.sql
+          after_bp03_households=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp03_household_membership_schema_growth_bytes=$((after_bp03_households-before_bp03_households))"
           psql -v ON_ERROR_STOP=1 -f db/proposals/0030_bp04_business_text_id_naming.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0023_bp05_police_architecture.sql
           psql -v ON_ERROR_STOP=1 -f tests/pkg001/police_architecture_acceptance.sql
