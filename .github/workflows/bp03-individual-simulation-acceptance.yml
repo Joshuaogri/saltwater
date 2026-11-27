@@ -6,6 +6,8 @@ on:
     paths:
       - 'db/proposals/0036_bp03_individual_simulation_promotion.sql'
       - 'tests/pkg001/bp03_individual_simulation_acceptance.sql'
+      - 'db/proposals/0037_bp03_person_routines_and_movement.sql'
+      - 'tests/pkg001/bp03_person_routines_movement_acceptance.sql'
       - '.github/workflows/bp03-individual-simulation-acceptance.yml'
   workflow_dispatch:
 
@@ -51,3 +53,7 @@ jobs:
           echo "bp03_individual_simulation_schema_growth_bytes=$((after-before))"
       - name: Verify tier progression, permanent promotion and history
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_individual_simulation_acceptance.sql
+      - name: Apply BP03 routines and movement service
+        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0037_bp03_person_routines_and_movement.sql
+      - name: Verify routine, movement, certainty and chronology boundaries
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_routines_movement_acceptance.sql
