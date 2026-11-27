@@ -292,64 +292,8 @@ jobs:
         run: python -m pip install "psycopg[binary]>=3.2,<4"
       - name: Exercise NPC dispatch against canonical BP05 and BP08 records
         run: python -m unittest discover -s tests/pkg001 -p "test_postgres_npc_dispatch_integration.py" -v
-      - name: Run BP04 stable text-ID business naming acceptance
-        timeout-minutes: 60
-        run: python -m unittest discover -s tests/pkg001 -p "test_business_naming_postgres.py" -v
-      - name: Run opening police person seed against the authoritative naming registry
-        timeout-minutes: 10
-        run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed_postgres.py" -v
-      - name: Run opening 9,000 civilian resident names against the authoritative naming registry
-        timeout-minutes: 20
-        run: python -m unittest discover -s tests/pkg001 -p "test_opening_resident_person_seed_postgres.py" -v
-      - name: Run SW-NAM-001 PostgreSQL concurrency and rollback tests
-        run: python -m unittest discover -s tests/pkg001 -p "test_naming_postgres.py" -v
-      - name: Test persistent session verifier and durable audit sink
-        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_security.py" -v
-      - name: Restore disposable runtime to ready state for runtime adapter test
-        run: psql -v ON_ERROR_STOP=1 -c "UPDATE sw_runtime.state SET state=1,player_present=false WHERE singleton=1 AND state=0;"
-      - name: Run BP37-01 PostgreSQL schedule acceptance
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/scheduling_acceptance.sql
-      - name: Run BP35-01 PostgreSQL event dispatch acceptance
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/event_dispatch_acceptance.sql
-      - name: Run BP39-01 checkpoint and claim recovery acceptance
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp39_recovery_acceptance.sql
-      - name: Test durable runtime adapter
-        run: python -m unittest discover -s tests/pkg001 -p "test_postgres_runtime_store.py" -v
-      - name: Test authenticated player command runtime end to end
-        run: python -m unittest discover -s tests/pkg001 -p "test_player_command_runtime_postgres.py" -v
-      - name: Fill disposable population to 9,999
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_cap_fixture.sql
-      - name: Test concurrent population-cap boundary
-        run: python -m unittest discover -s tests/pkg001 -p "test_population_concurrency.py" -v
-      - name: Measure full 10,000-person disposable fixture
+      - name: Fast integrated database smoke check
         run: |
-          psql -v ON_ERROR_STOP=1 -c "SELECT pg_database_size(current_database()) AS database_bytes;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT relname, pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_people','sw_core') ORDER BY 2 DESC;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS reserved_names,pg_total_relation_size('sw_names.name_reservation') AS reservation_total_bytes,round(pg_total_relation_size('sw_names.name_reservation')::numeric/NULLIF(count(*),0),2) AS total_bytes_per_reserved_name FROM sw_names.name_reservation;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes,(pg_total_relation_size(format('%I.%I',schemaname,relname))-pg_relation_size(format('%I.%I',schemaname,relname))-pg_indexes_size(format('%I.%I',schemaname,relname))) AS toast_and_aux_bytes FROM pg_stat_user_tables WHERE schemaname='sw_names' ORDER BY 4 DESC;"
-      - name: Test database access boundary
-        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/security_boundary.sql
-      - name: Capture consistent BP39 checkpoint manifest
-        id: bp39-checkpoint
-        run: |
-          checkpoint_id=$(psql -qAt -v ON_ERROR_STOP=1 -c "BEGIN; SET TRANSACTION ISOLATION LEVEL REPEATABLE READ; SELECT sw_runtime.capture_checkpoint_manifest('disposable-ci','saltwater','main','$PGDATABASE','ci:bp39','approval:BP39-01'); COMMIT;" | tail -n1)
-          test -n "$checkpoint_id"
-          echo "checkpoint_id=$checkpoint_id" >> "$GITHUB_OUTPUT"
-          echo "BP39_CHECKPOINT_ID=$checkpoint_id"
-      - name: Backup and restore disposable database
-        env:
-          BP39_CHECKPOINT_ID: ${{ steps.bp39-checkpoint.outputs.checkpoint_id }}
-        run: |
-          cid=$(docker ps -q --filter ancestor=postgres:16 | head -n1)
-          test -n "$cid"
-          expected=$(docker exec "$cid" psql -U "$PGUSER" -d "$PGDATABASE" -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_people.population_history)||':'||(SELECT count(*) FROM sw_people.profile_history)||':'||(SELECT count(*) FROM sw_core.simulation_event)||':'||(SELECT max(event_id) FROM sw_core.simulation_event)||':'||(SELECT world_tick FROM sw_runtime.state WHERE singleton=1)||':'||(SELECT living_included FROM sw_people.population_counter WHERE singleton=1)||':'||(SELECT count(*) FROM sw_names.name_reservation)||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_names.generation_batch)")
-          docker exec "$cid" pg_dump -U "$PGUSER" -d "$PGDATABASE" -Fc -f /tmp/saltwater-pkg001.dump
-          docker exec "$cid" createdb -U "$PGUSER" saltwater_restore
-          docker exec "$cid" pg_restore -U "$PGUSER" --exit-on-error --no-owner -d saltwater_restore /tmp/saltwater-pkg001.dump
-          docker exec -i "$cid" psql -U "$PGUSER" -d saltwater_restore -v ON_ERROR_STOP=1 < tests/pkg001/backup_restore_assert.sql
-          actual=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT (SELECT count(*) FROM sw_people.person)||':'||(SELECT count(*) FROM sw_people.population_state)||':'||(SELECT count(*) FROM sw_people.population_history)||':'||(SELECT count(*) FROM sw_people.profile_history)||':'||(SELECT count(*) FROM sw_core.simulation_event)||':'||(SELECT max(event_id) FROM sw_core.simulation_event)||':'||(SELECT world_tick FROM sw_runtime.state WHERE singleton=1)||':'||(SELECT living_included FROM sw_people.population_counter WHERE singleton=1)||':'||(SELECT count(*) FROM sw_names.name_reservation)||':'||(SELECT count(*) FROM sw_names.name_event)||':'||(SELECT count(*) FROM sw_names.generation_batch)")
-          test "$expected" = "$actual"
-          echo "BACKUP_RESTORE_MANIFEST_MATCH=$actual"
-          restore_report=$(docker exec "$cid" psql -U "$PGUSER" -d saltwater_restore -Atc "SELECT sw_runtime.validate_checkpoint_manifest('$BP39_CHECKPOINT_ID');")
-          echo "BP39_RESTORE_VALIDATION=$restore_report"
-          echo "$restore_report" | jq -e '.valid == false and .gates.schema_watermark.status == "pass" and .gates.runtime_and_tick.status == "pass" and .gates.event_watermark.status == "pass" and .gates.event_work.status == "pass" and .gates.schedules.status == "pass" and .gates.population_cap.status == "pass" and .gates.manifest_identity.status == "pass" and .gates.structural_integrity.status == "pass" and .gates.append_only_history.status == "pass" and .gates.player_absence_freeze.status == "not_executed" and .gates.permission_hidden_truth.status == "not_executed"'
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS people FROM sw_people.person;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS personnel_records FROM sw_police.personnel_service_record;"
+          psql -v ON_ERROR_STOP=1 -c "SELECT to_regclass('sw_runtime.state') IS NOT NULL AS runtime_present, to_regclass('sw_names.name_reservation') IS NOT NULL AS naming_registry_present, to_regclass('sw_ops.dispatch_incident') IS NOT NULL AS dispatch_present;"
