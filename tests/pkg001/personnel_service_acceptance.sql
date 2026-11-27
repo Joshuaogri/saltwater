@@ -4,6 +4,16 @@ DECLARE
   v_personnel bigint;
 BEGIN
   SELECT count(*) INTO v_personnel FROM sw_police.personnel;
+  IF (SELECT active_police_service_members FROM sw_people.population_summary)<>v_personnel THEN
+    RAISE EXCEPTION 'BP06 appointments must automatically qualify their canonical people as active police-service members';
+  END IF;
+  IF EXISTS(
+    SELECT 1 FROM sw_police.personnel p
+    JOIN sw_people.population_state pop ON pop.person_id=p.person_id
+    WHERE NOT pop.active_police_service OR pop.life_status<>1 OR pop.scope_status<>1
+  ) THEN
+    RAISE EXCEPTION 'BP06 personnel and BP03 population qualification are not synchronised';
+  END IF;
   IF (SELECT count(*) FROM sw_police.personnel_service_engagement)<>v_personnel THEN
     RAISE EXCEPTION 'each personnel dossier must have exactly one initial service engagement';
   END IF;

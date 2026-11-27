@@ -33,6 +33,14 @@ and validates them. Production Neon writes remain subject to explicit approval
 and a measured storage estimate. The workflow uses the existing
 `GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
+## BP03 ↔ BP06 police population integration
+
+BP06 service-appointment events now update the BP03 canonical population ledger automatically. The integration uses the existing canonical person ID, preserves resident and physical-presence qualifications, and toggles only the overlapping active-police-service qualification. A person already counted as a resident or physically present remains one person; police membership does not add a second headcount.
+
+Countable service states are active, leave, suspended, secondment-out, secondment-in and notice for primary sworn, civilian, technical-professional and auxiliary appointments. Contractors and terminal/non-service states do not qualify as active police-service members. The sync is driven by the append-only BP06 personnel service event, not by an independently maintained headcount.
+
+Disposable acceptance now reconciles BP06 personnel dossiers against BP03 active-police membership. Production Neon remains unchanged. Residence/address linkage to BP02 is the next integration slice.
+
 ## BP03 population service — qualification union implementation in CI
 
 A disposable-only follow-on proposal, db/proposals/0010_bp03_population_qualification_union.sql,

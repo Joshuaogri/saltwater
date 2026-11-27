@@ -48,6 +48,66 @@ CREATE TABLE sw_police.personnel_service_event (
 CREATE INDEX personnel_service_event_history_idx
   ON sw_police.personnel_service_event(personnel_id,service_event_id);
 
+
+-- BP03 population union follows authoritative BP06 service-engagement events.
+-- The canonical person remains a single identity; police service is one overlapping
+-- qualification, never an additional headcount.
+CREATE FUNCTION sw_police.sync_personnel_population_qualification()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path=pg_catalog,sw_police,sw_people
+AS $bp06$
+DECLARE
+  v_person_id integer;
+  v_usual_resident boolean;
+  v_physically_present boolean;
+  v_active_service boolean;
+BEGIN
+  IF NEW.event_kind NOT IN ('appointed','service_state_changed','category_changed','appointment_rescinded') THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT p.person_id INTO v_person_id
+  FROM sw_police.personnel p
+  WHERE p.personnel_id=NEW.personnel_id;
+  IF v_person_id IS NULL THEN
+    RAISE EXCEPTION 'BP06 service event has no canonical BP03 person identity';
+  END IF;
+
+  SELECT s.usual_resident,s.physically_present
+    INTO v_usual_resident,v_physically_present
+  FROM sw_people.population_state s
+  WHERE s.person_id=v_person_id
+  FOR UPDATE;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'BP06 personnel person has no BP03 population state';
+  END IF;
+
+  SELECT EXISTS(
+    SELECT 1
+    FROM sw_police.personnel_service_engagement e
+    WHERE e.personnel_id=NEW.personnel_id
+      AND e.is_primary
+      AND e.personnel_category IN
+        ('sworn_officer','civilian_employee','technical_professional','auxiliary')
+      AND e.service_state IN
+        ('active','leave','suspended','secondment_out','secondment_in','notice')
+  ) INTO v_active_service;
+
+  PERFORM sw_people.set_population_qualifications(
+    v_person_id,v_usual_resident,v_physically_present,v_active_service,
+    'BP06:POPULATION-SERVICE-EVENT:'||NEW.event_id::text,
+    NEW.actor_ref,NEW.reason
+  );
+  RETURN NEW;
+END
+$bp06$;
+
+CREATE TRIGGER personnel_service_population_sync
+AFTER INSERT ON sw_police.personnel_service_event
+FOR EACH ROW
+EXECUTE FUNCTION sw_police.sync_personnel_population_qualification();
+
 CREATE TABLE sw_police.service_number_history (
   service_number_event_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   personnel_id uuid NOT NULL REFERENCES sw_police.personnel(personnel_id),
