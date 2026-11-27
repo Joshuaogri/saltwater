@@ -33,6 +33,45 @@ and validates them. Production Neon writes remain subject to explicit approval
 and a measured storage estimate. The workflow uses the existing
 `GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
+## BP03 opening identity candidate cohorts — 2026-11-27
+
+BP03 now has deterministic, source-controlled candidate datasets for both exact
+opening cohorts. The civilian resident build workflow
+[46016834874 — success](https://github.com/Joshuaogri/saltwater/actions/runs/46016834874)
+generated and committed the resident dataset to `main` at
+`e6422fb04ea4d40d6ef33bb973a6375b057f541f`.
+
+- **9,000 civilian usual-resident name candidates** in
+  `data/people/saltwater-opening-civilian-resident-seed-v1.json` and its
+  deterministic gzip companion.
+- **500 police-person name candidates** remain in
+  `data/people/saltwater-opening-police-person-seed-v1.json` and its gzip
+  companion.
+- Exact candidate names are unique within each cohort, and the two cohorts
+  have zero exact-name overlap. The 9,000-person cohort is checked for exact
+  duplicates; final global/near-duplicate reservation remains the responsibility
+  of the authoritative SW-UNS registry.
+- Opening arithmetic is exactly **9,000 + 500 = 9,500** distinct people, with
+  **500 unused places** below the 10,000-person ceiling.
+- Resident dataset manifest SHA-256:
+  `e8dcfca02f7a3f2d80d53a90a79eae1b572be135d68653f57a3c451f014dbe43`.
+  Readable JSON is 4,603,381 bytes; deterministic gzip is 253,572 bytes.
+- Five resident-seed regression tests and five police-seed regression tests
+  passed in the build workflow.
+
+These files are **identity candidates only**. They do not create canonical
+`sw_people.person` rows, assign BP02 addresses/parcels, invent ages or other
+demographic facts, or create BP06 personnel appointments. No production Neon
+write or import was performed; `production_import_authorized=false`.
+
+BP03 remains in implementation, not complete. The next substantive runtime
+slice is the canonical person/population service, including the approved
+deduplicated qualification union (usual residence, physical presence and active
+police membership), atomic cap enforcement, lifecycle history and residence
+links. The existing disposable population proposal's single inclusion flag is
+not sufficient to implement that rule and must not be treated as production
+schema.
+
 ## BP02 operational geography — production release completed (2026-11-27)
 
 The approved BP02 operational geography release is now deployed to production Neon.
