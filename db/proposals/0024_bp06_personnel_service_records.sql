@@ -47,6 +47,12 @@ CREATE TABLE sw_police.personnel_service_event (
 );
 CREATE INDEX personnel_service_event_history_idx
   ON sw_police.personnel_service_event(personnel_id,service_event_id);
+CREATE UNIQUE INDEX personnel_service_event_source_ref_uq
+  ON sw_police.personnel_service_event(source_ref);
+
+INSERT INTO sw_core.event_type(event_code,description) VALUES
+ ('PERSONNEL_SERVICE_CHANGED','Authoritative police service engagement state changed')
+ON CONFLICT (event_code) DO NOTHING;
 
 
 -- BP03 population union follows authoritative BP06 service-engagement events.
@@ -91,7 +97,7 @@ BEGIN
       AND e.personnel_category IN
         ('sworn_officer','civilian_employee','technical_professional','auxiliary')
       AND e.service_state IN
-        ('active','leave','suspended','secondment_out','secondment_in','notice')
+        ('active','probationary','leave','suspended','secondment_out','secondment_in','notice')
   ) INTO v_active_service;
 
   PERFORM sw_people.set_population_qualifications(
@@ -222,6 +228,92 @@ $bp06$;
 CREATE TRIGGER personnel_service_dossier_after_insert
 AFTER INSERT ON sw_police.personnel
 FOR EACH ROW EXECUTE FUNCTION sw_police.create_personnel_service_dossier();
+
+-- All service-state changes pass through this event-backed command. The
+-- engagement update and append-only event are one transaction; the event trigger
+-- then reconciles the overlapping BP03 police-service qualification.
+CREATE FUNCTION sw_police.transition_personnel_service_engagement(
+  p_appointment_id uuid,p_new_state text,p_source_ref text,p_actor_ref text,p_reason text
+) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path=pg_catalog,sw_police,sw_people,sw_runtime,sw_core
+AS $bp06$
+DECLARE
+  v_engagement sw_police.personnel_service_engagement%ROWTYPE;
+  v_tick bigint;
+  v_event_id bigint;
+  v_event_type smallint;
+  v_event_kind text;
+BEGIN
+  IF p_appointment_id IS NULL
+     OR p_new_state NOT IN ('pending_start','probationary','active','leave','suspended',
+       'secondment_out','secondment_in','notice','separated','retired','deceased','rescinded')
+     OR p_source_ref IS NULL OR length(btrim(p_source_ref)) NOT BETWEEN 1 AND 200
+     OR p_actor_ref IS NULL OR length(btrim(p_actor_ref)) NOT BETWEEN 1 AND 120
+     OR p_reason IS NULL OR length(btrim(p_reason)) NOT BETWEEN 1 AND 240 THEN
+    RAISE EXCEPTION 'appointment, supported state and bounded provenance are required';
+  END IF;
+
+  SELECT * INTO v_engagement
+  FROM sw_police.personnel_service_engagement
+  WHERE appointment_id=p_appointment_id
+  FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'personnel service engagement does not exist'; END IF;
+
+  IF EXISTS(SELECT 1 FROM sw_police.personnel_service_event WHERE source_ref=p_source_ref) THEN
+    IF EXISTS(SELECT 1 FROM sw_police.personnel_service_event
+      WHERE source_ref=p_source_ref AND appointment_id=p_appointment_id
+        AND new_state=p_new_state) AND v_engagement.service_state=p_new_state THEN
+      RETURN (SELECT living_included FROM sw_people.population_counter WHERE singleton=1);
+    END IF;
+    RAISE EXCEPTION 'personnel service source reference was already used for a different transition';
+  END IF;
+
+  IF v_engagement.service_state IN ('separated','retired','deceased','rescinded')
+     AND p_new_state NOT IN ('separated','retired','deceased','rescinded') THEN
+    RAISE EXCEPTION 'terminal service engagements cannot be reactivated; create a new engagement';
+  END IF;
+
+  IF v_engagement.service_state=p_new_state THEN
+    RETURN (SELECT living_included FROM sw_people.population_counter WHERE singleton=1);
+  END IF;
+
+  SELECT world_tick INTO STRICT v_tick FROM sw_runtime.state WHERE singleton=1;
+  SELECT event_type_id INTO STRICT v_event_type
+  FROM sw_core.event_type WHERE event_code='PERSONNEL_SERVICE_CHANGED';
+
+  INSERT INTO sw_core.simulation_event(
+    event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key
+  ) VALUES (
+    v_event_type,clock_timestamp(),v_tick,'personnel',v_engagement.personnel_id::text,p_source_ref,
+    jsonb_build_object('appointment_id',p_appointment_id,'prior_state',v_engagement.service_state,
+      'new_state',p_new_state,'actor_ref',p_actor_ref,'reason',p_reason),
+    'SW-BP06:SERVICE-STATE:'||p_source_ref
+  ) RETURNING event_id INTO v_event_id;
+
+  UPDATE sw_police.personnel_service_engagement
+  SET service_state=p_new_state,
+      effective_to_tick=CASE WHEN p_new_state IN ('separated','retired','deceased','rescinded')
+        THEN v_tick ELSE NULL END
+  WHERE appointment_id=p_appointment_id;
+
+  v_event_kind:=CASE WHEN p_new_state='rescinded'
+    THEN 'appointment_rescinded' ELSE 'service_state_changed' END;
+
+  INSERT INTO sw_police.personnel_service_event(
+    event_id,personnel_id,appointment_id,event_kind,prior_state,new_state,effective_tick,
+    actor_ref,source_ref,reason
+  ) VALUES (
+    v_event_id,v_engagement.personnel_id,p_appointment_id,v_event_kind,
+    v_engagement.service_state,p_new_state,v_tick,p_actor_ref,p_source_ref,p_reason
+  );
+
+  RETURN (SELECT living_included FROM sw_people.population_counter WHERE singleton=1);
+END
+$bp06$;
+
+REVOKE ALL ON FUNCTION sw_police.transition_personnel_service_engagement(uuid,text,text,text,text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION sw_police.transition_personnel_service_engagement(uuid,text,text,text,text) TO sw_game_command;
 
 CREATE VIEW sw_police.personnel_service_current AS
 SELECT p.personnel_id,p.person_id,p.service_number,p.service_standing,p.service_status,
