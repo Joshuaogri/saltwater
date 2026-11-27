@@ -14,9 +14,11 @@ import urllib.request
 ROOT = pathlib.Path(".")
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 API = "https://generativelanguage.googleapis.com/v1beta/interactions"
-CHUNK_CHARS = 650_000
+CHUNK_CHARS = 180_000
 POLL_SECONDS = 10
 POLL_LIMIT_SECONDS = 12 * 60
+RETRY_LIMIT = 3
+RETRY_BACKOFF_SECONDS = 20
 TEXT_SUFFIXES = {".md", ".py", ".sql", ".yml", ".yaml", ".toml", ".ini", ".txt", ".sh", ".js", ".ts", ".html", ".css", ".json"}
 EXCLUDED_PARTS = {".git", ".venv", "venv", "__pycache__", "node_modules", "build", "dist", ".pytest_cache"}
 SECRET_PARTS = {".env", "secrets", "credentials"}
@@ -218,8 +220,24 @@ def main() -> None:
     print(f"Review scope={scope}; files={len(paths)}; slices={len(chunks)}; excluded from scope={len(omitted)}", flush=True)
     reports = []
     for index, chunk in enumerate(chunks, 1):
-        report = ask_gemini(chunk, index, len(chunks), key)
-        reports.append(f"## Repository review slice {index}/{len(chunks)}\n\n{report}")
+        last_error = None
+        for attempt in range(1, RETRY_LIMIT + 1):
+            try:
+                report = ask_gemini(chunk, index, len(chunks), key)
+                last_error = None
+                break
+            except RuntimeError as exc:
+                last_error = exc
+                if "RESOURCE_EXHAUSTED" not in str(exc) or attempt == RETRY_LIMIT:
+                    raise
+                wait = RETRY_BACKOFF_SECONDS * attempt
+                print(f"Gemini capacity limit on slice {index}; retry {attempt + 1}/{RETRY_LIMIT} in {wait}s", flush=True)
+                time.sleep(wait)
+        if last_error is not None:
+            raise last_error
+        reports.append(f"## Repository review slice {index}/{len(chunks)}\\n\\n{report}")
+        if index < len(chunks):
+            time.sleep(5)
     output = [
         "# Gemini — Saltwater Project-Wide Independent Review",
         "",
