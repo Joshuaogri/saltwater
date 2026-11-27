@@ -119,8 +119,8 @@ jobs:
       DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
     steps:
       - uses: actions/checkout@v4
-      - name: Install PostgreSQL Python driver
-        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Install PostgreSQL and deterministic geometry dependencies
+        run: python -m pip install "psycopg[binary]>=3.2,<4" "shapely==2.1.2"
       - name: Audit disposable proposal sequence
         run: python scripts/verify_sw_db_001_contract.py
       - name: Apply existing disposable platform proposals 0002-0009
