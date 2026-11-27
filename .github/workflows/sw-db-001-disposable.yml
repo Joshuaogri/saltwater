@@ -9,13 +9,11 @@ on:
       - "db/proposals/0012_bp04_physical_asset_detail_profiles.sql"
       - "db/proposals/0010_bp03_population_qualification_union.sql"
       - "db/proposals/0034_bp03_person_residence.sql"
-      - "db/proposals/0035_bp03_household_membership.sql"
       - "db/proposals/0036_bp03_individual_simulation_promotion.sql"
       - "db/proposals/0037_bp03_person_routines_and_movement.sql"
       - "db/proposals/0038_bp03_person_knowledge_boundary.sql"
       - "db/proposals/0039_bp03_person_attribute_claims.sql"
       - "tests/pkg001/person_residence_acceptance.sql"
-      - "tests/pkg001/household_membership_acceptance.sql"
       - "tests/pkg001/sw_db_001_*.sql"
       - "tests/pkg001/bp04_01_*.sql"
       - "tests/pkg001/bp04_02_*.sql"
@@ -174,17 +172,14 @@ jobs:
       - name: Apply BP03 household and individual simulation services
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
-          psql -v ON_ERROR_STOP=1 -f db/proposals/0035_bp03_household_membership.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0036_bp03_individual_simulation_promotion.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0037_bp03_person_routines_and_movement.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0038_bp03_person_knowledge_boundary.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0039_bp03_person_attribute_claims.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_household_individual_simulation_schema_growth_bytes=$((after-before))"
-      - name: Verify BP03 residence and household integration before world seed
-        run: |
-          psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
-          psql -v ON_ERROR_STOP=1 -f tests/pkg001/household_membership_acceptance.sql
+      - name: Verify BP03 residence integration before world seed
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
       - name: Provision deterministic opening population and business fixture
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
