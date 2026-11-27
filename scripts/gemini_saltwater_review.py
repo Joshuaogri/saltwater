@@ -96,7 +96,7 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
             changed = git("diff", "--name-only", f"{before}...{head}").splitlines()
         else:
             changed = tracked
-        active_bp = os.environ.get("ACTIVE_BP", "BP02").strip().upper()
+        active_bp = os.environ.get("ACTIVE_BP", "BP03").strip().upper()
         core = [p for p in tracked if p == "README.md"]
         # Keep each Gemini request within a small, high-signal evidence pack
         # for the selected active BP. Changed files are included separately.
