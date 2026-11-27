@@ -133,8 +133,15 @@ BEGIN
   END IF;
 
   -- A business name is globally unavailable to a property identity.
+  -- The BP04-01 migration acceptance runs before the opening business fixture.
+  -- Use an existing canonical global reservation so this migration test remains
+  -- independent of later world seeding; the separate business collision case
+  -- is exercised when the opening business registry is provisioned.
   SELECT r.display_name INTO STRICT existing_business_name
-  FROM sw_names.name_reservation r WHERE r.entity_type='BUSINESS' AND r.name_form='canonical' LIMIT 1;
+  FROM sw_names.name_reservation r
+  WHERE r.name_form='canonical' AND r.entity_type IN ('GEOGRAPHY','PERSON','BUSINESS')
+  ORDER BY CASE r.entity_type WHEN 'BUSINESS' THEN 0 ELSE 1 END
+  LIMIT 1;
   BEGIN
     INSERT INTO sw_property.property_asset
       (entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
