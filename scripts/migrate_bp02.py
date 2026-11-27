@@ -1,6 +1,7 @@
-"""Independent, checksum-controlled BP-02 domain migration runner.
+"""Independent, checksum-controlled BP02 domain migration runner.
 
-It never reads or changes sw_ops.schema_migration and never applies BP04 migrations.
+Applies only db/domain-migrations/bp02/*.sql in version order. It never reads
+or changes sw_ops.schema_migration and never applies BP04 migrations.
 Default mode is a no-write plan. Production requires --apply and --allow-production.
 """
 from __future__ import annotations
@@ -13,11 +14,44 @@ from pathlib import Path
 import psycopg
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "db/domain-migrations/bp02/0001_source_archive.sql"
+MIGRATIONS = sorted((ROOT / "db/domain-migrations/bp02").glob("[0-9][0-9][0-9][0-9]_*.sql"))
+MIGRATION = MIGRATIONS[0]  # compatibility alias for the original migration contract
 LOCK_KEY = 0x4250303247454F31  # BP02GEO1
 
-def migration_checksum() -> str:
-    return hashlib.sha256(MIGRATION.read_bytes()).hexdigest()
+
+def migration_checksum(path: Path = MIGRATION) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def migration_plan() -> list[dict]:
+    if not MIGRATIONS:
+        raise RuntimeError("No BP02 domain migrations were found")
+    plan = []
+    for index, path in enumerate(MIGRATIONS, start=1):
+        prefix, _, name = path.name.partition("_")
+        if not prefix.isdigit() or int(prefix) != index:
+            raise RuntimeError(f"BP02 migration sequence must be contiguous; found {path.name}")
+        plan.append({
+            "version": index,
+            "migration_name": path.stem,
+            "checksum_sha256": migration_checksum(path),
+            "path": path,
+        })
+    return plan
+
+
+def _migration_body(path: Path) -> str:
+    sql = path.read_text(encoding="utf-8")
+    upper = sql.upper()
+    begin = upper.find("BEGIN;")
+    commit = upper.rfind("COMMIT;")
+    prefix = sql[:begin] if begin >= 0 else sql
+    if begin < 0 or commit <= begin or any(
+        line.strip() and not line.lstrip().startswith("--") for line in prefix.splitlines()
+    ):
+        raise ValueError(f"{path.name} must have one outer BEGIN/COMMIT wrapper")
+    return sql[begin + len("BEGIN;"):commit]
+
 
 def apply_bp02(conn, expected_database: str, allow_production: bool = False) -> dict:
     actual = conn.execute("SELECT current_database()").fetchone()[0]
@@ -27,68 +61,83 @@ def apply_bp02(conn, expected_database: str, allow_production: bool = False) -> 
         raise PermissionError("Production requires --allow-production")
     if actual != "neondb" and allow_production:
         raise ValueError("--allow-production is valid only for neondb")
-    checksum = migration_checksum()
-    name = MIGRATION.stem
+
+    plan = migration_plan()
     conn.execute("SELECT pg_advisory_lock(%s)", (LOCK_KEY,))
     try:
         exists = conn.execute(
             "SELECT to_regclass('sw_geo.bp02_schema_migration') IS NOT NULL"
         ).fetchone()[0]
+        rows = []
         if exists:
             rows = conn.execute(
-                "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration ORDER BY version"
+                "SELECT version,migration_name,rtrim(checksum_sha256) FROM sw_geo.bp02_schema_migration ORDER BY version"
             ).fetchall()
-            if rows:
-                if rows != [(1, name, checksum)]:
-                    raise RuntimeError(f"BP02 migration ledger mismatch: {rows!r}")
-                return {"status":"already_applied","version":1,"migration":name,"checksum_sha256":checksum}
-        sql = MIGRATION.read_text(encoding="utf-8")
-        upper = sql.upper()
-        begin = upper.find("BEGIN;")
-        commit = upper.rfind("COMMIT;")
-        prefix = sql[:begin] if begin >= 0 else sql
-        if begin < 0 or commit <= begin or any(
-            line.strip() and not line.lstrip().startswith("--") for line in prefix.splitlines()
-        ):
-            raise ValueError("BP02 migration must have one outer BEGIN/COMMIT wrapper")
-        body = sql[begin+len("BEGIN;"):commit]
-        with conn.transaction():
-            conn.execute(body)
-            conn.execute(
-                "INSERT INTO sw_geo.bp02_schema_migration(version,migration_name,checksum_sha256) VALUES (1,%s,%s)",
-                (name,checksum),
-            )
-            recorded=conn.execute(
-                "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration WHERE version=1"
-            ).fetchone()
-            if recorded != (1,name,checksum):
-                raise RuntimeError("BP02 migration ledger verification failed")
-        return {"status":"applied","version":1,"migration":name,"checksum_sha256":checksum}
+        if len(rows) > len(plan):
+            raise RuntimeError(f"BP02 migration ledger is ahead of source: {rows!r}")
+        for expected, recorded in zip(plan, rows):
+            wanted = (expected["version"], expected["migration_name"], expected["checksum_sha256"])
+            if recorded != wanted:
+                raise RuntimeError(f"BP02 migration ledger mismatch: expected {wanted!r}, found {recorded!r}")
+
+        applied = []
+        for migration in plan[len(rows):]:
+            with conn.transaction():
+                conn.execute(_migration_body(migration["path"]))
+                conn.execute(
+                    "INSERT INTO sw_geo.bp02_schema_migration(version,migration_name,checksum_sha256) VALUES (%s,%s,%s)",
+                    (migration["version"], migration["migration_name"], migration["checksum_sha256"]),
+                )
+                recorded = conn.execute(
+                    "SELECT version,migration_name,rtrim(checksum_sha256) FROM sw_geo.bp02_schema_migration WHERE version=%s",
+                    (migration["version"],),
+                ).fetchone()
+                wanted = (migration["version"], migration["migration_name"], migration["checksum_sha256"])
+                if recorded != wanted:
+                    raise RuntimeError(f"BP02 migration ledger verification failed: {recorded!r}")
+            applied.append(migration["migration_name"])
+        return {
+            "status": "applied" if applied else "already_applied",
+            "applied_migrations": applied,
+            "current_version": len(plan),
+            "migration_checksums": [
+                {key: value for key, value in row.items() if key != "path"} for row in plan
+            ],
+            "independent_ledger": "sw_geo.bp02_schema_migration",
+            "global_migration_ledger_touched": False,
+        }
     finally:
         conn.execute("SELECT pg_advisory_unlock(%s)", (LOCK_KEY,))
 
+
 def main() -> int:
-    parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database-url",default=os.environ.get("DATABASE_URL"))
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--expected-database")
-    parser.add_argument("--apply",action="store_true")
-    parser.add_argument("--allow-production",action="store_true")
-    args=parser.parse_args()
+    parser.add_argument("--apply", action="store_true")
+    parser.add_argument("--allow-production", action="store_true")
+    args = parser.parse_args()
     if not args.database_url:
         parser.error("DATABASE_URL or --database-url is required")
     if not args.apply:
-        print(json.dumps({"status":"dry_run_no_database_write","migration":MIGRATION.name,"checksum_sha256":migration_checksum(),"independent_ledger":"sw_geo.bp02_schema_migration","global_migration_ledger_touched":False},indent=2))
+        print(json.dumps({
+            "status": "dry_run_no_database_write",
+            "migrations": [{key: value for key, value in row.items() if key != "path"} for row in migration_plan()],
+            "independent_ledger": "sw_geo.bp02_schema_migration",
+            "global_migration_ledger_touched": False,
+        }, indent=2))
         return 0
     if not args.expected_database:
         parser.error("--expected-database is required with --apply")
     try:
-        with psycopg.connect(args.database_url,autocommit=True) as conn:
-            result=apply_bp02(conn,args.expected_database,args.allow_production)
-        print(json.dumps(result,indent=2,sort_keys=True))
+        with psycopg.connect(args.database_url, autocommit=True) as conn:
+            result = apply_bp02(conn, args.expected_database, args.allow_production)
+        print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     except Exception as exc:
-        print(f"ERROR: {exc}",file=sys.stderr)
+        print(f"ERROR: {exc}", file=sys.stderr)
         return 1
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     raise SystemExit(main())
