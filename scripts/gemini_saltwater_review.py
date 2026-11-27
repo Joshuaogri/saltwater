@@ -13,7 +13,7 @@ import urllib.request
 
 ROOT = pathlib.Path(".")
 MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
-FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.5-flash")
+FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-3.5-flash-lite")
 API = "https://generativelanguage.googleapis.com/v1beta/interactions"
 CHUNK_CHARS = 45_000
 POLL_SECONDS = 10
