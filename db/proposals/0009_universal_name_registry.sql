@@ -61,6 +61,8 @@ CREATE TABLE sw_names.generation_batch_candidate (
   normalized_key text NOT NULL CHECK (length(normalized_key) BETWEEN 1 AND 200),
   PRIMARY KEY (batch_id,normalized_key)
 );
+CREATE INDEX generation_batch_candidate_trgm_idx
+  ON sw_names.generation_batch_candidate USING gin(normalized_key sw_names.gin_trgm_ops);
 
 CREATE TABLE sw_names.name_event (
   name_event_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -148,19 +150,6 @@ BEGIN
   PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
   IF EXISTS (
     WITH candidate AS (
-      SELECT sw_names.normalize_name(u.display_name) AS normalized_key,
-             u.ordinality
-      FROM unnest(p_display_names) WITH ORDINALITY AS u(display_name,ordinality)
-    )
-    SELECT 1 FROM candidate a JOIN candidate b
-      ON a.ordinality<b.ordinality
-     AND a.normalized_key OPERATOR(sw_names.%) b.normalized_key
-  ) THEN
-    RAISE EXCEPTION 'generated batch contains near-duplicate names';
-  END IF;
-
-  IF EXISTS (
-    WITH candidate AS (
       SELECT sw_names.normalize_name(u.display_name) AS normalized_key
       FROM unnest(p_display_names) AS u(display_name)
     )
@@ -203,6 +192,18 @@ BEGIN
   INSERT INTO sw_names.generation_batch_candidate(batch_id,normalized_key)
   SELECT p_batch_id,sw_names.normalize_name(u.display_name)
   FROM unnest(p_display_names) AS u(display_name);
+
+  IF EXISTS (
+    SELECT 1
+    FROM sw_names.generation_batch_candidate a
+    JOIN sw_names.generation_batch_candidate b
+      ON b.batch_id=a.batch_id
+     AND b.normalized_key OPERATOR(sw_names.%) a.normalized_key
+     AND a.normalized_key<b.normalized_key
+    WHERE a.batch_id=p_batch_id
+  ) THEN
+    RAISE EXCEPTION 'generated batch contains near-duplicate names';
+  END IF;
   RETURN v_total;
 END
 $sw_batch$;
