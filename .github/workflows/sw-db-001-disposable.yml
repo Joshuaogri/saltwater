@@ -169,7 +169,7 @@ jobs:
           echo "bp04_02_schema_incremental_bytes=$((after-before))"
           echo "bp04_02_proposal_source_bytes=$(wc -c < db/proposals/0012_bp04_physical_asset_detail_profiles.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY 5 DESC;"
-      - name: Apply BP03 household and individual simulation services
+      - name: Apply BP03 individual simulation services
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0036_bp03_individual_simulation_promotion.sql
