@@ -1943,7 +1943,7 @@ The operational-geography package workflow now runs the complete BP02 acceptance
 
 The BP02-owned migration stream now includes `0002_operational_geography.sql`, a compact gameplay schema for districts, neighbourhoods, geographic features, roads, junction nodes, road segments, named routes and ordered route links, plus canonical parcel, address, access-point and bridge-connector records. It uses stable source identifiers, JSON geometry/payloads and ordinary PostgreSQL indexes; it does not require PostGIS or alter the global/BP04 migration ledger.
 
-The BP02 migration runner applies numbered domain migrations in order and verifies each exact SHA-256 checksum. Gameplay records are explicitly labelled `ACTIVE_IN_GAME`; the release record keeps `production_seed_approved=false` unless separately authorised. This is schema preparation only: no production Neon write or operational geography import has been performed. The PostgreSQL 18.7 disposable workflow measures schema growth before the data importer is built.
+The BP02 migration runner applies numbered domain migrations in order and verifies each exact SHA-256 checksum. Gameplay records are explicitly labelled `ACTIVE_IN_GAME`; the release record keeps `production_seed_approved=false` unless separately authorised. At the time this note was written, this was schema preparation only. The importer and disposable end-to-end acceptance were subsequently completed; see the dated acceptance and isolated storage measurement below. Production Neon remains unchanged.
 
 
 
@@ -1964,3 +1964,12 @@ The BP02 Gemini review on the same commit did not produce a report: the API retu
 ## Free AI coding collaboration
 
 Shared coding-agent rules and the zero-cost toolchain setup are documented in [AGENTS.md](AGENTS.md), [Gemini instructions](GEMINI.md), [Copilot instructions](.github/copilot-instructions.md), and the [free AI coding toolchain guide](docs/development/free-ai-coding-toolchain.md). Development remains on `main` only; production Neon remains protected.
+
+
+## BP02 isolated operational storage measurement — passed (2026-11-27)
+
+The updated [BP02 operational geography workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46003181718), on main commit `0b3da715f1cd8409446ae23643fcde9a46499ace`, completed successfully. Its new measurement stage applies `0001_source_archive` and measures the database, then applies `0002_operational_geography` and measures again. On disposable PostgreSQL 18.7, the database measured 8,083,135 bytes after 0001 and 8,533,695 bytes after 0002: the incremental 0002 schema growth is exactly **450,560 bytes**.
+
+After importing the operational geography package, the database measured 14,964,415 bytes. Subtracting the post-0002 schema measurement gives **6,430,720 bytes** of operational data/import growth. The combined incremental addition attributable to 0002 plus the operational import is therefore **6,881,280 bytes**. A repeat import added **0 bytes**. Full acceptance and package generation completed successfully in the same workflow.
+
+Production currently measures 9,961,472 bytes and already contains the 0001 archive foundation but not 0002 or operational geography. On that baseline, the estimated post-release total is **16,842,752 bytes** (approximately 16.07 MiB), assuming comparable storage behaviour. This is a disposable-database projection, not a production measurement. The estimate adds only the isolated 0002 and data increments, so 0001 is not double-counted. No production Neon writes were performed; `production_seed_approved=false` remains in force, and operational production release still requires the user's explicit approval.
