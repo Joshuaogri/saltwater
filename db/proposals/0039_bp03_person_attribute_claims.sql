@@ -74,6 +74,9 @@ BEGIN
   SELECT 1 FROM sw_people.person_attribute_claim
   WHERE claim_id=p_supersedes_claim_id AND person_id=p_person_id AND attribute_code=p_attribute_code
  ) THEN RAISE EXCEPTION 'superseded claim must be for the same person and attribute'; END IF;
+ -- Serialize the globally unique source_ref before the replay lookup.
+ -- Different person-row locks alone cannot protect this cross-person uniqueness key.
+ PERFORM pg_advisory_xact_lock(hashtextextended('SW-BP03:ATTRIBUTE-SOURCE:'||p_source_ref,0));
  SELECT * INTO v_existing FROM sw_people.person_attribute_claim WHERE source_ref=p_source_ref;
  IF FOUND THEN
   IF ROW(v_existing.person_id,v_existing.attribute_code,v_existing.attribute_value,
