@@ -9,6 +9,7 @@ import argparse
 import gzip
 import json
 import os
+import time
 from pathlib import Path
 
 import psycopg
@@ -95,6 +96,12 @@ def _assert_negative_replay_rejected(conn, batch_id: int) -> None:
 
 
 def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
+    started = time.perf_counter()
+
+    def progress(label: str) -> None:
+        print(f"BP03 materialiser: {label} (+{time.perf_counter() - started:.1f}s)", flush=True)
+
+    progress("loading and validating candidate manifests")
     allocation = build_opening_resident_dwelling_allocation()
     with gzip.open(CANDIDATE_PATH, "rt", encoding="utf-8") as stream:
         candidate_payload = json.load(stream)
@@ -354,6 +361,7 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
             # exact/near-duplicate preflight and records the approved batch keys.
             conn.execute("SET LOCAL search_path = pg_catalog, sw_names, public")
 
+            progress("starting SW-UNS manifest registration and duplicate preflight")
             name_batch_id = conn.execute("""
                 SELECT sw_names.record_generation_batch(
                     'PERSON'::text,1::smallint,1::smallint,
@@ -369,6 +377,7 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
             """, (name_batch_id,)).fetchone()[0]
             if preflighted != EXPECTED_RESIDENTS:
                 raise RuntimeError(f"SW-UNS preflighted {preflighted} names, expected 9,000")
+            progress("SW-UNS duplicate preflight complete: 9,000 names")
             # The canonical person-name trigger reads this transaction-local
             # manifest ID so its reservation is linked to the approved batch.
             conn.execute(
@@ -392,6 +401,7 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                 CROSS JOIN sw_core.event_type et
                 WHERE et.event_code='PERSON_PROFILE_CHANGED'
             """, (ACTOR,batch_id))
+            progress("updating canonical person profiles; SW-UNS trigger creates canonical reservations")
             updated = conn.execute("""
                 UPDATE sw_people.person p
                 SET given_name=s.given_name,middle_name=s.middle_name,
@@ -405,19 +415,22 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
             """, (batch_id,)).fetchall()
             if len(updated) != EXPECTED_RESIDENTS:
                 raise RuntimeError(f"materialised {len(updated)} canonical civilian profiles, expected 9,000")
+            progress("person profiles updated; verifying trigger-created canonical reservations")
             reserved = conn.execute("""
-                SELECT count(*) FROM (
-                    SELECT sw_names.reserve_name(
-                        'PERSON',p.person_id,'canonical',s.display_name,s.source_ref,
-                        %s,'BP03 opening civilian identity materialisation',0,%s
-                    )
-                    FROM bp03_candidate_stage s
-                    JOIN sw_people.person p ON p.source_ref=s.source_ref
-                    ORDER BY p.person_id
-                ) names
-            """, (ACTOR,name_batch_id)).fetchone()[0]
+                SELECT count(*)
+                FROM bp03_candidate_stage s
+                JOIN sw_people.person p ON p.source_ref=s.source_ref
+                JOIN sw_names.name_reservation nr
+                  ON nr.entity_type='PERSON' AND nr.entity_id=p.person_id
+                 AND nr.name_form='canonical'
+                 AND nr.normalized_key=s.normalized_name
+                 AND nr.generation_batch_id=%s
+                 AND nr.source_ref=s.source_ref
+                WHERE sw_names.latest_status(nr.reservation_id)='active'
+            """, (name_batch_id,)).fetchone()[0]
             if reserved != EXPECTED_RESIDENTS:
-                raise RuntimeError(f"reserved {reserved} canonical civilian names, expected 9,000")
+                raise RuntimeError(f"found {reserved} active trigger-created canonical civilian names, expected 9,000")
+            progress("canonical name reservations verified: 9,000")
 
             address_ids = [r["bp02_address_source_id"] for r in records]
             expected_addresses = len(set(address_ids))
@@ -444,6 +457,7 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                 for r in records
             ], separators=(",", ":"), sort_keys=True)
 
+            progress("starting 9,000 residence assignments; each uses the authoritative residence lifecycle function")
             inserted = conn.execute("""
                 WITH allocation AS MATERIALIZED (
                     SELECT a.*
@@ -486,7 +500,9 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
 
             if len(inserted) != EXPECTED_RESIDENTS:
                 raise RuntimeError(f"materialised {len(inserted)} residence links, expected 9,000")
+            progress("residence lifecycle function completed: 9,000 links")
 
+            progress("running full identity, dwelling and population reconciliation")
             counts = conn.execute("""
                 SELECT count(*) AS assignment_rows,
                        count(DISTINCT a.person_id),
@@ -511,8 +527,11 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                 WHERE a.batch_id=%s
             """, (batch_id,)).fetchone()
             total, exact = _assert_exact_allocation_manifest(conn, batch_id)
+            progress("exact manifest reconciliation passed")
             if negative_replay_test:
+                progress("running tampered dwelling replay rejection")
                 _assert_negative_replay_rejected(conn, batch_id)
+                progress("tampered dwelling replay correctly rejected and rolled back")
 
             if counts[1:] != (
                 EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, expected_addresses,
