@@ -276,23 +276,36 @@ def main() -> None:
     chunks = make_chunks(paths, omitted)
     print(f"Review scope={scope}; files={len(paths)}; slices={len(chunks)}; excluded from scope={len(omitted)}", flush=True)
     reports = []
+    models = [MODEL] + ([FALLBACK_MODEL] if FALLBACK_MODEL and FALLBACK_MODEL != MODEL else [])
+    used_models = []
     for index, chunk in enumerate(chunks, 1):
+        report = None
         last_error = None
-        for attempt in range(1, RETRY_LIMIT + 1):
-            try:
-                report = ask_gemini(chunk, index, len(chunks), key)
-                last_error = None
+        for model_index, model in enumerate(models):
+            attempts = 1 if model_index == 0 else RETRY_LIMIT
+            for attempt in range(1, attempts + 1):
+                try:
+                    report = ask_gemini(chunk, index, len(chunks), key, model)
+                    used_models.append(model)
+                    last_error = None
+                    break
+                except RuntimeError as exc:
+                    last_error = exc
+                    transient = ("RESOURCE_EXHAUSTED", "UNAVAILABLE", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504")
+                    if not any(code in str(exc) for code in transient):
+                        raise
+                    if model_index == 0:
+                        print(f"Gemini primary model {model} is at capacity; trying fallback {FALLBACK_MODEL}.", flush=True)
+                        break
+                    if attempt == attempts:
+                        break
+                    wait = RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
+                    print(f"Gemini fallback capacity limit on slice {index}; retry {attempt + 1}/{attempts} in {wait}s", flush=True)
+                    time.sleep(wait)
+            if report is not None:
                 break
-            except RuntimeError as exc:
-                last_error = exc
-                transient = ("RESOURCE_EXHAUSTED", "UNAVAILABLE", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504")
-                if not any(code in str(exc) for code in transient) or attempt == RETRY_LIMIT:
-                    raise
-                wait = RETRY_BACKOFF_SECONDS * (2 ** (attempt - 1))
-                print(f"Gemini capacity limit on slice {index}; retry {attempt + 1}/{RETRY_LIMIT} in {wait}s", flush=True)
-                time.sleep(wait)
-        if last_error is not None:
-            raise last_error
+        if report is None:
+            raise last_error or RuntimeError(f"Gemini produced no report for slice {index}")
         reports.append(f"## Repository review slice {index}/{len(chunks)}\\n\\n{report}")
         if index < len(chunks):
             time.sleep(5)
