@@ -194,8 +194,10 @@ BEGIN
 
   -- Global namespace rejects existing geography and person names as well as business names.
   SELECT display_name INTO STRICT existing_geography_name
-  FROM sw_names.name_reservation WHERE entity_type='GEOGRAPHY' AND name_form='canonical'
-    AND normalized_key=sw_names.normalize_name('BP04 Test Parcel One');
+  FROM sw_names.name_reservation
+  WHERE entity_type='GEOGRAPHY' AND name_form='canonical'
+  ORDER BY reservation_id
+  LIMIT 1;
   BEGIN
     INSERT INTO sw_property.property_asset
       (entity_code,display_name,location_status,created_tick,source_ref,actor_ref,reason)
