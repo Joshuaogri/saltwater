@@ -33,6 +33,10 @@ BEGIN
      OR (SELECT count(*) FROM sw_test.person_cohort WHERE batch_id=v_batch AND cohort='POLICE_SUBSET')<>500 THEN
     RAISE EXCEPTION 'opening resident and police-subset cohorts do not reconcile';
   END IF;
+  IF (SELECT count(*) FROM sw_people.population_qualification_history q
+      JOIN sw_test.person_cohort c USING(person_id) WHERE c.batch_id=v_batch)<>9500 THEN
+    RAISE EXCEPTION 'all opening population qualifications must have initial history records';
+  END IF;
   IF (SELECT count(DISTINCT person_id) FROM sw_test.person_cohort WHERE batch_id=v_batch)<>9500 THEN
     RAISE EXCEPTION 'opening fixture duplicates canonical person identities';
   END IF;
@@ -89,6 +93,9 @@ BEGIN
   WHERE person_id=v_person;
   IF (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>9500 THEN
     RAISE EXCEPTION 're-entry did not restore exactly one population slot';
+  END IF;
+  IF (SELECT count(*) FROM sw_people.population_qualification_history WHERE person_id=v_person)<>3 THEN
+    RAISE EXCEPTION 'exit and re-entry must append two qualification transitions after the initial qualification';
   END IF;
 
   -- Valid lifecycle transition records history; terminal close cannot reopen.
