@@ -1,4 +1,4 @@
-name: Saltwater active-blueprint Gemini review
+name: Saltwater active-blueprint Gemini solutions
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       scope:
-        description: "Review changed files or the complete Saltwater repository"
+        description: "Solve blockers in changed files or the complete active-blueprint scope"
         required: true
         type: choice
         options:
@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   project-review:
-    name: Independent active-blueprint engineering review
+    name: Active-blueprint engineering solution
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
@@ -75,7 +75,7 @@ jobs:
       - name: Validate reviewer runner syntax
         run: python -m py_compile scripts/gemini_saltwater_review.py
 
-      - name: Run Gemini against the active blueprint
+      - name: Ask Gemini to solve the active-blueprint blockers
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ steps.scope.outputs.model }}
@@ -85,11 +85,11 @@ jobs:
           GITHUB_SHA: ${{ github.sha }}
         run: python scripts/gemini_saltwater_review.py
 
-      - name: Publish project review in workflow summary
+      - name: Publish Gemini engineering solution in workflow summary
         if: always() && hashFiles('gemini-saltwater-project-review.md') != ''
         run: cat gemini-saltwater-project-review.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Upload complete review report
+      - name: Upload complete Gemini solution report
         if: always() && hashFiles('gemini-saltwater-project-review.md') != ''
         uses: actions/upload-artifact@v4
         with:
