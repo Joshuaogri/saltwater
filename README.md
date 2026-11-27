@@ -2202,3 +2202,8 @@ The complete focused BP03 workflow [46040104903](https://github.com/Joshuaogri/s
 ## BP03 opening 9,500 identity names — SW-UNS preflight passed
 
 The dedicated [BP03 Opening Identity Registry Acceptance](https://github.com/Joshuaogri/saltwater/actions/runs/46040287960) passed on 2026-11-27. It reserved all 500 police candidate names and all 9,000 civilian candidate names against the disposable authoritative SW-UNS registry, checking unique canonical identities, unique normalized names, candidate manifest integrity and exact opening arithmetic (9,500 people, 500 unused places under the 10,000 cap). Civilian/police exact-name overlap was checked before reservation. Both cohort tests rolled back their transactions; no canonical population or production Neon records were created. See [opening identity preflight evidence](docs/implementation/test-evidence/BP03-opening-9500-identity-name-registry-preflight-0001.md).
+
+
+## BP03 10,000-person cap and concurrency — passed
+
+The focused [BP03 Individual Simulation Acceptance](https://github.com/Joshuaogri/saltwater/actions/runs/46042030165) passed on 2026-11-27. The disposable fixture reached 9,999 people, then raced two concurrent admissions for the final slot: exactly one succeeded and the other was rejected. Final counts reconciled to 10,000 canonical people, 10,000 included living people, 10,000 tier states, 10,000 tier-history rows and a population counter of 10,000. The disposable database measured **37,592,087 bytes**; proposal 0036 schema-only growth was **139,264 bytes**. These are PostgreSQL 16.16 disposable measurements, not Neon estimates. Full evidence: [BP03 10,000-person cap and concurrency](docs/implementation/test-evidence/BP03-10000-person-cap-concurrency-acceptance-0001.md).
