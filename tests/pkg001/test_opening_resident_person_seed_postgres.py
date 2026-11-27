@@ -119,7 +119,7 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                          middle_name text NOT NULL,
                          family_name text NOT NULL,
                          normalized_name text GENERATED ALWAYS AS
-                           (sw_names.normalize_name(concat_ws(' ',given_name,middle_name,family_name))) STORED
+                           (sw_names.normalize_name(given_name || ' ' || middle_name || ' ' || family_name)) STORED
                        ) ON COMMIT DROP"""
                 )
                 cur.executemany(
