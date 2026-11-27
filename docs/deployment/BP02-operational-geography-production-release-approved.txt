@@ -1,0 +1,5 @@
+BP02 operational geography production release approval recorded 2026-11-27.
+User explicitly approved applying migration 0002_operational_geography and importing SW-BP02-OPERATIONAL-GEOGRAPHY-V1 into production Neon.
+Expected production baseline: 9,961,472 bytes.
+Expected disposable measured growth: 6,881,280 bytes (450,560 schema + 6,430,720 operational data).
+Preserve recovery branch br-gentle-moon-bdtc0y32 unchanged.
