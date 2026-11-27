@@ -112,4 +112,4 @@ BEGIN
   END IF;
   RAISE NOTICE 'CAP_FIXTURE_PHASE=final_reconciliation ELAPSED_MS=%',round((extract(epoch FROM clock_timestamp()-phase_started)*1000)::numeric,2);
 END
-$;
+$$;
