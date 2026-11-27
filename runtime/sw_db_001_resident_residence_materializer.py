@@ -1,7 +1,7 @@
-"""Materialise the BP03 9,000-resident dwelling allocation in a disposable SW-DB-001 world.
+"""Materialise BP03's exact 9,000-person identity and dwelling allocation in disposable SW-DB-001.
 
-This fixture links existing canonical test people to active BP02 addresses. It does not
-create households, infer demographics, or write to production.
+Candidate identities are crosswalked by stable fixture keys, then linked to their
+manifested BP02 addresses. No households or demographics are inferred; production is untouched.
 """
 from __future__ import annotations
 
@@ -140,6 +140,33 @@ def materialise(database_url: str) -> dict:
                 ) d
             """).fetchone()[0]:
                 raise RuntimeError("civilian candidate cohort contains duplicate normalized names")
+            conn.execute("""
+                CREATE TEMP TABLE bp03_allocation_expected (
+                    allocation_ref text PRIMARY KEY,
+                    candidate_ref text NOT NULL UNIQUE,
+                    person_source_ref text NOT NULL UNIQUE,
+                    display_name text NOT NULL,
+                    unit_id text NOT NULL UNIQUE,
+                    bp04_address_id text NOT NULL,
+                    bp02_address_source_id text NOT NULL,
+                    neighbourhood_id text NOT NULL
+                ) ON COMMIT DROP
+            """)
+            with conn.cursor() as cursor:
+                cursor.executemany("""
+                    INSERT INTO bp03_allocation_expected(
+                        allocation_ref,candidate_ref,person_source_ref,display_name,
+                        unit_id,bp04_address_id,bp02_address_source_id,neighbourhood_id
+                    ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                """, [
+                    (
+                        row["allocation_ref"], row["candidate_ref"], row["person_source_ref"],
+                        row["display_name"], row["unit_id"], row["bp04_address_id"],
+                        row["bp02_address_source_id"], row["neighbourhood_id"],
+                    )
+                    for row in records
+                ])
+
             existing = conn.execute("""
                 SELECT count(*) FROM sw_test.opening_resident_dwelling_assignment
                 WHERE batch_id=%s
@@ -162,8 +189,17 @@ def materialise(database_url: str) -> dict:
                              AND pc.fixture_person_key=s.fixture_person_key),
                            count(*) FILTER (WHERE nr.reservation_id IS NOT NULL)
                     FROM sw_test.opening_resident_dwelling_assignment a
+                    JOIN bp03_allocation_expected x
+                      ON x.allocation_ref=a.allocation_ref
+                     AND x.candidate_ref=a.candidate_ref
+                     AND x.unit_id=a.unit_id
+                     AND x.bp04_address_id=a.bp04_address_id
+                     AND x.bp02_address_source_id=a.bp02_address_source_id
+                     AND x.neighbourhood_id=a.neighbourhood_id
                     JOIN bp03_candidate_stage s
                       ON s.candidate_ref=a.candidate_ref
+                     AND s.source_ref=x.person_source_ref
+                     AND s.display_name=x.display_name
                      AND s.fixture_person_key=a.fixture_person_key
                     JOIN sw_people.person p ON p.person_id=a.person_id
                     JOIN sw_people.person_residence r
@@ -228,7 +264,7 @@ def materialise(database_url: str) -> dict:
             mapped = conn.execute("""
                 SELECT count(*),count(DISTINCT p.person_id),
                        count(*) FILTER (WHERE pc.cohort='RESIDENT'),
-                       count(*) FILTER (WHERE p.source_ref='SW-DB-001:person:'||right(s.fixture_person_key,5))
+                       count(*) FILTER (WHERE p.source_ref='SW-DB-001:person:'||split_part(s.fixture_person_key,'-',3)::integer)
                 FROM bp03_candidate_stage s
                 JOIN sw_test.person_cohort pc ON pc.fixture_person_key=s.fixture_person_key AND pc.batch_id=%s
                 JOIN sw_people.person p ON p.person_id=pc.person_id
