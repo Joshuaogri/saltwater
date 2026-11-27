@@ -198,6 +198,13 @@ BEGIN
   SELECT p_batch_id,sw_names.normalize_name(u.display_name),pg_current_xact_id()
   FROM unnest(p_display_names) AS u(display_name);
 
+  -- The candidate and reservation tables have just received bulk generated
+  -- cohorts. Refresh planner statistics before the indexed trigram anti-join;
+  -- otherwise PostgreSQL may choose a quadratic nested-loop/seq-scan plan from
+  -- stale empty-table estimates during the 9,000-person opening import.
+  ANALYZE sw_names.generation_batch_candidate;
+  ANALYZE sw_names.name_reservation;
+
   IF EXISTS (
     SELECT 1
     FROM sw_names.generation_batch_candidate a
