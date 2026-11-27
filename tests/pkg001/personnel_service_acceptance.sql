@@ -2,6 +2,9 @@
 DO $bp06$
 DECLARE
   v_personnel bigint;
+  v_appointment uuid;
+  v_person_id integer;
+  v_population_before integer;
 BEGIN
   SELECT count(*) INTO v_personnel FROM sw_police.personnel;
   IF (SELECT active_police_service_members FROM sw_people.population_summary)<>v_personnel THEN
@@ -48,13 +51,7 @@ BEGIN
   -- Police service is an overlapping population qualification. Non-terminal
   -- leave/suspension/secondment states remain countable; terminal separation
   -- removes only the police qualification and preserves the canonical person.
-  DECLARE
-    v_appointment uuid;
-    v_person_id integer;
-    v_population_before integer;
-    v_population_after integer;
-  BEGIN
-    SELECT e.appointment_id,p.person_id INTO STRICT v_appointment,v_person_id
+  SELECT e.appointment_id,p.person_id INTO STRICT v_appointment,v_person_id
     FROM sw_police.personnel_service_engagement e
     JOIN sw_police.personnel p USING(personnel_id)
     ORDER BY p.service_number LIMIT 1;
@@ -85,11 +82,10 @@ BEGIN
        <>v_population_before-1 THEN
       RAISE EXCEPTION 'service transition replay changed population count';
     END IF;
-    IF (SELECT count(*) FROM sw_police.personnel_service_event
-        WHERE source_ref LIKE 'BP06-LIFECYCLE-TEST:%')<>3 THEN
-      RAISE EXCEPTION 'service lifecycle must retain exactly three immutable transition events';
-    END IF;
-  END;
+  IF (SELECT count(*) FROM sw_police.personnel_service_event
+      WHERE source_ref LIKE 'BP06-LIFECYCLE-TEST:%')<>3 THEN
+    RAISE EXCEPTION 'service lifecycle must retain exactly three immutable transition events';
+  END IF;
 
   IF (SELECT count(*) FROM sw_police.authorised_post WHERE post_status='filled')<>0 THEN
     RAISE EXCEPTION 'personnel appointment must not silently fill an authorised post';
