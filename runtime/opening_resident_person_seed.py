@@ -10,8 +10,9 @@ import hashlib
 import json
 from pathlib import Path
 from typing import Any
+import math
 
-from runtime.naming import GeneratorConfig, generate_candidates, normalize_name
+from runtime.naming import (GeneratorConfig, generate_candidates, normalize_name, pg_trgm_similarity)
 
 ROOT = Path(__file__).resolve().parents[1]
 VOCAB_PATH = ROOT / "data/naming/saltwater-person-naming-v1.json"
@@ -58,6 +59,48 @@ def _police_name_keys() -> set[str]:
     if len(keys) != POLICE_COUNT:
         raise ValueError("opening police cohort contains duplicate normalized names")
     return keys
+
+
+def _trigram_signature(value: str) -> frozenset[str]:
+    """Match the PostgreSQL pg_trgm word-trigram set used by SW-UNS."""
+    normalized = normalize_name(value)
+    result: set[str] = set()
+    for word in normalized.split():
+        padded = f"  {word} "
+        result.update(padded[index:index + 3] for index in range(len(padded) - 2))
+    return frozenset(result)
+
+
+def _add_to_similarity_index(
+    value: str,
+    signatures: list[frozenset[str]],
+    postings: dict[str, list[int]],
+) -> None:
+    signature = _trigram_signature(value)
+    index = len(signatures)
+    signatures.append(signature)
+    for trigram in signature:
+        postings.setdefault(trigram, []).append(index)
+
+
+def _has_near_duplicate(
+    value: str,
+    signatures: list[frozenset[str]],
+    postings: dict[str, list[int]],
+    indexed_names: list[str],
+) -> bool:
+    signature = _trigram_signature(value)
+    overlap_counts: dict[int, int] = {}
+    for trigram in signature:
+        for index in postings.get(trigram, ()):
+            overlap_counts[index] = overlap_counts.get(index, 0) + 1
+    for index, common in overlap_counts.items():
+        prior = signatures[index]
+        # Jaccard similarity >= 0.90 requires this many shared trigrams.
+        required = math.ceil(0.90 * (len(signature) + len(prior)) / 1.90)
+        if common >= required and pg_trgm_similarity(value, indexed_names[index]) >= 0.90:
+            return True
+    return False
 
 
 def build_opening_resident_person_seed() -> dict[str, Any]:
