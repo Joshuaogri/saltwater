@@ -67,8 +67,8 @@ BEGIN
     ) RETURNING event_id INTO v_event_id;
 
     INSERT INTO sw_people.population_state(
-      person_id,life_status,scope_status,effective_tick,last_event_id
-    ) VALUES (v_person_id,1,1,0,v_event_id);
+      person_id,life_status,scope_status,effective_tick,last_event_id,active_police_service
+    ) VALUES (v_person_id,1,1,0,v_event_id,true);
 
     INSERT INTO opening_police_fixture_person(person_id,personnel_category)
     VALUES (
