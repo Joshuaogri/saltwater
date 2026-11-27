@@ -65,6 +65,9 @@ jobs:
           fi
           echo "model=${DISPATCH_MODEL:-gemini-3.8-flash}" >> "$GITHUB_OUTPUT"
 
+      - name: Validate reviewer runner syntax
+        run: python -m py_compile scripts/gemini_saltwater_review.py
+
       - name: Run Gemini across Saltwater
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
