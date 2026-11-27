@@ -46,7 +46,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/property/saltwater-property-world-v1.json.gz
+          git add data/property/saltwater-property-world-v1.json.gz data/property/saltwater-property-world-v1-summary.json
           git rm --ignore-unmatch data/property/saltwater-property-world-v1.json
           if git diff --cached --quiet; then
             echo "Canonical property world is unchanged."

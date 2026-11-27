@@ -518,7 +518,18 @@ def main():
     with output.open("w", encoding="utf-8", newline="") as stream:
         json.dump(document, stream, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
         stream.write("\n")
-    print(json.dumps(result["summary"] | {"manifest_sha256": result["manifest_sha256"], "storage_format": document["storage_format"], "output_bytes": output.stat().st_size}, indent=2, sort_keys=True))
+    summary = result["summary"] | {
+        "dataset_id": result["dataset_id"],
+        "manifest_sha256": result["manifest_sha256"],
+        "storage_format": document["storage_format"],
+        "output_bytes": output.stat().st_size,
+        "occupancy_capacity_status": "NOT_ASSESSED",
+        "resident_allocation_status": "NOT_ASSIGNED",
+        "production_seed_authorized": False,
+    }
+    summary_path = root / "data/property/saltwater-property-world-v1-summary.json"
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    print(json.dumps(summary, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
