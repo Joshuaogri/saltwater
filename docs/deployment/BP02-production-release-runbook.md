@@ -180,3 +180,73 @@ An independent read-only Neon query against production branch `br-still-cloud-bd
 Measured production growth was **81,920 bytes**, matching the disposable PostgreSQL benchmark. The identical repeat import returned `already_present` and added **0 bytes**. Identity validation was 100 resolved and zero unresolved. No operational roads, parcels, addresses, access points or routes were promoted. Preserve recovery branch `br-gentle-moon-bdtc0y32` unchanged.
 
 The schema migration had been observed in production before this workflow; this workflow performed the archive insertion. Historical pre-release notes above are retained as historical evidence and are superseded by this final release record.
+
+
+## Operational geography deployment preparation — 2026-11-27
+
+This is a separate workstream from the completed archive-only release above.
+The full BP02 acceptance artifact from run
+[45889071983](https://github.com/Joshuaogri/saltwater/actions/runs/45889071983)
+was downloaded and inspected. Its report states:
+
+- Structural acceptance: PASS.
+- Operational release status: PASS.
+- Operational approval: true.
+- Database write performed: false; Neon write performed: false.
+- Canonical gameplay register: 420 parcels, 420 addresses, 420 primary
+  property-address links, 2,948 building access-point locators and four
+  bridge connector candidates.
+- Base geography: 8 districts, 24 neighbourhoods, 54 features, 42 roads,
+  367 network nodes, 685 road segments and five routes.
+- Address-road-access exceptions unresolved: zero.
+
+### Record semantics that must survive import
+
+The 2,948 access-point records are canonical gameplay locators, but their
+individual point status is still unreviewed. Their road links are
+nearest/proximity candidates and are explicitly not confirmed routes. The four
+bridge connector candidates also retain unreviewed geometric status and
+not-assessed physical, legal and access characteristics. The importer must
+preserve those values exactly; it must not turn a candidate into a verified
+entrance, legal access right or routable connector.
+
+### Package sizing (not database growth)
+
+The canonical geography register alone measures 5,039,798 bytes as
+deterministic JSON and 204,098 bytes as gzip. The full acceptance report is
+9,225,005 bytes and is an audit artifact, not a seed payload. These measurements
+are useful for package planning only. They are not a PostgreSQL storage-growth
+estimate and must not be presented as one.
+
+### Current production baseline and implementation gap
+
+A fresh read-only production check on branch br-still-cloud-bdvaw8u4,
+database neondb, PostgreSQL 18.7, returned **9,961,472 bytes**. Production
+currently has sw_geo.bp02_schema_migration and sw_geo.source_archive, but
+does not have operational geography tables, sw_geo.entity, sw_geo.version or
+the sw_property schema.
+
+The existing BP02 migration runner is hard-coded to migration 0001 and must
+first be upgraded to a checksum-verified sequential migration stream without
+changing the recorded version-1 checksum. The existing global proposal
+0013_bp02_parcel_address_candidate.sql is explicitly a disposable,
+candidate-only schema and is not suitable for production operational seeding.
+
+### Required next engineering steps
+
+1. Build a deterministic, source-hash-pinned operational release manifest from
+   the accepted full BP02 audit and SW-GEO-V1 source.
+2. Design a separate BP02 operational schema that preserves stable string IDs,
+   database-local surrogate IDs, topology, geometry, parcel/address links and
+   candidate access-point semantics without applying BP04 global migrations.
+3. Build a guarded importer with strict source approval, count, relationship,
+   checksum, idempotency and target-database checks.
+4. Benchmark schema plus complete seed on disposable PostgreSQL 18.7; record
+   clean baseline, schema growth, each data-layer growth, total growth,
+   relation/index sizes, repeat-import growth and representative lookup plans.
+5. Update the expected production baseline and projected total from measured
+   benchmark results, then present the exact release plan for explicit
+   production approval.
+
+No production schema or data was changed during this preparation. The existing
+recovery branch br-gentle-moon-bdtc0y32 remains untouched.
