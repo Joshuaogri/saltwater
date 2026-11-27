@@ -13,7 +13,7 @@
 |---|---|---|---|---|---|---|
 | BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED | IN_PROGRESS | IN_PROGRESS | BLOCKED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
 | BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED | IMPLEMENTED | TESTED | VERIFIED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
-| BP-03 | Population and Individual Simulation | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
+| BP-03 | Population and Individual Simulation | DESIGNED | IN_PROGRESS | IN_PROGRESS (cap/concurrency slice tested) | IN_PROGRESS | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
 | BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | BLOCKED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
 | BP-06 | Police Personnel | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-06](divisions/BP-06-POLICE-PERSONNEL.md) |
@@ -78,7 +78,7 @@ Statuses are independent across specification, implementation, testing and verif
 1. Crosswalk structural coverage: all 52 source divisions, 168 requirement IDs and 60 test IDs are mapped; semantic completeness/ownership audit remains to be completed. See [52→44 crosswalk](SALTWATER-52-TO-44-CROSSWALK.md).
 2. BP-01: full specification draft created; user review/approval pending.
 3. BP-02: **COMPLETE — VERIFIED** for fictional gameplay; full acceptance run 45889071983 passed. Production Neon seeding remains a separate persistence task.
-4. BP-03: full population architecture draft created; population-scope countability decisions remain open.
+4. BP-03: **DESIGNED — approved**. Population-scope/countability canon is settled in SW-CANON-001. The core disposable person/population schema and 10,000-person concurrent cap slice exist; full opening population provisioning, service integration and current-head acceptance remain in progress.
 5. BP-04: full built-world/property/business/organisation specification draft created; business baseline and distribution decisions remain open.
 6. BP-05: full police institutional architecture specification draft created; command titles, unit structure and staffing allocation remain open.
 7. BP-06: full police personnel specification draft created; category taxonomy, service-number format, probation and restricted-record policy decisions remain open.

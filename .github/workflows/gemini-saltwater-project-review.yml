@@ -18,7 +18,7 @@ on:
       active_bp:
         description: "Blueprint division to review (for example BP02)"
         required: true
-        default: "BP02"
+        default: "BP03"
         type: string
       model:
         description: "Gemini model"

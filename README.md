@@ -10,7 +10,9 @@ current default is **BP02 — Sovereign City-State Geography**. When project wor
 moves to another BP, update the default so automatic push and scheduled reviews
 target the new active division. Manual runs can select a different BP.
 
-For BP02, Gemini's primary review scope is operational geography: deployment
+For BP03, Gemini's primary review scope is population accounting and individual simulation: canonical person identity, opening 9,500-person cohort, 10,000-person hard cap, population-scope rules, lifecycle and residence history, atomic admissions, demographic/provenance handling, processing tiers, permanent police-relevance promotion, and the BP-02/BP-04/BP-06 interfaces. Other BPs are examined only for concrete dependencies affecting the active BP; they are not independently audited.
+
+For BP02, Gemini's previous review scope was operational geography: deployment
 package, source-to-table mapping, stable identity, districts, neighbourhoods,
 features, roads, network nodes and segments, routes, parcels, addresses,
 access-point locators, referential integrity, deterministic packaging, tests,
@@ -120,6 +122,41 @@ current steps. Their final results are not yet claimed.
 
 
 Saltwater is a fictional sovereign city-state and a single-city police simulation.
+
+## BP03 active division — population and individual simulation
+
+BP02 is complete and its operational geography is deployed to production Neon.
+The active division is now **BP03 — Population and Individual Simulation**.
+The full master blueprint BP01–BP44 is approved; no repeat division-approval
+gate is required.
+
+Binding population canon is already settled in SW-CANON-001: 10,000 living
+people maximum; opening target 9,000 residents plus 500 police (9,500 total);
+500 unused shared headroom; police are a subset of population; one canonical
+person identity per individual; no automatic filling of headroom. The exact
+population-scope rules and single-person counting semantics are adopted.
+
+Existing implementation is partial, not a completed population service:
+- Disposable-only proposal `db/proposals/0002_runtime_city_population.sql`
+  defines canonical person identity/profile history, population state/history,
+  a serialised population counter and the 10,000 cap.
+- PKG-001 run [45265769796](https://github.com/Joshuaogri/saltwater/actions/runs/45265769796)
+  passed the disposable concurrent 9,999-to-10,000 admission test: one
+  transaction admitted and the competing 10,001st admission was rejected.
+- Compact full-cap fixture growth measured 8,192,000 bytes on disposable
+  PostgreSQL 16.16; this is not a Neon production estimate.
+- A 500-name opening police identity candidate dataset exists, but those names
+  are not yet canonical person records or BP06 service dossiers in production.
+- The authoritative 9,000-resident opening cohort has not yet been created or
+  seeded. No BP03 population/person production seed is authorised by this
+  status note.
+
+Next BP03 work is to complete the population service and reproducible disposable
+acceptance against current `main`, then prepare the opening population seed
+using canonical geography/address links and SW-UNS identity reservations.
+Keep population headroom unused, preserve one identity per person, and do not
+write to production Neon without a separate exact-operation approval and
+measured storage estimate.
 
 ## Single-player NPC world
 

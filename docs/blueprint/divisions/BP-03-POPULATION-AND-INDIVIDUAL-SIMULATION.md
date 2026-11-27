@@ -3,11 +3,11 @@
 **Project:** Saltwater  
 **Blueprint:** BP-01–BP-44  
 **Version:** 0.1  
-**Status:** `DESIGNED_DRAFT` — awaiting user review/approval  
+**Status:** `DESIGNED` — approved as part of the user-approved BP-01–BP-44 master blueprint (2026-11-23)  
 **Date:** 2026-11-22  
 **Owner:** BP-03  
 **Dependencies:** BP-01, BP-02, BP-04, BP-06–BP-08, BP-17–BP-18, BP-30, BP-33, BP-35–BP-39, BP-42–BP-44  
-**Authority:** One authoritative person identity and population ledger. No Neon schema or population seed is authorised by this document.
+**Authority:** User-approved BP-03 design under the fixed BP-01–BP-44 master blueprint. SW-CANON-001 settles population scope and opening countability. One authoritative person identity and population ledger. This design approval does not authorise a production Neon migration or population seed.
 
 ---
 
