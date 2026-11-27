@@ -11,7 +11,7 @@ BEGIN
    WHERE person_id=v_person AND detail_tier=0 AND NOT permanently_promoted) THEN
   RAISE EXCEPTION 'new person must default to registry tier 0';
  END IF;
- v_tier:=sw_people.set_person_detail_tier(v_person,1,'routine_profile',
+ v_tier:=sw_people.set_person_detail_tier(v_person,1::smallint,'routine_profile',
   'fixture:routine-1','Routine simulation enabled','test:bp03','BP03-TIER:ROUTINE');
  IF v_tier<>1 THEN RAISE EXCEPTION 'tier 1 transition failed'; END IF;
  v_promoted:=sw_people.promote_person_persistently(v_person,'witness',
@@ -27,7 +27,7 @@ BEGIN
   RAISE EXCEPTION 'duplicate promotion must be idempotent';
  END IF;
  BEGIN
-  PERFORM sw_people.set_person_detail_tier(v_person,2,'case_closed','fixture:incident-1',
+  PERFORM sw_people.set_person_detail_tier(v_person,2::smallint,'case_closed','fixture:incident-1',
    'Attempted downgrade','test:bp03','BP03-TIER:DOWNGRADE');
   RAISE EXCEPTION 'tier 3 downgrade unexpectedly succeeded';
  EXCEPTION WHEN raise_exception THEN
