@@ -1,4 +1,4 @@
-name: Saltwater project-wide Gemini review
+name: Saltwater active-blueprint Gemini review
 
 on:
   push:
@@ -15,6 +15,11 @@ on:
           - full
           - changed
         default: full
+      active_bp:
+        description: "Blueprint division to review (for example BP02)"
+        required: true
+        default: "BP02"
+        type: string
       model:
         description: "Gemini model"
         required: true
@@ -31,7 +36,7 @@ concurrency:
 
 jobs:
   project-review:
-    name: Independent whole-project engineering review
+    name: Independent active-blueprint engineering review
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
@@ -54,6 +59,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           DISPATCH_SCOPE: ${{ inputs.scope }}
           DISPATCH_MODEL: ${{ inputs.model }}
+          DISPATCH_BP: ${{ inputs.active_bp }}
         run: |
           set -euo pipefail
           if [[ "$EVENT_NAME" == "schedule" ]]; then
@@ -64,15 +70,17 @@ jobs:
             echo "scope=changed" >> "$GITHUB_OUTPUT"
           fi
           echo "model=${DISPATCH_MODEL:-gemini-3.8-flash}" >> "$GITHUB_OUTPUT"
+          echo "active_bp=${DISPATCH_BP:-BP02}" >> "$GITHUB_OUTPUT"
 
       - name: Validate reviewer runner syntax
         run: python -m py_compile scripts/gemini_saltwater_review.py
 
-      - name: Run Gemini across Saltwater
+      - name: Run Gemini against the active blueprint
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: ${{ steps.scope.outputs.model }}
           REVIEW_SCOPE: ${{ steps.scope.outputs.scope }}
+          ACTIVE_BP: ${{ steps.scope.outputs.active_bp }}
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_SHA: ${{ github.sha }}
         run: python scripts/gemini_saltwater_review.py
