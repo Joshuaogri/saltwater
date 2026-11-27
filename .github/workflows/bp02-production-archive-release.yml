@@ -1,0 +1,189 @@
+name: Saltwater BP02 archive-only production release
+
+# Manual-only. The BP02 schema is already present in production; this workflow
+# verifies its checksum and inserts only the immutable SW-GEO-V1 source archive.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_release:
+        description: Type/select APPLY_BP02_ARCHIVE_TO_NEON to insert the archive
+        required: true
+        type: choice
+        options:
+          - NO
+          - APPLY_BP02_ARCHIVE_TO_NEON
+        default: NO
+      recovery_point_reference:
+        description: Confirm the preserved Neon pre-release recovery branch ID
+        required: true
+        type: string
+      expected_database_bytes:
+        description: Exact read-only production baseline measured 2026-11-27
+        required: true
+        type: string
+        default: "9879552"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saltwater-neon-bp02-archive-production
+  cancel-in-progress: false
+
+jobs:
+  validate-release-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main, explicit release confirmation and recorded recovery point
+        env:
+          REF: ${{ github.ref }}
+          CONFIRM: ${{ inputs.confirm_release }}
+          RECOVERY_POINT: ${{ inputs.recovery_point_reference }}
+        run: |
+          set -euo pipefail
+          test "$REF" = "refs/heads/main" || { echo "::error::Production release is permitted from main only."; exit 1; }
+          test "$CONFIRM" = "APPLY_BP02_ARCHIVE_TO_NEON" || { echo "::error::Explicit BP02 archive release confirmation is required."; exit 1; }
+          test "$RECOVERY_POINT" = "br-gentle-moon-bdtc0y32" || { echo "::error::Unexpected recovery-point reference."; exit 1; }
+
+  deploy-bp02-archive:
+    needs: validate-release-request
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Verify production target, migration checksum, baseline and package
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EXPECTED_DATABASE_BYTES: ${{ inputs.expected_database_bytes }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "${DATABASE_URL:-}" || { echo "::error::DATABASE_URL secret is missing."; exit 1; }
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          import psycopg
+          from runtime.bp02_geography_archive_importer import build_package
+          from scripts.migrate_bp02 import MIGRATION
+
+          expected_bytes = int(os.environ["EXPECTED_DATABASE_BYTES"])
+          expected_archive = "6b46d62a944334a1853bc7190e33476bb06adc835e433d5592d6b0ee4c700d0c"
+          expected_migration = hashlib.sha256(MIGRATION.read_bytes()).hexdigest()
+          package = build_package(os.environ["GITHUB_SHA"])
+          assert package["archive_sha256"] == expected_archive, "Pinned BP02 archive digest mismatch"
+          assert package["compressed_bytes"] == 25689, "Unexpected compressed archive size"
+          assert package["manifest"]["identity_validation"]["resolved"] == 100
+          assert package["manifest"]["identity_validation"]["unresolved"] == 0
+          assert package["manifest"]["release_scope"] == "SOURCE_ARCHIVE_ONLY"
+          assert package["manifest"]["operational_geography_promoted"] is False
+
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              db, version, size = conn.execute(
+                  "SELECT current_database(), current_setting('server_version'), pg_database_size(current_database())"
+              ).fetchone()
+              assert db == "neondb", f"Expected neondb, connected to {db}"
+              assert version.startswith("18.7"), f"Unexpected PostgreSQL version: {version}"
+              assert size == expected_bytes, f"Baseline changed: expected {expected_bytes}, found {size}"
+              ledger = conn.execute(
+                  "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration ORDER BY version"
+              ).fetchall()
+              assert ledger == [(1, MIGRATION.stem, expected_migration)], f"BP02 migration ledger mismatch: {ledger!r}"
+              global_versions = conn.execute(
+                  "SELECT array_agg(version ORDER BY version) FROM sw_ops.schema_migration"
+              ).fetchone()[0]
+              assert global_versions == [1, 2], f"Global migration ledger changed: {global_versions!r}"
+              archive_rows = conn.execute(
+                  "SELECT release_code,archive_sha256 FROM sw_geo.source_archive ORDER BY release_code"
+              ).fetchall()
+              assert archive_rows in ([], [("SW-GEO-V1", expected_archive)]), f"Unexpected archive rows: {archive_rows!r}"
+              print(json.dumps({
+                  "preflight": "passed",
+                  "database": db,
+                  "postgres_version": version,
+                  "database_bytes_before": size,
+                  "bp02_migration_checksum": expected_migration,
+                  "global_migration_versions": global_versions,
+                  "existing_archive_rows": len(archive_rows),
+                  "archive_bytes": package["compressed_bytes"],
+                  "archive_sha256": package["archive_sha256"],
+                  "source_commit": os.environ["GITHUB_SHA"],
+                  "identity_validation": package["manifest"]["identity_validation"],
+                  "release_scope": "SOURCE_ARCHIVE_ONLY"
+              }, indent=2))
+          PY
+      - name: Insert immutable BP02 source archive
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          python -m runtime.bp02_geography_archive_importer \
+            --apply \
+            --expected-database neondb \
+            --allow-production \
+            --source-commit "$GITHUB_SHA"
+      - name: Verify archive acceptance, unchanged global ledger and measured storage
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          import psycopg
+          from runtime.bp02_geography_archive_importer import build_package
+          from scripts.migrate_bp02 import MIGRATION
+          package = build_package()
+          expected_migration = hashlib.sha256(MIGRATION.read_bytes()).hexdigest()
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              db, size = conn.execute(
+                  "SELECT current_database(), pg_database_size(current_database())"
+              ).fetchone()
+              assert db == "neondb"
+              row = conn.execute("""
+                  SELECT release_code, archive_format, compressed_bytes,
+                         uncompressed_bytes, source_file_count, archive_sha256,
+                         release_scope, source_manifest
+                  FROM sw_geo.source_archive WHERE release_code='SW-GEO-V1'
+              """).fetchone()
+              assert row is not None, "SW-GEO-V1 archive missing"
+              assert row[0:7] == ("SW-GEO-V1","tar.gz",25689,596267,2,
+                                  package["archive_sha256"],"SOURCE_ARCHIVE_ONLY"), row
+              assert row[7]["operational_geography_promoted"] is False
+              assert row[7]["identity_validation"]["resolved"] == 100
+              assert row[7]["identity_validation"]["unresolved"] == 0
+              ledger = conn.execute(
+                  "SELECT version,migration_name,checksum_sha256 FROM sw_geo.bp02_schema_migration ORDER BY version"
+              ).fetchall()
+              assert ledger == [(1,MIGRATION.stem,expected_migration)], ledger
+              global_versions = conn.execute(
+                  "SELECT array_agg(version ORDER BY version) FROM sw_ops.schema_migration"
+              ).fetchone()[0]
+              assert global_versions == [1,2], global_versions
+              print(json.dumps({
+                  "acceptance": "passed",
+                  "database_bytes_after": size,
+                  "archive_compressed_bytes": row[2],
+                  "archive_sha256": row[5],
+                  "global_migration_versions": global_versions,
+                  "operational_geography_promoted": False
+              }, indent=2))
+          PY
+      - name: Verify repeat-import idempotency
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          before="$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')"
+          python -m runtime.bp02_geography_archive_importer --apply --expected-database neondb --allow-production --source-commit "$GITHUB_SHA"
+          after="$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')"
+          echo "database_bytes_before_repeat=$before"
+          echo "database_bytes_after_repeat=$after"
+          test "$before" = "$after"
+          echo "Repeat import is idempotent; additional database growth is zero bytes." >> "$GITHUB_STEP_SUMMARY"
