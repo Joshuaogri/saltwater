@@ -31,6 +31,58 @@ and validates them. Production Neon writes remain subject to explicit approval
 and a measured storage estimate. The workflow uses the existing
 `GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
+## BP02 operational geography — production release completed (2026-11-27)
+
+The approved BP02 operational geography release is now deployed to production Neon.
+GitHub Actions [run 46014720819](https://github.com/Joshuaogri/saltwater/actions/runs/46014720819)
+completed successfully on `main`. The workflow built and validated the approved
+package, passed the exact-target production preflight, applied
+`0002_operational_geography`, imported the package, verified all records and
+relationships, confirmed the repeat import was idempotent with **0 bytes** of
+additional growth, and uploaded the exact deployed package.
+
+Production BP02 migration ledger now contains versions 1 and 2. Migration 0002
+checksum: `1c483229b407dc824cbb2464944394f8b1e997517e6f95d77372010bdec4eb22`.
+The immutable source archive `SW-GEO-V1` remains intact, and the global
+`sw_ops.schema_migration` ledger remains unchanged at versions [1, 2].
+The production release record is
+`SW-BP02-OPERATIONAL-GEOGRAPHY-V1`, package SHA-256
+`ee250551239292e16808eb2d063d54dd290a04d001ab2127f2dd3773686ecc10`,
+with `production_seed_approved=true` based on the user's explicit approval.
+
+Imported and independently verified production row counts:
+
+- 8 districts; 24 neighbourhoods; 54 geographic features.
+- 42 roads; 367 network nodes; 685 road segments.
+- 5 routes; 116 route-node links; 111 route-segment links.
+- 420 parcels; 420 addresses; 2,948 access-point locators; 4 bridge connectors.
+- All 685 road segments resolve to their endpoint nodes and parent roads;
+  all 420 addresses resolve to parcels.
+- All 2,948 access-point locators and all four bridge connectors retain their
+  approved in-game status. Candidate access/bridge semantics were not silently
+  promoted to verified physical entrances or routable connectors.
+
+The release workflow measured production at **16,728,064 bytes** after import,
+a **6,766,592-byte** increase from the guarded 9,961,472-byte baseline
+(approximately 6.45 MiB). A subsequent independent read-only Neon check measured
+**16,752,640 bytes**; this is the latest direct database-size reading, or
+**6,791,168 bytes** above the same baseline (approximately 6.47 MiB).
+The 24,576-byte difference between the two readings is retained transparently;
+the workflow's recorded repeat-import check itself showed identical before/after
+sizes and **0 bytes** growth. The isolated disposable estimate was a projection,
+not a substitute for these production measurements.
+
+The deployed package is 227,656 compressed bytes and 5,354,226 uncompressed
+bytes. The exact deployed package and manifest are retained in artifact
+[bp02-operational-geography-v1-production-package](https://github.com/Joshuaogri/saltwater/actions/runs/46014720819/artifacts/15206266694)
+(212,032-byte ZIP; expires 2027-02-25). The pre-release recovery branch
+`br-gentle-moon-bdtc0y32` was preserved unchanged.
+
+This production deployment supersedes the earlier BP02 README notes stating
+that operational geography had not been seeded, that migration 0002 was
+pending, or that production remained at 9,961,472 bytes. Those entries are
+historical preparation records, not the current state.
+
 ## BP02 bridge identity and business-naming lock remediation — 2026-11-26
 
 The BP02 bridge assessment builder now selects only the four connector identities
