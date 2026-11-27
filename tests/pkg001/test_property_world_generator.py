@@ -147,6 +147,12 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         self.assertEqual(w["summary"]["building_count"], len(w["buildings"]))
         self.assertEqual(w["summary"]["premises_count"], len(w["premises"]))
         self.assertEqual(w["summary"]["unit_count"], len(w["units"]))
+        residential_ids = {p["property_id"] for p in w["properties"] if p["primary_use"] == "dwelling"}
+        residential_units = [u for u in w["units"] if u["unit_class"] == "dwelling" and u["property_id"] in residential_ids]
+        self.assertEqual(w["summary"]["residential_property_count"], len(residential_ids))
+        self.assertEqual(w["summary"]["residential_dwelling_unit_count"], len(residential_units))
+        self.assertTrue(residential_units)
+        self.assertTrue(all(u["physical_capacity"] is None for u in residential_units))
         self.assertEqual(w["summary"]["address_count"], len(w["addresses"]))
         self.assertEqual(w["summary"]["access_point_count"], len(w["access_points"]))
         self.assertEqual(w["summary"]["constructed_access_route_count"], len(w["access_routes"]))

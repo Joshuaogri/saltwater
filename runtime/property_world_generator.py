@@ -419,6 +419,16 @@ def build_property_world(source: dict) -> dict:
     for p in premises_rows:
         p["unit_ids"] = sorted(units_for_premises[p["premises_id"]])
 
+    residential_property_ids = {
+        row["property_id"] for row in property_rows
+        if row.get("primary_use") == "dwelling"
+    }
+    residential_dwelling_unit_count = sum(
+        1 for row in unit_rows
+        if row.get("unit_class") == "dwelling"
+        and row.get("property_id") in residential_property_ids
+    )
+
     body = {
         "schema": "saltwater-canonical-property-world/1.0",
         "dataset_id": "SW-PROPERTY-WORLD-V1",
@@ -429,6 +439,8 @@ def build_property_world(source: dict) -> dict:
         "summary": {
             "property_count": len(property_rows), "building_count": len(building_rows),
             "premises_count": len(premises_rows), "unit_count": len(unit_rows),
+            "residential_property_count": len(residential_property_ids),
+            "residential_dwelling_unit_count": residential_dwelling_unit_count,
             "address_count": len(address_rows), "access_point_count": len(access_rows),
             "constructed_access_route_count": len(route_rows),
             "site_feature_count": len(site_feature_rows),

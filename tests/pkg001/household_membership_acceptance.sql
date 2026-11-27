@@ -14,7 +14,7 @@ BEGIN
  VALUES('BP03-HH-TEST:ADDRESS','BP03-HH-TEST:PARCEL','ACTIVE_IN_GAME','{"test_fixture":true}');
  INSERT INTO sw_property.property_site(
   property_id,display_name,address_id,use_class,lifecycle_status,source_dataset,source_record
- ) VALUES('BP03-HH-TEST:PROPERTY','Fixture dwelling',NULL,'residential','active',
+ ) VALUES('BP03-HH-TEST:PROPERTY','Fixture dwelling',NULL,'dwelling','active',
   'BP03-HH-TEST','{"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_property.street_address(
   address_id,property_id,display_name,source_dataset,source_record
