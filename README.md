@@ -6,7 +6,7 @@ Gemini is used as an independent engineering collaborator for the **currently ac
 blueprint division**. Every review is explicitly told the active BP identifier and
 must focus on that BP rather than conducting an unfocused whole-project audit.
 The active division is selected through the workflow's `active_bp` input; the
-current default is **BP02 — Sovereign City-State Geography**. When project work
+current default is **BP03 — Population and Individual Simulation**. When project work
 moves to another BP, update the default so automatic push and scheduled reviews
 target the new active division. Manual runs can select a different BP.
 
