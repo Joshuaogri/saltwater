@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'db/proposals/0010_bp03_population_qualification_union.sql'
       - 'db/proposals/0036_bp03_individual_simulation_promotion.sql'
       - 'tests/pkg001/bp03_individual_simulation_acceptance.sql'
       - 'db/proposals/0037_bp03_person_routines_and_movement.sql'
