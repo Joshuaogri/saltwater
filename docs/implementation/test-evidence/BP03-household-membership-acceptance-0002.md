@@ -19,7 +19,7 @@ The household acceptance fixture verifies:
 - Population count remains two after one household membership ends, because residence remains active.
 - Append-only household creation, member-addition and departure history.
 
-The fixture deliberately leaves `unit_space.use_class` null. Dwelling classification is taken from `unit_space.unit_class`; residential use is taken from the parent `property_site.use_class`, matching the actual BP04 property-world generator/importer contract. The generator supplies `unit_class` for each unit, but does not supply a unit-level `use_class`. This prevents the household service from depending on a unit-level use field that the source importer does not populate.
+The fixture deliberately leaves `unit_space.use_class` null. Dwelling classification is taken from `unit_space.unit_class`; the actual BP04 importer maps the source property's `primary_use='dwelling'` into `property_site.use_class='dwelling'`. The generator does not supply a unit-level `use_class`. BP03 therefore requires both `unit_class='dwelling'` and parent `property_site.use_class='dwelling'`. This prevents the household service from depending on a unit-level use field that the source importer does not populate.
 
 ## Limits
 
