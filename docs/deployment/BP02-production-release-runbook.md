@@ -1,6 +1,23 @@
 # BP-02 archive-only production release runbook
 
-**Status: BP02 archive-only production release COMPLETE and independently verified (2026-11-27).** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
+> **Current production status — 2026-11-27:** The archive-only release and the
+> separate operational-geography release are both complete. This runbook's
+> archive-only procedure and its historical pre-release values below are retained
+> as audit history; they are not instructions to repeat the deployment.
+>
+> The operational release passed in
+> [GitHub Actions run 46014720819](https://github.com/Joshuaogri/saltwater/actions/runs/46014720819).
+> Production migration ledger versions are 1 and 2; the operational package
+> release record is `SW-BP02-OPERATIONAL-GEOGRAPHY-V1` with SHA-256
+> `ee250551239292e16808eb2d063d54dd290a04d001ab2127f2dd3773686ecc10`.
+> The deployed counts and live size readings are recorded in the
+> [README production release record](../../README.md#bp02-operational-geography--production-release-completed-2026-11-27).
+> The recovery branch `br-gentle-moon-bdtc0y32` is preserved. Do not rerun
+> the production migration/import workflow as a new release; use a separately
+> versioned and approved change for future BP02 data/schema updates.
+
+
+**Status: BP02 archive-only and operational-geography production releases COMPLETE and independently verified (2026-11-27).** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
 
 ## Current production state after explicit approval (2026-11-27)
 
