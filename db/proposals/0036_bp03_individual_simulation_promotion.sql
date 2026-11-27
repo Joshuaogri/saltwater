@@ -36,6 +36,24 @@ CREATE TABLE sw_people.person_relevance_promotion (
   recorded_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE FUNCTION sw_people.initialise_person_simulation_state()
+RETURNS trigger LANGUAGE plpgsql AS $
+DECLARE v_tick bigint;
+BEGIN
+ SELECT world_tick INTO STRICT v_tick FROM sw_core.simulation_event WHERE event_id=NEW.last_event_id;
+ INSERT INTO sw_people.person_simulation_state(person_id,detail_tier,tier_reason,effective_tick,last_event_id)
+ VALUES(NEW.person_id,0,'Registry identity created',v_tick,NEW.last_event_id);
+ INSERT INTO sw_people.person_simulation_history(event_id,person_id,prior_tier,new_tier,
+  trigger_kind,trigger_ref,reason,actor_ref,effective_tick)
+ VALUES(NEW.last_event_id,NEW.person_id,NULL,0,'person_created',
+  COALESCE(NEW.source_ref,'person:'||NEW.person_id::text),
+  'Initial registry processing tier','system:bp03',v_tick);
+ RETURN NEW;
+END $;
+CREATE TRIGGER person_simulation_state_initialise
+AFTER INSERT ON sw_people.person
+FOR EACH ROW EXECUTE FUNCTION sw_people.initialise_person_simulation_state();
+
 CREATE FUNCTION sw_people.reject_person_simulation_history_mutation()
 RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
