@@ -36,7 +36,8 @@ def build_release() -> tuple[bytes, dict]:
     if audit.get("overall_status") != "PASS" or audit.get("operational_release_status") != "PASS":
         raise ValueError("BP02 full acceptance must pass before operational package creation")
     if not audit.get("authority", {}).get("operational_approval"):
-        raise ValueError("BP02 operational authority gate is not satisfied")
+        raise ValueError("BP02 fictional gameplay release authority is not satisfied")
+    production_seed_approved = identity.get("operational_seed_approved") is True
     canonical = audit["canonical_geography_register"]
     if canonical.get("operational_release_status") != "RELEASED_FOR_GAMEPLAY":
         raise ValueError("Canonical geography register is not released for gameplay")
@@ -78,7 +79,8 @@ def build_release() -> tuple[bytes, dict]:
         "schema": "saltwater-bp02-operational-geography/1.0",
         "release_id": "SW-BP02-OPERATIONAL-GEOGRAPHY-V1",
         "release_status": "ACCEPTED_FOR_GAMEPLAY_DEPLOYMENT",
-        "operational_approval": True,
+        "gameplay_release_accepted": True,
+        "production_seed_approved": production_seed_approved,
         "source_dataset": geography["dataset_id"],
         "coordinate_reference": geography["coordinate_reference"],
         "source_hashes": {
@@ -105,7 +107,8 @@ def build_release() -> tuple[bytes, dict]:
     manifest = {
         "release_id": payload["release_id"],
         "schema": payload["schema"],
-        "operational_approval": True,
+        "gameplay_release_accepted": True,
+        "production_seed_approved": production_seed_approved,
         "source_hashes": payload["source_hashes"],
         "record_counts": actual,
         "uncompressed_bytes": len(raw),
@@ -121,6 +124,7 @@ def build_release() -> tuple[bytes, dict]:
             "bridge_connectors_are_accepted_gameplay_records": True,
             "database_surrogate_ids_embedded": False,
             "production_database_written": False,
+            "production_seed_authority_granted": production_seed_approved,
         },
     }
     return compressed, manifest
