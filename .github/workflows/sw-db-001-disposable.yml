@@ -14,6 +14,11 @@ on:
       - "db/proposals/0038_bp03_person_knowledge_boundary.sql"
       - "db/proposals/0039_bp03_person_attribute_claims.sql"
       - "tests/pkg001/person_residence_acceptance.sql"
+      - "runtime/sw_db_001_resident_residence_materializer.py"
+      - "runtime/opening_resident_dwelling_allocation.py"
+      - "runtime/bp02_operational_geography_package.py"
+      - "runtime/bp02_operational_geography_importer.py"
+      - "data/people/saltwater-opening-resident-dwelling-allocation-v1.json.gz"
       - "tests/pkg001/sw_db_001_*.sql"
       - "tests/pkg001/bp04_01_*.sql"
       - "tests/pkg001/bp04_02_*.sql"
@@ -111,6 +116,7 @@ jobs:
       PGUSER: saltwater_test
       PGPASSWORD: test-only
       PGDATABASE: saltwater_test
+      DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
     steps:
       - uses: actions/checkout@v4
       - name: Install PostgreSQL Python driver
@@ -148,6 +154,10 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0034_bp03_person_residence.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_population_residence_schema_growth_bytes=$((after-before))"
+      - name: Import accepted BP02 operational geography into disposable world
+        run: |
+          python -m runtime.bp02_operational_geography_package
+          python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
       - name: Measure BP04-01 proposal 0011 schema-only growth
         run: |
@@ -227,6 +237,8 @@ jobs:
           echo "idempotent_repeat_storage_delta_bytes=$((after-before))"
           test "$before_rows" = "$after_rows"
           echo "IDEMPOTENT_ROW_MANIFEST_MATCH=$after_rows"
+      - name: Materialise 9,000 BP03 resident-to-BP02-address links
+        run: python -m runtime.sw_db_001_resident_residence_materializer
       - name: Measure population, person, business and reconciliation query latency
         run: |
           psql -v ON_ERROR_STOP=1 -c "EXPLAIN (ANALYZE,BUFFERS) SELECT living_included,10000-living_included AS headroom FROM sw_people.population_counter WHERE singleton=1;"
