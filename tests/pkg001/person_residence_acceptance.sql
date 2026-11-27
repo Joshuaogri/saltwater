@@ -1,5 +1,8 @@
 \set ON_ERROR_STOP on
 BEGIN;
+-- Match the tick-zero bootstrap used by the population-union acceptance; this transaction rolls the state change back.
+UPDATE sw_runtime.state SET state=1,player_present=false
+ WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
 DO $bp03$
 DECLARE v_person integer; v_residence bigint; v_replayed bigint; v_count integer;
 BEGIN
