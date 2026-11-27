@@ -190,6 +190,11 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM sw_names.name_reservation r
     WHERE r.normalized_key <> NEW.normalized_key
+      -- Generated batches are preflighted as a set before insertion; avoid
+      -- quadratic comparisons with earlier rows from the same manifest.
+      -- Exact duplicates remain protected by the namespace unique constraint.
+      AND (NEW.generation_batch_id IS NULL
+           OR r.generation_batch_id IS DISTINCT FROM NEW.generation_batch_id)
       AND r.normalized_key % NEW.normalized_key
   ) THEN
     RAISE EXCEPTION 'near-duplicate name requires review before reservation';
