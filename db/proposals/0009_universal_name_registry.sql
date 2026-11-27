@@ -116,7 +116,7 @@ CREATE FUNCTION sw_names.preflight_generation_batch(
   p_batch_id bigint,p_display_names text[]
 ) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER
-SET search_path=pg_catalog,sw_names,public AS $
+SET search_path=pg_catalog,sw_names,public AS $sw_batch$
 DECLARE
   v_expected integer;
   v_total integer;
@@ -205,7 +205,7 @@ BEGIN
   FROM unnest(p_display_names) AS u(display_name);
   RETURN v_total;
 END
-$;
+$sw_batch$;
 
 CREATE FUNCTION sw_names.record_generation_batch(
   p_domain text,p_generator_version smallint,p_normalizer_version smallint,
