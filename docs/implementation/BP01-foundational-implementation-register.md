@@ -69,6 +69,10 @@ The first disposable acceptance passed in [run 45868150806](../test-evidence/BP0
 
 The versioned person vocabulary and deterministic candidate generator now produce 500 unique, three-part opening police identity candidates. Internal exact and pg_trgm-compatible near-duplicate screening is applied. Each row has a stable seed reference but no database `person_id`, personnel category, demographic facts or active service status. Names remain unreserved until checked/reserved through the authoritative SW-UNS registry; the candidate dataset is not a production import or a claim that the opening cohort is already provisioned. A dedicated GitHub build workflow persists readable and gzip forms on `main`; PKG-001 also runs its regression tests.
 
+### BP03 identity-registry evidence update (2026-11-27)
+
+The dedicated disposable PostgreSQL workflow [46060309607](https://github.com/Joshuaogri/saltwater/actions/runs/46060309607) passed the 500-person police and 9,000-person civilian SW-UNS candidate identity tests on commit `04ae2929afd8c60ae332251399f8e2e1e01521f5`. This establishes candidate registry preflight and rollback only; it does not establish the 9,000-person canonical residence materialisation. The follow-up trigger correction is on `main` as [d1ea709](https://github.com/Joshuaogri/saltwater/commit/d1ea7093d611c2bf8df85eccc90fc4f0b10a27bd), and the latest identity rerun was still executing its 9,000-person step when inspected. BP03 remains in progress.
+
 ## 6. Acceptance and release boundary
 
 - Design: **DESIGNED**.
