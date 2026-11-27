@@ -1,8 +1,24 @@
 # BP-02 archive-only production release runbook
 
-**Status: prepared, not authorised or deployed.** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
+**Status: BP02 schema already present in production; SW-GEO-V1 archive insertion pending the guarded GitHub Actions run.** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
 
-## Verified pre-release state (2026-11-27)
+## Current production state after explicit approval (2026-11-27)
+
+A fresh read-only query after the user's explicit approval found that the independent BP02 schema migration had already been applied to production before this execution attempt. This assistant did not issue that schema write. The current state is:
+
+- Database: `neondb`, PostgreSQL 18.7
+- Production branch: `br-still-cloud-bdvaw8u4`
+- Current database size: **9,879,552 bytes**
+- BP02 migration ledger: one row, version 1, migration `0001_source_archive`, checksum `0801ca73441e3170df270d55747ca18ad3b2ede4937dec11c74b106b490c1850`
+- BP02 archive rows: **0**
+- Global migration versions: **1 and 2**, unchanged
+- Recovery branch preserved: `br-gentle-moon-bdtc0y32`
+
+The schema-only database increase relative to the earlier 9,781,248-byte baseline is **98,304 bytes**. The remaining disposable benchmark estimate for the archive insertion is **81,920 bytes**, projecting **9,961,472 bytes** after insertion. This is an estimate; the release workflow measures actual growth.
+
+A manual-only workflow has been added on `main`: [BP02 archive-only production release](../../.github/workflows/bp02-production-archive-release.yml). It checks the migration checksum, archive digest, exact database baseline, recovery-point reference, PostgreSQL version and unchanged global migration ledger. It inserts only the immutable source archive, runs acceptance checks and verifies repeat-import idempotency. It requires the repository secret `DATABASE_URL` already used by the existing Neon production workflows. No production archive row has yet been inserted.
+
+## Historical pre-release state (2026-11-27)
 
 Read-only query against Neon project `misty-breeze-20463094`, production branch `br-still-cloud-bdvaw8u4`, database `neondb`:
 
@@ -143,4 +159,4 @@ Confirm one BP-02 migration ledger row, one `SW-GEO-V1` archive row, source scop
 - [Global migration validation after restoring the contiguous atomicity fixture](https://github.com/Joshuaogri/saltwater/actions/runs/45910255603) — passed.
 - [PostgreSQL 16 archive regression](https://github.com/Joshuaogri/saltwater/actions/runs/45910168053) — passed.
 
-**No production Neon writes have been made by preparing this runbook.**
+**Production state note:** the BP02 schema is present as recorded above; the archive remains pending. The schema application was observed, not performed by this assistant. The new guarded workflow is the approved execution path for the remaining archive-only insert.
