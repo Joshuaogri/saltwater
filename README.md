@@ -1851,3 +1851,14 @@ A read-only Neon control-plane audit found one manual snapshot, `snap-calm-credi
 
 
 The Neon manual snapshot attempt was blocked by the project's snapshot limit. To avoid deleting the only historical snapshot, a no-compute copy-on-write recovery branch was created from the current production branch instead: `br-gentle-moon-bdtc0y32`, parent `br-still-cloud-bdvaw8u4`, parent LSN `0/FFB0F510`, parent timestamp `2026-11-26T23:30:47Z`, created `2026-11-27T00:35:27Z`. Neon reports the branch `ready`; it has no compute, and creation reported zero compute time and data transfer. This is a branch-level recovery point, not a manual snapshot. SQL verification on that no-compute branch was unavailable because it has no endpoint. Preserve it unchanged through the BP02 release; do not add compute or delete it as part of routine cleanup. The runbook records the exact identifiers and limitation.
+
+
+### BP02 production archive release — 2026-11-27
+
+After explicit user approval, a fresh read-only production check found that the BP02 independent schema migration was already present in Neon. The assistant did not apply that schema migration. Production currently has the BP02 ledger version 1 with checksum `0801ca73441e3170df270d55747ca18ad3b2ede4937dec11c74b106b490c1850`, but **zero** `SW-GEO-V1` archive rows. The global migration ledger remains versions 1 and 2 only.
+
+The current production database baseline is **9,879,552 bytes** on PostgreSQL 18.7. The schema-only increase from the earlier 9,781,248-byte baseline is 98,304 bytes. The remaining archive insertion is benchmarked at 81,920 bytes, giving a provisional projected total of **9,961,472 bytes**. The actual size must be measured after insertion.
+
+Added the manual-only workflow [BP02 archive-only production release](.github/workflows/bp02-production-archive-release.yml). It is restricted to `main`, requires the exact confirmation input and recorded recovery-branch ID, checks the exact live database baseline, verifies the source migration checksum and canonical 25,689-byte archive digest, inserts only the immutable archive, checks that global migrations remain unchanged, and verifies repeat-import idempotency. It uses the existing GitHub Actions `DATABASE_URL` secret. The runbook is updated at [BP02 production release runbook](docs/deployment/BP02-production-release-runbook.md).
+
+**Current status: schema present; archive insertion still pending.** The workflow has been committed but not dispatched; no archive insertion is claimed.
