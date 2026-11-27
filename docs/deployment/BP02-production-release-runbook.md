@@ -1,6 +1,6 @@
 # BP-02 archive-only production release runbook
 
-**Status: BP02 schema already present in production; SW-GEO-V1 archive insertion pending the guarded GitHub Actions run.** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
+**Status: BP02 archive-only production release COMPLETE and independently verified (2026-11-27).** This procedure applies only the BP-02 source archive schema and one immutable source archive. It does not apply global migrations 0003–0012, promote operational geography, or change the global migration ledger.
 
 ## Current production state after explicit approval (2026-11-27)
 
@@ -160,3 +160,23 @@ Confirm one BP-02 migration ledger row, one `SW-GEO-V1` archive row, source scop
 - [PostgreSQL 16 archive regression](https://github.com/Joshuaogri/saltwater/actions/runs/45910168053) — passed.
 
 **Production state note:** the BP02 schema is present as recorded above; the archive remains pending. The schema application was observed, not performed by this assistant. The new guarded workflow is the approved execution path for the remaining archive-only insert.
+
+
+## Final production release verification — 2026-11-27
+
+GitHub Actions [run 45990887217](https://github.com/Joshuaogri/saltwater/actions/runs/45990887217) completed successfully on `main`. The guarded workflow confirmed the exact pre-release baseline of 9,879,552 bytes, PostgreSQL 18.7, the BP02 migration checksum, the recovery-branch reference, and unchanged global migration versions. It inserted one immutable `SW-GEO-V1` archive and passed the acceptance and repeat-import checks.
+
+An independent read-only Neon query against production branch `br-still-cloud-bdvaw8u4` confirmed:
+
+- Database `neondb`, PostgreSQL 18.7
+- Final database size: **9,961,472 bytes**
+- Exactly one `SW-GEO-V1` archive row
+- Format `tar.gz`; compressed size **25,689 bytes**; source size **596,267 bytes**; two source files
+- SHA-256: `6b46d62a944334a1853bc7190e33476bb06adc835e433d5592d6b0ee4c700d0c`
+- Release scope: `SOURCE_ARCHIVE_ONLY`
+- BP02 migration ledger: version 1
+- Global migration ledger: versions 1 and 2, unchanged
+
+Measured production growth was **81,920 bytes**, matching the disposable PostgreSQL benchmark. The identical repeat import returned `already_present` and added **0 bytes**. Identity validation was 100 resolved and zero unresolved. No operational roads, parcels, addresses, access points or routes were promoted. Preserve recovery branch `br-gentle-moon-bdtc0y32` unchanged.
+
+The schema migration had been observed in production before this workflow; this workflow performed the archive insertion. Historical pre-release notes above are retained as historical evidence and are superseded by this final release record.
