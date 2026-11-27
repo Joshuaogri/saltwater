@@ -167,6 +167,11 @@ def materialise(database_url: str) -> dict:
                     JOIN sw_people.person p ON p.person_id=a.person_id
                     JOIN sw_people.person_residence r
                       ON r.residence_id=a.residence_id AND r.person_id=a.person_id
+                     AND r.address_source_id=a.bp02_address_source_id
+                     AND r.residence_kind='permanent'
+                    JOIN sw_geo.bp02_address ad
+                      ON ad.source_id=a.bp02_address_source_id
+                     AND ad.operational_status='ACTIVE_IN_GAME'
                     JOIN sw_people.population_state ps ON ps.person_id=a.person_id
                     JOIN sw_test.person_cohort pc
                       ON pc.person_id=a.person_id AND pc.batch_id=a.batch_id
