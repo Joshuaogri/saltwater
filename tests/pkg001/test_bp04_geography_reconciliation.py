@@ -1,6 +1,9 @@
 import unittest
+from unittest.mock import patch
 
-from runtime.bp04_geography_reconciliation import reconcile_collections
+from runtime.bp04_geography_reconciliation import (
+    _resolve_geometry_manifests, reconcile_collections,
+)
 
 
 class BP04GeographyReconciliationTests(unittest.TestCase):
@@ -32,6 +35,21 @@ class BP04GeographyReconciliationTests(unittest.TestCase):
         self.codes = {
             "SW-D01", "SW-D02", "SW-D01-N1", "SW-D02-N1", "SW-R01", "SW-R02",
         }
+
+    def test_precomputed_geometry_manifests_are_reused_without_regeneration(self):
+        geo = {}
+        candidates = {"parcels": []}
+        dossiers = {"parcels": []}
+        assets = {"properties": [], "buildings": [], "access_points": []}
+        with (
+            patch("runtime.bp04_geography_reconciliation.build_candidates", side_effect=AssertionError("rebuilt candidates")),
+            patch("runtime.bp04_geography_reconciliation.build_parcel_dossiers", side_effect=AssertionError("rebuilt dossiers")),
+            patch("runtime.bp04_geography_reconciliation.build_asset_inventory", side_effect=AssertionError("rebuilt assets")),
+        ):
+            resolved = _resolve_geometry_manifests(geo, candidates, dossiers, assets)
+        self.assertIs(resolved[0], candidates)
+        self.assertIs(resolved[1], dossiers)
+        self.assertIs(resolved[2], assets)
 
     def test_candidate_and_context_links_resolve_without_false_canonical_promotion(self):
         result = reconcile_collections(

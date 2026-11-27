@@ -1,3 +1,14 @@
+## BP02 reconciliation reuses audited geometry (2026-11-28)
+
+The full BP02 audit previously regenerated the same parcel candidates, parcel
+dossiers and physical-asset inventory inside BP04 geography reconciliation
+immediately after producing them for the audit. The reconciliation function now
+accepts those already-built manifests and only generates missing inputs when
+called independently. A focused regression test proves that supplied manifests
+are reused without invoking any generator again. The full acceptance checks and
+canonical counts remain unchanged; this removes a measured duplicate geometry
+pass from every operational package build.
+
 ## BP04-03 asset-generation performance repair (2026-11-28)
 
 The first timed full BP02 pass measured parcel candidate generation at 5.031s,

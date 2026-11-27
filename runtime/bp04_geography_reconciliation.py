@@ -170,11 +170,25 @@ def reconcile_collections(
     }
 
 
-def build_reconciliation(geo: dict, identity_map: dict, property_document: dict) -> dict:
+def _resolve_geometry_manifests(geo: dict, candidate_manifest=None,
+                                parcel_dossiers=None, physical_assets=None):
+    """Reuse validated geometry products when an upstream audit already built them."""
+    if candidate_manifest is None:
+        candidate_manifest = build_candidates(geo)
+    if parcel_dossiers is None:
+        parcel_dossiers = build_parcel_dossiers(geo, candidate_manifest)
+    if physical_assets is None:
+        physical_assets = build_asset_inventory(geo, candidate_manifest, parcel_dossiers)
+    return candidate_manifest, parcel_dossiers, physical_assets
+
+
+def build_reconciliation(geo: dict, identity_map: dict, property_document: dict,
+                         candidate_manifest=None, parcel_dossiers=None,
+                         physical_assets=None) -> dict:
     identity_result = validate_identity_map(geo, identity_map)
-    candidate_manifest = build_candidates(geo)
-    parcel_dossiers = build_parcel_dossiers(geo, candidate_manifest)
-    physical_assets = build_asset_inventory(geo, candidate_manifest, parcel_dossiers)
+    candidate_manifest, parcel_dossiers, physical_assets = _resolve_geometry_manifests(
+        geo, candidate_manifest, parcel_dossiers, physical_assets,
+    )
     candidate_ids = {
         row["candidate_parcel_id"] for row in candidate_manifest["parcels"]
     }

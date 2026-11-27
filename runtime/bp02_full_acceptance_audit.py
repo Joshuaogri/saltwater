@@ -59,7 +59,10 @@ def run_full_bp02_acceptance_audit() -> dict:
     connector_topology = _timed_stage("access_connector_topology_audit", audit_connector_topology, source, candidates, dossiers, assets)
     direct_connectors = _timed_stage("direct_access_connector_audit", audit_direct_access_connectors, source, candidates, dossiers, assets)
     route_corridors = _timed_stage("route_corridor_candidate_audit", build_route_corridor_candidates, source, candidates, dossiers, assets)
-    reconciliation = _timed_stage("bp04_geography_reconciliation", build_reconciliation, source, identity_map, property_document)
+    reconciliation = _timed_stage(
+        "bp04_geography_reconciliation", build_reconciliation,
+        source, identity_map, property_document, candidates, dossiers, assets,
+    )
     exception_resolution = _timed_stage("address_frontage_exception_resolution", resolve_address_frontage_exceptions, reconciliation, source, direct_connectors)
     if exception_resolution["unresolved_exception_count"]:
         unresolved_ids = {

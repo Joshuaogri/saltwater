@@ -43,6 +43,7 @@ on:
       - "runtime/bp02_address_frontage_exception_resolution.py"
       - "runtime/bp02_fictional_geography_release.py"
       - "runtime/bp02_no_building_site_reconciliation.py"
+      - "tests/pkg001/test_bp04_geography_reconciliation.py"
       - "data/people/saltwater-opening-resident-dwelling-allocation-v1.json.gz"
       - "tests/pkg001/sw_db_001_*.sql"
       - "tests/pkg001/bp04_01_*.sql"
