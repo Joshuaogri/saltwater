@@ -423,11 +423,21 @@ def build_property_world(source: dict) -> dict:
         row["property_id"] for row in property_rows
         if row.get("primary_use") == "dwelling"
     }
+    mixed_use_property_ids = {
+        row["property_id"] for row in property_rows
+        if row.get("primary_use") == "mixed_use"
+    }
     residential_dwelling_unit_count = sum(
         1 for row in unit_rows
         if row.get("unit_class") == "dwelling"
         and row.get("property_id") in residential_property_ids
     )
+    mixed_use_dwelling_unit_count = sum(
+        1 for row in unit_rows
+        if row.get("unit_class") == "dwelling"
+        and row.get("property_id") in mixed_use_property_ids
+    )
+    household_eligible_dwelling_unit_count = residential_dwelling_unit_count + mixed_use_dwelling_unit_count
 
     body = {
         "schema": "saltwater-canonical-property-world/1.0",
@@ -441,6 +451,9 @@ def build_property_world(source: dict) -> dict:
             "premises_count": len(premises_rows), "unit_count": len(unit_rows),
             "residential_property_count": len(residential_property_ids),
             "residential_dwelling_unit_count": residential_dwelling_unit_count,
+            "mixed_use_property_count": len(mixed_use_property_ids),
+            "mixed_use_dwelling_unit_count": mixed_use_dwelling_unit_count,
+            "household_eligible_dwelling_unit_count": household_eligible_dwelling_unit_count,
             "address_count": len(address_rows), "access_point_count": len(access_rows),
             "constructed_access_route_count": len(route_rows),
             "site_feature_count": len(site_feature_rows),
@@ -528,7 +541,7 @@ def main():
         "production_seed_authorized": False,
     }
     summary_path = root / "data/property/saltwater-property-world-v1-summary.json"
-    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
+    summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(summary, indent=2, sort_keys=True))
 
 

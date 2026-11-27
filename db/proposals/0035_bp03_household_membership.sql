@@ -141,8 +141,9 @@ BEGIN
  SELECT u.property_id,p.address_id INTO v_property,v_address
  FROM sw_property.unit_space u
  JOIN sw_property.property_site p ON p.property_id=u.property_id
- WHERE u.unit_id=p_unit_id AND u.unit_class='dwelling' AND p.use_class='dwelling'
-   AND u.lifecycle_status='active';
+ WHERE u.unit_id=p_unit_id AND u.unit_class='dwelling'
+   AND p.use_class IN ('dwelling','mixed_use')
+   AND p.lifecycle_status='active' AND u.lifecycle_status='active';
  IF NOT FOUND OR v_address IS DISTINCT FROM p_bp04_address_id THEN
   RAISE EXCEPTION 'household unit must be an active residential dwelling at the supplied BP04 address';
  END IF;
