@@ -19,6 +19,8 @@ CREATE TABLE sw_people.person_routine (
 );
 CREATE INDEX person_routine_person_validity_idx
  ON sw_people.person_routine(person_id,valid_from_tick DESC);
+CREATE UNIQUE INDEX person_routine_one_successor_idx
+ ON sw_people.person_routine(supersedes_routine_id) WHERE supersedes_routine_id IS NOT NULL;
 
 CREATE TABLE sw_people.person_movement_event (
  movement_id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -173,8 +175,11 @@ END $$;
 
 CREATE VIEW sw_people.person_routine_current AS
 SELECT r.* FROM sw_people.person_routine r
-WHERE NOT EXISTS(SELECT 1 FROM sw_people.person_routine n
- WHERE n.supersedes_routine_id=r.routine_id);
+WHERE r.valid_from_tick <= (SELECT world_tick FROM sw_runtime.state WHERE singleton=1)
+ AND (r.valid_to_tick IS NULL OR r.valid_to_tick >
+   (SELECT world_tick FROM sw_runtime.state WHERE singleton=1))
+ AND NOT EXISTS(SELECT 1 FROM sw_people.person_routine n
+  WHERE n.supersedes_routine_id=r.routine_id);
 
 CREATE VIEW sw_people.person_movement_summary AS
 SELECT person_id,count(*)::bigint AS movement_event_count,
