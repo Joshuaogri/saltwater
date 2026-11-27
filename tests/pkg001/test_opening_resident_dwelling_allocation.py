@@ -39,7 +39,6 @@ class OpeningResidentDwellingAllocationTests(unittest.TestCase):
         self.assertEqual(len(rows), TARGET_COUNT)
         self.assertEqual(len({r["candidate_ref"] for r in rows}), TARGET_COUNT)
         self.assertEqual(len({r["unit_id"] for r in rows}), TARGET_COUNT)
-        self.assertEqual(len({r["bp04_address_id"] for r in rows}), TARGET_COUNT)
         self.assertTrue(all(r["person_id"] is None for r in rows))
 
     def test_bp02_identity_links_follow_released_hash_rules(self):

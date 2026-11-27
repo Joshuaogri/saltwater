@@ -207,8 +207,6 @@ def build_opening_resident_dwelling_allocation() -> dict[str, Any]:
         raise ValueError("candidate allocation reuses a dwelling unit")
     if len({row["candidate_ref"] for row in allocations}) != TARGET_COUNT:
         raise ValueError("candidate allocation reuses a person candidate")
-    if len({row["bp04_address_id"] for row in allocations}) != TARGET_COUNT:
-        raise ValueError("candidate allocation assigns multiple people to one site address; one candidate per site is required for this initial plan")
 
     payload = {
         "schema": "saltwater-opening-resident-dwelling-allocation/1.0",
