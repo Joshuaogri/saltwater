@@ -2269,3 +2269,14 @@ The report contains stale or invented schema/table names, proposes population ar
 ## BP02 operational geography source package — disposable validation passed (2026-11-27)
 
 The independent PostgreSQL 18.7 migration workflow [46077021078](https://github.com/Joshuaogri/saltwater/actions/runs/46077021078) passed on commit `2e3a3333189da4bebb6112b9f78e3833f8616c37`. It built release `SW-GEO-V1` as a deterministic source archive (2 source files; 596,679 uncompressed bytes; 25,963 compressed bytes; SHA-256 `a5c711098f9205015e82e6c82102866233ff31c0af6f8edad731a9975994ede8`). Repeating the package operation produced zero database growth (8,615,615 bytes before and after). The workflow explicitly reported `operational_geography_promoted=false` and `release_scope=SOURCE_ARCHIVE_ONLY`; this validates reproducible packaging and idempotency only, not a live operational geography promotion or dispatch-ready road network.
+
+
+## BP04 business registry audit and BP04-01 disposable acceptance — fixes committed (2026-11-27)
+
+The BP04 business registry audit now reads the existing compressed canonical business registry and expands its columnar representation before auditing it. This avoids rebuilding the full property world just to run an integrity audit. The audit still checks 10,000 business identities, establishment and occupancy links, lifecycle consistency, and public-name uniqueness; it does not reserve names persistently or create people.
+
+The first direct-load attempt exposed that the compressed file is stored in columnar form. Commit `0bfc2b20` corrected the test adapter to expand that representation before running the audit. Separately, commit `6d157295` restored the BP04-01 geography fixture and SQL acceptance execution in the disposable SW-DB-001 workflow after its contract test caught that the workflow only referenced the fixture in its path filter.
+
+PKG-001 disposable PostgreSQL validation [run 46078386662](https://github.com/Joshuaogri/saltwater/actions/runs/46078386662) passed both jobs on commit `0bfc2b20`: the Python regression job passed 40 steps/tests and the disposable PostgreSQL job passed all 19 execution steps, including BP12 schema/runtime boundary checks, representative 1,000-person storage measurement, NPC dispatch against canonical BP05/BP08 records, and the integrated database smoke check. This is disposable validation; no production Neon records were changed.
+
+The latest SW-DB-001 run [46078348599](https://github.com/Joshuaogri/saltwater/actions/runs/46078348599) has passed its Python regression job (28 steps/tests), including BP04-01 and BP04-02 contract checks. Its disposable PostgreSQL job has passed BP03 individual simulation acceptance and is still building the BP02 operational geography package; BP04 SQL acceptance and BP03 residence integration have not yet completed in this run. No full SW-DB-001 pass or full resident materialisation is claimed.
