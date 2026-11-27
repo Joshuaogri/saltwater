@@ -61,12 +61,14 @@ BEGIN
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),0,'person',v_person_a,'pkg003-supervisor-a','{"life_status":1,"scope_status":1}','pkg003-supervisor-a-pop')
   RETURNING event_id INTO v_event;
-  INSERT INTO sw_people.population_state VALUES (v_person_a,1,1,0,v_event);
+  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id,active_police_service)
+  VALUES (v_person_a,1,1,0,v_event,true);
 
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key)
   VALUES (v_event_type,clock_timestamp(),0,'person',v_person_b,'pkg003-supervisor-b','{"life_status":1,"scope_status":1}','pkg003-supervisor-b-pop')
   RETURNING event_id INTO v_event;
-  INSERT INTO sw_people.population_state VALUES (v_person_b,1,1,0,v_event);
+  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id,active_police_service)
+  VALUES (v_person_b,1,1,0,v_event,true);
 
   UPDATE sw_runtime.state SET bootstrap_open=false WHERE singleton=1;
   UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
