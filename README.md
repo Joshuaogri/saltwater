@@ -33,6 +33,31 @@ and validates them. Production Neon writes remain subject to explicit approval
 and a measured storage estimate. The workflow uses the existing
 `GEMINI_API_KEY` Actions secret; never place the key in source code or chat.
 
+## BP03 population service — qualification union implementation in CI
+
+A disposable-only follow-on proposal, db/proposals/0010_bp03_population_qualification_union.sql,
+now replaces the earlier single scope_status counter with the binding
+SW-CANON-001 union: a living canonical person counts once when any of
+usual_resident, physically_present, or active_police_service is true.
+The counter row remains the serialization point for concurrent admissions and
+lifecycle transitions. A read-only population summary exposes the total and
+overlapping category sub-counts.
+
+The proposal adds controlled canonical-person creation through the SW-UNS
+name registry, qualification transitions, death handling, idempotency keys,
+and append-only qualification history. The disposable acceptance checks cover
+single-category counting, overlapping categories counting once, removal of
+one qualification while another remains, exit/separation, death, and refusal
+to requalify a deceased identity. The existing 9,999-to-10,000 concurrent
+admission test now qualifies its test people explicitly as usual residents.
+
+The migration refuses to infer categories for existing population rows and
+requires an empty population state/counter. Existing scope_status values alone
+do not identify whether someone is a resident, physically present, or an
+active police-service member. No production Neon migration or population
+seed has been run. BP03 remains in progress pending disposable PostgreSQL
+acceptance and later BP02 address / BP06 service integration.
+
 ## BP03 opening identity candidate cohorts — 2026-11-27
 
 BP03 now has deterministic, source-controlled candidate datasets for both exact

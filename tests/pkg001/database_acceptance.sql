@@ -28,8 +28,8 @@ BEGIN
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
     SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
     RETURNING event_id INTO ev;
-  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id)
-    VALUES (pid,1,1,0,ev);
+  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id,usual_resident)
+    VALUES (pid,1,1,0,ev,true);
   IF (SELECT living_included FROM sw_people.population_counter WHERE singleton=1) <> 1 THEN
     RAISE EXCEPTION 'population counter failed to count included living person';
   END IF;
@@ -51,8 +51,8 @@ BEGIN
     INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick)
       SELECT event_type_id,now(),0 FROM sw_core.event_type WHERE event_code='POPULATION_STATE_CHANGED'
       RETURNING event_id INTO ev;
-    INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id)
-      VALUES (pid,1,1,0,ev);
+    INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id,usual_resident)
+      VALUES (pid,1,1,0,ev,true);
     RAISE EXCEPTION '10,001st living included person was incorrectly accepted';
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM = '10,001st living included person was incorrectly accepted' THEN RAISE; END IF;

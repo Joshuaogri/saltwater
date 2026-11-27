@@ -93,8 +93,8 @@ BEGIN
   -- Population-cap and immutable history triggers remain authoritative.
   phase_started := clock_timestamp();
   INSERT INTO sw_people.population_state
-    (person_id,life_status,scope_status,effective_tick,last_event_id)
-  SELECT person_id,1,1,current_tick,population_event_id
+    (person_id,life_status,scope_status,effective_tick,last_event_id,usual_resident)
+  SELECT person_id,1,1,current_tick,population_event_id,true
   FROM cap_fixture_stage
   ORDER BY fixture_no;
 

@@ -14,6 +14,8 @@ on:
       - "db/proposals/0007_bp35_event_dispatch.sql"
       - "db/proposals/0008_bp39_checkpoint_recovery.sql"
       - "db/proposals/0009_universal_name_registry.sql"
+      - "db/proposals/0010_bp03_population_qualification_union.sql"
+      - "tests/pkg001/population_union_acceptance.sql"
       - "db/proposals/0012_bp04_canonical_property_stack.sql"
       - "db/proposals/0030_bp04_business_text_id_naming.sql"
       - "db/proposals/0023_bp05_police_architecture.sql"
@@ -197,6 +199,11 @@ jobs:
           echo "bp39_checkpoint_recovery_schema_growth_bytes=$((after_recovery-before_recovery))"
           before_naming=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          before_bp03_population=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/population_union_acceptance.sql
+          after_bp03_population=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
+          echo "bp03_population_service_schema_growth_bytes=$((after_bp03_population-before_bp03_population))"
           psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0030_bp04_business_text_id_naming.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0023_bp05_police_architecture.sql
