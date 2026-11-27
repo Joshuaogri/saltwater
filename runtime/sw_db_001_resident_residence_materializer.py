@@ -105,35 +105,6 @@ def materialise(database_url: str) -> dict:
                 )
             """)
 
-            existing = conn.execute("""
-                SELECT count(*) FROM sw_test.opening_resident_dwelling_assignment
-                WHERE batch_id=%s
-            """, (batch_id,)).fetchone()[0]
-            if existing == EXPECTED_RESIDENTS:
-                counts = conn.execute("""
-                    SELECT count(*),count(DISTINCT person_id),count(DISTINCT unit_id),
-                           count(DISTINCT bp02_address_source_id)
-                    FROM sw_test.opening_resident_dwelling_assignment
-                    WHERE batch_id=%s
-                """, (batch_id,)).fetchone()
-                if counts[:3] != (EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS):
-                    raise RuntimeError(f"existing residence allocation is inconsistent: {counts!r}")
-                return {
-                    "status": "already_materialised_idempotently",
-                    "batch_id": batch_id,
-                    "residents": counts[0],
-                    "distinct_addresses": counts[3],
-                }
-            if existing != 0:
-                raise RuntimeError(f"partial residence allocation exists ({existing} rows); refusing unsafe repair")
-
-            residents = conn.execute("""
-                SELECT count(*) FROM sw_test.person_cohort
-                WHERE batch_id=%s AND cohort='RESIDENT'
-            """, (batch_id,)).fetchone()[0]
-            if residents != EXPECTED_RESIDENTS:
-                raise RuntimeError(f"expected 9,000 resident fixture people, found {residents}")
-
             # Stable candidate_ref -> fixture key mapping; never use row-number pairing.
             staged = []
             for candidate in candidates:
@@ -168,6 +139,35 @@ def materialise(database_url: str) -> dict:
                 ) d
             """).fetchone()[0]:
                 raise RuntimeError("civilian candidate cohort contains duplicate normalized names")
+            existing = conn.execute("""
+                SELECT count(*) FROM sw_test.opening_resident_dwelling_assignment
+                WHERE batch_id=%s
+            """, (batch_id,)).fetchone()[0]
+            if existing == EXPECTED_RESIDENTS:
+                counts = conn.execute("""
+                    SELECT count(*),count(DISTINCT person_id),count(DISTINCT unit_id),
+                           count(DISTINCT bp02_address_source_id)
+                    FROM sw_test.opening_resident_dwelling_assignment
+                    WHERE batch_id=%s
+                """, (batch_id,)).fetchone()
+                if counts[:3] != (EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS):
+                    raise RuntimeError(f"existing residence allocation is inconsistent: {counts!r}")
+                return {
+                    "status": "already_materialised_idempotently",
+                    "batch_id": batch_id,
+                    "residents": counts[0],
+                    "distinct_addresses": counts[3],
+                }
+            if existing != 0:
+                raise RuntimeError(f"partial residence allocation exists ({existing} rows); refusing unsafe repair")
+
+            residents = conn.execute("""
+                SELECT count(*) FROM sw_test.person_cohort
+                WHERE batch_id=%s AND cohort='RESIDENT'
+            """, (batch_id,)).fetchone()[0]
+            if residents != EXPECTED_RESIDENTS:
+                raise RuntimeError(f"expected 9,000 resident fixture people, found {residents}")
+
             mapped = conn.execute("""
                 SELECT count(*),count(DISTINCT p.person_id),
                        count(*) FILTER (WHERE pc.cohort='RESIDENT'),
