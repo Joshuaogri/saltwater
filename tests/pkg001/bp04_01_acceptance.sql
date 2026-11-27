@@ -7,7 +7,7 @@ UPDATE sw_runtime.state SET state=1,player_present=false
 WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
 UPDATE sw_runtime.state SET state=2,player_present=true,bootstrap_open=false
 WHERE singleton=1 AND state=1 AND bootstrap_open=true AND world_tick=0;
-DO $
+DO $bp04_acceptance$
 DECLARE
   p_unresolved bigint;
   p_resolved bigint;
@@ -278,5 +278,5 @@ BEGIN
 
   RAISE NOTICE 'BP04_01_ACCEPTANCE_PASS properties=2 buildings=2 premises=3 units=1 access_points=3';
 END
-$$;
+$bp04_acceptance$;
 ROLLBACK;
