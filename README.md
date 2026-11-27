@@ -1,3 +1,17 @@
+## BP04-03 asset-generation performance repair (2026-11-28)
+
+The first timed full BP02 pass measured parcel candidate generation at 5.031s,
+parcel dossiers at 0.387s, physical-asset inventory at 154.779s, route-corridor
+audit at 38.418s, and then proceeded into BP04 geography reconciliation. The
+asset inventory was the dominant measured CPU stage. Its final connector pass
+repeatedly scanned every access point to find same-building peers and rebuilt
+and rechecked the same 128 boundary samples for multiple access points on one
+building. It now groups peer access points and precomputes safe boundary samples
+once per building. Substage timings report estate design, connector reconciliation
+and profile generation separately. The integrated SW-DB-001 workflow now also
+watches every BP02 geometry/reconciliation dependency so these changes cannot
+silently bypass the BP03 integrated acceptance run.
+
 ## BP04-01 disposable acceptance fixture independence (2026-11-28)
 
 The BP04-01 acceptance transaction no longer assumes the opening resident cohort
