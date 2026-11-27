@@ -213,7 +213,7 @@ def build_opening_resident_dwelling_allocation() -> dict[str, Any]:
         "dataset_id": "SW-OPENING-RESIDENT-DWELLING-ALLOCATION-V1",
         "allocation_version": 1,
         "allocation_method": "largest-remainder proportional allocation by active eligible dwelling inventory per neighbourhood; stable lexical tie-break; stable unit ordering",
-        "allocation_policy": "one candidate per distinct active dwelling unit and one candidate per BP04 site address in this planning pass; no household composition, occupancy capacity, demographics or actual residence is inferred",
+        "allocation_policy": "one candidate per distinct active dwelling unit; multiple dwelling units may share a BP04 site address; no household composition, occupancy capacity, demographics or actual residence is inferred",
         "candidate_count": TARGET_COUNT,
         "eligible_dwelling_count": eligible_total,
         "allocated_candidate_count": len(allocations),
