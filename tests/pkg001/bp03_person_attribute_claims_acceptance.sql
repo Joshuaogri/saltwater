@@ -18,7 +18,17 @@ BEGIN
  v_retry:=sw_people.record_person_attribute_claim(v_person,'age_range',
   '{"minimum":28,"maximum":34}'::jsonb,'estimated',0.650,0,v_source_event,NULL,
   'BP03-CLAIM:AGE-ESTIMATE','test:bp03','Idempotent replay');
+
  IF v_claim1<>v_retry THEN RAISE EXCEPTION 'attribute claim replay created a duplicate'; END IF;
+ -- source_ref is globally unique even when a different person retries it.
+ BEGIN
+  PERFORM sw_people.record_person_attribute_claim(v_source,'age_range',
+   '{"minimum":28,"maximum":34}'::jsonb,'estimated',0.650,0,v_source_event,NULL,
+   'BP03-CLAIM:AGE-ESTIMATE','test:bp03','Cross-person source_ref collision must fail');
+  RAISE EXCEPTION 'cross-person source_ref collision unexpectedly accepted';
+ EXCEPTION WHEN raise_exception THEN
+  IF SQLERRM='cross-person source_ref collision unexpectedly accepted' THEN RAISE; END IF;
+ END;
  v_claim2:=sw_people.record_person_attribute_claim(v_person,'age_range',
   '{"minimum":31,"maximum":37}'::jsonb,'disputed',0.400,0,v_source_event,NULL,
   'BP03-CLAIM:AGE-DISPUTED','test:bp03','A conflicting sourced claim');
