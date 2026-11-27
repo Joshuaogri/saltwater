@@ -81,3 +81,7 @@ The dedicated disposable PostgreSQL workflow [46060309607](https://github.com/Jo
 - Verification: **BLOCKED** pending the global evidence listed above.
 - No production Neon writes, migrations, seeds, grants or permission changes were performed.
 - No new BP division or branch was created.
+
+### BP03 residence integration evidence update (2026-11-27)
+
+[SW-DB-001 run 46060435097](https://github.com/Joshuaogri/saltwater/actions/runs/46060435097) passed the integrated BP03 individual-simulation acceptance, BP02 geography package build/import, BP04-01/BP04-02 schema growth measurements and BP03 residence integration acceptance. Python regression passed 28/28. The run is currently provisioning the deterministic opening population and business fixture; 9,000-resident materialisation, tampered replay rejection, idempotency, restore, capacity and final reconciliation remain pending. BP03 remains in progress.
