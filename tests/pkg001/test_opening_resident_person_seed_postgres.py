@@ -146,9 +146,11 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                 # through the batch fast path.
                 cur.execute(
                     """SELECT sw_names.record_generation_batch(
-                         'PERSON',1,1,'negative-preflight-test',999999,
-                         decode(%s,'hex'),2,'BP03-NEGATIVE-PREFLIGHT',
-                         'ci-bp03','Reject duplicate candidate names')""",
+                         'PERSON'::text,1::smallint,1::smallint,
+                         'negative-preflight-test'::text,999999::bigint,
+                         decode(%s,'hex'),2::integer,
+                         'BP03-NEGATIVE-PREFLIGHT'::text,'ci-bp03'::text,
+                         'Reject duplicate candidate names'::text)""",
                     (hashlib.sha256(b"BP03-NEGATIVE-PREFLIGHT").hexdigest(),),
                 )
                 negative_batch_id = cur.fetchone()[0]
