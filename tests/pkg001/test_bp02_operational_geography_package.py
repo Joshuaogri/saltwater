@@ -19,11 +19,13 @@ class BP02OperationalPackageTests(unittest.TestCase):
         self.assertEqual(manifest_a["record_counts"]["access_points"], 2948)
         self.assertEqual(manifest_a["record_counts"]["bridge_connectors"], 4)
         payload = json.loads(gzip.decompress(first))
-        self.assertTrue(payload["operational_approval"])
+        self.assertTrue(payload["gameplay_release_accepted"])
+        self.assertFalse(payload["production_seed_approved"])
         self.assertFalse(payload["database_write_performed"])
         self.assertFalse(payload["neon_write_performed"])
         self.assertEqual(payload["acceptance"]["overall_status"], "PASS")
         self.assertEqual(payload["acceptance"]["operational_release_status"], "PASS")
+        self.assertFalse(payload["identity_map"]["operational_seed_approved"])
         self.assertEqual(len(payload["identity_map"]["entries"]), 100)
         self.assertEqual(
             payload["identity_map"]["counts"]["unresolved_source_to_entity_code_mappings"], 0
