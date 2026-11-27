@@ -1,5 +1,6 @@
 -- BP03 household membership and BP04 dwelling / BP02 address bridge.
 -- Disposable acceptance first; this proposal is not a production migration.
+-- Address identity is cross-checked by canonical parcel ID; no fuzzy address matching.
 BEGIN;
 
 CREATE TABLE sw_geo.bp04_bp02_address_link (
