@@ -268,8 +268,8 @@ BEGIN
           jsonb_build_object('life_status',1,'scope_status',1),p_idempotency_key||':population')
   RETURNING event_id INTO v_population_event;
 
-  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id)
-  VALUES (v_person_id,1,1,v_tick,v_population_event);
+  INSERT INTO sw_people.population_state(person_id,life_status,scope_status,effective_tick,last_event_id,active_police_service)
+  VALUES (v_person_id,1,1,v_tick,v_population_event,true);
 
   SELECT event_type_id INTO STRICT v_event_type FROM sw_core.event_type WHERE event_code='PERSONNEL_APPOINTED';
   INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,subject_kind,subject_id,source_ref,attributes,idempotency_key)
