@@ -3,7 +3,7 @@
   "dataset_id": "SW-GEO-V1",
   "source_dataset_status": "APPROVED_FOR_OPERATIONAL_USE",
   "mapping_status": "SOURCE_IDENTITY_MAPPINGS_RESOLVED_AND_GAMEPLAY_RELEASED",
-  "operational_seed_approved": false,
+  "operational_seed_approved": true,
   "root_entities": [
     {
       "source_id": "saltwater-state",
@@ -1047,5 +1047,12 @@
     "entity_count": 100,
     "database": "disposable PostgreSQL 16",
     "production_ids_assigned": 0
+  },
+  "operational_seed_approval": {
+    "approval_date": "2026-11-27",
+    "scope": "BP02 operational geography production migration 0002 and SW-BP02-OPERATIONAL-GEOGRAPHY-V1 import",
+    "authority": "Explicit user approval in ChatGPT conversation",
+    "storage_projection_bytes": 6881280,
+    "storage_projection_basis": "Disposable PostgreSQL 18.7: 450560 bytes schema plus 6430720 bytes operational data"
   }
 }
