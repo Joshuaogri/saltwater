@@ -37,7 +37,7 @@ CREATE TABLE sw_people.person_relevance_promotion (
 );
 
 CREATE FUNCTION sw_people.initialise_person_simulation_state()
-RETURNS trigger LANGUAGE plpgsql AS $
+RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE v_tick bigint;
 BEGIN
  SELECT world_tick INTO STRICT v_tick FROM sw_core.simulation_event WHERE event_id=NEW.last_event_id;
@@ -49,7 +49,7 @@ BEGIN
   COALESCE(NEW.source_ref,'person:'||NEW.person_id::text),
   'Initial registry processing tier','system:bp03',v_tick);
  RETURN NEW;
-END $;
+END $$;
 CREATE TRIGGER person_simulation_state_initialise
 AFTER INSERT ON sw_people.person
 FOR EACH ROW EXECUTE FUNCTION sw_people.initialise_person_simulation_state();
