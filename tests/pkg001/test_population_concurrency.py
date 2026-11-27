@@ -23,7 +23,7 @@ class PopulationCapConcurrencyTests(unittest.TestCase):
                             "WHERE event_code='PERSON_CREATED' RETURNING event_id",(current_tick,number))
                         created_event=cur.fetchone()[0]
                         cur.execute("INSERT INTO sw_people.person(given_name,family_name,created_tick,source_ref,last_event_id) "
-                            "VALUES ('Concurrent','Attempt-'||substr(md5(%s::text),1,12),%s,'SW-DB-001:cap-person:'||%s,%s) RETURNING person_id",
+                            "VALUES ('Concurrent','Attempt-'||substr(md5(%s::text),1,12),%s,'SW-BP03:cap-race-person:'||%s,%s) RETURNING person_id",
                             (number,current_tick,number,created_event))
                         person_id=cur.fetchone()[0]
                         cur.execute("INSERT INTO sw_core.simulation_event(event_type_id,occurred_at,world_tick,source_ref) "
