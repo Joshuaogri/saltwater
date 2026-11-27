@@ -42,6 +42,7 @@ concurrency:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   python-regression:
@@ -158,11 +159,35 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0034_bp03_person_residence.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp03_population_residence_schema_growth_bytes=$((after-before))"
-      - name: Import accepted BP02 operational geography into disposable world
+      - name: Download the accepted BP02 operational geography release package
+        uses: actions/download-artifact@v4
+        with:
+          name: bp02-operational-geography-v1-production-package
+          run-id: 46014720819
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: build
+      - name: Verify BP02 release package against current source checksums
         run: |
-          python -m pip install 'shapely>=2,<3'
-          python -m runtime.bp02_operational_geography_package
-          python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest=json.loads(Path("build/bp02-operational-geography-v1.manifest.json").read_text())
+          checks={
+            "geography_sha256":"data/geography/saltwater-geography-v1.json",
+            "identity_map_sha256":"data/geography/saltwater-geography-v1-identity-map.json",
+            "property_world_sha256":"data/property/saltwater-property-world-v1.json.gz",
+          }
+          for key,path in checks.items():
+            actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()
+            if actual!=manifest["source_hashes"][key]:
+              raise SystemExit(f"BP02 artifact source mismatch for {path}: {actual}")
+          package=Path("build/bp02-operational-geography-v1.json.gz").read_bytes()
+          if hashlib.sha256(package).hexdigest()!=manifest["package_sha256"]:
+            raise SystemExit("BP02 package checksum mismatch")
+          print(json.dumps({"release_id":manifest["release_id"],"package_sha256":manifest["package_sha256"],"record_counts":manifest["record_counts"],"source_hashes_verified":True},indent=2))
+          PY
+      - name: Import accepted BP02 operational geography into disposable world
+        run: python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname IN ('sw_business','sw_ops') ORDER BY 5 DESC;"
       - name: Measure BP04-01 proposal 0011 schema-only growth
         run: |
