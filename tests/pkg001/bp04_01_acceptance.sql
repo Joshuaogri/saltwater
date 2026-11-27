@@ -1,6 +1,13 @@
 -- BP04-01 disposable PostgreSQL 16 acceptance. All rows are synthetic and rolled back.
 BEGIN;
-DO $$
+-- Mirror the standard disposable BP03 acceptance harness: canonical person
+-- creation is an in-game event and therefore requires a running, player-present
+-- simulation. This transaction rolls the temporary runtime transition back.
+UPDATE sw_runtime.state SET state=1,player_present=false
+WHERE singleton=1 AND state=0 AND bootstrap_open=true AND world_tick=0;
+UPDATE sw_runtime.state SET state=2,player_present=true,bootstrap_open=false
+WHERE singleton=1 AND state=1 AND bootstrap_open=true AND world_tick=0;
+DO $
 DECLARE
   p_unresolved bigint;
   p_resolved bigint;
