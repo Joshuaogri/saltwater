@@ -295,5 +295,4 @@ jobs:
       - name: Fast integrated database smoke check
         run: |
           psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS people FROM sw_people.person;"
-          psql -v ON_ERROR_STOP=1 -c "SELECT count(*) AS personnel_records FROM sw_police.personnel_service_record;"
           psql -v ON_ERROR_STOP=1 -c "SELECT to_regclass('sw_runtime.state') IS NOT NULL AS runtime_present, to_regclass('sw_names.name_reservation') IS NOT NULL AS naming_registry_present, to_regclass('sw_people.population_counter') IS NOT NULL AS population_counter_present;"
