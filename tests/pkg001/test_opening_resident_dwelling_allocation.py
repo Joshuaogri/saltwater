@@ -7,6 +7,8 @@ import unittest
 from runtime.opening_resident_dwelling_allocation import (
     TARGET_COUNT,
     _stable_id,
+    _load_sources,
+    _sha256,
     build_opening_resident_dwelling_allocation,
 )
 
@@ -24,6 +26,22 @@ class OpeningResidentDwellingAllocationTests(unittest.TestCase):
         digest = without_hash.pop("manifest_sha256")
         canonical = json.dumps(without_hash, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()
         self.assertEqual(digest, hashlib.sha256(canonical).hexdigest())
+
+    def test_allocation_is_bound_to_current_resident_and_property_source_hashes(self):
+        resident, resident_raw, _, property_raw = _load_sources()
+        sources = self.payload["source_datasets"]
+        self.assertEqual(
+            sources["resident_candidates"]["manifest_sha256"],
+            resident["manifest_sha256"],
+        )
+        self.assertEqual(
+            sources["resident_candidates"]["compressed_sha256"],
+            _sha256(resident_raw),
+        )
+        self.assertEqual(
+            sources["property_world"]["compressed_sha256"],
+            _sha256(property_raw),
+        )
 
     def test_exact_candidate_and_eligible_dwelling_reconciliation(self):
         p = self.payload
