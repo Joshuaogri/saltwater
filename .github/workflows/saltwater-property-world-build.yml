@@ -5,6 +5,7 @@ on:
     paths:
       - "runtime/property_world_generator.py"
       - "runtime/physical_asset_inventory_generator.py"
+      - "runtime/physical_asset_inventory_generator.py"
       - "runtime/parcel_candidate_generator.py"
       - "runtime/parcel_dossier_generator.py"
       - "runtime/road_corridor_audit.py"

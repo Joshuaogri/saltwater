@@ -157,7 +157,17 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         mixed_units = [u for u in w["units"] if u["unit_class"] == "dwelling" and u["property_id"] in mixed_ids]
         self.assertEqual(w["summary"]["mixed_use_property_count"], len(mixed_ids))
         self.assertEqual(w["summary"]["mixed_use_dwelling_unit_count"], len(mixed_units))
+        self.assertTrue(mixed_units, "mixed-use sites must contribute dwelling units")
         self.assertEqual(w["summary"]["household_eligible_dwelling_unit_count"], len(residential_units) + len(mixed_units))
+        mixed_building_ids = {
+            b["building_id"] for b in w["buildings"] if b["property_id"] in mixed_ids
+        }
+        mixed_dwelling_premises = {
+            p["premises_id"] for p in w["premises"]
+            if p["building_id"] in mixed_building_ids and p["premises_type"] == "residential_common"
+        }
+        self.assertTrue(mixed_dwelling_premises)
+        self.assertTrue(all(u["premises_id"] in mixed_dwelling_premises for u in mixed_units))
         self.assertEqual(w["summary"]["address_count"], len(w["addresses"]))
         self.assertEqual(w["summary"]["access_point_count"], len(w["access_points"]))
         self.assertEqual(w["summary"]["constructed_access_route_count"], len(w["access_routes"]))

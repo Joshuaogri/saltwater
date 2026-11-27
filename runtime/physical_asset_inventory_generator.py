@@ -355,17 +355,24 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                 premises_code = f"SWPR-{slug}-F{floor:02d}" if building_index == 1 else f"SWPR-{slug}-{building_suffix}-F{floor:02d}"
                 premises_name = _name("PREMISES", f"{parcel_id}:F{floor:02d}" if building_index == 1 else f"{parcel_id}:{building_suffix}:F{floor:02d}", occupied)
                 floor_area = footprint_area * 0.82
-                premises_type = {
-                    "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
-                    "civic": "civic_room", "education": "department", "industrial": "industrial_bay",
-                    "freight_logistics": "warehouse", "port_maritime": "warehouse",
-                    "waterfront": "suite", "utility": "plant_space",
-                }.get(land_use, "other")
+                # Mixed-use towers keep commercial activity on lower floors and
+                # create dwellings on upper floors as part of the same property.
+                mixed_use_dwelling_floor = (
+                    land_use == "mixed_use" and floor >= max(1, storeys // 2)
+                )
+                premises_type = (
+                    "residential_common" if mixed_use_dwelling_floor else {
+                        "residential": "residential_common", "mixed_use": "suite", "commercial": "office",
+                        "civic": "civic_room", "education": "department", "industrial": "industrial_bay",
+                        "freight_logistics": "warehouse", "port_maritime": "warehouse",
+                        "waterfront": "suite", "utility": "plant_space",
+                    }.get(land_use, "other")
+                )
                 premises.append({
                     "candidate_premises_id": premises_code, "display_name": premises_name,
                     "building_id": building_code,
                     "floor_order": floor, "floor_code": "G" if floor == 0 else f"L{floor}",
-                    "premises_type": premises_type, "primary_function": use_code,
+                    "premises_type": premises_type, "primary_function": "dwelling" if mixed_use_dwelling_floor else use_code,
                     "floor_area_m2": round(floor_area, 3),
                     "fitout_standard": "unknown", "occupancy_suitability": "unknown",
                     "security_boundary": "unknown", "accessibility_state": "unknown",
@@ -380,13 +387,15 @@ def build_asset_inventory(source: dict, candidates: dict | None = None,
                     units.append({
                         "candidate_unit_id": unit_code, "display_name": unit_name,
                         "premises_id": premises_code,
-                        "unit_class": {
-                            "residential": "dwelling", "mixed_use": "other",
-                            "commercial": "office", "civic": "room", "education": "room",
-                            "industrial": "workshop", "freight_logistics": "storage",
-                            "port_maritime": "storage", "waterfront": "other",
-                            "utility": "plant_space",
-                        }.get(land_use, "other"),
+                        "unit_class": (
+                            "dwelling" if mixed_use_dwelling_floor else {
+                                "residential": "dwelling", "mixed_use": "other",
+                                "commercial": "office", "civic": "room", "education": "room",
+                                "industrial": "workshop", "freight_logistics": "storage",
+                                "port_maritime": "storage", "waterfront": "other",
+                                "utility": "plant_space",
+                            }.get(land_use, "other")
+                        ),
                         "floor_level": "Ground" if floor == 0 else f"Level {floor}",
                         "floor_area_m2": round(floor_area / count, 3),
                         "room_count": 1 if land_use in ("industrial", "freight_logistics", "utility") else 2,
