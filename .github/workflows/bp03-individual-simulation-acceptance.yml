@@ -8,6 +8,8 @@ on:
       - 'tests/pkg001/bp03_individual_simulation_acceptance.sql'
       - 'db/proposals/0037_bp03_person_routines_and_movement.sql'
       - 'tests/pkg001/bp03_person_routines_movement_acceptance.sql'
+      - 'db/proposals/0038_bp03_person_knowledge_boundary.sql'
+      - 'tests/pkg001/bp03_person_knowledge_acceptance.sql'
       - '.github/workflows/bp03-individual-simulation-acceptance.yml'
   workflow_dispatch:
 
@@ -57,3 +59,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f db/proposals/0037_bp03_person_routines_and_movement.sql
       - name: Verify routine, movement, certainty and chronology boundaries
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_routines_movement_acceptance.sql
+      - name: Apply BP03 person knowledge boundary
+        run: psql -v ON_ERROR_STOP=1 -f db/proposals/0038_bp03_person_knowledge_boundary.sql
+      - name: Verify sourced knowledge and immutable information history
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp03_person_knowledge_acceptance.sql
