@@ -153,16 +153,26 @@ BEGIN
   WHERE batch_id=p_batch_id;
 
   PERFORM set_config('pg_trgm.similarity_threshold','0.90',true);
+  -- Keep exact and fuzzy matching as separate indexable joins. Combining
+  -- equality and the trigram operator in one OR join can force PostgreSQL into
+  -- an expensive broad scan for large opening cohorts.
   IF EXISTS (
-    WITH candidate AS (
+    WITH candidate AS MATERIALIZED (
       SELECT sw_names.normalize_name(u.display_name) AS normalized_key
       FROM unnest(p_display_names) AS u(display_name)
     )
     SELECT 1
     FROM candidate c
     JOIN sw_names.name_reservation r
-      ON (r.normalized_key=c.normalized_key
-          OR r.normalized_key OPERATOR(sw_names.%) c.normalized_key)
+      ON r.normalized_key=c.normalized_key
+    WHERE v_existing=0
+       OR r.generation_batch_id IS DISTINCT FROM p_batch_id
+    UNION ALL
+    SELECT 1
+    FROM candidate c
+    JOIN sw_names.name_reservation r
+      ON r.normalized_key OPERATOR(sw_names.%) c.normalized_key
+     AND r.normalized_key<>c.normalized_key
     WHERE v_existing=0
        OR r.generation_batch_id IS DISTINCT FROM p_batch_id
   ) THEN
