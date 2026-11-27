@@ -121,10 +121,14 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/domain-migrations/bp02/0001_source_archive.sql
+          psql -v ON_ERROR_STOP=1 -f db/domain-migrations/bp02/0002_operational_geography.sql
       - name: Measure proposal 0010 schema-only growth
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0010_canonical_world_provisioning.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0034_bp03_person_residence.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "schema_database_bytes_before=$before"
           echo "schema_database_bytes_after=$after"
@@ -147,12 +151,21 @@ jobs:
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_physical_asset_detail_profiles.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0035_bp03_household_membership.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0036_bp03_individual_simulation_promotion.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0037_bp03_person_routines_and_movement.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0038_bp03_person_knowledge_boundary.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0039_bp03_person_attribute_claims.sql
           after=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
           echo "bp04_02_schema_database_bytes_before=$before"
           echo "bp04_02_schema_database_bytes_after=$after"
           echo "bp04_02_schema_incremental_bytes=$((after-before))"
           echo "bp04_02_proposal_source_bytes=$(wc -c < db/proposals/0012_bp04_physical_asset_detail_profiles.sql)"
           psql -v ON_ERROR_STOP=1 -c "SELECT schemaname,relname,pg_relation_size(format('%I.%I',schemaname,relname)) AS heap_bytes,pg_indexes_size(format('%I.%I',schemaname,relname)) AS index_bytes,pg_total_relation_size(format('%I.%I',schemaname,relname)) AS total_bytes FROM pg_stat_user_tables WHERE schemaname='sw_property' ORDER BY 5 DESC;"
+      - name: Verify BP03 residence and household integration before world seed
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/person_residence_acceptance.sql
+          psql -v ON_ERROR_STOP=1 -f tests/pkg001/household_membership_acceptance.sql
       - name: Provision deterministic opening population and business fixture
         run: |
           before=$(psql -v ON_ERROR_STOP=1 -Atc "SELECT pg_database_size(current_database());")
