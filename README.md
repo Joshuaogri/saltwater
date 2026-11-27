@@ -2176,3 +2176,10 @@ The focused disposable acceptance workflow is [BP03 Individual Simulation Accept
 
 
 The focused acceptance completed successfully on 2026-11-27 in [run 46039112729](https://github.com/Joshuaogri/saltwater/actions/runs/46039112729). The disposable PostgreSQL 16.16 schema-only growth for proposal 0036 was **139,264 bytes**. Acceptance verified tier 0 → 1 → 3, permanent promotion provenance, idempotent retry, downgrade rejection, append-only tier history and exactly one promotion record. The transaction rolled back; no population records were retained. See [BP03 tier and promotion acceptance evidence](docs/implementation/test-evidence/BP03-individual-simulation-tier-promotion-acceptance-0001.md).
+
+
+## BP03 routines and movement — disposable acceptance passed
+
+BP03 now also has `db/proposals/0037_bp03_person_routines_and_movement.sql`. It records effective-dated, structured person routines separately from attendance, supports explicit routine succession, and stores sourced movement events with origin/destination references, travel mode, certainty, confidence and simulation time. Routine and movement records are append-only; retries are idempotent; future movement and movement chronology regressions are rejected. The current-routine view respects the simulation tick and successor chain.
+
+The expanded focused workflow [46039460668](https://github.com/Joshuaogri/saltwater/actions/runs/46039460668) passed on 2026-11-27. It verified routine replay, replacement/supersession, movement certainty, movement summary, future-event rejection and immutable history. See [BP03 routines and movement acceptance evidence](docs/implementation/test-evidence/BP03-person-routines-movement-acceptance-0001.md). These records are a person simulation data contract; actual schedule execution remains BP37 and route resolution remains BP02. No production population data was written.
