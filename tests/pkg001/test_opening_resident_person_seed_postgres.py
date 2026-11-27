@@ -141,6 +141,27 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                     (batch_id,),
                 )
                 self.assertEqual(cur.fetchone()[0], 9000, "all civilian names must be preflighted as one manifest")
+
+                # A second manifest cannot smuggle duplicate normalized names
+                # through the batch fast path.
+                cur.execute(
+                    """SELECT sw_names.record_generation_batch(
+                         'PERSON',1,1,'negative-preflight-test',999999,
+                         decode(%s,'hex'),2,'BP03-NEGATIVE-PREFLIGHT',
+                         'ci-bp03','Reject duplicate candidate names')""",
+                    (hashlib.sha256(b"BP03-NEGATIVE-PREFLIGHT").hexdigest(),),
+                )
+                negative_batch_id = cur.fetchone()[0]
+                duplicate_name = rows[0]["display_name"]
+                cur.execute("SAVEPOINT bp03_negative_name_preflight")
+                with self.assertRaises(psycopg.Error):
+                    cur.execute(
+                        "SELECT sw_names.preflight_generation_batch(%s,ARRAY[%s,%s])",
+                        (negative_batch_id, duplicate_name, duplicate_name),
+                    )
+                cur.execute("ROLLBACK TO SAVEPOINT bp03_negative_name_preflight")
+                cur.execute("RELEASE SAVEPOINT bp03_negative_name_preflight")
+
                 cur.execute(
                     """CREATE TEMP TABLE bp03_civilian_seed_event_map (
                          source_ref text PRIMARY KEY,
