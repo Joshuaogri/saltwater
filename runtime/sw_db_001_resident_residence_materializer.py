@@ -369,6 +369,12 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
             """, (name_batch_id,)).fetchone()[0]
             if preflighted != EXPECTED_RESIDENTS:
                 raise RuntimeError(f"SW-UNS preflighted {preflighted} names, expected 9,000")
+            # The canonical person-name trigger reads this transaction-local
+            # manifest ID so its reservation is linked to the approved batch.
+            conn.execute(
+                "SELECT set_config('sw_names.generation_batch_id', %s, true)",
+                (str(name_batch_id),),
+            )
             conn.execute("""
                 INSERT INTO sw_core.simulation_event(
                     event_type_id,occurred_at,world_tick,subject_kind,subject_id,
