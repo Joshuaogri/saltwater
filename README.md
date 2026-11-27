@@ -1959,3 +1959,8 @@ Both BP02 domain migrations applied successfully to disposable PostgreSQL 18.7. 
 The workflow artifact `bp02-operational-geography-v1-package` (211,841-byte ZIP) is available from [run 46001930271](https://github.com/Joshuaogri/saltwater/actions/runs/46001930271). The release record explicitly retains `production_seed_approved=false`; this successful disposable import is not a production authorisation. No production Neon writes were performed. Production sizing and any production release remain a separate decision, using the measured production baseline and avoiding double-counting the already-installed BP02 archive/migration foundation.
 
 The BP02 Gemini review on the same commit did not produce a report: the API returned `RESOURCE_EXHAUSTED` after its configured retries. This is a reviewer-capacity failure, not a BP02 acceptance failure; no Gemini approval is claimed. The main database-migration validation workflow also passed. The wider PKG-001 disposable PostgreSQL workflow was still running when this note was written.
+
+
+## Free AI coding collaboration
+
+Shared coding-agent rules and the zero-cost toolchain setup are documented in [AGENTS.md](AGENTS.md), [Gemini instructions](GEMINI.md), [Copilot instructions](.github/copilot-instructions.md), and the [free AI coding toolchain guide](docs/development/free-ai-coding-toolchain.md). Development remains on `main` only; production Neon remains protected.
