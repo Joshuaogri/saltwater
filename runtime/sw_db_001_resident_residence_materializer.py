@@ -145,18 +145,69 @@ def materialise(database_url: str) -> dict:
             """, (batch_id,)).fetchone()[0]
             if existing == EXPECTED_RESIDENTS:
                 counts = conn.execute("""
-                    SELECT count(*),count(DISTINCT person_id),count(DISTINCT unit_id),
-                           count(DISTINCT bp02_address_source_id)
-                    FROM sw_test.opening_resident_dwelling_assignment
-                    WHERE batch_id=%s
+                    SELECT count(*),
+                           count(DISTINCT a.person_id),
+                           count(DISTINCT a.unit_id),
+                           count(DISTINCT a.bp02_address_source_id),
+                           count(DISTINCT a.candidate_ref),
+                           count(*) FILTER (WHERE r.residence_status='current'),
+                           count(*) FILTER (WHERE ps.usual_resident),
+                           count(*) FILTER (WHERE p.source_ref=s.source_ref
+                             AND p.given_name=s.given_name
+                             AND p.middle_name IS NOT DISTINCT FROM s.middle_name
+                             AND p.family_name=s.family_name
+                             AND concat_ws(' ',p.given_name,p.middle_name,p.family_name)=s.display_name),
+                           count(*) FILTER (WHERE pc.cohort='RESIDENT'
+                             AND pc.fixture_person_key=s.fixture_person_key),
+                           count(*) FILTER (WHERE nr.reservation_id IS NOT NULL)
+                    FROM sw_test.opening_resident_dwelling_assignment a
+                    JOIN bp03_candidate_stage s
+                      ON s.candidate_ref=a.candidate_ref
+                     AND s.fixture_person_key=a.fixture_person_key
+                    JOIN sw_people.person p ON p.person_id=a.person_id
+                    JOIN sw_people.person_residence r
+                      ON r.residence_id=a.residence_id AND r.person_id=a.person_id
+                    JOIN sw_people.population_state ps ON ps.person_id=a.person_id
+                    JOIN sw_test.person_cohort pc
+                      ON pc.person_id=a.person_id AND pc.batch_id=a.batch_id
+                    LEFT JOIN sw_names.name_reservation nr
+                      ON nr.entity_type='PERSON' AND nr.entity_id=p.person_id
+                     AND nr.name_form='canonical'
+                     AND nr.normalized_key=s.normalized_name
+                     AND sw_names.latest_status(nr.reservation_id)='active'
+                    WHERE a.batch_id=%s
                 """, (batch_id,)).fetchone()
-                if counts[:3] != (EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS):
-                    raise RuntimeError(f"existing residence allocation is inconsistent: {counts!r}")
+                police_count = conn.execute("""
+                    SELECT count(*)
+                    FROM sw_test.person_cohort pc
+                    JOIN sw_people.person p ON p.person_id=pc.person_id
+                    WHERE pc.batch_id=%s AND pc.cohort='POLICE_SUBSET'
+                      AND p.source_ref LIKE 'SW-DB-001:person:%%'
+                """, (batch_id,)).fetchone()[0]
+                expected = (
+                    EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS,
+                    len({row['bp02_address_source_id'] for row in records}),
+                    EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS,
+                    EXPECTED_RESIDENTS, EXPECTED_RESIDENTS, EXPECTED_RESIDENTS,
+                )
+                if counts != expected or police_count != 500:
+                    raise RuntimeError(
+                        'existing residence allocation failed full BP03 idempotency '
+                        f'reconciliation: counts={counts!r}, expected={expected!r}, '
+                        f'police_subset={police_count}'
+                    )
                 return {
-                    "status": "already_materialised_idempotently",
-                    "batch_id": batch_id,
-                    "residents": counts[0],
-                    "distinct_addresses": counts[3],
+                    'status': 'already_materialised_idempotently',
+                    'batch_id': batch_id,
+                    'residents': counts[0],
+                    'distinct_people': counts[1],
+                    'distinct_dwelling_units': counts[2],
+                    'distinct_addresses': counts[3],
+                    'current_residences': counts[5],
+                    'candidate_person_identity_matches': counts[7],
+                    'canonical_name_reservations_active': counts[9],
+                    'police_subset_preserved': police_count,
+                    'identity_crosswalk_verified': True,
                 }
             if existing != 0:
                 raise RuntimeError(f"partial residence allocation exists ({existing} rows); refusing unsafe repair")
