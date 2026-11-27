@@ -9,9 +9,9 @@ DO $bp03$
 DECLARE v_household integer; v_p1 integer; v_p2 integer; v_count integer; v_member bigint;
 BEGIN
  INSERT INTO sw_geo.bp02_parcel(source_id,operational_status,record)
- VALUES('BP03-HH-TEST:PARCEL','ACTIVE_IN_GAME','{"test_fixture":true}');
+ VALUES('SWP-BP03-HH-TEST','ACTIVE_IN_GAME','{"test_fixture":true,"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_geo.bp02_address(source_id,parcel_source_id,operational_status,record)
- VALUES('BP03-HH-TEST:ADDRESS','BP03-HH-TEST:PARCEL','ACTIVE_IN_GAME','{"test_fixture":true}');
+ VALUES('BP03-HH-TEST:ADDRESS','SWP-BP03-HH-TEST','ACTIVE_IN_GAME','{"test_fixture":true,"source_candidate_parcel_id":"BP03-HH-TEST:PARCEL"}');
  INSERT INTO sw_property.property_site(
   property_id,display_name,address_id,use_class,lifecycle_status,source_dataset,source_record
  ) VALUES('BP03-HH-TEST:PROPERTY','Fixture mixed-use dwelling',NULL,'mixed_use','active',
@@ -36,21 +36,21 @@ BEGIN
   'BP03-HH-TEST:PREMISES','Fixture dwelling unit','dwelling',NULL,'active',
   'BP03-HH-TEST','{"test_fixture":true}');
  IF NOT sw_geo.link_bp04_bp02_address(
-  'BP03-HH-TEST:BP04-ADDRESS','BP03-HH-TEST:ADDRESS',
+  'BP03-HH-TEST:BP04-ADDRESS','SWA-BP03-HH-TEST',
   'BP03-HH-TEST:CROSSWALK','BP03-HH-TEST:EXACT-PARCEL-IDENTITY') THEN
   RAISE EXCEPTION 'exact parcel address crosswalk was not recorded';
  END IF;
  v_household:=sw_people.create_household(
   'BP03-HH-TEST:HOUSEHOLD','BP03-HH-TEST:UNIT','BP03-HH-TEST:BP04-ADDRESS',
-  'BP03-HH-TEST:ADDRESS','BP03-HH-TEST:HOUSEHOLD-CREATE',
+  'SWA-BP03-HH-TEST','BP03-HH-TEST:HOUSEHOLD-CREATE',
   'bp03-household-ci','two-person fixture household');
  v_p1:=sw_people.create_person('Maren','Dovell','BP03-HH-TEST:PERSON-1',
   'bp03-household-ci','household membership acceptance','Elyra');
  v_p2:=sw_people.create_person('Tavian','Merrow','BP03-HH-TEST:PERSON-2',
   'bp03-household-ci','household membership acceptance','Corin');
- PERFORM sw_people.set_person_residence(v_p1,'BP03-HH-TEST:ADDRESS','permanent',
+ PERFORM sw_people.set_person_residence(v_p1,'SWA-BP03-HH-TEST','permanent',
   'BP03-HH-TEST:RESIDENCE-1','bp03-household-ci','household address');
- PERFORM sw_people.set_person_residence(v_p2,'BP03-HH-TEST:ADDRESS','permanent',
+ PERFORM sw_people.set_person_residence(v_p2,'SWA-BP03-HH-TEST','permanent',
   'BP03-HH-TEST:RESIDENCE-2','bp03-household-ci','household address');
  v_member:=sw_people.add_household_member(v_household,v_p1,'household_contact',
   'BP03-HH-TEST:MEMBER-1','bp03-household-ci','fixture household contact');

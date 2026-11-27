@@ -37,10 +37,17 @@ BEGIN
  IF v_parcel IS NULL OR v_address_parcel IS NULL OR v_parcel<>v_address_parcel THEN
   RAISE EXCEPTION 'BP04 address and property source parcel identity are inconsistent';
  END IF;
- IF NOT EXISTS(SELECT 1 FROM sw_geo.bp02_address
-   WHERE source_id=p_bp02_address_source_id AND parcel_source_id=v_parcel
-     AND operational_status='ACTIVE_IN_GAME') THEN
-  RAISE EXCEPTION 'BP02 address does not resolve to the same active canonical parcel';
+ IF NOT EXISTS(
+  SELECT 1
+  FROM sw_geo.bp02_address a
+  JOIN sw_geo.bp02_parcel p ON p.source_id=a.parcel_source_id
+  WHERE a.source_id=p_bp02_address_source_id
+    AND a.operational_status='ACTIVE_IN_GAME'
+    AND p.operational_status='ACTIVE_IN_GAME'
+    AND a.record->>'source_candidate_parcel_id'=v_parcel
+    AND p.record->>'source_candidate_parcel_id'=v_parcel
+ ) THEN
+  RAISE EXCEPTION 'BP02 address and its stable parcel identity do not resolve to the same source parcel';
  END IF;
  SELECT * INTO v_existing FROM sw_geo.bp04_bp02_address_link
  WHERE bp04_address_id=p_bp04_address_id OR bp02_address_source_id=p_bp02_address_source_id;
