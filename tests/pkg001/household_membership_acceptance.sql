@@ -33,7 +33,7 @@ BEGIN
  INSERT INTO sw_property.unit_space(
   unit_id,property_id,building_id,premises_id,display_name,unit_class,use_class,lifecycle_status,source_dataset,source_record
  ) VALUES('BP03-HH-TEST:UNIT','BP03-HH-TEST:PROPERTY','BP03-HH-TEST:BUILDING',
-  'BP03-HH-TEST:PREMISES','Fixture dwelling unit','dwelling','residential','active',
+  'BP03-HH-TEST:PREMISES','Fixture dwelling unit','dwelling',NULL,'active',
   'BP03-HH-TEST','{"test_fixture":true}');
  IF NOT sw_geo.link_bp04_bp02_address(
   'BP03-HH-TEST:BP04-ADDRESS','BP03-HH-TEST:ADDRESS',
