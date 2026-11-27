@@ -97,11 +97,21 @@ def selected_paths(scope: str) -> tuple[list[str], list[str]]:
         else:
             changed = tracked
         active_bp = os.environ.get("ACTIVE_BP", "BP02").strip().upper()
-        core = [p for p in tracked if p == "README.md" or p.startswith("docs/blueprint/") or p.startswith("docs/implementation/")]
+        core = [p for p in tracked if p == "README.md"]
         bp_prefixes = {
-            "BP02": ("runtime/bp02", "data/geography/", "data/property/", "tests/pkg001/test_bp02", ".github/workflows/bp02-", "docs/deployment/BP02"),
+            "BP02": (
+                "runtime/bp02", "data/geography/", "data/property/",
+                "tests/pkg001/test_bp02", ".github/workflows/bp02-",
+                "docs/deployment/BP02",
+            ),
         }.get(active_bp, ())
-        active_bp_files = [p for p in tracked if any(p.startswith(prefix) for prefix in bp_prefixes)]
+        bp_docs = {
+            "BP02": (
+                "docs/blueprint/divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md",
+                "docs/implementation/BP02-operational-geography-implementation-register.md",
+            ),
+        }.get(active_bp, ())
+        active_bp_files = [p for p in tracked if any(p.startswith(prefix) for prefix in bp_prefixes) or p in bp_docs]
         chosen = set(p for p in changed if p in tracked) | set(core) | set(active_bp_files)
         omitted = [p for p in tracked if p not in chosen]
         return sorted(chosen), omitted
@@ -237,7 +247,8 @@ def main() -> None:
                 break
             except RuntimeError as exc:
                 last_error = exc
-                if "RESOURCE_EXHAUSTED" not in str(exc) or attempt == RETRY_LIMIT:
+                transient = ("RESOURCE_EXHAUSTED", "UNAVAILABLE", "HTTP 429", "HTTP 500", "HTTP 502", "HTTP 503", "HTTP 504")
+                if not any(code in str(exc) for code in transient) or attempt == RETRY_LIMIT:
                     raise
                 wait = RETRY_BACKOFF_SECONDS * attempt
                 print(f"Gemini capacity limit on slice {index}; retry {attempt + 1}/{RETRY_LIMIT} in {wait}s", flush=True)
