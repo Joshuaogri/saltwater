@@ -546,14 +546,14 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                 "distinct_people": counts[1],
                 "distinct_dwelling_units": counts[2],
                 "distinct_site_addresses": counts[3],
-                "current_residences": counts[4],
-                "usual_resident_flags": counts[5],
+                "current_residences": counts[5],
+                "usual_resident_flags": counts[6],
                 "household_rows_created": 0,
                 "production_database_written": False,
                 "allocation_manifest_sha256": allocation["manifest_sha256"],
                 "fixture_person_identity_matches_candidate_identity": True,
                 "canonical_person_names_reserved": reserved,
-                "candidate_person_identity_matches": counts[6],
+                "candidate_person_identity_matches": counts[7],
                 "police_subset_preserved": police_count,
             }
 
