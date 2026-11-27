@@ -1,0 +1,56 @@
+name: BP03 Opening Identity Registry Acceptance
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'data/people/saltwater-opening-police-person-seed-v1.json'
+      - 'data/people/saltwater-opening-civilian-resident-seed-v1.json.gz'
+      - 'tests/pkg001/test_opening_police_person_seed_postgres.py'
+      - 'tests/pkg001/test_opening_resident_person_seed_postgres.py'
+      - 'db/proposals/0036_bp03_individual_simulation_promotion.sql'
+      - '.github/workflows/bp03-opening-identity-name-acceptance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  opening-identities:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply canonical person and SW-UNS foundations
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0036_bp03_individual_simulation_promotion.sql
+      - name: Install PostgreSQL Python driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Validate all 500 opening police identities against SW-UNS
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_police_person_seed_postgres.py" -v
+      - name: Validate all 9,000 civilian identities against SW-UNS
+        timeout-minutes: 20
+        run: python -m unittest discover -s tests/pkg001 -p "test_opening_resident_person_seed_postgres.py" -v
