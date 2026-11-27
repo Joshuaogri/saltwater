@@ -74,3 +74,5 @@ BEGIN
 END
 $bp03$;
 ROLLBACK;
+
+-- CI fixture is transactional and leaves no persistent household records.
