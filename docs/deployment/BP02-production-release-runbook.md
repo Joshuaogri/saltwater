@@ -39,8 +39,6 @@ As a non-destructive alternative, a no-compute copy-on-write recovery branch was
 - Compute: none; compute time and data transfer both zero at creation
 
 This is a fresh branch-level recovery point at the recorded parent LSN, not a Neon manual snapshot. The branch is currently no-compute, so SQL verification against it was unavailable without adding compute. Do not add compute or modify this recovery branch as part of the release. Preserve it until the release has been verified and the user authorises any cleanup.
-
-This confirms a historical pre-production snapshot exists and was used to establish the current production branch. It does **not** establish a fresh recovery point taken from the current production branch immediately before this release. The release operator must create or otherwise confirm a current-production restore point and record its identifier/time before any migration or import. No snapshot was created during this audit.
 - BP04 global migrations 0003–0012: still pending; do not apply as part of this release
 
 ## Tested storage envelope
