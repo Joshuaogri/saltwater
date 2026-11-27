@@ -1,3 +1,12 @@
+## BP04-01 disposable acceptance fixture independence (2026-11-28)
+
+The BP04-01 acceptance transaction no longer assumes the opening resident cohort
+has already been seeded. It creates one temporary canonical person through the
+BP03 person service inside its rollback-only test transaction, then verifies the
+global SW-UNS person/property name collision. This preserves cross-domain name
+protection coverage without depending on future opening-world seed order or
+leaving canonical person records behind.
+
 ## BP02 geometry audit performance and diagnostics (2026-11-28)
 
 The BP02 release gate remains a full structural and operational acceptance audit;
