@@ -1,4 +1,6 @@
 \set ON_ERROR_STOP on
+BEGIN;
+UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1;
 DO $bp06$
 DECLARE
   v_personnel bigint;
@@ -93,3 +95,4 @@ BEGIN
 END
 $bp06$;
 SELECT 'BP06 personnel service records acceptance passed' AS result;
+ROLLBACK;
