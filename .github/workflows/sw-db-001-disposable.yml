@@ -252,8 +252,8 @@ jobs:
           echo "idempotent_repeat_storage_delta_bytes=$((after-before))"
           test "$before_rows" = "$after_rows"
           echo "IDEMPOTENT_ROW_MANIFEST_MATCH=$after_rows"
-      - name: Materialise 9,000 BP03 resident-to-BP02-address links
-        run: python -m runtime.sw_db_001_resident_residence_materializer
+      - name: Materialise 9,000 BP03 residents and prove tampered dwelling replay is rejected
+        run: python -m runtime.sw_db_001_resident_residence_materializer --negative-replay-test
       - name: Verify BP03 resident materialisation idempotency and identity integrity
         run: python -m runtime.sw_db_001_resident_residence_materializer
       - name: Measure population, person, business and reconciliation query latency
