@@ -350,24 +350,9 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
             if police_count != 500:
                 raise RuntimeError(f"separate 500-person police cohort changed: {police_count}")
 
-            # Preflight every candidate against the global registry before profile updates.
+            # The authoritative SW-UNS function performs one locked, set-based
+            # exact/near-duplicate preflight and records the approved batch keys.
             conn.execute("SET LOCAL search_path = pg_catalog, sw_names, public")
-            conn.execute("SET LOCAL pg_trgm.similarity_threshold = '0.90'")
-            conn.execute("CREATE INDEX bp03_candidate_stage_trgm_idx ON bp03_candidate_stage USING gin(normalized_name sw_names.gin_trgm_ops)")
-            conflicts = conn.execute("""
-                SELECT count(*) FROM bp03_candidate_stage c
-                JOIN sw_names.name_reservation r
-                  ON r.normalized_key=c.normalized_name OR r.normalized_key % c.normalized_name
-            """).fetchone()[0]
-            if conflicts:
-                raise RuntimeError(f"{conflicts} civilian names conflict with exact/near SW-UNS reservations")
-            near_pairs = conn.execute("""
-                SELECT count(*) FROM bp03_candidate_stage a
-                JOIN bp03_candidate_stage b
-                  ON a.candidate_ref<b.candidate_ref AND a.normalized_name % b.normalized_name
-            """).fetchone()[0]
-            if near_pairs:
-                raise RuntimeError(f"{near_pairs} near-duplicate pairs exist in civilian candidates")
 
             name_batch_id = conn.execute("""
                 SELECT sw_names.record_generation_batch(
@@ -378,6 +363,12 @@ def materialise(database_url: str, negative_replay_test: bool = False) -> dict:
                     'BP03 disposable identity materialisation; exact 9,000-person civilian cohort'::text
                 )
             """, (candidate_payload["seed"], bytes.fromhex(candidate_payload["manifest_sha256"]), ACTOR)).fetchone()[0]
+            preflighted = conn.execute("""
+                SELECT sw_names.preflight_generation_batch(%s,array_agg(display_name))
+                FROM bp03_candidate_stage
+            """, (name_batch_id,)).fetchone()[0]
+            if preflighted != EXPECTED_RESIDENTS:
+                raise RuntimeError(f"SW-UNS preflighted {preflighted} names, expected 9,000")
             conn.execute("""
                 INSERT INTO sw_core.simulation_event(
                     event_type_id,occurred_at,world_tick,subject_kind,subject_id,
