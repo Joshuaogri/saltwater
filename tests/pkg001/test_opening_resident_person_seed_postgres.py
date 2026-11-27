@@ -117,9 +117,7 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                          source_ref text UNIQUE NOT NULL,
                          given_name text NOT NULL,
                          middle_name text NOT NULL,
-                         family_name text NOT NULL,
-                         normalized_name text GENERATED ALWAYS AS
-                           (sw_names.normalize_name(given_name || ' ' || middle_name || ' ' || family_name)) STORED
+                         family_name text NOT NULL
                        ) ON COMMIT DROP"""
                 )
                 cur.executemany(
@@ -134,31 +132,15 @@ class OpeningCivilianPersonNameRegistryPostgresTests(unittest.TestCase):
                         for row in rows
                     ],
                 )
-                # Validate the complete generated cohort once before any reservations.
-                # The trigger then checks the existing global registry without repeatedly
-                # comparing each new row to all earlier rows from this same manifest.
-                cur.execute("CREATE INDEX bp03_civilian_seed_trgm_idx ON bp03_civilian_seed_stage USING gin(normalized_name sw_names.gin_trgm_ops)")
-                cur.execute("SET LOCAL pg_trgm.similarity_threshold='0.90'")
                 cur.execute(
-                    """SELECT EXISTS (
-                         SELECT 1
-                         FROM bp03_civilian_seed_stage a
-                         JOIN bp03_civilian_seed_stage b
-                           ON a.candidate_ref < b.candidate_ref
-                          AND a.normalized_name OPERATOR(sw_names.%) b.normalized_name
-                       )"""
+                    """SELECT sw_names.preflight_generation_batch(
+                         %s,
+                         array_agg(given_name || ' ' || middle_name || ' ' || family_name)
+                       )
+                       FROM bp03_civilian_seed_stage""",
+                    (batch_id,),
                 )
-                self.assertFalse(cur.fetchone()[0], "civilian batch contains near-duplicate canonical names")
-                cur.execute(
-                    """SELECT EXISTS (
-                         SELECT 1
-                         FROM bp03_civilian_seed_stage c
-                         JOIN sw_names.name_reservation r
-                           ON r.normalized_key OPERATOR(sw_names.%) c.normalized_name
-                         WHERE r.normalized_key <> c.normalized_name
-                       )"""
-                )
-                self.assertFalse(cur.fetchone()[0], "civilian names conflict with existing global SW-UNS reservations")
+                self.assertEqual(cur.fetchone()[0], 9000, "all civilian names must be preflighted as one manifest")
                 cur.execute(
                     """CREATE TEMP TABLE bp03_civilian_seed_event_map (
                          source_ref text PRIMARY KEY,
