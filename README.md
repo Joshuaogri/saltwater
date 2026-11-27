@@ -1870,3 +1870,45 @@ The BP02 `SW-GEO-V1` source archive-only production release remains complete and
 Production Neon was read-only verified at **9,961,472 bytes** on PostgreSQL 18.7. It contains the immutable source archive but no operational geography tables. The source road graph contains 42 roads, 367 nodes, 685 segments and 5 routes; all 100 source identity mappings resolve. The 420 parcel/address records and 768 access-point/connector records remain design candidates, not operational records. The address review queue has 5 P1, 33 P2 and 382 P3 records; none is operationally approved.
 
 No production operational-geography write has been performed. The existing 130,973,696-byte BP04 Stage E disposable benchmark represents a much broader physical-asset inventory and is not used as the BP02 geography estimate. A dedicated PostgreSQL 18.7 geography benchmark and end-to-end deployment test must establish the exact delta before a separate explicit production approval.
+
+
+## BP02 operational-geography deployment preparation — 2026-11-27
+
+A read-only review of the successful full acceptance artifact from run
+[45889071983](https://github.com/Joshuaogri/saltwater/actions/runs/45889071983)
+confirms that the approved gameplay release register contains 420 canonical
+parcels, 420 canonical addresses, 420 primary property-address links, 2,948
+building access-point locators and four bridge connector candidates. The
+underlying SW-GEO-V1 source contains 8 districts, 24 neighbourhoods, 54
+geographic features, 42 named roads, 367 network nodes, 685 road segments and
+five routes. The full acceptance report records operational approval and zero
+unresolved address-road-access exceptions; it also records that no database or
+Neon write was performed.
+
+Important status semantics must be retained during seeding: the 2,948 access
+point records are canonical gameplay locators, but their point status remains
+unreviewed and their road links are proximity candidates, not confirmed routes.
+The four bridge connector records also retain unreviewed geometry and
+not-assessed physical/legal access fields. Importing these records must not
+silently promote them to verified entrances or routable connectors.
+
+A source-only sizing check of the canonical geography register measured
+5,039,798 bytes as deterministic JSON and 204,098 bytes as gzip. These are
+package sizes, not PostgreSQL storage-growth measurements. The full audit
+artifact is 9,225,005 bytes and must not be imported wholesale; the deployment
+package should contain only the source and canonical gameplay records required
+by operational queries.
+
+Production Neon remains unchanged by this preparation. Its current measured
+database size is 9,961,472 bytes. It currently has the BP02 migration ledger
+and immutable source archive, but no operational geography tables, no
+sw_geo.entity/sw_geo.version foundation and no sw_property schema.
+
+The current scripts/migrate_bp02.py is still hard-coded to migration 0001;
+it must be extended to a checksum-verified sequential BP02 migration stream
+before an operational schema migration can be deployed. The existing global
+proposal 0013 is explicitly a disposable candidate-only parcel/address
+profile schema and is not an approved production migration. A separate
+PostgreSQL 18.7 disposable schema-and-seed benchmark is required before any
+production storage estimate or release approval. No production write is
+authorised by this preparation note.
