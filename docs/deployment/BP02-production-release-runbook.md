@@ -25,6 +25,21 @@ A read-only Neon control-plane check found one manual snapshot:
 - The snapshot's source branch is no longer present (Neon returned branch-not-found when inspected).
 - The current production branch has no automatic snapshot schedule configured.
 
+This confirms a historical pre-production snapshot exists and was used to establish the current production branch. A fresh manual snapshot attempt on 2026-11-27 was rejected by Neon with `snapshots limit exceeded`; the existing snapshot was not deleted or replaced.
+
+As a non-destructive alternative, a no-compute copy-on-write recovery branch was created directly from the current production branch:
+
+- Recovery branch: `br-gentle-moon-bdtc0y32`
+- Name: `BP02 pre-release recovery 2026-11-27`
+- Parent production branch: `br-still-cloud-bdvaw8u4`
+- Parent LSN: `0/FFB0F510`
+- Parent timestamp: `2026-11-26T23:30:47Z`
+- Created: `2026-11-27T00:35:27Z`
+- State: `ready`
+- Compute: none; compute time and data transfer both zero at creation
+
+This is a fresh branch-level recovery point at the recorded parent LSN, not a Neon manual snapshot. The branch is currently no-compute, so SQL verification against it was unavailable without adding compute. Do not add compute or modify this recovery branch as part of the release. Preserve it until the release has been verified and the user authorises any cleanup.
+
 This confirms a historical pre-production snapshot exists and was used to establish the current production branch. It does **not** establish a fresh recovery point taken from the current production branch immediately before this release. The release operator must create or otherwise confirm a current-production restore point and record its identifier/time before any migration or import. No snapshot was created during this audit.
 - BP04 global migrations 0003–0012: still pending; do not apply as part of this release
 
