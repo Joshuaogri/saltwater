@@ -2,7 +2,6 @@
 """Project-wide, read-only Gemini review for Saltwater."""
 from __future__ import annotations
 
-import gzip
 import hashlib
 import json
 import os
