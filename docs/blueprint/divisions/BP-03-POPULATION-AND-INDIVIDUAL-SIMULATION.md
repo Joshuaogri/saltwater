@@ -663,3 +663,7 @@ The workflow trigger was corrected on `main` in [d1ea709](https://github.com/Jos
 ## 20.3 BP03 individual-simulation integrated disposable checks (2026-11-27)
 
 In SW-DB-001 run [46060435097](https://github.com/Joshuaogri/saltwater/actions/runs/46060435097), disposable PostgreSQL successfully applied proposals 0036–0039 and passed all four acceptance scripts: individual tier and permanent promotion; sourced person attribute claims; person knowledge boundary; and person routines and movement. The parallel Python regression job passed 28/28. The run had not yet passed the BP02 operational-geography package build, so residence integration, resident materialisation, repeat-run integrity and full SW-DB-001 completion remain pending.
+
+## 20.4 BP03 residence integration — passed (2026-11-27)
+
+The integrated disposable PostgreSQL job in [SW-DB-001 run 46060435097](https://github.com/Joshuaogri/saltwater/actions/runs/46060435097) passed BP03 tier/promotion, attribute-claim, knowledge-boundary and routines/movement acceptance, then built and imported the current BP02 operational geography package and passed the BP03 residence integration acceptance. The Python regression job passed 28/28. The run has advanced to deterministic opening population/business fixture provisioning. It has not yet executed the 9,000-person resident materialisation, tampered dwelling replay rejection, resident materialisation idempotency, backup/restore or final reconciliation. This is not a BP03 completion declaration.
