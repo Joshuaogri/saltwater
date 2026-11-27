@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "runtime/bp02_operational_geography_package.py"
+      - "runtime/bp02_operational_geography_importer.py"
       - "runtime/bp02_full_acceptance_audit.py"
       - "runtime/bp02_fictional_geography_release.py"
       - "runtime/parcel_candidate_generator.py"
@@ -13,6 +14,8 @@ on:
       - "runtime/bp02_parcel_address_identity.py"
       - "runtime/bp02_address_frontage_exception_resolution.py"
       - "runtime/bp02_bridge_connector_engineering_register.py"
+      - "db/domain-migrations/bp02/**"
+      - "scripts/migrate_bp02.py"
       - "data/geography/**"
       - "data/property/saltwater-property-world-v1.json.gz"
       - ".github/workflows/bp02-operational-geography-package.yml"
@@ -24,7 +27,23 @@ permissions:
 jobs:
   build-operational-geography-package:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:18.7
+        env:
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_USER: saltwater_test
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://saltwater_test:test-only@localhost:5432/saltwater_test
     steps:
       - uses: actions/checkout@v4
         with:
@@ -32,8 +51,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install pinned geometry engine
-        run: python -m pip install "shapely==2.1.2"
+      - name: Install pinned geometry engine and PostgreSQL driver
+        run: python -m pip install "shapely==2.1.2" "psycopg[binary]>=3.2,<4"
+      - name: Record clean PostgreSQL baseline
+        run: |
+          python - <<'PY'
+          import os, psycopg
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              print("postgres_version=" + conn.execute("SHOW server_version").fetchone()[0])
+              print("database_bytes_before=" + str(conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]))
+          PY
       - name: Run BP02 acceptance once and build the package
         run: python -m runtime.bp02_operational_geography_package
       - name: Verify package and manifest integrity
@@ -59,6 +86,40 @@ jobs:
               "production_database_written": False
           }, indent=2, sort_keys=True))
           PY
+      - name: Apply BP02 domain schema in disposable PostgreSQL
+        run: python scripts/migrate_bp02.py --apply --expected-database saltwater_test
+      - name: Import accepted gameplay geography and measure storage
+        run: |
+          python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
+          python - <<'PY'
+          import os, psycopg
+          tables = {
+              "districts":"bp02_district", "neighbourhoods":"bp02_neighbourhood",
+              "features":"bp02_feature", "roads":"bp02_road", "nodes":"bp02_node",
+              "segments":"bp02_segment", "routes":"bp02_route", "route_nodes":"bp02_route_node",
+              "route_segments":"bp02_route_segment", "parcels":"bp02_parcel",
+              "addresses":"bp02_address", "access_points":"bp02_access_point",
+              "bridge_connectors":"bp02_bridge_connector",
+          }
+          with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
+              for label, table in tables.items():
+                  count = conn.execute(f"SELECT count(*) FROM sw_geo.{table}").fetchone()[0]
+                  print(f"{label}_rows={count}")
+              print("database_bytes_after_import=" + str(conn.execute("SELECT pg_database_size(current_database())").fetchone()[0]))
+              print("release_record=" + str(conn.execute("SELECT release_id,package_sha256,production_seed_approved FROM sw_geo.bp02_release").fetchone()))
+              assert conn.execute("SELECT count(*) FROM sw_geo.bp02_segment s JOIN sw_geo.bp02_node n ON n.source_id=s.from_node_source_id JOIN sw_geo.bp02_node t ON t.source_id=s.to_node_source_id JOIN sw_geo.bp02_road r ON r.source_id=s.road_source_id").fetchone()[0] == 685
+              assert conn.execute("SELECT count(*) FROM sw_geo.bp02_address a JOIN sw_geo.bp02_parcel p ON p.source_id=a.parcel_source_id").fetchone()[0] == 420
+              assert conn.execute("SELECT count(*) FROM sw_geo.bp02_bridge_connector WHERE operational_status='ACTIVE_IN_GAME'").fetchone()[0] == 4
+          PY
+      - name: Verify idempotent repeat import has zero growth
+        run: |
+          before=$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')
+          python -m runtime.bp02_operational_geography_importer --apply --expected-database saltwater_test
+          after=$(python -c 'import os,psycopg; c=psycopg.connect(os.environ["DATABASE_URL"]); print(c.execute("SELECT pg_database_size(current_database())").fetchone()[0]); c.close()')
+          echo "database_bytes_before_repeat=$before"
+          echo "database_bytes_after_repeat=$after"
+          echo "repeat_import_growth_bytes=$((after-before))"
+          test "$before" = "$after"
       - name: Upload measured package and manifest
         uses: actions/upload-artifact@v4
         with:
