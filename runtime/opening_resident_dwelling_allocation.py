@@ -123,8 +123,8 @@ def build_opening_resident_dwelling_allocation() -> dict[str, Any]:
         expected_address_ref = f"SW-GEO-V1:{candidate_parcel_id}"
         if not candidate_parcel_id or address.get("source_ref") != expected_address_ref:
             raise ValueError(f"{unit['unit_id']}: BP04 address parcel provenance does not match its property")
-        neighbourhood_id = prop.get("neighbourhood_id")
-        district_id = prop.get("district_id")
+        neighbourhood_id = prop.get("neighbourhood_id") or prop.get("source_neighbourhood_id")
+        district_id = prop.get("district_id") or prop.get("source_district_id")
         if not neighbourhood_id or not district_id:
             raise ValueError(f"{unit['unit_id']}: property lacks administrative geography")
         units_by_neighbourhood[str(neighbourhood_id)].append({
