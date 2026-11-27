@@ -1,10 +1,10 @@
 {
   "allocated_candidate_count": 9000,
   "candidate_count": 9000,
-  "compressed_bytes": 244208,
+  "compressed_bytes": 244210,
   "dataset_id": "SW-OPENING-RESIDENT-DWELLING-ALLOCATION-V1",
   "eligible_dwelling_count": 55558,
-  "manifest_sha256": "cda19231191fb6bda2835aaa20adac686bf30c16a082ea99c6f50f5a7b34bec7",
+  "manifest_sha256": "888cd0a006960b55c3bd9290b28228797a29457362ba5e4f2cf381857f3bfd25",
   "materialisation_status": "CANDIDATE_DWELLING_MATCHES_ONLY_NO_CANONICAL_PERSON_RESIDENCE_OR_HOUSEHOLD_ROWS",
   "neighbourhood_count": 8,
   "occupancy_capacity_status": "NOT_ASSESSED",
@@ -12,7 +12,7 @@
   "source_datasets": {
     "bp02_identity_rule": "SWP- + first 16 uppercase SHA-256 hex characters of source_candidate_parcel_id; SWA- + first 16 uppercase SHA-256 hex characters of BP04 address_id",
     "property_world": {
-      "compressed_sha256": "7223d8eb4dfa9b2473bf1424f08d345e2edfcd642155fb51fab23734c05c36b7",
+      "compressed_sha256": "a24e049636428bc3cdf003b111e36bb854e03097a302d87ce59b40d280565f3b",
       "dataset_id": "SW-PROPERTY-WORLD-V1"
     },
     "resident_candidates": {
