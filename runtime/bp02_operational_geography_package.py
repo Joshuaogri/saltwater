@@ -130,7 +130,7 @@ def main() -> None:
     compressed, manifest = build_release()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_bytes(compressed)
-    MANIFEST.write_bytes(canonical_json(manifest) + b"\\n")
+    MANIFEST.write_bytes(canonical_json(manifest) + b"\n")
     print(json.dumps(manifest, indent=2, sort_keys=True))
 
 
