@@ -110,5 +110,48 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertEqual(len(doc["tables"]["agreement_event_history"]["rows"]), doc["metadata"]["summary"]["agreement_event_count"])
 
 
+    def test_owner_manager_landlord_tenant_operator_and_occupant_roles_resolve_separately(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        report = audit_property_tenure_role_separation(
+            self.data, self.world, self.registry
+        )
+        self.assertTrue(report["valid"])
+        self.assertEqual(report["properties_checked"], 420)
+        self.assertEqual(report["ownership_interests_checked"], 420)
+        self.assertEqual(report["management_appointments_checked"], 420)
+        self.assertEqual(report["agreements_checked"], len(self.data["agreements"]))
+        self.assertEqual(report["occupancies_checked"], 10000)
+        self.assertGreater(report["third_party_management_count"], 0)
+        self.assertGreater(report["direct_owner_management_count"], 0)
+        self.assertEqual(report["person_records_created"], 0)
+
+    def test_tenant_cannot_be_resolved_through_organisation_register(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        tenure["agreements"][0]["tenant_business_id"] = tenure["organisations"][0]["organisation_id"]
+        with self.assertRaisesRegex(ValueError, "tenant/operator role"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_manager_cannot_be_resolved_through_business_register(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        tenure["management_appointments"][0]["manager_organisation_id"] = (
+            self.registry["businesses"][0]["business_id"]
+        )
+        with self.assertRaisesRegex(ValueError, "manager role"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_occupant_must_match_explicit_tenant_and_establishment(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        tenure["occupancies"][0]["occupant_business_id"] = self.registry["businesses"][1]["business_id"]
+        with self.assertRaisesRegex(ValueError, "occupant role"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+
 if __name__ == "__main__":
     unittest.main()
