@@ -129,10 +129,14 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='premises_lifecycle_event' AND column_name='lawful_use_certificate_id' AND data_type='text')
   THEN RAISE EXCEPTION 'typed property title, transaction or lifecycle fields missing'; END IF;
 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='sw_property' AND table_name='occupancy_relationship')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='occupancy_relationship' AND column_name='subletting_right_id' AND data_type='text')
+  THEN RAISE EXCEPTION 'explicit subletting occupancy relationship schema missing'; END IF;
+
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='contractual_rights_index' AND column_name='source_agreement_id' AND data_type='text')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='physical_access_evidence_register' AND column_name='legal_right_of_way_status' AND data_type='text')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='boundary_evidence_register' AND column_name='legal_boundary_status' AND data_type='text')
   THEN RAISE EXCEPTION 'typed property rights, access or boundary evidence fields missing'; END IF;
 END $bp04$;
 
-SELECT 'BP04 phase-1 through phase-10 schema acceptance passed' AS result;
+SELECT 'BP04 phase-1 through phase-13 schema acceptance passed' AS result;
