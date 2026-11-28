@@ -8,6 +8,7 @@ on:
       - "db/proposals/0002_runtime_city_population.sql"
       - "db/proposals/0003_legacy_checksum_adoption.sql"
       - "scripts/migrate.py"
+      - "scripts/migrate_bp02.py"
       - "scripts/verify_legacy_baseline.py"
       - "tests/database/**"
       - "tests/pkg001/**"
@@ -52,10 +53,12 @@ jobs:
         env:
           DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_test
         run: python scripts/migrate.py --apply
-      - name: Verify migration history and checksum idempotency
+      - name: Verify migration history and checksum idempotency across independent BP02 schema
         env:
           DATABASE_URL: postgresql://saltwater:test-only-password@localhost:5432/saltwater_test
+          PGPASSWORD: test-only-password
         run: |
+          psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -c "CREATE SCHEMA sw_geo; CREATE TABLE sw_geo.bp02_schema_migration (version integer PRIMARY KEY, migration_name text NOT NULL, checksum_sha256 char(64) NOT NULL, applied_at timestamptz NOT NULL DEFAULT now())"
           python scripts/migrate.py
           python scripts/migrate.py --apply
           python scripts/migrate.py
