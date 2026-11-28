@@ -285,7 +285,6 @@ def reconcile_canonical_property_bindings(
             if (
                 bp02_access is None
                 or access.get("bp02_access_point_id") != access_id
-                or bp02_access.get("property_id") != property_id
                 or bp02_access.get("building_id") != building_id
                 or bp02_access.get("point_m") != point
             ):
