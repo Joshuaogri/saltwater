@@ -24,14 +24,14 @@ Acceptance evidence:
 
 The BP04 design decisions are resolved. NPCs make ordinary fictional decisions autonomously; no human-player approval gates are used for routine in-game activity. Production Neon writes remain separate and were not performed.
 
-**BP04 remains in progress:** the strict 48-criterion audit now records 18 PASS, 15 PARTIAL, 1 BLOCKED, 14 NOT VERIFIED and 0 FAIL. Continue from the remaining criteria; do not rebuild the accepted spatial integration.
+**BP04 remains in progress, not complete:** the current strict 48-criterion audit records 22 PASS, 18 PARTIAL, 1 BLOCKED, 7 NOT VERIFIED and 0 FAIL. Continue from the remaining criteria; do not rebuild the accepted spatial integration. Production Neon still does not contain the BP04 relational schema/migrations.
 
 **BP04 NPC ownership/tenancy update — 2026-11-28:** the tenure generator now creates independent tenant/operator business pairs across every generated unit class while retaining self-operated cases. Both direct-owner and third-party manager appointments remain represented. The canonical tenure archive was regenerated on `main`; all 14 focused tests passed in [workflow 46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). AC-C01 remains PARTIAL because independent landlord/title-holder and occupant/tenant combinations still need broader coverage. No production Neon write occurred.
 
 
 ## BP04 spatial integration — passed (2026-11-28)
 
-BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write. BP04 criteria AC-B01 and AC-B05 are now PASS. The updated strict audit records 18 PASS, 15 PARTIAL, 1 BLOCKED and 14 NOT VERIFIED; BP04 remains IN_PROGRESS until the remaining criteria are accepted. No production Neon write occurred.
+BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write. BP04 criteria AC-B01 and AC-B05 are now PASS. At the time of this spatial-release update, the strict audit recorded 18 PASS, 15 PARTIAL, 1 BLOCKED and 14 NOT VERIFIED; that is a historical snapshot, superseded by the current criterion counts at the top of this README. No production Neon write occurred.
 
 ## BP04 competing title-transfer acceptance — passed on PostgreSQL 16/18 (2026-11-28)
 
