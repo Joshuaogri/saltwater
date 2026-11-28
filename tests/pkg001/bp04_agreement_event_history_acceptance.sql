@@ -159,6 +159,40 @@ INSERT INTO sw_property.contractual_rights_index(
  'contractual_lease_licence_or_concession','SWTEST-BUS-01','SWTEST-AGR-04',2027,'current','commercial',
  'bp04_agreement_lifecycle_acceptance',false,'bp04_agreement_lifecycle_acceptance'
 );
+INSERT INTO sw_property.organisation(organisation_id,display_name,organisation_type,registered_city,status,source_dataset)
+VALUES ('SWTEST-ORG-NEW','Test Successor Property Owner','property_holding_company','Saltwater','active','bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.ownership_interest(
+ ownership_interest_id,property_id,owner_organisation_id,management_model,interest_type,source_dataset
+) VALUES (
+ 'SWTEST-OWN-01','SWTEST-PROP-01','SWTEST-ORG-OWNER','direct_owner','freehold','bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.property_title_register(
+ title_register_id,property_id,current_ownership_interest_id,registered_proprietor_organisation_id,
+ title_status,tenure_type,registration_tick,source_basis,boundary_record_id,
+ active_dispute_count,unresolved_title_issue_count,source_dataset
+) VALUES (
+ 'SWTEST-TITLE-01','SWTEST-PROP-01','SWTEST-OWN-01','SWTEST-ORG-OWNER',
+ 'registered_current','freehold',0,'test_fixture','SWTEST-BOUNDARY-01',0,0,
+ 'bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.property_interest_record(
+ property_interest_record_id,property_id,ownership_interest_id,interest_holder_organisation_id,
+ interest_type,interest_status,priority_order,source_basis,source_dataset
+) VALUES (
+ 'SWTEST-INTEREST-01','SWTEST-PROP-01','SWTEST-OWN-01','SWTEST-ORG-OWNER',
+ 'registered_ownership','current',1,'test_fixture','bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.property_rights_schedule(
+ property_rights_schedule_id,property_id,title_register_id,registered_ownership_interest_id,
+ registered_owner_organisation_id,current_contractual_right_count,historical_contractual_right_count,
+ right_class_coverage,unverified_right_classes,schedule_status,
+ legal_search_required_before_disposition_or_works,source_dataset
+) VALUES (
+ 'SWTEST-RIGHTS-SCHEDULE-01','SWTEST-PROP-01','SWTEST-TITLE-01','SWTEST-OWN-01',
+ 'SWTEST-ORG-OWNER',1,0,ARRAY['ownership','leasehold_or_occupancy']::text[],
+ ARRAY['easement','wayleave']::text[],'test_fixture',true,
+ 'bp04_agreement_lifecycle_acceptance'
+);
 INSERT INTO sw_property.business_unit_link(
  business_unit_link_id,business_id,establishment_id,unit_id,premises_id,
  valid_from_tick,valid_to_tick,occupancy_relationship,occupancy_status,source_dataset
@@ -173,6 +207,8 @@ DECLARE
   v_replay uuid;
   v_status text;
   v_relationship text;
+  v_transfer_event text;
+  v_transfer_replay text;
 BEGIN
   SELECT t.agreement_event_id INTO v_first
   FROM sw_property.transition_occupancy_agreement(
@@ -339,6 +375,63 @@ BEGIN
       WHERE agreement_id='SWTEST-AGR-04' AND idempotency_key='test:assignment:1')<>1 THEN
     RAISE EXCEPTION 'assignment replay created duplicate events';
   END IF;
+
+  SELECT t.lifecycle_event_id INTO v_transfer_event
+  FROM sw_property.transfer_property_ownership(
+    'SWTEST-PROP-01','SWTEST-ORG-OWNER','SWTEST-ORG-NEW',
+    8,8,2027,2027,'actor:test','source:test:title-transfer',
+    'test:title-transfer:1','gameplay_action'
+  ) t;
+  SELECT t.lifecycle_event_id INTO v_transfer_replay
+  FROM sw_property.transfer_property_ownership(
+    'SWTEST-PROP-01','SWTEST-ORG-OWNER','SWTEST-ORG-NEW',
+    8,8,2027,2027,'actor:test','source:test:title-transfer',
+    'test:title-transfer:1','gameplay_action'
+  ) t;
+  IF v_transfer_event<>v_transfer_replay THEN
+    RAISE EXCEPTION 'property ownership transfer replay did not return original lifecycle event';
+  END IF;
+  IF (SELECT owner_organisation_id FROM sw_property.ownership_interest
+      WHERE ownership_interest_id='SWTEST-OWN-01')<>'SWTEST-ORG-NEW'
+     OR (SELECT registered_proprietor_organisation_id FROM sw_property.property_title_register
+         WHERE title_register_id='SWTEST-TITLE-01')<>'SWTEST-ORG-NEW'
+     OR (SELECT interest_holder_organisation_id FROM sw_property.property_interest_record
+         WHERE property_interest_record_id='SWTEST-INTEREST-01')<>'SWTEST-ORG-NEW'
+     OR (SELECT registered_owner_organisation_id FROM sw_property.property_rights_schedule
+         WHERE property_rights_schedule_id='SWTEST-RIGHTS-SCHEDULE-01')<>'SWTEST-ORG-NEW' THEN
+    RAISE EXCEPTION 'property title/ownership projections were not transferred consistently';
+  END IF;
+  IF (SELECT landlord_organisation_id FROM sw_property.occupancy_agreement
+      WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-ORG-OWNER'
+     OR (SELECT tenant_business_id FROM sw_property.occupancy_agreement
+         WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-02'
+     OR (SELECT operator_business_id FROM sw_property.occupancy_agreement
+         WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-02'
+     OR (SELECT occupant_business_id FROM sw_property.occupancy
+         WHERE occupancy_id='SWTEST-OCC-02')<>'SWTEST-BUS-01'
+     OR (SELECT occupancy_status FROM sw_property.occupancy
+         WHERE occupancy_id='SWTEST-OCC-02')<>'occupied'
+     OR (SELECT business_id FROM sw_property.business_unit_link
+         WHERE business_unit_link_id='SWTEST-LINK-PRIMARY')<>'SWTEST-BUS-01' THEN
+    RAISE EXCEPTION 'property title transfer silently changed continuing tenancy or physical occupancy';
+  END IF;
+  IF (SELECT count(*) FROM sw_property.property_title_instrument
+      WHERE ownership_event_id=v_transfer_event AND payment_or_settlement_record_created=false)<>1
+     OR (SELECT count(*) FROM sw_property.property_transaction_index
+         WHERE ownership_event_id=v_transfer_event AND financial_settlement_status='not_created_bp34')<>1
+     OR (SELECT financial_transaction_created FROM sw_property.property_lifecycle_event
+         WHERE lifecycle_event_id=v_transfer_event) IS DISTINCT FROM false THEN
+    RAISE EXCEPTION 'ownership transfer created or omitted its non-financial title evidence';
+  END IF;
+
+  BEGIN
+    UPDATE sw_property.property_lifecycle_event
+    SET narrative='tampered'
+    WHERE lifecycle_event_id=v_transfer_event;
+    RAISE EXCEPTION 'property lifecycle event update was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='property lifecycle event update was accepted' THEN RAISE; END IF;
+  END;
 END
 $bp04$;
 
