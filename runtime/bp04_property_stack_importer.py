@@ -447,7 +447,11 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                         expected_event = tuple(
                             getattr(entry[column], "obj", entry[column]) for column in columns
                         )
-                        if stored is None or tuple(stored) != expected_event:
+                        stored_event = tuple(
+                            str(value) if column == "letting_authority_event_id" else value
+                            for column,value in zip(columns,stored or ())
+                        )
+                        if stored is None or stored_event != expected_event:
                             raise RuntimeError(
                                 f"Immutable letting authority event {entry[pk]} conflicts with the canonical source"
                             )
