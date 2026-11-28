@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 114-table disposable PostgreSQL 16/18 benchmark
+name: BP04 canonical property stack — 113-table disposable PostgreSQL 16/18 benchmark
 # Keep the archive-only collection inventory assertion aligned with the expanded source stack.
 # BP04 subletting end/start and idempotent replay now share the physical-unit lock order.
 
