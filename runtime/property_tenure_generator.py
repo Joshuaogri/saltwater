@@ -297,6 +297,74 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "source_basis": "business_registry_and_fictional_tenure_generator",
         })
 
+    # Generate one explicit, independently identified NPC organisation use
+    # relationship per property. This is a secondary permitted use, not a
+    # replacement for the primary tenant's business occupancy.
+    third_party_occupancy_relationships = []
+    third_party_occupancy_count = 0
+    for property_id in sorted(properties):
+        property_units = sorted(
+            (unit for unit in units.values() if unit["property_id"] == property_id and unit["unit_id"] in business_by_unit),
+            key=lambda unit: unit["unit_id"],
+        )
+        if not property_units:
+            continue
+        unit = property_units[0]
+        business_id = business_by_unit[unit["unit_id"]]["business_id"]
+        agreement_id = agreement_by_business[business_id]
+        manager_id = manager_by_property[property_id]
+        occupancy_id = f"SWOCC-TP-{_slug(property_id)}"
+        use_type = _pick(
+            ["service_provider", "contractor_access", "concession", "storage"],
+            property_id + "-third-party-use",
+        )
+        occupancies.append({
+            "occupancy_id": occupancy_id,
+            "property_id": property_id,
+            "building_id": unit["building_id"],
+            "premises_id": unit["premises_id"],
+            "unit_id": unit["unit_id"],
+            "occupant_type": "organisation",
+            "occupant_business_id": None,
+            "occupant_organisation_id": manager_id,
+            "establishment_id": None,
+            "agreement_id": agreement_id,
+            "occupancy_status": "permitted_third_party_use",
+            "effective_from_year": _number(property_id + "-third-party-use-year", 2018, 2026),
+            "effective_to_year": None,
+            "population_person_ids": [],
+            "source_basis": "generated_fictional_canon",
+        })
+        third_party_occupancy_relationships.append({
+            "relationship_id": f"SWTPOR-{_slug(property_id)}",
+            "occupancy_id": occupancy_id,
+            "property_id": property_id,
+            "unit_id": unit["unit_id"],
+            "underlying_agreement_id": agreement_id,
+            "property_right_id": None,
+            "use_type": use_type,
+            "granting_business_id": business_id,
+            "granting_organisation_id": None,
+            "granting_person_id": None,
+            "receiving_business_id": None,
+            "receiving_organisation_id": manager_id,
+            "receiving_person_id": None,
+            "permitted_purpose": f"Permitted {use_type.replace('_', ' ')} supporting the primary tenant's operation",
+            "access_scope": "Named property and unit only; no independent possession or primary business-unit link",
+            "permission_status": "not_required",
+            "relationship_status": "active",
+            "decision_authority_organisation_id": None,
+            "consent_decision_ref": None,
+            "effective_from_tick": 0,
+            "effective_to_tick": None,
+            "recorded_tick": 0,
+            "actor_ref": business_id,
+            "source_ref": f"SW-CANON-THIRD-PARTY-{_slug(property_id)}",
+            "evidence_class": "generated_fictional_canon",
+            "idempotency_key": f"SWTPOR-{_slug(property_id)}-GRANT",
+        })
+        third_party_occupancy_count += 1
+
     for unit_id, unit in units.items():
         link = business_by_unit.get(unit_id)
         if link:
@@ -436,7 +504,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "agreement_event_count": len(agreement_event_history),
             "agreement_execution_date_recorded_count": 0,
             "agreement_execution_date_unknown_count": len(agreements),
-            "current_business_occupancy_count": len(occupancies),
+            "current_business_occupancy_count": len(businesses),
+            "third_party_occupancy_relationship_count": len(third_party_occupancy_relationships),
+            "third_party_organisation_occupancy_count": third_party_occupancy_count,
             "unit_occupancy_state_count": len(unit_states),
             "business_occupancy_count": len(business_by_unit),
             "person_records_created": 0,
@@ -451,6 +521,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         "agreements": agreements,
         "agreement_event_history": agreement_event_history,
         "occupancies": occupancies,
+        "third_party_occupancy_relationships": third_party_occupancy_relationships,
         "unit_occupancy_states": unit_states,
         "lineage": {
             "property_world_dataset": "SW-PROPERTY-WORLD-V1",
@@ -461,7 +532,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         "gameplay": {
             "ownership": "Chronological acquisition and transfer events resolve to the current property ownership interest.",
             "tenancy": "Each registered business establishment has a current lease, licence or operating concession linked to its unit and landlord. A non-owner landlord resolves through a property-scoped authority granted by the current title holder. Agreement history is append-only; execution dates remain explicitly unrecorded unless evidenced.",
-            "occupancy": "Business occupancy is explicit; residential units remain unallocated until the separate population-allocation process.",
+            "occupancy": "Primary business occupancy is explicit. Separate organisation-level third-party uses are recorded against the same physical unit and underlying agreement without replacing primary occupancy; residential units remain unallocated until the separate population-allocation process.",
             "population": "No person records, residents, tenants-as-persons, employees or police personnel are created.",
             "finance_boundary": "Rent bands and contract terms are references only; rent postings, balances and accounting remain BP-34.",
             "time": "Historical years describe fictional backstory; current agreement and occupancy states begin at simulation tick zero.",
