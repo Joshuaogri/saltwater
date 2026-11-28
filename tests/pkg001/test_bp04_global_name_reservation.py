@@ -283,7 +283,7 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
         near_business_id = "SWBIZ-AC-A04-CROSSDOMAIN-002"
         near_organisation_id = "SWORG-AC-A04-CROSSDOMAIN-002"
         near_business_name = "Mellifluous Quartz Holdings"
-        near_name = "Mellifluous Quartz Holding"
+        near_name = "Mellifluous Quartz Holdinngs"
         with connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
@@ -299,6 +299,12 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
                        VALUES (%s,%s,'TEST','SW-AC-A04-TEST','{}'::jsonb)""",
                     (near_organisation_id, near_name),
                 )
+                cur.execute(
+                    """SELECT sw_names.similarity(
+                         sw_names.normalize_name(%s),sw_names.normalize_name(%s))""",
+                    (near_business_name, near_name),
+                )
+                self.assertGreaterEqual(cur.fetchone()[0], 0.90)
                 cur.execute(
                     """SELECT sw_names.reserve_business_name(
                          %s,'trading',%s,
