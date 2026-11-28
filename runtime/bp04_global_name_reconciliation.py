@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import math
 import re
 from collections import defaultdict
 from dataclasses import dataclass
@@ -189,9 +190,7 @@ def build_global_name_inventory() -> dict[str, Any]:
                 prior_trigrams, prior = signatures[prior_index]
                 if item.domain == prior.domain or item.owner == prior.owner:
                     continue
-                required = int(__import__("math").ceil(
-                    0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90
-                ))
+                required = math.ceil(0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90)
                 if common < required:
                     continue
                 if pg_trgm_similarity(item.display_name, prior.display_name) >= 0.90:
