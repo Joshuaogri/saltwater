@@ -2,7 +2,7 @@ import json
 import unittest
 from pathlib import Path
 
-from runtime.property_world_generator import build_property_world, to_columnar_document
+from runtime.property_world_generator import build_property_world, to_columnar_document, _bp02_stable_id
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -51,8 +51,8 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         self.assertEqual(len({p["bp02_parcel_id"] for p in w["properties"]}), len(w["properties"]))
         self.assertEqual(len({p["bp02_address_id"] for p in w["properties"]}), len(w["properties"]))
         for p in w["properties"]:
-            self.assertTrue(p["bp02_parcel_id"].startswith("SWP-"))
-            self.assertTrue(p["bp02_address_id"].startswith("SWA-"))
+            self.assertEqual(p["bp02_parcel_id"], _bp02_stable_id("SWP", p["source_candidate_parcel_id"]))
+            self.assertEqual(p["bp02_address_id"], _bp02_stable_id("SWA", p["address_id"]))
             self.assertEqual(addresses[p["address_id"]]["bp02_parcel_id"], p["bp02_parcel_id"])
             self.assertEqual(addresses[p["address_id"]]["bp02_address_id"], p["bp02_address_id"])
             self.assertIn(p["address_id"], addresses)
@@ -81,6 +81,8 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         for a in self.world["access_points"]:
             self.assertTrue(a["access_point_id"])
             self.assertEqual(a["effective_from_tick"], 0)
+            self.assertIsNone(a["effective_to_tick"])
+            self.assertEqual(a["bp02_coordinate_reference"], "SW-LOCAL-METRE-GRID-V1")
             self.assertIn(a["canonical_status"], ("active", "ACTIVE"))
             self.assertIn(a["bp02_locator_status"], ("BOUND_TO_BP02_ACCESS_POINT", "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS"))
             self.assertEqual(len(a["point_m"]), 2)
