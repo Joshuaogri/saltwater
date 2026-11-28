@@ -14,7 +14,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: saltwater-property-tenure-main
+  group: saltwater-property-tenure-main-v2
   cancel-in-progress: true
 jobs:
   build-and-persist:
