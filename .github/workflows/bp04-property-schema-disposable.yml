@@ -21,6 +21,7 @@ on:
       - "db/migrations/0017_bp04_property_ownership_transfer_writer.sql"
       - "db/migrations/0018_bp04_occupancy_handover.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
+      - "tests/pkg001/test_bp04_concurrent_handover.py"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/test_bp04_property_stack_importer.py"
@@ -114,6 +115,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Verify agreement event history and lifecycle transition writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_agreement_event_history_acceptance.sql
+      - name: Verify concurrent occupancy handover serialization and idempotency
+        run: python tests/pkg001/test_bp04_concurrent_handover.py
       - name: Store all 14 compressed source datasets without typed-row expansion
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL" --archive-only
       - name: Verify archive-only storage and complete provenance
