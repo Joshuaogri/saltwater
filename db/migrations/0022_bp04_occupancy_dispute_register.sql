@@ -386,7 +386,7 @@ BEGIN
   ) VALUES (
     p_dispute_id,v_event_type,p_effective_tick,p_recorded_tick,
     p_actor_ref,p_source_ref,p_idempotency_key,p_evidence_class,v_payload
-  ) RETURNING dispute_event_id INTO v_event_id;
+  ) RETURNING occupancy_dispute_event.dispute_event_id INTO v_event_id;
 
   UPDATE sw_property.occupancy_dispute
   SET dispute_status=p_resulting_status,
