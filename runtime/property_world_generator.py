@@ -48,6 +48,12 @@ def _route_slug(value):
     return "".join(c for c in value.upper() if c.isalnum())
 
 
+def _bp02_stable_id(prefix: str, source_id: str) -> str:
+    """Return the portable BP02 parcel/address identity for a source ID."""
+    digest = hashlib.sha256(source_id.encode("utf-8")).hexdigest()[:16].upper()
+    return f"{prefix}-{digest}"
+
+
 def _address_number(parcel_id, road_id, counters):
     counters[road_id] += 1
     return counters[road_id] * 2 + (1 if counters[road_id] % 2 else 0)
@@ -107,8 +113,11 @@ def build_property_world(source: dict) -> dict:
         road = roads[road_id]
         number = _address_number(parcel_id, road_id, road_counters)
         address_id = f"SWADDR-{_slug(parcel_id)}"
+        bp02_parcel_id = _bp02_stable_id("SWP", parcel_id)
+        bp02_address_id = _bp02_stable_id("SWA", address_id)
         address = {
-            "address_id": address_id, "property_id": pid,
+            "address_id": address_id, "bp02_address_id": bp02_address_id,
+            "bp02_parcel_id": bp02_parcel_id, "property_id": pid,
             "building_ids": [], "street_number": number,
             "street_name": road["name"], "road_id": road_id,
             "district_id": district["id"], "district_name": district["name"],
@@ -147,6 +156,7 @@ def build_property_world(source: dict) -> dict:
         use = p["primary_use"]
         property_rows.append({
             **p, "property_id": pid, "address_id": address_id,
+            "bp02_parcel_id": bp02_parcel_id, "bp02_address_id": bp02_address_id,
             "canonical_status": "active", "site_state": _pick(["developed","partly_developed","yard_and_building","managed_open_site"], parcel_id+"-site"),
             "boundary_type": _pick(["masonry_boundary","metal_fence","hedge_and_rail","mixed_boundary","open_frontage_with_rear_fence"], parcel_id+"-boundary"),
             "surface_type": _pick(["paved","concrete","asphalt","gravel","landscaped","mixed_surface"], parcel_id+"-surface"),
@@ -279,7 +289,8 @@ def build_property_world(source: dict) -> dict:
         point = a["point_m"]
         access_id = a["candidate_access_point_id"]
         access = {
-            **a, "access_point_id": access_id, "building_id": bid,
+            **a, "access_point_id": access_id, "bp02_access_point_id": access_id,
+            "bp02_locator_status": "BOUND_TO_BP02_ACCESS_POINT", "building_id": bid,
             "property_id": pid, "access_type": access_type,
             "access_modes": ["pedestrian"] + (["vehicle"] if no == 1 and building["building_use"] in ("industrial","warehouse","port_maritime") else []),
             "door_type": _pick(["single_leaf_hinged","double_leaf_hinged","automatic_sliding","roller_shutter"], access_id+"-door"),
@@ -367,7 +378,8 @@ def build_property_world(source: dict) -> dict:
         address["address_label"] = f'{address["street_number"]} {address["street_name"]}, {address["neighbourhood_name"]}, Saltwater'
         access_id = f"SWA-{_slug(pid)}-SITE-A01"
         access_rows.append({
-            "access_point_id": access_id, "property_id": pid,
+            "access_point_id": access_id, "bp02_access_point_id": None,
+            "bp02_locator_status": "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS", "property_id": pid,
             "building_id": None, "access_type": "site_entrance_gate",
             "access_modes": ["pedestrian","maintenance_vehicle"],
             "point_m": [round(site_point.x, 6), round(site_point.y, 6)],
