@@ -394,3 +394,143 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def audit_property_tenure_role_separation(
+    tenure: dict, property_world: dict, registry: dict
+) -> dict:
+    """Validate typed role references across ownership, management, contracts and possession.
+
+    Role equality is permitted where the same organisation/business genuinely holds
+    multiple roles (for example, direct owner-management or a tenant that operates
+    its own establishment). The audit instead proves that each role is resolved
+    through its owning identity register and that role relationships agree.
+    """
+    required_lists = {
+        "current_ownership_interests": tenure.get("current_ownership_interests"),
+        "management_appointments": tenure.get("management_appointments"),
+        "agreements": tenure.get("agreements"),
+        "occupancies": tenure.get("occupancies"),
+        "organisations": tenure.get("organisations"),
+        "properties": property_world.get("properties"),
+        "businesses": registry.get("businesses"),
+        "establishments": registry.get("establishments"),
+    }
+    for name, rows in required_lists.items():
+        if not isinstance(rows, list):
+            raise ValueError(f"{name} must be a list")
+
+    organisation_ids = {row.get("organisation_id") for row in tenure["organisations"]}
+    property_ids = {row.get("property_id") for row in property_world["properties"]}
+    business_by_id = {row.get("business_id"): row for row in registry["businesses"]}
+    establishment_by_id = {
+        row.get("establishment_id"): row for row in registry["establishments"]
+    }
+    if None in organisation_ids or None in business_by_id or None in establishment_by_id:
+        raise ValueError("role identity registers contain missing stable IDs")
+
+    owner_by_property = {}
+    for interest in tenure["current_ownership_interests"]:
+        property_id = interest.get("property_id")
+        owner_id = interest.get("owner_organisation_id")
+        if property_id not in property_ids or owner_id not in organisation_ids:
+            raise ValueError("ownership role does not resolve to canonical property and organisation")
+        if property_id in owner_by_property:
+            raise ValueError(f"multiple current owner projections for property {property_id}")
+        owner_by_property[property_id] = owner_id
+    if set(owner_by_property) != property_ids:
+        raise ValueError("current ownership register does not cover every canonical property")
+
+    managers_by_property = {}
+    direct_owner_management = 0
+    third_party_management = 0
+    for appointment in tenure["management_appointments"]:
+        property_id = appointment.get("property_id")
+        manager_id = appointment.get("manager_organisation_id")
+        appointing_owner_id = appointment.get("appointing_organisation_id")
+        if appointment.get("appointment_status") != "current":
+            continue
+        if property_id not in property_ids or manager_id not in organisation_ids:
+            raise ValueError("manager role does not resolve to canonical property and organisation")
+        if appointing_owner_id != owner_by_property.get(property_id):
+            raise ValueError(f"management appointment for {property_id} was not made by its current owner")
+        if property_id in managers_by_property:
+            raise ValueError(f"multiple current management appointments for property {property_id}")
+        managers_by_property[property_id] = manager_id
+        if manager_id == appointing_owner_id:
+            direct_owner_management += 1
+            if appointment.get("management_model") != "direct_owner_management":
+                raise ValueError("non-direct management model incorrectly assigns owner as manager")
+        else:
+            third_party_management += 1
+            if appointment.get("management_model") == "direct_owner_management":
+                raise ValueError("direct owner-management incorrectly assigns a separate manager")
+    if set(managers_by_property) != property_ids:
+        raise ValueError("current management appointments do not cover every canonical property")
+
+    agreement_by_id = {}
+    for agreement in tenure["agreements"]:
+        agreement_id = agreement.get("agreement_id")
+        property_id = agreement.get("property_id")
+        landlord_id = agreement.get("landlord_organisation_id")
+        manager_id = agreement.get("managing_organisation_id")
+        tenant_id = agreement.get("tenant_business_id")
+        operator_id = agreement.get("operator_business_id")
+        establishment_id = agreement.get("establishment_id")
+        establishment = establishment_by_id.get(establishment_id)
+        if not agreement_id or agreement_id in agreement_by_id:
+            raise ValueError("agreement identities must be present and unique")
+        if property_id not in property_ids or landlord_id not in organisation_ids:
+            raise ValueError(f"landlord role for {agreement_id} does not resolve to an organisation/property")
+        if landlord_id != owner_by_property[property_id]:
+            raise ValueError(f"landlord role for {agreement_id} does not match the current title owner")
+        if manager_id not in organisation_ids or manager_id != managers_by_property[property_id]:
+            raise ValueError(f"manager role for {agreement_id} does not match the current appointment")
+        if tenant_id not in business_by_id or operator_id not in business_by_id:
+            raise ValueError(f"tenant/operator role for {agreement_id} does not resolve to a business")
+        if establishment is None or establishment.get("business_id") != tenant_id:
+            raise ValueError(f"tenant role for {agreement_id} does not own its establishment")
+        if establishment.get("property_id") != property_id or establishment.get("unit_id") != agreement.get("unit_id"):
+            raise ValueError(f"agreement {agreement_id} does not match its establishment location")
+        agreement_by_id[agreement_id] = agreement
+
+    occupancy_by_agreement = {}
+    for occupancy in tenure["occupancies"]:
+        agreement_id = occupancy.get("agreement_id")
+        agreement = agreement_by_id.get(agreement_id)
+        occupant_id = occupancy.get("occupant_business_id")
+        if agreement is None or occupant_id not in business_by_id:
+            raise ValueError("occupant/agreement role does not resolve to canonical business records")
+        if agreement_id in occupancy_by_agreement:
+            raise ValueError(f"multiple current occupancy projections for agreement {agreement_id}")
+        if occupant_id != agreement.get("tenant_business_id"):
+            raise ValueError(f"occupant role for {agreement_id} differs from the contracted tenant")
+        if occupancy.get("unit_id") != agreement.get("unit_id"):
+            raise ValueError(f"occupancy for {agreement_id} differs from the contracted unit")
+        if occupancy.get("establishment_id") != agreement.get("establishment_id"):
+            raise ValueError(f"occupancy for {agreement_id} differs from the contracted establishment")
+        if occupancy.get("occupant_type") != "business":
+            raise ValueError("this canonical opening occupancy projection must identify business occupants")
+        if occupancy.get("population_person_ids") != []:
+            raise ValueError("property occupancy must not create or embed population person identities")
+        occupancy_by_agreement[agreement_id] = occupancy
+
+    if set(occupancy_by_agreement) != {
+        agreement["agreement_id"] for agreement in tenure["agreements"]
+        if agreement.get("expiry_year") is None
+    }:
+        raise ValueError("current occupancy projections do not match current agreements")
+
+    return {
+        "valid": True,
+        "properties_checked": len(property_ids),
+        "ownership_interests_checked": len(owner_by_property),
+        "management_appointments_checked": len(managers_by_property),
+        "direct_owner_management_count": direct_owner_management,
+        "third_party_management_count": third_party_management,
+        "agreements_checked": len(agreement_by_id),
+        "occupancies_checked": len(occupancy_by_agreement),
+        "business_identities_checked": len(business_by_id),
+        "organisation_identities_checked": len(organisation_ids),
+        "person_records_created": tenure.get("summary", {}).get("person_records_created", 0),
+    }
