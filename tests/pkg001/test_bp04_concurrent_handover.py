@@ -177,6 +177,133 @@ def _seed_fixture(dsn: str, token: str):
     return prop, unit, businesses, agreements, occupancy
 
 
+def _call_subletting(dsn: str, app_name: str, barrier: Barrier, args: tuple):
+    try:
+        with psycopg.connect(dsn, application_name=app_name, options="-c statement_timeout=60000") as conn:
+            with conn.cursor() as cur:
+                barrier.wait(timeout=15)
+                cur.execute(
+                    """SELECT * FROM sw_property.record_subletting_relationship(
+                       %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    args,
+                )
+                return ("ok", cur.fetchone(), None)
+    except Exception as exc:
+        return ("error", None, str(exc))
+
+
+def test_concurrent_exact_subletting_creation_is_idempotent():
+    dsn = os.environ["DATABASE_URL"]
+    token = uuid.uuid4().hex[:12]
+    prop, unit, businesses, agreements, superior_occupancy = _seed_fixture(dsn, token)
+    sub_occupancy = f"SWCONC-OCC-{token}-SUB"
+    right_id = f"SWCONC-RIGHT-{token}-SUB"
+    relationship_id = f"SWCONC-REL-{token}-SUB"
+    idempotency_key = f"sublet:concurrent:{token}"
+    sub_establishment = f"SWCONC-EST-{token}-2"
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE sw_property.occupancy_agreement SET agreement_type='sublease' WHERE agreement_id=%s",
+                (agreements[1],),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.occupancy(
+                  occupancy_id,property_id,premises_id,unit_id,occupant_business_id,
+                  establishment_id,agreement_id,occupant_type,occupancy_status,
+                  effective_from_year,effective_to_year,source_dataset
+                )
+                SELECT %s,%s,premises_id,unit_id,%s,%s,%s,'business_subtenant',
+                       'occupied',2027,NULL,'bp04_concurrent_subletting_acceptance'
+                FROM sw_property.occupancy_agreement WHERE agreement_id=%s
+                """,
+                (sub_occupancy, prop, businesses[1], sub_establishment, agreements[1], agreements[1]),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.contractual_rights_index(
+                  property_right_id,property_id,premises_id,unit_id,right_type,
+                  holder_business_id,source_agreement_id,commencement_year,right_status,
+                  permitted_use,source_of_truth,new_legal_instrument_created,source_dataset
+                )
+                VALUES (%s,%s,
+                  (SELECT premises_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s),
+                  %s,'subletting',%s,%s,2027,'current','commercial',
+                  'bp04_concurrent_subletting_acceptance',false,
+                  'bp04_concurrent_subletting_acceptance')
+                """,
+                (right_id, prop, agreements[0], unit, businesses[0], agreements[0]),
+            )
+
+    args = (
+        relationship_id, agreements[0], agreements[1], superior_occupancy,
+        sub_occupancy, right_id, 5, 5, "actor:subletting-race",
+        "source:subletting-race", idempotency_key,
+    )
+    blocker = psycopg.connect(
+        dsn, application_name="bp04-subletting-blocker",
+        options="-c statement_timeout=60000",
+    )
+    try:
+        with blocker.cursor() as cur:
+            cur.execute(
+                """
+                SELECT agreement_id FROM sw_property.occupancy_agreement
+                WHERE agreement_id IN (%s,%s) ORDER BY agreement_id FOR UPDATE
+                """,
+                (agreements[0], agreements[1]),
+            )
+            assert len(cur.fetchall()) == 2
+        barrier = Barrier(3)
+        names = ("bp04-subletting-left", "bp04-subletting-right")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            f1 = pool.submit(_call_subletting, dsn, names[0], barrier, args)
+            f2 = pool.submit(_call_subletting, dsn, names[1], barrier, args)
+            barrier.wait(timeout=15)
+            deadline = time.monotonic() + 10
+            waiting = 0
+            while time.monotonic() < deadline:
+                with blocker.cursor() as cur:
+                    cur.execute(
+                        """SELECT wait_event_type,pg_blocking_pids(pid)
+                           FROM pg_stat_activity WHERE application_name IN (%s,%s)""",
+                        names,
+                    )
+                    states = cur.fetchall()
+                waiting = sum(1 for state in states if state[0] == "Lock" and state[1])
+                if waiting == 2:
+                    break
+                time.sleep(0.05)
+            if waiting != 2:
+                raise AssertionError(f"expected two blocked subletting writers, observed {states!r}")
+            blocker.commit()
+            first, second = f1.result(timeout=30), f2.result(timeout=30)
+    finally:
+        if not blocker.closed:
+            blocker.rollback()
+            blocker.close()
+
+    assert first[0] == "ok", first
+    assert second[0] == "ok", second
+    assert first[1] == second[1], (first, second)
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT count(*) FROM sw_property.occupancy_relationship WHERE idempotency_key=%s",
+                (idempotency_key,),
+            )
+            assert cur.fetchone()[0] == 1
+            cur.execute(
+                """SELECT count(*) FROM sw_property.occupancy_agreement_event
+                   WHERE agreement_id=%s AND idempotency_key=%s""",
+                (agreements[0], idempotency_key),
+            )
+            assert cur.fetchone()[0] == 1
+    print("BP04 concurrent subletting exact-replay acceptance passed")
+
+
 def test_competing_and_idempotent_handover_writers_serialize():
     dsn = os.environ["DATABASE_URL"]
     token = uuid.uuid4().hex[:12]
@@ -249,3 +376,4 @@ def test_competing_and_idempotent_handover_writers_serialize():
 
 if __name__ == '__main__':
     test_competing_and_idempotent_handover_writers_serialize()
+    test_concurrent_exact_subletting_creation_is_idempotent()
