@@ -2538,3 +2538,6 @@ The requested remaining work was implemented directly on `main` and passed the c
 - **Organisation/facility/healthcare/transport:** migration 0028 adds facility/service profiles, healthcare capability metadata, BP02 route/stop and BP37 timetable references, fleet/accessibility metadata, dependencies and append-only disruption events.
 
 The complete run also passed the 110-table BP04 schema/archive acceptance, 10k lookup benchmark, all 14 compressed source archives, gameplay lookup and repeat-import storage stability on both PostgreSQL versions. No production Neon writes were made. The five requested workstreams are cleared; the wider BP04 48-criterion audit remains IN_PROGRESS for unrelated outstanding criteria.
+
+
+**BP04 management-role audit — 2026-11-28:** the runtime audit now reports direct-owner and third-party management coverage by generated property unit class. All 15 focused property-tenure tests passed in [workflow 46146300199](https://github.com/Joshuaogri/saltwater/actions/runs/46146300199). This adds role-coverage evidence without changing the canonical tenure archive. AC-C01 remains PARTIAL pending independent landlord/title-holder and occupant/tenant combinations and full database-level cross-register coverage.
