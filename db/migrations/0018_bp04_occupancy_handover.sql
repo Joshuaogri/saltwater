@@ -181,6 +181,15 @@ BEGIN
   END IF;
 
   IF EXISTS (
+    SELECT 1 FROM sw_property.occupancy_relationship AS r
+    WHERE r.relationship_status='active'
+      AND (r.superior_occupancy_id=p_prior_occupancy_id
+           OR r.sub_occupancy_id=p_prior_occupancy_id)
+  ) THEN
+    RAISE EXCEPTION 'active subletting relationship must end before physical handover';
+  END IF;
+
+  IF EXISTS (
     SELECT 1 FROM sw_property.occupancy AS o
     WHERE o.unit_id=p_unit_id AND o.effective_to_year IS NULL
       AND o.occupancy_id<>p_prior_occupancy_id
