@@ -144,7 +144,12 @@ def build_global_name_inventory() -> dict[str, Any]:
     placeholders: list[NameCandidate] = []
     for item in candidates:
         key = normalize_name(item.display_name)
-        if key.isdigit() or key in PLACEHOLDER_WORDS or PLACEHOLDER.fullmatch(key):
+        if (
+            key.isdigit()
+            or key in PLACEHOLDER_WORDS
+            or PLACEHOLDER.fullmatch(key)
+            or (item.domain == "organisation" and re.search(r"\\s+\\d+$", item.display_name))
+        ):
             placeholders.append(item)
         by_key[key].append(item)
 
