@@ -19,6 +19,16 @@ The full [95-table BP04 disposable schema/archive workflow](https://github.com/J
 **Remaining lifecycle scope:** assignment/title-transfer/subletting concurrency stress, complete BP03/BP34/BP35 cross-register integration, broader multi-register rollback and the remaining BP04 acceptance matrix remain open. This writer does not create rent postings, alter population, infer missing execution dates or dispatch BP35 events. All checks used disposable PostgreSQL; no production Neon write or seed was performed. BP04 remains `IN_PROGRESS`.
 
 
+## Main and BP02 migration-ledger verification — read-only Neon check passed (2026-11-28)
+
+The main migration fingerprint now covers only schemas owned by `scripts/migrate.py`; it excludes `sw_geo`, which is governed by the independent BP02 migration runner and its own `sw_geo.bp02_schema_migration` ledger. This prevents valid BP02 geography deployment from being misreported as drift by the main `sw_ops` ledger, while changes to main-runner schemas remain fingerprinted and drift-protected.
+
+The production Neon verification passed in [run 46126034226](https://github.com/Joshuaogri/saltwater/actions/runs/46126034226): main `sw_ops` migration checksums and live schema fingerprint matched, and the independent BP02 `sw_geo` ledger checksums matched their source migrations. Both steps ran with `default_transaction_read_only=on`; no production migration or data write occurred. Added `scripts/migrate_bp02.py --verify` as a read-only ledger verifier, with checksum/pending/unknown-version unit tests.
+
+Disposable database migration validation passed in [run 46126084477](https://github.com/Joshuaogri/saltwater/actions/runs/46126084477), including a regression fixture that creates a separate `sw_geo` schema and verifies it does not alter the main migration fingerprint. The main runner continues to detect drift in its own schemas. Production remains unchanged.
+
+
+
 ## BP03 full integrated opening-world acceptance — passed (2026-11-28)
 
 The integrated [SW-DB-001 disposable world provisioning and capacity proof](https://github.com/Joshuaogri/saltwater/actions/runs/46117963944) completed successfully on `main` at commit `b27c19c03b9cc5f40ab65007a3038558b3d06296`. Both workflow jobs passed: the Python regression job and the disposable PostgreSQL job. All 23 database execution steps completed successfully.
