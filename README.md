@@ -1,3 +1,11 @@
+# Saltwater
+
+## Binding single-player NPC-world rule
+
+Saltwater has exactly one human player: the user, who controls one individual police officer. Every other person is an NPC, including all other officers, commanders, staff, residents, business owners, officials, suspects, witnesses and criminals. There are no other human players or player-controlled factions. NPCs maintain persistent identities, roles, knowledge boundaries, routines and relationships; they make decisions and interact with one another and the world autonomously. The simulation responds to the player's actions while preserving NPC agency and causal continuity. This rule applies across all 44 blueprint divisions.
+
+The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
+
 ## BP04-12 agreement event history and lifecycle transitions — disposable acceptance passed (2026-11-28)
 
 The existing canonical `sw_property.occupancy_agreement` and `sw_property.occupancy` projections are retained. Migration [0013 — append-only agreement event history](db/migrations/0013_bp04_agreement_event_history.sql) adds one immutable event register with effective/recorded ticks, actor/source provenance, explicit evidence class, idempotency keys, linked predecessor/successor references and structured payloads. Its writer serializes changes per agreement, returns the original event for exact replay, rejects conflicting replay and backwards chronology, and validates linked agreements against the same property/unit.
