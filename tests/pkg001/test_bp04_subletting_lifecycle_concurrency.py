@@ -41,12 +41,12 @@ def _prepare_subtenant(dsn, token, prop, unit, business, establishment, agreemen
                   permitted_use,source_of_truth,new_legal_instrument_created,source_dataset,
                   consent_requirement
                 )
-                SELECT %s,%s,premises_id,%s,'subletting',tenant_business_id,%s,2027,
+                SELECT %s,%s,premises_id,%s,'subletting',(SELECT tenant_business_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s),%s,2027,
                        'current','commercial','bp04_subletting_lifecycle_concurrency',
                        false,'bp04_subletting_lifecycle_concurrency','not_required'
                 FROM sw_property.occupancy_agreement WHERE agreement_id=%s
                 """,
-                (f"SWLIFE-RIGHT-{token}", prop, unit, superior_agreement, agreement),
+                (f"SWLIFE-RIGHT-{token}", prop, unit, superior_agreement, superior_agreement, agreement),
             )
 
 
@@ -172,7 +172,7 @@ class SublettingLifecycleConcurrencyTests(unittest.TestCase):
         test_exact_start_replay_interleaved_with_end_is_serialized()
 
     def test_new_start_interleaved_with_prior_end_is_serialized(self):
-        test_new_subletting_start_interleaved_with_prior_relationship_end_is_serialized()
+        test_new_subletting_start_interleaved_with_prior_relationship_end()
 
 
 if __name__ == "__main__":
