@@ -640,6 +640,10 @@ def test_competing_title_transfers_serialize_and_preserve_tenancy():
                 """,
                 (rights, prop, title, ownership, owner),
             )
+            cur.execute(
+                "UPDATE sw_property.occupancy_agreement SET landlord_organisation_id=%s WHERE agreement_id=%s",
+                (owner, agreements[0]),
+            )
 
     common = (prop, owner)
     left = common + (
