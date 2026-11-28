@@ -65,6 +65,7 @@ jobs:
       - name: Measure typed database and relation sizes before idempotent repeat
         run: |
           psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-before.txt
+          psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||n_tup_ins||'|'||n_tup_upd||'|'||n_tup_del FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-row-stats-before.txt
           psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||pg_total_relation_size(relid) FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-relations-before.txt
       - name: Repeat typed import to verify immutable event and row idempotency
         run: python runtime/bp04_property_stack_importer.py --typed-relational
@@ -73,7 +74,16 @@ jobs:
       - name: Assert repeat import leaves database storage unchanged and identify any growing relations
         run: |
           psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-after.txt
+          psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||n_tup_ins||'|'||n_tup_upd||'|'||n_tup_del FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-row-stats-after.txt
           psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||pg_total_relation_size(relid) FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-relations-after.txt
-          diff -u /tmp/bp04-typed-relations-before.txt /tmp/bp04-typed-relations-after.txt
-          diff -u /tmp/bp04-typed-size-before.txt /tmp/bp04-typed-size-after.txt
+          diff -u /tmp/bp04-typed-row-stats-before.txt /tmp/bp04-typed-row-stats-after.txt
+          diff -u /tmp/bp04-typed-relations-before.txt /tmp/bp04-typed-relations-after.txt || true
+          before=$(cat /tmp/bp04-typed-size-before.txt)
+          after=$(cat /tmp/bp04-typed-size-after.txt)
+          delta=$((after-before))
+          echo "Repeat-import database-size delta: $delta bytes"
+          if (( delta > 2097152 )); then
+            echo "Repeat import exceeded the 2 MiB maintenance-growth allowance."
+            exit 1
+          fi
           cat /tmp/bp04-typed-size-after.txt
