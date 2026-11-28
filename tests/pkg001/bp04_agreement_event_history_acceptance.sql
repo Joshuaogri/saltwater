@@ -150,6 +150,15 @@ INSERT INTO sw_property.contractual_rights_index(
  'subletting','SWTEST-BUS-01','SWTEST-AGR-04',2027,'current','commercial',
  'bp04_agreement_lifecycle_acceptance',false,'bp04_agreement_lifecycle_acceptance'
 );
+INSERT INTO sw_property.contractual_rights_index(
+ property_right_id,property_id,premises_id,unit_id,right_type,holder_business_id,
+ source_agreement_id,commencement_year,right_status,permitted_use,source_of_truth,
+ new_legal_instrument_created,source_dataset
+) VALUES (
+ 'SWTEST-RIGHT-LEASE-01','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+ 'contractual_lease_licence_or_concession','SWTEST-BUS-01','SWTEST-AGR-04',2027,'current','commercial',
+ 'bp04_agreement_lifecycle_acceptance',false,'bp04_agreement_lifecycle_acceptance'
+);
 INSERT INTO sw_property.business_unit_link(
  business_unit_link_id,business_id,establishment_id,unit_id,premises_id,
  valid_from_tick,valid_to_tick,occupancy_relationship,occupancy_status,source_dataset
@@ -239,6 +248,16 @@ BEGIN
     RAISE EXCEPTION 'subletting created a second primary business-unit link';
   END IF;
 
+  BEGIN
+    PERFORM * FROM sw_property.assign_occupancy_agreement_tenant(
+      'SWTEST-AGR-04','SWTEST-BUS-01','SWTEST-BUS-02',6,6,
+      'actor:test','source:test:assignment','test:assignment:blocked','gameplay_action'
+    );
+    RAISE EXCEPTION 'assignment proceeded while a subletting relationship was active';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='assignment proceeded while a subletting relationship was active' THEN RAISE; END IF;
+  END;
+
   PERFORM * FROM sw_property.end_subletting_relationship(
     'SWTEST-REL-01',6,6,'actor:test','source:test:sublet-end','test:sublet:end'
   );
@@ -277,6 +296,37 @@ BEGIN
   EXCEPTION WHEN unique_violation THEN
     NULL;
   END;
+
+  PERFORM * FROM sw_property.assign_occupancy_agreement_tenant(
+    'SWTEST-AGR-04','SWTEST-BUS-01','SWTEST-BUS-02',7,7,
+    'actor:test','source:test:assignment','test:assignment:1','gameplay_action'
+  );
+  PERFORM * FROM sw_property.assign_occupancy_agreement_tenant(
+    'SWTEST-AGR-04','SWTEST-BUS-01','SWTEST-BUS-02',7,7,
+    'actor:test','source:test:assignment','test:assignment:1','gameplay_action'
+  );
+  IF (SELECT tenant_business_id FROM sw_property.occupancy_agreement
+      WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-02'
+     OR (SELECT operator_business_id FROM sw_property.occupancy_agreement
+         WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-01' THEN
+    RAISE EXCEPTION 'assignment did not preserve separate operator identity';
+  END IF;
+  IF (SELECT occupant_business_id FROM sw_property.occupancy
+      WHERE occupancy_id='SWTEST-OCC-02')<>'SWTEST-BUS-01'
+     OR (SELECT business_id FROM sw_property.business_unit_link
+         WHERE business_unit_link_id='SWTEST-LINK-PRIMARY')<>'SWTEST-BUS-01' THEN
+    RAISE EXCEPTION 'legal assignment silently changed physical occupancy or primary unit link';
+  END IF;
+  IF (SELECT holder_business_id FROM sw_property.contractual_rights_index
+      WHERE property_right_id='SWTEST-RIGHT-LEASE-01')<>'SWTEST-BUS-02'
+     OR (SELECT right_status FROM sw_property.contractual_rights_index
+         WHERE property_right_id='SWTEST-RIGHT-SUBLET-01')<>'historical_expired' THEN
+    RAISE EXCEPTION 'assignment did not update contractual right holder or expire former tenant subletting permission';
+  END IF;
+  IF (SELECT count(*) FROM sw_property.occupancy_agreement_event
+      WHERE agreement_id='SWTEST-AGR-04' AND idempotency_key='test:assignment:1')<>1 THEN
+    RAISE EXCEPTION 'assignment replay created duplicate events';
+  END IF;
 END
 $bp04$;
 
