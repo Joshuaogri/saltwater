@@ -38,13 +38,17 @@ jobs:
         run: python -m runtime.property_tenure_generator
       - name: Run property tenure regression tests
         run: python -m unittest discover -s tests/pkg001 -p "test_property_tenure_generator.py" -v
-      - name: Persist compact columnar property tenure records on main
+      - name: Compress and persist canonical property tenure archive on main
         run: |
+          gzip -9 -n -c data/property/saltwater-property-tenure-v1.json > data/property/saltwater-property-tenure-v1.json.gz
+          gzip -t data/property/saltwater-property-tenure-v1.json.gz
+          rm data/property/saltwater-property-tenure-v1.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/property/saltwater-property-tenure-v1.json
+          git add data/property/saltwater-property-tenure-v1.json.gz
+          git rm --ignore-unmatch data/property/saltwater-property-tenure-v1.json
           if git diff --cached --quiet; then
-            echo "Property tenure records are unchanged."
+            echo "Compressed property tenure archive is unchanged."
             exit 0
           fi
           git commit -m "Generate Saltwater property ownership and occupancy history"
