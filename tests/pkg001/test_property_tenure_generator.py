@@ -126,6 +126,27 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertGreater(report["direct_owner_management_count"], 0)
         self.assertEqual(report["person_records_created"], 0)
 
+    def test_independent_operator_roles_cover_every_generated_unit_class(self):
+        report = __import__(
+            "runtime.property_tenure_generator", fromlist=["audit_property_tenure_role_separation"]
+        ).audit_property_tenure_role_separation(self.data, self.world, self.registry)
+        agreements = [a for a in self.data["agreements"] if a["expiry_year"] is None]
+        business_by_id = {b["business_id"]: b for b in self.registry["businesses"]}
+        establishment_by_id = {e["establishment_id"]: e for e in self.registry["establishments"]}
+        unit_by_id = {u["unit_id"]: u for u in self.world["units"]}
+        independent_classes = {
+            unit_by_id[establishment_by_id[business_by_id[a["tenant_business_id"]]["primary_establishment_id"]]["unit_id"]]["unit_class"]
+            for a in agreements if a["tenant_business_id"] != a["operator_business_id"]
+        }
+        all_classes = {
+            unit_by_id[establishment_by_id[b["primary_establishment_id"]]["unit_id"]]["unit_class"]
+            for b in self.registry["businesses"]
+        }
+        self.assertEqual(independent_classes, all_classes)
+        self.assertGreater(report["independent_operator_agreement_count"], 0)
+        self.assertGreater(report["same_tenant_operator_agreement_count"], 0)
+        self.assertTrue(all(a["operator_business_id"] in business_by_id for a in agreements))
+
     def test_tenant_cannot_be_resolved_through_organisation_register(self):
         from runtime.property_tenure_generator import audit_property_tenure_role_separation
 
