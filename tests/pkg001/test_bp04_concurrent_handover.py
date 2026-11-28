@@ -195,11 +195,6 @@ def test_competing_and_idempotent_handover_writers_serialize():
 
     winning_row = successes[0][1]
     winning_new_occupancy = winning_row[2]
-    winning_link = winning_row[3]
-    winning_business = next(
-        business for business, agreement in zip(businesses[1:], agreements[1:])
-        if agreement == (left[3] if winning_row[2] == winning_row[2] else right[3])
-    )
     # Resolve the actual winner from the committed new occupancy row.
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
@@ -245,3 +240,7 @@ def test_competing_and_idempotent_handover_writers_serialize():
             assert cur.fetchone()[0] == 1
 
     print("BP04 concurrent handover serialization and idempotency acceptance passed")
+
+
+if __name__ == '__main__':
+    test_competing_and_idempotent_handover_writers_serialize()
