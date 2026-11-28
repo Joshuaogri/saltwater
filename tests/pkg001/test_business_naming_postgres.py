@@ -249,24 +249,11 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                               b.entity_type,b.entity_ref,b.display_name,
                               sw_names.similarity(a.normalized_key,b.normalized_key)
                        FROM bp04_global_name_preflight a
-                       JOIN LATERAL (
-                         SELECT b.entity_type,b.entity_ref,b.display_name,b.normalized_key
-                         FROM bp04_global_name_preflight b
-                         WHERE b.entity_type<>a.entity_type
-                           AND b.normalized_key<>a.normalized_key
-                           AND b.normalized_key OPERATOR(sw_names.%) a.normalized_key
-                         ORDER BY sw_names.similarity(a.normalized_key,b.normalized_key) DESC
-                         LIMIT 1
-                       ) b ON sw_names.similarity(a.normalized_key,b.normalized_key)>0.90
-                       WHERE a.ordinal < (
-                         SELECT min(x.ordinal) FROM bp04_global_name_preflight x
-                         WHERE x.entity_type=b.entity_type
-                           AND x.entity_ref=b.entity_ref
-                           AND x.name_form=(
-                             SELECT y.name_form FROM bp04_global_name_preflight y
-                             WHERE y.ordinal=a.ordinal
-                           )
-                       )
+                       JOIN bp04_global_name_preflight b
+                         ON a.entity_type < b.entity_type
+                        AND b.normalized_key<>a.normalized_key
+                        AND b.normalized_key OPERATOR(sw_names.%) a.normalized_key
+                       WHERE sw_names.similarity(a.normalized_key,b.normalized_key)>0.90
                        ORDER BY 7 DESC LIMIT 20"""
                 )
                 near_conflicts = cur.fetchall()
