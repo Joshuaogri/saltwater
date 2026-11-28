@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import uuid
 from runtime.dataset_io import load_json
 from pathlib import Path
 
@@ -377,13 +378,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "source_basis": "generated_fictional_canon",
         })
         letting_authority_events.append({
-            "letting_authority_event_id": (
-                f"{hashlib.sha256(('SWLAE-' + property_id + '-GRANT').encode()).hexdigest()[:8]}-"
-                f"{hashlib.sha256(('SWLAE-' + property_id + '-GRANT').encode()).hexdigest()[8:12]}-"
-                f"{hashlib.sha256(('SWLAE-' + property_id + '-GRANT').encode()).hexdigest()[12:16]}-"
-                f"{hashlib.sha256(('SWLAE-' + property_id + '-GRANT').encode()).hexdigest()[16:20]}-"
-                f"{hashlib.sha256(('SWLAE-' + property_id + '-GRANT').encode()).hexdigest()[20:32]}"
-            ),
+            "letting_authority_event_id": str(uuid.UUID(
+                hashlib.sha256(("SWLAE-" + property_id + "-GRANT").encode()).hexdigest()[:32]
+            )),
             "letting_authority_id": authority_id,
             "event_type": "authority_granted",
             "effective_year": authority_year,
