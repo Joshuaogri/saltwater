@@ -8,6 +8,7 @@ on:
       - "runtime/property_world_generator.py"
       - "runtime/business_registry_generator.py"
       - "runtime/property_tenure_generator.py"
+      - "runtime/property_security_access_generator.py"
       - "runtime/bp04_global_name_reconciliation.py"
       - "tests/pkg001/test_bp04_global_name_reconciliation.py"
       - "tests/pkg001/test_property_tenure_generator.py"
