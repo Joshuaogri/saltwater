@@ -58,7 +58,7 @@ INSERT INTO sw_property.facility_service_event(
 ) VALUES (
  'SWF-BUS-SERVICE','service_disrupted',10,10,'npc:transit-operations',
  'generated:transit-disruption','swf:transit:disruption:01',
- '{"reason":"NPC operational disruption","service_impact":"reduced_frequency"}'::jsonb
+ '{"reason":"NPC operational disruption","service_impact":"reduced_frequency","availability_status":"limited","temporary_closure":false}'::jsonb
 );
 
 DO $bp04$
