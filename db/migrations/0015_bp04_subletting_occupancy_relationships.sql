@@ -24,6 +24,7 @@ CREATE TABLE sw_property.occupancy_relationship (
   subtenant_business_id text NOT NULL REFERENCES sw_property.business(business_id)
     DEFERRABLE INITIALLY DEFERRED,
   effective_from_tick bigint NOT NULL CHECK (effective_from_tick>=0),
+  recorded_tick bigint NOT NULL CHECK (recorded_tick>=0),
   effective_to_tick bigint,
   relationship_status text NOT NULL DEFAULT 'active'
     CHECK (relationship_status IN ('active','ended')),
@@ -53,12 +54,12 @@ BEGIN
   IF ROW(NEW.relationship_id,NEW.property_id,NEW.unit_id,NEW.superior_agreement_id,
          NEW.sub_agreement_id,NEW.superior_occupancy_id,NEW.sub_occupancy_id,
          NEW.subletting_right_id,NEW.granting_business_id,NEW.subtenant_business_id,
-         NEW.effective_from_tick,NEW.actor_ref,NEW.source_ref,NEW.idempotency_key,NEW.created_at)
+         NEW.effective_from_tick,NEW.recorded_tick,NEW.actor_ref,NEW.source_ref,NEW.idempotency_key,NEW.created_at)
      IS DISTINCT FROM
      ROW(OLD.relationship_id,OLD.property_id,OLD.unit_id,OLD.superior_agreement_id,
          OLD.sub_agreement_id,OLD.superior_occupancy_id,OLD.sub_occupancy_id,
          OLD.subletting_right_id,OLD.granting_business_id,OLD.subtenant_business_id,
-         OLD.effective_from_tick,OLD.actor_ref,OLD.source_ref,OLD.idempotency_key,OLD.created_at)
+         OLD.effective_from_tick,OLD.recorded_tick,OLD.actor_ref,OLD.source_ref,OLD.idempotency_key,OLD.created_at)
      OR OLD.relationship_status<>'active'
      OR NEW.relationship_status<>'ended'
      OR NEW.effective_to_tick IS NULL
@@ -115,6 +116,7 @@ BEGIN
        OR v_prior.sub_occupancy_id<>p_sub_occupancy_id
        OR v_prior.subletting_right_id<>p_subletting_right_id
        OR v_prior.effective_from_tick<>p_effective_tick
+       OR v_prior.recorded_tick<>p_recorded_tick
        OR v_prior.actor_ref<>p_actor_ref OR v_prior.source_ref<>p_source_ref THEN
       RAISE EXCEPTION 'subletting relationship idempotency key conflicts with prior definition';
     END IF;
@@ -167,7 +169,8 @@ BEGIN
      OR v_superior_occupancy.effective_to_year IS NOT NULL THEN
     RAISE EXCEPTION 'superior occupancy must be current and match the superior tenant';
   END IF;
-  IF v_sub_occupancy.agreement_id<>p_sub_agreement_id
+  IF v_sub_occupancy.occupancy_id IS NULL
+     OR v_sub_occupancy.agreement_id<>p_sub_agreement_id
      OR v_sub_occupancy.unit_id<>v_sub.unit_id
      OR v_sub_occupancy.occupant_business_id<>v_sub.tenant_business_id
      OR v_sub_occupancy.occupant_type<>'business_subtenant'
@@ -191,7 +194,7 @@ BEGIN
     p_relationship_id,v_superior.property_id,v_superior.unit_id,
     p_superior_agreement_id,p_sub_agreement_id,p_superior_occupancy_id,
     p_sub_occupancy_id,p_subletting_right_id,v_superior.tenant_business_id,
-    v_sub.tenant_business_id,p_effective_tick,p_actor_ref,p_source_ref,p_idempotency_key
+    v_sub.tenant_business_id,p_effective_tick,p_recorded_tick,p_actor_ref,p_source_ref,p_idempotency_key
   );
 
   PERFORM sw_property.append_occupancy_agreement_event(
@@ -231,8 +234,17 @@ BEGIN
   IF NOT FOUND THEN RAISE EXCEPTION 'occupancy relationship not found'; END IF;
 
   IF v_relationship.relationship_status='ended' THEN
+    SELECT * INTO v_prior_event
+    FROM sw_property.occupancy_agreement_event
+    WHERE agreement_id=v_relationship.superior_agreement_id
+      AND idempotency_key=p_idempotency_key;
     IF v_relationship.end_idempotency_key<>p_idempotency_key
-       OR v_relationship.effective_to_tick<>p_effective_tick THEN
+       OR v_relationship.effective_to_tick<>p_effective_tick
+       OR NOT FOUND
+       OR v_prior_event.event_type<>'subletting_ended'
+       OR v_prior_event.recorded_tick<>p_recorded_tick
+       OR v_prior_event.actor_ref<>p_actor_ref
+       OR v_prior_event.source_ref<>p_source_ref THEN
       RAISE EXCEPTION 'subletting end conflicts with prior terminal event';
     END IF;
     RETURN QUERY SELECT v_relationship.relationship_id,'ended'::text;
