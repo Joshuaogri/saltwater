@@ -200,6 +200,54 @@ INSERT INTO sw_property.business_unit_link(
  'SWTEST-LINK-PRIMARY','SWTEST-BUS-01','SWTEST-EST-01','SWTEST-UNIT-01','SWTEST-PREM-01',
  0,NULL,'primary_tenant','occupied','bp04_agreement_lifecycle_acceptance'
 );
+INSERT INTO sw_property.premises(
+ premises_id,property_id,display_name,premises_use,lifecycle_status,source_dataset
+) VALUES (
+ 'SWTEST-PREM-02','SWTEST-PROP-01','Test Handover Premises','commercial','active',
+ 'bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.unit_space(
+ unit_id,property_id,premises_id,display_name,unit_class,use_class,lifecycle_status,source_dataset
+) VALUES (
+ 'SWTEST-UNIT-02','SWTEST-PROP-01','SWTEST-PREM-02','Test Handover Unit',
+ 'commercial','commercial','active','bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.establishment(
+ establishment_id,business_id,property_id,premises_id,unit_id,display_name,
+ establishment_type,status,source_dataset
+) VALUES
+ ('SWTEST-EST-03','SWTEST-BUS-01','SWTEST-PROP-01','SWTEST-PREM-02','SWTEST-UNIT-02',
+  'Handover Outgoing Establishment','primary','active','bp04_agreement_lifecycle_acceptance'),
+ ('SWTEST-EST-04','SWTEST-BUS-02','SWTEST-PROP-01','SWTEST-PREM-02','SWTEST-UNIT-02',
+  'Handover Incoming Establishment','primary','active','bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.occupancy_agreement(
+ agreement_id,property_id,premises_id,unit_id,landlord_organisation_id,
+ tenant_business_id,operator_business_id,establishment_id,agreement_type,
+ commencement_year,agreement_status,source_dataset
+) VALUES
+ ('SWTEST-AGR-06','SWTEST-PROP-01','SWTEST-PREM-02','SWTEST-UNIT-02','SWTEST-ORG-OWNER',
+  'SWTEST-BUS-01','SWTEST-BUS-01','SWTEST-EST-03','commercial_occupancy_lease',
+  2027,'active','bp04_agreement_lifecycle_acceptance'),
+ ('SWTEST-AGR-07','SWTEST-PROP-01','SWTEST-PREM-02','SWTEST-UNIT-02','SWTEST-ORG-OWNER',
+  'SWTEST-BUS-02','SWTEST-BUS-02','SWTEST-EST-04','commercial_occupancy_lease',
+  2028,'active','bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.occupancy(
+ occupancy_id,property_id,premises_id,unit_id,occupant_business_id,
+ establishment_id,agreement_id,occupant_type,occupancy_status,
+ effective_from_year,effective_to_year,source_dataset
+) VALUES (
+ 'SWTEST-OCC-04','SWTEST-PROP-01','SWTEST-PREM-02','SWTEST-UNIT-02',
+ 'SWTEST-BUS-01','SWTEST-EST-03','SWTEST-AGR-06','business','occupied',
+ 2027,NULL,'bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.business_unit_link(
+ business_unit_link_id,business_id,establishment_id,unit_id,premises_id,
+ valid_from_tick,valid_to_tick,occupancy_relationship,occupancy_status,source_dataset
+) VALUES (
+ 'SWTEST-LINK-HANDOVER-OLD','SWTEST-BUS-01','SWTEST-EST-03','SWTEST-UNIT-02','SWTEST-PREM-02',
+ 0,NULL,'primary_occupant','occupied','bp04_agreement_lifecycle_acceptance'
+);
+
 
 DO $bp04$
 DECLARE
@@ -209,6 +257,10 @@ DECLARE
   v_relationship text;
   v_transfer_event text;
   v_transfer_replay text;
+  v_handover_event uuid;
+  v_handover_replay uuid;
+  v_handover_occupancy text;
+  v_handover_link text;
 BEGIN
   SELECT t.agreement_event_id INTO v_first
   FROM sw_property.transition_occupancy_agreement(
@@ -432,6 +484,53 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='property lifecycle event update was accepted' THEN RAISE; END IF;
   END;
+
+  -- The first unit still has a current subtenant occupancy. Exclusive handover
+  -- must fail closed until that separate physical occupancy is explicitly ended.
+  BEGIN
+    PERFORM * FROM sw_property.handover_business_occupancy(
+      'SWTEST-PROP-01','SWTEST-UNIT-01','SWTEST-OCC-02','SWTEST-AGR-04',
+      'SWTEST-BUS-02',2028,9,9,'actor:test','source:test:handover',
+      'test:handover:blocked-shared','gameplay_action'
+    );
+    RAISE EXCEPTION 'exclusive handover proceeded while a second occupant remained current';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='exclusive handover proceeded while a second occupant remained current' THEN RAISE; END IF;
+  END;
+
+  SELECT h.handover_event_id,h.new_occupancy_id,h.new_business_unit_link_id
+  INTO v_handover_event,v_handover_occupancy,v_handover_link
+  FROM sw_property.handover_business_occupancy(
+    'SWTEST-PROP-01','SWTEST-UNIT-02','SWTEST-OCC-04','SWTEST-AGR-07',
+    'SWTEST-BUS-02',2028,9,9,'actor:test','source:test:handover',
+    'test:handover:1','gameplay_action'
+  ) h;
+  SELECT h.handover_event_id INTO v_handover_replay
+  FROM sw_property.handover_business_occupancy(
+    'SWTEST-PROP-01','SWTEST-UNIT-02','SWTEST-OCC-04','SWTEST-AGR-07',
+    'SWTEST-BUS-02',2028,9,9,'actor:test','source:test:handover',
+    'test:handover:1','gameplay_action'
+  ) h;
+  IF v_handover_event<>v_handover_replay THEN
+    RAISE EXCEPTION 'occupancy handover replay did not return original event';
+  END IF;
+  IF (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-04')<>'vacated'
+     OR (SELECT effective_to_year FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-04')<>2028
+     OR (SELECT occupant_business_id FROM sw_property.occupancy WHERE occupancy_id=v_handover_occupancy)<>'SWTEST-BUS-02'
+     OR (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id=v_handover_occupancy)<>'occupied'
+     OR (SELECT business_id FROM sw_property.business_unit_link WHERE business_unit_link_id=v_handover_link)<>'SWTEST-BUS-02'
+     OR (SELECT valid_to_tick FROM sw_property.business_unit_link WHERE business_unit_link_id='SWTEST-LINK-HANDOVER-OLD')<>9
+     OR (SELECT valid_to_tick FROM sw_property.business_unit_link WHERE business_unit_link_id=v_handover_link) IS NOT NULL THEN
+    RAISE EXCEPTION 'explicit occupancy handover did not close old and create new occupancy/link';
+  END IF;
+  IF (SELECT tenant_business_id FROM sw_property.occupancy_agreement WHERE agreement_id='SWTEST-AGR-06')<>'SWTEST-BUS-01'
+     OR (SELECT tenant_business_id FROM sw_property.occupancy_agreement WHERE agreement_id='SWTEST-AGR-07')<>'SWTEST-BUS-02'
+     OR (SELECT count(*) FROM sw_property.business_unit_link
+         WHERE unit_id='SWTEST-UNIT-02' AND valid_to_tick IS NULL)<>1
+     OR (SELECT count(*) FROM sw_property.occupancy_handover_event
+         WHERE handover_event_id=v_handover_event)<>1 THEN
+    RAISE EXCEPTION 'physical handover changed legal agreements or left duplicate primary links';
+  END IF;
 END
 $bp04$;
 
