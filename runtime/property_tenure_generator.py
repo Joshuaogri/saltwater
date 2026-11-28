@@ -164,6 +164,18 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         candidate_unit_class = units[candidate_establishment["unit_id"]]["unit_class"]
         first_tenant_by_unit_class.setdefault(candidate_unit_class, candidate_id)
     independent_operator_tenants = set(first_tenant_by_unit_class.values())
+    # Guarantee an independent head-lessee landlord in every generated unit
+    # class wherever the title chronology permits a current head lease.
+    eligible_landlord_by_unit_class = {}
+    for candidate_id in business_ids:
+        candidate_establishment = establishments[businesses[candidate_id]["primary_establishment_id"]]
+        candidate_unit = units[candidate_establishment["unit_id"]]
+        candidate_property_id = candidate_unit["property_id"]
+        candidate_start = _number(candidate_id+"-lease-start", 2016, 2026)
+        candidate_owner_year = _number(candidate_property_id + "-owner-current-year", 2012, 2026)
+        if candidate_start >= candidate_owner_year:
+            eligible_landlord_by_unit_class.setdefault(candidate_unit["unit_class"], candidate_id)
+    independent_landlord_tenants = set(eligible_landlord_by_unit_class.values())
     for sequence, business_id in enumerate(business_ids, 1):
         business = businesses[business_id]
         establishment = establishments[business["primary_establishment_id"]]
@@ -189,8 +201,11 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         }.get(sector, "commercial_occupancy_lease")
         current_owner_year = _number(property_id + "-owner-current-year", 2012, 2026)
         use_head_lease = (
-            _number(property_id + "-independent-landlord", 1, 5) == 1
-            and start_year >= current_owner_year
+            start_year >= current_owner_year
+            and (
+                business_id in independent_landlord_tenants
+                or _number(property_id + "-independent-landlord", 1, 5) == 1
+            )
         )
         if use_head_lease:
             head_lessee_id = head_lessee_by_property.get(property_id)
@@ -576,11 +591,36 @@ def audit_property_tenure_role_separation(
     authority_by_id = {
         row.get("letting_authority_id"): row for row in tenure["letting_authorities"]
     }
-    authority_event_ids = {
-        row.get("letting_authority_id")
-        for row in tenure["letting_authority_events"]
-        if row.get("event_type") == "authority_granted"
-    }
+    if len(authority_by_id) != len(tenure["letting_authorities"]) or None in authority_by_id:
+        raise ValueError("letting authority identities must be present and unique")
+    organisation_by_id = {row["organisation_id"]: row for row in tenure["organisations"]}
+    grant_events_by_authority = {}
+    event_ids, idempotency_keys = set(), set()
+    for event in tenure["letting_authority_events"]:
+        event_id = event.get("letting_authority_event_id")
+        key = event.get("idempotency_key")
+        authority_id = event.get("letting_authority_id")
+        if not event_id or event_id in event_ids or not key or key in idempotency_keys:
+            raise ValueError("letting authority event identities and idempotency keys must be unique")
+        event_ids.add(event_id)
+        idempotency_keys.add(key)
+        if authority_id not in authority_by_id:
+            raise ValueError("letting authority event does not resolve to an authority")
+        if event.get("event_type") == "authority_granted":
+            grant_events_by_authority.setdefault(authority_id, []).append(event)
+    for authority_id, authority in authority_by_id.items():
+        if (
+            authority.get("property_id") not in property_ids
+            or authority.get("grantor_organisation_id") not in organisation_by_id
+            or authority.get("grantee_organisation_id") not in organisation_by_id
+            or authority.get("grantor_organisation_id") == authority.get("grantee_organisation_id")
+            or authority.get("grantor_organisation_id") != owner_by_property[authority["property_id"]]
+            or len(grant_events_by_authority.get(authority_id, [])) != 1
+        ):
+            raise ValueError(f"letting authority {authority_id} does not have a unique valid title-holder grant")
+        grant = grant_events_by_authority[authority_id][0]
+        if grant.get("effective_year") != authority.get("effective_from_year"):
+            raise ValueError(f"letting authority {authority_id} grant event does not match its effective date")
     agreement_by_id = {}
     for agreement in tenure["agreements"]:
         agreement_id = agreement.get("agreement_id")
@@ -603,9 +643,11 @@ def audit_property_tenure_role_separation(
                 or authority.get("property_id") != property_id
                 or authority.get("grantor_organisation_id") != owner_by_property[property_id]
                 or authority.get("grantee_organisation_id") != landlord_id
+                or authority.get("grantor_organisation_id") == authority.get("grantee_organisation_id")
+                or (authority.get("unit_id") is not None and authority.get("unit_id") != agreement.get("unit_id"))
                 or agreement.get("commencement_year", 0) < authority.get("effective_from_year", 99999)
                 or (authority.get("effective_to_year") is not None and agreement.get("commencement_year", 99999) > authority["effective_to_year"])
-                or authority_id not in authority_event_ids
+                or len(grant_events_by_authority.get(authority_id, [])) != 1
             ):
                 raise ValueError(f"non-owner landlord role for {agreement_id} lacks matching title-holder letting authority")
         elif authority_id is not None:
@@ -662,6 +704,16 @@ def audit_property_tenure_role_separation(
             agreement.get("letting_authority_id") is not None
             for agreement in agreement_by_id.values()
         ),
+        "independent_landlord_role_coverage_by_unit_class": {
+            unit_class: {
+                "agreement_count": sum(
+                    agreement.get("letting_authority_id") is not None
+                    and unit_by_id[agreement["unit_id"]]["unit_class"] == unit_class
+                    for agreement in agreement_by_id.values()
+                )
+            }
+            for unit_class in sorted({unit["unit_class"] for unit in property_world.get("units", [])})
+        },
         "occupancies_checked": len(occupancy_by_agreement),
         "business_identities_checked": len(business_by_id),
         "organisation_identities_checked": len(organisation_ids),
