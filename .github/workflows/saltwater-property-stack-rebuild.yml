@@ -4,7 +4,12 @@ on:
     branches: [main]
     paths:
       - "runtime/property_stack_rebuild.py"
+      - "runtime/organisation_naming.py"
+      - "runtime/property_world_generator.py"
+      - "runtime/business_registry_generator.py"
       - "runtime/property_tenure_generator.py"
+      - "runtime/bp04_global_name_reconciliation.py"
+      - "tests/pkg001/test_bp04_global_name_reconciliation.py"
       - "tests/pkg001/test_property_tenure_generator.py"
       - "runtime/property_development_control_generator.py"
       - "runtime/property_lifecycle_transactions_generator.py"
@@ -77,6 +82,8 @@ jobs:
             sha256sum "$dataset.gz"
             rm "$dataset"
           done
+      - name: Run global SW-UNS cross-domain BP04 acceptance
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp04_global_name_reconciliation.py" -v
       - name: Persist one consistent property stack snapshot on main
         run: |
           git config user.name "github-actions[bot]"
