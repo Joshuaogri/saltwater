@@ -34,6 +34,10 @@ jobs:
           python-version: "3.12"
       - name: Install deterministic geometry dependency
         run: python -m pip install "shapely==2.1.2"
+      - name: Restore compressed property and tenure source datasets
+        run: |
+          gzip -dc data/property/saltwater-property-world-v1.json.gz > data/property/saltwater-property-world-v1.json
+          gzip -dc data/property/saltwater-property-tenure-v1.json.gz > data/property/saltwater-property-tenure-v1.json
       - name: Generate building systems and utilities
         run: python -m runtime.building_services_generator
       - name: Run building systems and utilities regression tests
