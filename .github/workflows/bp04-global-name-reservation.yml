@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - "data/business/saltwater-business-registry-v1.json.gz"
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json.gz"
       - "data/property/saltwater-building-services-v1.json.gz"
@@ -23,7 +24,7 @@ jobs:
   reserve:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 45
     services:
       postgres:
         image: postgres:16
@@ -72,5 +73,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0035_bp03_household_membership.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0030_bp04_business_text_id_naming.sql
           psql -v ON_ERROR_STOP=1 -f db/proposals/0040_bp04_global_text_id_name_reservations.sql
+      - name: Persist all 20,000 business public names in the shared namespace
+        run: python -m unittest tests.pkg001.test_business_naming_postgres -v
       - name: Persist and verify every named BP04 property and organisation entity
         run: python -m unittest discover -s tests/pkg001 -p "test_bp04_global_name_reservation.py" -v
