@@ -187,6 +187,115 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
         self.assertEqual(report["brand_records_not_counted_as_businesses"], 1)
         self.assertEqual(report["alias_records_not_counted_as_businesses"], 1)
 
+    def test_distinct_businesses_can_share_building_without_sharing_units(self):
+        registry = copy.deepcopy(self.registry)
+        used_units = {row["unit_id"] for row in registry["establishments"]}
+        existing_by_building = {}
+        for row in registry["establishments"]:
+            existing_by_building.setdefault(row["building_id"], row)
+
+        unit_table = self.property_world_document["tables"]["units"]
+        unit_columns = {name: index for index, name in enumerate(unit_table["columns"])}
+        address_table = self.property_world_document["tables"]["addresses"]
+        address_columns = {name: index for index, name in enumerate(address_table["columns"])}
+        addresses = {
+            row[address_columns["address_id"]]: (
+                row[address_columns["district_id"]],
+                row[address_columns["neighbourhood_id"]],
+            )
+            for row in address_table["rows"]
+        }
+        shared_unit = None
+        shared_existing = None
+        for values in unit_table["rows"]:
+            unit_id = values[unit_columns["unit_id"]]
+            building_id = values[unit_columns["building_id"]]
+            unit_class = values[unit_columns["unit_class"]]
+            if unit_id in used_units or building_id not in existing_by_building:
+                continue
+            if unit_class in {"dwelling", "residential"}:
+                continue
+            address_id = values[unit_columns["address_id"]]
+            if address_id not in addresses:
+                continue
+            district_id, neighbourhood_id = addresses[address_id]
+            shared_unit = {
+                "unit_id": unit_id,
+                "property_id": values[unit_columns["property_id"]],
+                "building_id": building_id,
+                "premises_id": values[unit_columns["premises_id"]],
+                "address_id": address_id,
+                "district_id": district_id,
+                "neighbourhood_id": neighbourhood_id,
+            }
+            shared_existing = existing_by_building[building_id]
+            break
+        self.assertIsNotNone(shared_unit, "a second unused non-residential unit in an occupied building is required")
+
+        template_business = registry["businesses"][0]
+        new_business = copy.deepcopy(template_business)
+        new_business.update({
+            "business_id": "SWBIZ-99999999",
+            "registered_name": "Quillstone Meridian Holdings Limited",
+            "trading_name": "Quillstone Meridian",
+            "registered_address_id": shared_unit["address_id"],
+            "primary_establishment_id": "SWEST-99999999",
+            "status": "active",
+            "source_generator": registry["generator"],
+            "registered_city": "Saltwater",
+            "fictional_entity": True,
+            "person_records_created": 0,
+        })
+
+        template_establishment = next(
+            row for row in registry["establishments"]
+            if row["establishment_id"] == template_business["primary_establishment_id"]
+        )
+        new_establishment = copy.deepcopy(template_establishment)
+        new_establishment.update({
+            "establishment_id": "SWEST-99999999",
+            "business_id": new_business["business_id"],
+            **shared_unit,
+            "status": "active",
+            "source_generator": registry["generator"],
+        })
+
+        template_link = next(
+            row for row in registry["business_unit_links"]
+            if row["establishment_id"] == template_establishment["establishment_id"]
+        )
+        new_link = copy.deepcopy(template_link)
+        new_link.update({
+            "business_unit_link_id": "SWBUL-99999999",
+            "business_id": new_business["business_id"],
+            "establishment_id": new_establishment["establishment_id"],
+            "unit_id": shared_unit["unit_id"],
+            "premises_id": shared_unit["premises_id"],
+            "occupancy_status": "occupied",
+        })
+
+        registry["businesses"].append(new_business)
+        registry["establishments"].append(new_establishment)
+        registry["business_unit_links"].append(new_link)
+        summary = registry["summary"]
+        summary["distinct_business_count"] += 1
+        summary["establishment_count"] += 1
+        summary["business_unit_link_count"] += 1
+        summary["active_businesses"] += 1
+        summary["businesses_by_sector"][new_business["sector"]] += 1
+
+        report = audit_business_registry(
+            registry,
+            property_world_document=self.property_world_document,
+            geography=self.geography,
+        )
+        self.assertEqual(report["business_count"], 10001)
+        self.assertEqual(report["distinct_business_ids"], 10001)
+        self.assertEqual(report["spatial_lineage"]["establishments_checked"], 10001)
+        self.assertEqual(new_establishment["building_id"], shared_existing["building_id"])
+        self.assertNotEqual(new_establishment["unit_id"], shared_existing["unit_id"])
+        self.assertNotEqual(new_establishment["business_id"], shared_existing["business_id"])
+
     def test_branch_primary_establishment_must_belong_to_same_business(self):
         registry = copy.deepcopy(self.registry)
         registry["businesses"][0]["primary_establishment_id"] = (
