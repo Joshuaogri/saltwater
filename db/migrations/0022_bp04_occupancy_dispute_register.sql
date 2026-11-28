@@ -242,10 +242,10 @@ BEGIN
   IF p_occupancy_relationship_id IS NOT NULL THEN
     SELECT rel.* INTO v_relationship FROM sw_property.occupancy_relationship AS rel
     WHERE rel.relationship_id=p_occupancy_relationship_id;
-    IF NOT FOUND OR rel.property_id<>v_occupancy.property_id
-       OR rel.unit_id<>v_occupancy.unit_id
-       OR (rel.superior_occupancy_id<>p_occupancy_id
-           AND rel.sub_occupancy_id<>p_occupancy_id) THEN
+    IF NOT FOUND OR v_relationship.property_id<>v_occupancy.property_id
+       OR v_relationship.unit_id<>v_occupancy.unit_id
+       OR (v_relationship.superior_occupancy_id<>p_occupancy_id
+           AND v_relationship.sub_occupancy_id<>p_occupancy_id) THEN
       RAISE EXCEPTION 'disputed subletting relationship must include the target occupancy';
     END IF;
   END IF;
