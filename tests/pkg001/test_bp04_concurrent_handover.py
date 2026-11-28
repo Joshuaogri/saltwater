@@ -558,7 +558,7 @@ def _call_title_transfer(dsn: str, app_name: str, barrier: Barrier, args: tuple)
                 barrier.wait(timeout=15)
                 cur.execute(
                     """SELECT * FROM sw_property.transfer_property_ownership(
-                       %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                       %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                     args,
                 )
                 return ("ok", cur.fetchone(), None)
