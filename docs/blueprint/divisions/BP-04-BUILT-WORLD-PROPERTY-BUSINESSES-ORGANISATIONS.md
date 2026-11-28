@@ -831,3 +831,16 @@ The shared registry defines the typed adapter contract for business, organisatio
 **Verification status:** `NOT_STARTED`.
 
 No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document.
+
+
+## 2026-11-28 approved NPC integration implementation decisions
+
+The playable simulation has one human player; all other people, businesses, organisations, landlords, tenants, operators, occupiers, employees, service providers and counterparties are fictional NPCs. NPC decisions are represented as in-world authority/consent records with actor, source and effective/recorded time. They do not require a human-player approval gate. This rule applies to the following accepted implementation scope:
+
+1. Subletting starts, ends and exact replays serialize on the physical unit; two-session PostgreSQL 16/18 acceptance covers the interleavings.
+2. Third-party occupancy supports business, organisation and BP03-person identities, explicit use types and append-only lifecycle events. Owner/landlord, tenant, operator and occupant are separate role references.
+3. BP03 owns canonical person identity and population counting; BP33 owns NPC employment records; BP04 stores validated staff-role links to those records. One person may hold multiple jobs without duplicate population counting.
+4. BP34 owns rent schedules, charges, payment transactions, allocations and derived balances. BP04 stores only external finance references; rent arrears or settlement never directly changes agreement or physical occupancy status.
+5. BP04 facility/service profiles link organisation operators, healthcare capability/referral metadata, BP02 route/stop references, BP37 timetable references, fleet/accessibility metadata, utility dependencies and append-only disruption events. Clinical records remain outside BP04.
+
+Implementation migrations 0025–0032 and the complete [110-table disposable PostgreSQL 16/18 acceptance workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed on both versions, including archive import, gameplay lookup, player find/inspect, performance benchmark and repeat-import stability. These five requested workstreams are approved and cleared. This addendum does not declare the entire BP04 division complete; the remaining 48-criterion audit is authoritative for outstanding work.
