@@ -2483,3 +2483,8 @@ Migration `0018_bp04_occupancy_handover.sql` adds an append-only handover event 
 The 95-table BP04 schema/archive workflow [46125032346](https://github.com/Joshuaogri/saltwater/actions/runs/46125032346) passed on PostgreSQL 16 and 18. Its agreement-event acceptance exercised blocked and successful handover, prior/new occupancy and link state, legal-agreement separation and exact replay. The workflow also passed archive-only import and repeat-import storage stability. Migration checksum/schema validation [46125032349](https://github.com/Joshuaogri/saltwater/actions/runs/46125032349) passed. These are disposable database results only; no production Neon migration or data write occurred.
 
 BP04 remains in progress. Broader cross-register and concurrent-writer acceptance, business registry reconciliation, global adopted-name inventory, query performance budgets and other outstanding criteria remain open.
+
+
+## BP04 subletting lifecycle concurrency
+
+Added migration `0025_bp04_subletting_end_start_serialization.sql` and real two-session start/end interleaving acceptance. The existing 100-table PostgreSQL 16/18 disposable workflow now runs the new tests. CI validation is pending; BP04 remains in progress and no production Neon changes have been made.
