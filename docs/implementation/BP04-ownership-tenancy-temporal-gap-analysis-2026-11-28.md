@@ -58,3 +58,10 @@ Migration 0025 makes subletting termination lock the physical unit before the re
 ## Requested NPC integration batch — cleared
 
 All five requested workstreams are implemented and accepted on disposable PostgreSQL 16 and 18 in [workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466): subletting start/end concurrency; third-party occupancy and independent NPC roles; BP03/BP33 person/employment integration; BP34 rent/payment separation; and organisation/facility/healthcare/transport service interfaces. The complete 110-table schema/archive, lookup, archive import and repeat-import checks also passed. No production Neon write occurred. The wider BP04 48-criterion status remains IN_PROGRESS until the unrelated items above are resolved.
+
+
+## BP02 parcel/address/access release — accepted 2026-11-28
+
+BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write.
+
+This closes the BP04 spatial prerequisite: AC-B01 and AC-B05 are PASS. Do not recreate parcel, address or access-point generation/binding work. Continue with the remaining BP04 criteria in the strict audit.
