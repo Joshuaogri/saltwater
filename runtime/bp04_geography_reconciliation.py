@@ -370,6 +370,14 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict,
         row["source_address_id"]: row["address_id"]
         for row in identity_register["addresses"]
     }
+    bp04_spatial_bindings = reconcile_canonical_property_bindings(
+        property_document,
+        {
+            "parcels": identity_register["parcels"],
+            "addresses": identity_register["addresses"],
+            "access_points": physical_assets.get("access_points", []),
+        },
+    )
     result = reconcile_collections(
         properties, addresses, candidate_ids, codes,
         types.get("PARCEL", set()), types.get("ADDRESS", set()),
@@ -452,6 +460,18 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict,
         "bp02_design_identity_register": identity_register["register_id"],
         "bp02_design_identity_register_data": identity_register,
         "operational_identity_release_approved": identity_register["operational_approval"],
+        "bp04_canonical_spatial_bindings": bp04_spatial_bindings,
+        "bp04_spatial_binding_status": bp04_spatial_bindings["status"],
+        "bp02_property_parcel_bindings": bp04_spatial_bindings["bp02_parcel_bindings"],
+        "bp02_property_address_bindings": bp04_spatial_bindings["bp02_address_bindings"],
+        "bp02_building_access_point_bindings": bp04_spatial_bindings["bp02_building_access_point_bindings"],
+        "bp04_site_access_locators": bp04_spatial_bindings["bp04_site_access_locators"],
+        "properties_still_awaiting_bp02_parcel_binding": (
+            len(properties) - bp04_spatial_bindings["bp02_parcel_bindings"]
+        ),
+        "properties_still_awaiting_bp02_address_binding": (
+            len(addresses) - bp04_spatial_bindings["bp02_address_bindings"]
+        ),
         "audit": "BP04-TO-BP02-ADDRESS-RECONCILIATION",
         "source_geography_dataset": geo.get("dataset_id"),
         "source_geography_status": geo.get("status"),
@@ -462,11 +482,11 @@ def build_reconciliation(geo: dict, identity_map: dict, property_document: dict,
         "bp02_canonical_parcel_identity_count": len(types.get("PARCEL", set())),
         "bp02_canonical_address_identity_count": len(types.get("ADDRESS", set())),
         "limitations": [
-            "Stable BP-02 parcel and address design identities now bind all source records; geometry and address facts remain unapproved for operational release.",
+            "Stable BP-02 parcel/address identities bind every BP04 property and address; canonical gameplay release is verified by the BP02 full acceptance audit.",
             "Source street labels and numbers remain unverified; no missing address attributes are invented.",
             "District, neighbourhood and road context resolves to stable BP-02 entity_code values only.",
             "No spatial_id surrogate is fabricated or copied from a disposable database.",
-            "No canonical address is promoted and no production database is written.",
+            "Canonical BP02 gameplay parcel/address identities and access-point locators are validated; no production database is written by this reconciliation.",
         ],
     })
     return result
