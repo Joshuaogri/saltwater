@@ -2488,3 +2488,8 @@ BP04 remains in progress. Broader cross-register and concurrent-writer acceptanc
 ## BP04 subletting lifecycle concurrency
 
 Added migration `0025_bp04_subletting_end_start_serialization.sql` and real two-session start/end interleaving acceptance. The existing 100-table PostgreSQL 16/18 disposable workflow now runs the new tests. CI validation is pending; BP04 remains in progress and no production Neon changes have been made.
+
+
+## BP04 subletting lifecycle concurrency — 2026-11-28
+
+Migration `0025_bp04_subletting_end_start_serialization.sql` makes subletting termination acquire the physical-unit lock before the relationship row, matching the start writer's lock order. New two-session acceptance covers exact start replay racing an end and a new subletting start racing the prior relationship's end. The disposable PostgreSQL 16/18 workflow now includes these tests. CI validation is pending; no pass is claimed. BP04 remains in progress. No production Neon write was made.
