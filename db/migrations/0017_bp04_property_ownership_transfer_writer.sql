@@ -4,6 +4,7 @@ BEGIN;
 
 ALTER TABLE sw_property.property_lifecycle_event
   ADD COLUMN recorded_tick bigint CHECK (recorded_tick IS NULL OR recorded_tick>=0),
+  ADD COLUMN recorded_year integer CHECK (recorded_year IS NULL OR recorded_year>=1),
   ADD COLUMN actor_ref text,
   ADD COLUMN source_ref text,
   ADD COLUMN idempotency_key text,
@@ -147,13 +148,13 @@ BEGIN
   INSERT INTO sw_property.property_lifecycle_event(
     lifecycle_event_id,property_id,event_type,effective_year,effective_tick,
     event_status,title_register_id,source_record_id,historical_date_known,
-    financial_transaction_created,narrative,source_dataset,recorded_tick,
+    financial_transaction_created,narrative,source_dataset,recorded_tick,recorded_year,
     actor_ref,source_ref,idempotency_key,evidence_class,event_payload
   ) VALUES (
     v_event_id,p_property_id,'ownership_transferred',p_effective_year,p_effective_tick,
     'recorded',v_title.title_register_id,p_source_ref,true,false,
     'Property title transferred; occupancy agreements and physical occupancy remain separate',
-    'BP04-GAMEPLAY-PROPERTY-OWNERSHIP-TRANSFER',p_recorded_tick,
+    'BP04-GAMEPLAY-PROPERTY-OWNERSHIP-TRANSFER',p_recorded_tick,p_recorded_year,
     p_actor_ref,p_source_ref,p_idempotency_key,p_evidence_class,v_payload
   );
 
