@@ -21,6 +21,7 @@ on:
       - "db/migrations/0017_bp04_property_ownership_transfer_writer.sql"
       - "db/migrations/0018_bp04_occupancy_handover.sql"
       - "db/migrations/0019_bp04_subletting_idempotency_race_fix.sql"
+      - "db/migrations/0020_bp04_subletting_handover_serialization.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/test_bp04_concurrent_handover.py"
       - "tests/pkg001/bp04_business_search_performance.py"
