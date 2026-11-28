@@ -126,6 +126,30 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertGreater(report["direct_owner_management_count"], 0)
         self.assertEqual(report["person_records_created"], 0)
 
+    def test_owner_and_independent_manager_roles_are_audited_by_unit_class(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        report = audit_property_tenure_role_separation(
+            self.data, self.world, self.registry
+        )
+        self.assertGreater(report["direct_owner_management_count"], 0)
+        self.assertGreater(report["third_party_management_count"], 0)
+        self.assertEqual(
+            set(report["management_role_coverage_by_unit_class"]),
+            {unit["unit_class"] for unit in self.world["units"]},
+        )
+        for unit_class, coverage in report["management_role_coverage_by_unit_class"].items():
+            self.assertGreater(coverage["property_count"], 0, unit_class)
+            self.assertGreater(
+                coverage["direct_owner_management_count"] + coverage["third_party_management_count"],
+                0,
+                unit_class,
+            )
+            self.assertEqual(
+                coverage["direct_owner_management_count"] + coverage["third_party_management_count"],
+                coverage["property_count"],
+            )
+
     def test_independent_operator_roles_cover_every_generated_unit_class(self):
         report = __import__(
             "runtime.property_tenure_generator", fromlist=["audit_property_tenure_role_separation"]
