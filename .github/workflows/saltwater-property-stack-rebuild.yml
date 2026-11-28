@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - "runtime/property_stack_rebuild.py"
+      - "runtime/property_tenure_generator.py"
+      - "tests/pkg001/test_property_tenure_generator.py"
       - "runtime/property_development_control_generator.py"
       - "runtime/property_lifecycle_transactions_generator.py"
       - "tests/pkg001/test_property_lifecycle_transactions_generator.py"
