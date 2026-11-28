@@ -27,11 +27,13 @@ on:
       - "db/migrations/0022_bp04_occupancy_dispute_register.sql"
       - "db/migrations/0023_bp04_joint_title_transfer_writer.sql"
       - "db/migrations/0024_bp04_contractual_right_consent_lifecycle.sql"
+      - "db/migrations/0025_bp04_subletting_end_start_serialization.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_ownership_interest_acceptance.sql"
       - "tests/pkg001/bp04_occupancy_dispute_acceptance.sql"
       - "tests/pkg001/bp04_joint_title_transfer_acceptance.sql"
       - "tests/pkg001/test_bp04_concurrent_handover.py"
+      - "tests/pkg001/test_bp04_subletting_lifecycle_concurrency.py"
       - "tests/pkg001/bp04_business_search_performance.py"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
@@ -134,6 +136,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_joint_title_transfer_acceptance.sql
       - name: Verify concurrent occupancy handover serialization and idempotency
         run: python tests/pkg001/test_bp04_concurrent_handover.py
+      - name: Verify subletting start/end interleavings under real concurrent sessions
+        run: python -m unittest tests.pkg001.test_bp04_subletting_lifecycle_concurrency -v
       - name: Benchmark 10k business substring search latency
         run: python tests/pkg001/bp04_business_search_performance.py
       - name: Store all 14 compressed source datasets without typed-row expansion
