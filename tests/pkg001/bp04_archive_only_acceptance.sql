@@ -22,8 +22,8 @@ BEGIN
   IF v_datasets <> 14 OR v_archives <> 14 THEN
     RAISE EXCEPTION 'Expected 14 archived datasets and ledger entries; got %, %', v_archives, v_datasets;
   END IF;
-  IF v_collections <> 105 THEN
-    RAISE EXCEPTION 'Expected 105 source collections; got %', v_collections;
+  IF v_collections <> 106 THEN
+    RAISE EXCEPTION 'Expected 106 source collections; got %', v_collections;
   END IF;
   IF v_loaded <> 0 THEN
     RAISE EXCEPTION 'Archive-only mode must not materialise typed rows; loaded count %', v_loaded;
