@@ -172,14 +172,16 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
                     (batch_id, names),
                 )
                 self.assertEqual(cur.fetchone()[0], len(records))
-                for entity_id, display_name in records:
-                    cur.execute(
-                        """SELECT sw_names.reserve_text_entity_name(
-                             %s,%s,'canonical',%s,
-                             'BP04-global-canon-name-inventory','ci-bp04-global-name',
-                             'BP04 global persistent canonical-name reservation',0,%s)""",
-                        (entity_type, entity_id, display_name, batch_id),
-                    )
+                cur.executemany(
+                    """SELECT sw_names.reserve_text_entity_name(
+                         %s,%s,'canonical',%s,
+                         'BP04-global-canon-name-inventory','ci-bp04-global-name',
+                         'BP04 global persistent canonical-name reservation',0,%s)""",
+                    [
+                        (entity_type, entity_id, display_name, batch_id)
+                        for entity_id, display_name in records
+                    ],
+                )
                 cur.execute(
                     """SELECT count(*) FROM sw_names.name_reservation
                        WHERE entity_type=%s AND generation_batch_id=%s""",
