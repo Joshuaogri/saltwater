@@ -408,13 +408,13 @@ BEGIN
   END;
 
   PERFORM * FROM sw_property.decide_contractual_right_consent(
-    'SWTEST-CONSENT-01','pending','granted',4,5,
+    'SWTEST-CONSENT-01','pending','granted','SWTEST-ORG-OWNER',4,5,
     'npc:property-owner','source:test:consent-granted',
     'test:consent:grant','generated_fictional_canon',
     'NPC property owner grants subletting consent to the named subtenant.'
   );
   PERFORM * FROM sw_property.decide_contractual_right_consent(
-    'SWTEST-CONSENT-01','pending','granted',4,5,
+    'SWTEST-CONSENT-01','pending','granted','SWTEST-ORG-OWNER',4,5,
     'npc:property-owner','source:test:consent-granted',
     'test:consent:grant','generated_fictional_canon',
     'NPC property owner grants subletting consent to the named subtenant.'
@@ -432,7 +432,7 @@ BEGIN
   ) r;
 
   PERFORM * FROM sw_property.decide_contractual_right_consent(
-    'SWTEST-CONSENT-01','granted','revoked',6,6,
+    'SWTEST-CONSENT-01','granted','revoked','SWTEST-ORG-OWNER',6,6,
     'npc:property-owner','source:test:consent-revoked',
     'test:consent:revoke','generated_fictional_canon',
     'NPC property owner revokes future subletting permission.'
