@@ -15,6 +15,7 @@ on:
       - "db/migrations/0011_bp04_property_title_lifecycle.sql"
       - "db/migrations/0012_bp04_property_rights_boundaries.sql"
       - "db/migrations/0013_bp04_agreement_event_history.sql"
+      - "db/migrations/0014_bp04_agreement_lifecycle_transitions.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
@@ -107,7 +108,7 @@ jobs:
           grep -q "Production Neon imports are restricted to --archive-only mode" /tmp/bp04-prod-storage.log
       - name: Verify typed table inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
-      - name: Verify append-only occupancy agreement event history and idempotency
+      - name: Verify agreement event history and lifecycle transition writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_agreement_event_history_acceptance.sql
       - name: Store all 14 compressed source datasets without typed-row expansion
         run: python runtime/bp04_property_stack_importer.py --root . --dsn "$DATABASE_URL" --archive-only
