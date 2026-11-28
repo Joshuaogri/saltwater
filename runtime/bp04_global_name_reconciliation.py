@@ -178,9 +178,9 @@ def build_global_name_inventory() -> dict[str, Any]:
                 ],
             })
 
-    # Existing per-domain suites screen within-domain near duplicates. This pass
-    # focuses on cross-domain near duplicates while excluding multiple names
-    # belonging to the same stable entity.
+    # Business, geography and opening-person suites already screen their own
+    # cohorts. This pass also screens property/building/premises and organisation
+    # names within their domains, as well as every cross-domain combination.
     signatures: list[tuple[frozenset[str], NameCandidate]] = []
     postings: dict[str, dict[int, dict[str, list[int]]]] = defaultdict(
         lambda: defaultdict(lambda: defaultdict(list))
@@ -203,7 +203,9 @@ def build_global_name_inventory() -> dict[str, Any]:
             maximum_size = math.floor(len(trigrams) / 0.90)
             anchor_count = max(1, math.floor(len(trigrams) * 0.10) + 1)
             for prior_domain, domain_index in postings.items():
-                if prior_domain == item.domain:
+                if prior_domain == item.domain and item.domain in {
+                    "geography", "business", "npc_candidate"
+                }:
                     continue
                 prior_sizes = range(minimum_size, maximum_size + 1)
                 frequencies = []
