@@ -858,3 +858,8 @@ The property-tenure generator creates deterministic independent tenant/operator 
 ## 2026-11-28 management-role coverage audit
 
 The property-tenure runtime audit now reports direct-owner versus third-party management appointment coverage for every generated unit class. Regression coverage confirms the class inventory is complete and each property's current management appointment is counted exactly once. The 15-test property ownership/occupancy build passed in [workflow 46146300199](https://github.com/Joshuaogri/saltwater/actions/runs/46146300199). This is additional AC-C01 verification; independent landlord/title-holder and occupant/tenant arrangements plus database-level role combinations remain outstanding.
+
+
+## 2026-11-28 explicit non-owner landlord / head-lessee authority
+
+Migrations 0033–0034 add a property- or unit-scoped letting-authority register with separate grantor and grantee organisations, head-lease/leasehold/concession/contractual letting-right types, effective years, instrument provenance and append-only authority events. An occupancy agreement may identify a non-owner landlord only when the registered proprietor granted a matching authority for that property/unit and commencement period and the grant event is recorded. Revoked and superseded authorities cannot support a new agreement. Direct title-holder landlords remain valid without a separate authority. Disposable PostgreSQL migration, ledger and functional acceptance passed in [workflow 46147360337](https://github.com/Joshuaogri/saltwater/actions/runs/46147360337). The canonical 420-property/10,000-business generated landlord matrix has not yet been expanded; AC-C01 remains PARTIAL.
