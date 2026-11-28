@@ -66,6 +66,7 @@ BEGIN
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref)) NOT BETWEEN 1 AND 200
      OR p_source_ref IS NULL OR length(trim(p_source_ref)) NOT BETWEEN 1 AND 200
      OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$'
+     OR p_evidence_class IS NULL
      OR p_evidence_class NOT IN ('source_documented','generated_fictional_canon','gameplay_action') THEN
     RAISE EXCEPTION 'invalid property ownership transfer request';
   END IF;
@@ -124,10 +125,10 @@ BEGIN
     RAISE EXCEPTION 'current title and ownership-interest owner do not match expected transferor';
   END IF;
 
-  SELECT max(effective_tick),max(recorded_tick)
+  SELECT max(ev.effective_tick),max(ev.recorded_tick)
   INTO v_latest_effective,v_latest_recorded
-  FROM sw_property.property_lifecycle_event
-  WHERE property_id=p_property_id;
+  FROM sw_property.property_lifecycle_event AS ev
+  WHERE ev.property_id=p_property_id;
   IF v_latest_effective IS NOT NULL AND p_effective_tick<v_latest_effective THEN
     RAISE EXCEPTION 'property lifecycle effective tick cannot move backwards';
   END IF;
@@ -203,10 +204,10 @@ BEGIN
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer requires exactly one current property-interest record'; END IF;
 
-  UPDATE sw_property.property_rights_schedule
+  UPDATE sw_property.property_rights_schedule AS prs
   SET registered_owner_organisation_id=p_new_owner_organisation_id
-  WHERE property_id=p_property_id
-    AND registered_owner_organisation_id=p_expected_owner_organisation_id;
+  WHERE prs.property_id=p_property_id
+    AND prs.registered_owner_organisation_id=p_expected_owner_organisation_id;
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer requires exactly one property-rights schedule'; END IF;
 
