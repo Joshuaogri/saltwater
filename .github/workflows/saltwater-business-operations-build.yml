@@ -30,6 +30,8 @@ jobs:
           python-version: "3.12"
       - name: Install deterministic geometry dependency
         run: python -m pip install "shapely==2.1.2"
+      - name: Restore compressed business registry source
+        run: gzip -dc data/business/saltwater-business-registry-v1.json.gz > data/business/saltwater-business-registry-v1.json
       - name: Generate 70,000 weekly business-day records
         run: python -m runtime.business_operations_generator
       - name: Run business operating schedule regression tests
