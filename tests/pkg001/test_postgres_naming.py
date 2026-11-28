@@ -100,6 +100,73 @@ class PostgresNamingAdapterTests(unittest.TestCase):
         self.assertEqual(self.connection.commits, 0)
         self.assertEqual(self.connection.rollbacks, 0)
 
+    def test_bp04_text_entity_reservation_uses_canonical_stable_text_id(self):
+        reservation_id = self.registry.reserve_text_entity(
+            "organisation", "SWORG-000001", "Alderwick Barrow Property Holdings",
+            source_ref="property-tenure-v1", actor_ref="ci-test",
+            reason="organisation naming integration", effective_tick=0,
+            generation_batch_id=8,
+        )
+        self.assertEqual(reservation_id, 71)
+        self.assertIn("sw_names.reserve_text_entity_name", self.connection.value.query)
+        self.assertEqual(
+            self.connection.value.params,
+            (
+                "ORGANISATION", "SWORG-000001",
+                "Alderwick Barrow Property Holdings", "property-tenure-v1",
+                "ci-test", "organisation naming integration", 0, 8,
+            ),
+        )
+        self.assertIn("'canonical'", self.connection.value.query)
+        self.assertEqual(self.connection.commits, 0)
+
+    def test_bp04_text_entity_batch_uses_executemany_without_committing(self):
+        count = self.registry.reserve_text_entity_batch(
+            (
+                ("PROPERTY", "SWPROP-000001", "Alderwick Barrow Property"),
+                ("BUILDING", "SWBLD-000001", "Ashcombe Bramwell Tower"),
+            ),
+            source_ref="property-world-v1", actor_ref="ci-test",
+            reason="text entity batch adapter contract", effective_tick=0,
+            generation_batch_id=9,
+        )
+        self.assertEqual(count, 2)
+        self.assertIn("sw_names.reserve_text_entity_name", self.connection.value.query)
+        self.assertEqual(len(self.connection.value.params), 2)
+        self.assertEqual(self.connection.value.params[0][0], "PROPERTY")
+        self.assertEqual(self.connection.value.params[1][0], "BUILDING")
+        self.assertEqual(self.connection.commits, 0)
+        self.assertEqual(self.connection.rollbacks, 0)
+
+    def test_bp04_text_entity_search_preserves_stable_text_identity(self):
+        self.connection.value.rows = [
+            (72, "ORGANISATION", "SWORG-000001", "canonical",
+             "Alderwick Barrow Property Holdings", "active", False),
+        ]
+        results = self.registry.search_text_entity(
+            "organisation", "Alderwick Barrow Property Holdings"
+        )
+        self.assertEqual(len(results), 1)
+        self.assertIsNone(results[0].entity_id)
+        self.assertEqual(results[0].entity_ref, "SWORG-000001")
+        self.assertEqual(results[0].entity_type, "ORGANISATION")
+        self.assertIn("sw_names.search_text_entity_name", self.connection.value.query)
+
+    def test_bp04_text_entity_reservation_rejects_invalid_type_or_identity(self):
+        with self.assertRaises(ValueError):
+            self.registry.reserve_text_entity(
+                "BUSINESS", "SWBIZ-000001", "Example Name",
+                source_ref="fixture", actor_ref="test", reason="invalid",
+                effective_tick=0,
+            )
+        with self.assertRaises(ValueError):
+            self.registry.reserve_text_entity(
+                "ORGANISATION", "", "Example Name",
+                source_ref="fixture", actor_ref="test", reason="invalid",
+                effective_tick=0,
+            )
+        self.assertIsNone(self.connection.value.query)
+
     def test_business_search_preserves_text_identity(self):
         self.connection.value.rows = [
             (72, "BUSINESS", "SWBIZ-000001", "trading",
