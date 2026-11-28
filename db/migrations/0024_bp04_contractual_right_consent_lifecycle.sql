@@ -50,6 +50,7 @@ CREATE TABLE sw_property.contractual_right_consent (
     'source_documented','generated_fictional_canon','gameplay_action'
   )),
   created_at timestamptz NOT NULL DEFAULT transaction_timestamp(),
+  CHECK (authorised_business_id IS NULL OR authorised_business_id<>requester_business_id),
   CHECK (valid_to_tick IS NULL OR (valid_from_tick IS NOT NULL AND valid_to_tick>valid_from_tick)),
   CHECK (
     (consent_status='pending' AND valid_from_tick IS NULL AND valid_to_tick IS NULL
@@ -251,6 +252,7 @@ CREATE FUNCTION sw_property.decide_contractual_right_consent(
   p_consent_id text,
   p_expected_status text,
   p_resulting_status text,
+  p_decision_authority_organisation_id text,
   p_effective_tick bigint,
   p_recorded_tick bigint,
   p_actor_ref text,
@@ -268,6 +270,7 @@ DECLARE
   v_payload jsonb;
 BEGIN
   IF p_consent_id IS NULL
+     OR p_decision_authority_organisation_id IS NULL
      OR p_expected_status NOT IN ('pending','granted')
      OR p_resulting_status NOT IN ('granted','refused','withdrawn','revoked','expired')
      OR NOT (
@@ -303,7 +306,8 @@ BEGIN
        OR v_prior.recorded_tick<>p_recorded_tick
        OR v_prior.actor_ref<>p_actor_ref OR v_prior.source_ref<>p_source_ref
        OR v_prior.evidence_class<>p_evidence_class
-       OR v_prior.event_payload->>'decision_note' IS DISTINCT FROM p_decision_note THEN
+       OR v_prior.event_payload->>'decision_note' IS DISTINCT FROM p_decision_note
+       OR v_prior.event_payload->>'decision_authority_organisation_id' IS DISTINCT FROM p_decision_authority_organisation_id THEN
       RAISE EXCEPTION 'contractual right consent decision idempotency key conflicts with prior event';
     END IF;
     RETURN QUERY SELECT p_consent_id,p_resulting_status,v_prior.consent_event_id;
@@ -314,16 +318,21 @@ BEGIN
     RAISE EXCEPTION 'contractual right consent status conflict: expected %, found %',
       p_expected_status,v_consent.consent_status;
   END IF;
+  IF v_consent.decision_authority_organisation_id<>p_decision_authority_organisation_id THEN
+    RAISE EXCEPTION 'consent decision must be made by the explicitly named authority organisation';
+  END IF;
   IF p_effective_tick<v_consent.requested_effective_tick
      OR p_recorded_tick<v_consent.requested_recorded_tick THEN
     RAISE EXCEPTION 'consent decision ticks cannot precede the request';
   END IF;
-  IF p_expected_status='granted' AND p_effective_tick<=v_consent.valid_from_tick THEN
+  IF p_expected_status='granted' AND (p_effective_tick<=v_consent.valid_from_tick
+       OR p_recorded_tick<v_consent.decision_recorded_tick) THEN
     RAISE EXCEPTION 'consent revocation/expiry tick must follow its effective grant tick';
   END IF;
 
   v_event_type:='consent_'||p_resulting_status;
   v_payload:=jsonb_build_object('decision_note',p_decision_note,
+    'decision_authority_organisation_id',p_decision_authority_organisation_id,
     'prior_status',p_expected_status,'resulting_status',p_resulting_status);
   INSERT INTO sw_property.contractual_right_consent_event(
     consent_id,event_type,effective_tick,recorded_tick,actor_ref,source_ref,
@@ -366,6 +375,9 @@ BEGIN
          SELECT 1
          FROM sw_property.contractual_right_consent AS c
          WHERE c.property_right_id=NEW.subletting_right_id
+           AND c.property_id=v_right.property_id
+           AND c.unit_id=v_right.unit_id
+           AND c.source_agreement_id=v_right.source_agreement_id
            AND c.consent_type='subletting'
            AND c.requester_business_id=NEW.granting_business_id
            AND c.decision_authority_organisation_id=v_right.consent_authority_organisation_id
@@ -394,7 +406,7 @@ REVOKE ALL ON FUNCTION sw_property.request_contractual_right_consent(
   text,text,text,text,text,text,bigint,bigint,text,text,text,text
 ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_property.decide_contractual_right_consent(
-  text,text,text,bigint,bigint,text,text,text,text,text
+  text,text,text,text,bigint,bigint,text,text,text,text,text
 ) FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_property.enforce_subletting_consent() FROM PUBLIC;
 COMMIT;
