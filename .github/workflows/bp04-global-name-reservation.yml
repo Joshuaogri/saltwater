@@ -8,6 +8,7 @@ on:
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json.gz"
       - "data/property/saltwater-building-services-v1.json.gz"
+      - ".github/workflows/bp04-global-name-reservation.yml"
   workflow_run:
     workflows: ["Saltwater Property Stack Sequential Rebuild"]
     types: [completed]
