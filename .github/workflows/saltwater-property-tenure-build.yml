@@ -30,6 +30,10 @@ jobs:
           python-version: "3.12"
       - name: Install deterministic geometry dependency
         run: python -m pip install "shapely==2.1.2"
+      - name: Restore compressed property and business source datasets
+        run: |
+          gzip -dc data/property/saltwater-property-world-v1.json.gz > data/property/saltwater-property-world-v1.json
+          gzip -dc data/business/saltwater-business-registry-v1.json.gz > data/business/saltwater-business-registry-v1.json
       - name: Generate property ownership and occupancy history
         run: python -m runtime.property_tenure_generator
       - name: Run property tenure regression tests
