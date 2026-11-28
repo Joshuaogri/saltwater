@@ -1,0 +1,36 @@
+name: BP04 business registry audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/bp04_business_registry_audit.py"
+      - "runtime/naming.py"
+      - "runtime/property_tenure_generator.py"
+      - "tests/pkg001/test_bp04_business_registry_audit.py"
+      - "data/business/saltwater-business-registry-v1.json.gz"
+      - ".github/workflows/bp04-business-registry-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bp04-business-registry-audit-main
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install deterministic geometry dependency
+        run: python -m pip install "shapely==2.1.2"
+      - name: Run full 10,000-business registry audit regression suite
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp04_business_registry_audit.py" -v
