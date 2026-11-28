@@ -169,5 +169,37 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             audit_business_registry(registry)
 
 
+    def test_lifecycle_counts_reconcile_to_embedded_registry_summary(self):
+        report = self.audit
+        self.assertEqual(
+            report["lifecycle_count_total"],
+            report["business_count"],
+        )
+        self.assertEqual(
+            report["active_businesses"]
+            + report["seasonal_businesses"]
+            + report["temporarily_inactive_businesses"],
+            10000,
+        )
+
+    def test_lifecycle_summary_drift_fails_closed(self):
+        registry = copy.deepcopy(self.registry)
+        registry["summary"]["active_businesses"] += 1
+        with self.assertRaisesRegex(ValueError, "lifecycle class counts do not match"):
+            audit_business_registry(registry)
+
+    def test_unknown_business_lifecycle_status_fails_closed(self):
+        registry = copy.deepcopy(self.registry)
+        registry["businesses"][0]["status"] = "unknown"
+        with self.assertRaisesRegex(ValueError, "unknown lifecycle status"):
+            audit_business_registry(registry)
+
+    def test_employee_band_must_match_business_size(self):
+        registry = copy.deepcopy(self.registry)
+        registry["businesses"][0]["employee_band"] = "100-499"
+        with self.assertRaisesRegex(ValueError, "employee band inconsistent"):
+            audit_business_registry(registry)
+
+
 if __name__ == "__main__":
     unittest.main()
