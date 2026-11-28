@@ -7,6 +7,10 @@ on:
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json.gz"
       - "data/property/saltwater-building-services-v1.json.gz"
+  workflow_run:
+    workflows: ["Saltwater Property Stack Sequential Rebuild"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -17,6 +21,7 @@ concurrency:
 
 jobs:
   reserve:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
