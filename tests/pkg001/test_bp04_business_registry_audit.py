@@ -16,7 +16,14 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
     def setUpClass(cls):
         with gzip.open(ROOT / "data/business/saltwater-business-registry-v1.json.gz", "rt", encoding="utf-8") as handle:
             cls.registry = _expand_columnar(json.load(handle))
-        cls.audit = audit_business_registry(cls.registry)
+        with gzip.open(ROOT / "data/property/saltwater-property-world-v1.json.gz", "rt", encoding="utf-8") as handle:
+            cls.property_world_document = json.load(handle)
+        cls.geography = json.loads((ROOT / "data/geography/saltwater-geography-v1.json").read_text(encoding="utf-8"))
+        cls.audit = audit_business_registry(
+            cls.registry,
+            property_world_document=cls.property_world_document,
+            geography=cls.geography,
+        )
 
     def test_full_ten_thousand_local_business_population_and_lifecycle_counts(self):
         report = self.audit
@@ -30,6 +37,27 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
         self.assertEqual(sum(report["businesses_by_lifecycle_status"].values()), 10000)
         self.assertEqual(report["person_records_created"], 0)
         self.assertFalse(report["persistent_name_reservations_performed"])
+
+    def test_business_establishments_resolve_through_canonical_property_and_geography(self):
+        lineage = self.audit["spatial_lineage"]
+        self.assertEqual(lineage["businesses_checked"], 10000)
+        self.assertEqual(lineage["establishments_checked"], 10000)
+        self.assertEqual(lineage["exception_count"], 0)
+        self.assertEqual(lineage["validation_status"], "PASS")
+        self.assertGreater(lineage["canonical_units_checked"], 0)
+        self.assertGreater(lineage["districts_referenced"], 0)
+        self.assertGreater(lineage["neighbourhoods_referenced"], 0)
+
+    def test_unknown_address_and_off_map_references_fail_closed(self):
+        registry = copy.deepcopy(self.registry)
+        registry["businesses"][0]["registered_address_id"] = "SWADDR-MISSING"
+        registry["establishments"][0]["address_id"] = "SWADDR-MISSING"
+        with self.assertRaisesRegex(ValueError, "unknown canonical address"):
+            audit_business_registry(
+                registry,
+                property_world_document=self.property_world_document,
+                geography=self.geography,
+            )
 
     def test_duplicate_business_identity_fails_closed(self):
         registry = copy.deepcopy(self.registry)
