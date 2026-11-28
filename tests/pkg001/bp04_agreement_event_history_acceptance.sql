@@ -249,6 +249,19 @@ INSERT INTO sw_property.business_unit_link(
 );
 
 
+CREATE OR REPLACE FUNCTION sw_property.bp04_test_fail_handover_event_insert()
+RETURNS trigger LANGUAGE plpgsql AS $test$
+BEGIN
+  IF NEW.source_ref='source:test:rollback' THEN
+    RAISE EXCEPTION 'injected handover event insert failure';
+  END IF;
+  RETURN NEW;
+END
+$test$;
+CREATE TRIGGER bp04_test_fail_handover_event_insert
+BEFORE INSERT ON sw_property.occupancy_handover_event
+FOR EACH ROW EXECUTE FUNCTION sw_property.bp04_test_fail_handover_event_insert();
+
 DO $bp04$
 DECLARE
   v_first uuid;
@@ -509,6 +522,30 @@ BEGIN
     IF SQLERRM='exclusive handover proceeded while a second occupant remained current' THEN RAISE; END IF;
   END;
 
+  BEGIN
+    PERFORM * FROM sw_property.handover_business_occupancy(
+      'SWTEST-PROP-01','SWTEST-UNIT-02','SWTEST-OCC-04','SWTEST-AGR-07',
+      'SWTEST-BUS-02',2028,9,9,'actor:test','source:test:rollback',
+      'test:handover:rollback','gameplay_action'
+    );
+    RAISE EXCEPTION 'injected handover event failure did not abort the transaction';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='injected handover event failure did not abort the transaction' THEN RAISE; END IF;
+    IF SQLERRM<>'injected handover event insert failure' THEN RAISE; END IF;
+  END;
+  IF (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-04')<>'occupied'
+     OR (SELECT effective_to_year FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-04') IS NOT NULL
+     OR (SELECT valid_to_tick FROM sw_property.business_unit_link
+         WHERE business_unit_link_id='SWTEST-LINK-HANDOVER-OLD') IS NOT NULL
+     OR EXISTS (SELECT 1 FROM sw_property.occupancy
+                WHERE unit_id='SWTEST-UNIT-02'
+                  AND source_dataset='BP04-GAMEPLAY-OCCUPANCY-HANDOVER')
+     OR EXISTS (SELECT 1 FROM sw_property.occupancy_handover_event
+                WHERE property_id='SWTEST-PROP-01'
+                  AND idempotency_key='test:handover:rollback') THEN
+    RAISE EXCEPTION 'failed multi-record occupancy handover left partial state';
+  END IF;
+
   SELECT h.handover_event_id,h.new_occupancy_id,h.new_business_unit_link_id
   INTO v_handover_event,v_handover_occupancy,v_handover_link
   FROM sw_property.handover_business_occupancy(
@@ -552,6 +589,9 @@ BEGIN
   END;
 END
 $bp04$;
+
+DROP TRIGGER bp04_test_fail_handover_event_insert ON sw_property.occupancy_handover_event;
+DROP FUNCTION sw_property.bp04_test_fail_handover_event_insert();
 
 ROLLBACK;
 SELECT 'BP04 agreement event history acceptance passed' AS result;
