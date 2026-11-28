@@ -68,6 +68,35 @@ class PropertyTenureTests(unittest.TestCase):
             for old in history:
                 self.assertLess(old["expiry_year"], current[0]["commencement_year"])
 
+
+    def test_agreement_history_is_append_only_and_execution_dates_remain_unknown(self):
+        d = self.data
+        agreements = {x["agreement_id"]: x for x in d["agreements"]}
+        events = d["agreement_event_history"]
+        self.assertEqual(len(events), d["summary"]["agreement_event_count"])
+        self.assertEqual(len({x["agreement_event_id"] for x in events}), len(events))
+        self.assertEqual({x["agreement_id"] for x in events}, set(agreements))
+        self.assertEqual(d["summary"]["agreement_execution_date_recorded_count"], 0)
+        self.assertEqual(d["summary"]["agreement_execution_date_unknown_count"], len(agreements))
+        self.assertTrue(all(x["execution_date"] is None and x["execution_date_status"] == "not_recorded" for x in events))
+        for agreement in agreements.values():
+            rows = [x for x in events if x["agreement_id"] == agreement["agreement_id"]]
+            self.assertEqual(sum(x["event_type"] == "agreement_baseline_registered" for x in rows), 1)
+            self.assertEqual(sum(x["event_type"] == "agreement_commenced" for x in rows), 1)
+            self.assertEqual(sum(x["event_type"] == "agreement_expired" for x in rows), int(agreement["expiry_year"] is not None))
+
+    def test_expiry_does_not_automatically_evict_or_vacate_current_occupant(self):
+        d = self.data
+        current_by_unit = {x["unit_id"]: x for x in d["occupancies"]}
+        expired = [x for x in d["agreements"] if x["expiry_year"] is not None]
+        self.assertTrue(expired)
+        for old in expired:
+            current = current_by_unit[old["unit_id"]]
+            self.assertNotEqual(current["agreement_id"], old["agreement_id"])
+            self.assertEqual(current["occupant_business_id"], old["tenant_business_id"])
+            self.assertIsNone(current["effective_to_year"])
+            self.assertIn(current["occupancy_status"], {"occupied", "seasonal_occupation", "temporarily_suspended_occupation"})
+
     def test_columnar_output_preserves_counts_and_references(self):
         doc = to_columnar_document(self.data)
         doc["schema"] = "saltwater-property-tenure-columnar/1.0"
