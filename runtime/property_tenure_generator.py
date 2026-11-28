@@ -302,14 +302,11 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
     # replacement for the primary tenant's business occupancy.
     third_party_occupancy_relationships = []
     third_party_occupancy_count = 0
-    for property_id in sorted(properties):
-        property_units = sorted(
-            (unit for unit in units.values() if unit["property_id"] == property_id and unit["unit_id"] in business_by_unit),
-            key=lambda unit: unit["unit_id"],
-        )
-        if not property_units:
-            continue
-        unit = property_units[0]
+    first_occupied_unit_by_property = {}
+    for occupied_unit_id in sorted(business_by_unit):
+        occupied_unit = units[occupied_unit_id]
+        first_occupied_unit_by_property.setdefault(occupied_unit["property_id"], occupied_unit)
+    for property_id, unit in sorted(first_occupied_unit_by_property.items()):
         business_id = business_by_unit[unit["unit_id"]]["business_id"]
         agreement_id = agreement_by_business[business_id]
         manager_id = manager_by_property[property_id]
