@@ -118,6 +118,11 @@ def build_global_name_inventory() -> dict[str, Any]:
         _add(candidates, "organisation", "ORGANISATION", row.get("organisation_id"),
              row.get("display_name"), "canonical", "SW-PROPERTY-TENURE-V1:organisations")
 
+    services_doc = _read_json("data/property/saltwater-building-services-v1.json.gz")
+    for row in _columnar_rows(services_doc, "utility_providers"):
+        _add(candidates, "organisation", "ORGANISATION", row.get("organisation_id"),
+             row.get("display_name"), "canonical", "SW-BUILDING-SERVICES-V1:utility_providers")
+
     civilian = _read_json("data/people/saltwater-opening-civilian-resident-seed-v1.json")
     police = _read_json("data/people/saltwater-opening-police-person-seed-v1.json")
     for dataset, payload, domain in (
