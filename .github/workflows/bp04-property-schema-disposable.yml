@@ -32,6 +32,7 @@ on:
       - "db/migrations/0026_bp04_subletting_replay_end_serialization.sql"
       - "db/migrations/0027_bp04_third_party_staff_finance_interfaces.sql"
       - "db/migrations/0028_bp04_facility_health_transport_profiles.sql"
+      - "db/migrations/0029_bp04_third_party_occupancy_end_writer_fix.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_third_party_cross_domain_acceptance.sql"
       - "tests/pkg001/bp04_facility_health_transport_acceptance.sql"
@@ -131,7 +132,7 @@ jobs:
             exit 1
           fi
           grep -q "Production Neon imports are restricted to --archive-only mode" /tmp/bp04-prod-storage.log
-      - name: Verify 100-table typed inventory and integrity contracts
+      - name: Verify 110-table typed inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Verify agreement event history and lifecycle transition writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_agreement_event_history_acceptance.sql
