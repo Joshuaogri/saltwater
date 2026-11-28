@@ -16,8 +16,16 @@ BEGIN
     INTO v_collections, v_source_rows, v_loaded
   FROM sw_property.source_dataset_collection;
   IF v_datasets <> 14 THEN RAISE EXCEPTION 'expected 14 archived source datasets, found %', v_datasets; END IF;
-  IF v_collections <> 105 THEN RAISE EXCEPTION 'expected 105 source collection ledger rows, found %', v_collections; END IF;
-  IF v_source_rows <> 1950923 THEN RAISE EXCEPTION 'expected 1950923 source records, found %', v_source_rows; END IF;
+  IF v_collections <> 107 THEN RAISE EXCEPTION 'expected 107 source collection ledger rows, found %', v_collections; END IF;
+  IF v_source_rows <> 1950939 THEN RAISE EXCEPTION 'expected 1950939 source records, found %', v_source_rows; END IF;
+
+  SELECT count(*) INTO v_count FROM sw_property.letting_authority;
+  IF v_count <> 8 THEN RAISE EXCEPTION 'expected 8 canonical letting authorities, found %', v_count; END IF;
+  SELECT count(*) INTO v_count FROM sw_property.letting_authority_event;
+  IF v_count <> 8 THEN RAISE EXCEPTION 'expected 8 immutable letting authority events, found %', v_count; END IF;
+  SELECT count(*) INTO v_count FROM sw_property.occupancy_agreement
+  WHERE letting_authority_id IS NOT NULL;
+  IF v_count <> 1821 THEN RAISE EXCEPTION 'expected 1821 current non-owner landlord agreements, found %', v_count; END IF;
 
   SELECT mapping_status, loaded_record_count INTO v_status, v_count
   FROM sw_property.source_dataset_collection
