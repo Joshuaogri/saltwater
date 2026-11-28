@@ -1,0 +1,67 @@
+name: BP04 global canonical name reservations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "data/property/saltwater-property-tenure-v1.json.gz"
+      - "data/property/saltwater-building-services-v1.json.gz"
+      - ".github/workflows/bp04-global-name-reservation.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bp04-global-name-reservation-main
+  cancel-in-progress: true
+
+jobs:
+  reserve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: saltwater_test
+          POSTGRES_PASSWORD: test-only
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: saltwater_test
+      PGPASSWORD: test-only
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install PostgreSQL driver
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Apply SW-NAM and BP04 proposals to disposable PostgreSQL only
+        run: |
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0001_foundation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0003_actor_session_authorization.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0004_recruit_entry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0005_player_identity_activation.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0006_bp37_tick_scheduling.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0007_bp35_event_dispatch.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0008_bp39_checkpoint_recovery.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0012_bp04_canonical_property_stack.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0030_bp04_business_text_id_naming.sql
+          psql -v ON_ERROR_STOP=1 -f db/proposals/0040_bp04_global_text_id_name_reservations.sql
+      - name: Persist and verify every named BP04 property and organisation entity
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp04_global_name_reservation.py" -v
