@@ -7,7 +7,7 @@ BEGIN
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
   IF v_count <> 95 THEN
-    RAISE EXCEPTION 'expected 95 BP04 tables including agreement event, subletting and occupancy handover, found %', v_count;
+    RAISE EXCEPTION 'expected 97 BP04 tables including agreement event, subletting, occupancy handover and occupancy disputes, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
