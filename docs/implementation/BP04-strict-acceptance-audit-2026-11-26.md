@@ -7,6 +7,12 @@
 **Latest relevant CI:** Business registry build and its 9 regression tests [45840815853](https://github.com/Joshuaogri/saltwater/actions/runs/45840815853) passed; migration validation [45840815670](https://github.com/Joshuaogri/saltwater/actions/runs/45840815670) passed; PKG-001 disposable PostgreSQL [45840815690](https://github.com/Joshuaogri/saltwater/actions/runs/45840815690) passed both Python and PostgreSQL jobs. BP04 integration [45834691417](https://github.com/Joshuaogri/saltwater/actions/runs/45834691417) and earlier PKG-001 [45837315742](https://github.com/Joshuaogri/saltwater/actions/runs/45837315742) passed. These runs validate specific slices, not all 48 BP04 criteria.  
 **Production archive:** [45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) passed archive-only source deployment. Production storage was measured separately.
 
+## 2026-11-28 agreement-event follow-up
+
+Migration 0013 (`db/migrations/0013_bp04_agreement_event_history.sql`) adds an append-only event register to the existing agreement schema. The dedicated acceptance passed on PostgreSQL 16 and 18, and the complete BP04 disposable schema/archive workflow passed in [run 46122929619](https://github.com/Joshuaogri/saltwater/actions/runs/46122929619). The migration runner and atomic rollback test passed in [run 46122991558](https://github.com/Joshuaogri/saltwater/actions/runs/46122991558). The benchmark now verifies 93 disposable `sw_property` base tables.
+
+This evidence upgrades AC-C06 from NOT VERIFIED to PARTIAL and strengthens AC-C03 without claiming full lifecycle completion. The append writer records events only; it intentionally does not update agreement or occupancy projections. No production Neon migration/write was performed. BP04 remains NOT COMPLETE.
+
 ## Status meanings
 
 - **PASS** — direct implementation and repeatable test/evidence support the full criterion.
@@ -44,10 +50,10 @@
 |---|---|---|
 | AC-C01 — owner, manager, landlord, tenant, operator and occupant remain distinct | PARTIAL | Separate source entities and agreement roles exist; a complete adversarial role-separation acceptance matrix is not linked. |
 | AC-C02 — multiple, disputed and time-bounded interests supported | NOT VERIFIED | Source registers exist, but no full lifecycle and dispute test report demonstrates all cases. |
-| AC-C03 — lease/licence dates, renewals, expiry and termination preserve history | PARTIAL | Agreement and lifecycle registers exist; 1,232 agreements were inventoried, but no execution dates were recorded and lifecycle event history is incomplete. |
+| AC-C03 — lease/licence dates, renewals, expiry and termination preserve history | PARTIAL | Migration 0013 adds an append-only agreement event register with evidence class, actor/source provenance, effective/recorded ticks, linked predecessor/successor references, exact idempotent replay and immutable history; disposable PostgreSQL 16/18 acceptance passed. This is event intake only: the complete transition writer and projection updates for renewal, variation, expiry, termination, assignment and surrender remain incomplete. Historic source execution dates remain unrecorded unless evidenced. |
 | AC-C04 — subletting and third-party occupancy require explicit records | NOT VERIFIED | No dedicated positive/negative subletting and third-party occupancy acceptance is linked. |
 | AC-C05 — agreement existence, rent payment and physical occupancy are not conflated | NOT VERIFIED | No end-to-end test proves separation across BP04 and BP34 payment/occupancy facts. |
-| AC-C06 — expired agreement with continued occupancy is representable | NOT VERIFIED | No specific temporal conflict test/evidence is linked. |
+| AC-C06 — expired agreement with continued occupancy is representable | PARTIAL | The generated tenure regression now verifies that expired historical agreements do not automatically vacate or evict a continuing current occupant, and that the successor agreement remains linked to the same tenant. The disposable agreement-event ledger acceptance separately verifies immutable event recording. A full live relational transition/occupancy projection test remains outstanding. |
 | AC-C07 — property transfer preserves continuing tenancy and prior ownership | NOT VERIFIED | No transfer-with-continuing-tenancy history test is linked. |
 
 ## D. Organisation and facility operations
