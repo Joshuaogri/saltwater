@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: bp04-typed-import-main
+  cancel-in-progress: true
+
 jobs:
   typed-import:
     name: typed-import (PostgreSQL ${{ matrix.postgres }})
