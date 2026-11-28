@@ -333,6 +333,31 @@ BEGIN
     RAISE EXCEPTION 'renewal replay created duplicate events';
   END IF;
 
+  -- A revoked right must not authorise a new subletting relationship.
+  UPDATE sw_property.contractual_rights_index
+  SET right_status='revoked'
+  WHERE property_right_id='SWTEST-RIGHT-SUBLET-01';
+  BEGIN
+    PERFORM * FROM sw_property.record_subletting_relationship(
+      'SWTEST-REL-REVOKED','SWTEST-AGR-04','SWTEST-AGR-05',
+      'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
+      5,5,'actor:test','source:test:revoked-right','test:sublet:revoked'
+    );
+    RAISE EXCEPTION 'subletting with a revoked right was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='subletting with a revoked right was accepted' THEN RAISE; END IF;
+  END;
+  IF EXISTS (
+    SELECT 1 FROM sw_property.occupancy_relationship
+    WHERE relationship_id='SWTEST-REL-REVOKED'
+  ) OR (SELECT occupancy_status FROM sw_property.occupancy
+        WHERE occupancy_id='SWTEST-OCC-03')<>'occupied' THEN
+    RAISE EXCEPTION 'revoked right created a subletting relationship or changed physical occupancy';
+  END IF;
+  UPDATE sw_property.contractual_rights_index
+  SET right_status='current'
+  WHERE property_right_id='SWTEST-RIGHT-SUBLET-01';
+
   SELECT r.relationship_id INTO v_relationship
   FROM sw_property.record_subletting_relationship(
     'SWTEST-REL-01','SWTEST-AGR-04','SWTEST-AGR-05',
