@@ -5,15 +5,19 @@ from __future__ import annotations
 import gzip
 import json
 import statistics
+import sys
 import time
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+
 from runtime.bp04_lookup import BP04Lookup, SEARCH_FIELDS, _normalise
 
 
-ROOT = Path(__file__).resolve().parents[2]
 ARCHIVES = {
     "SW-PROPERTY-WORLD-V1": ROOT / "data/property/saltwater-property-world-v1.json.gz",
     "SW-BUSINESS-REGISTRY-V1": ROOT / "data/business/saltwater-business-registry-v1.json.gz",
