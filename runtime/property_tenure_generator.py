@@ -150,6 +150,8 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         business_by_unit[link["unit_id"]] = link
 
     agreements, occupancies, unit_states = [], [], []
+    letting_authorities, letting_authority_events = [], []
+    head_lessee_organisations, head_lessee_by_property = [], {}
     agreement_by_business = {}
     business_ids = sorted(businesses)
     business_position = {business_id: index for index, business_id in enumerate(business_ids)}
@@ -184,6 +186,27 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "food_hospitality": "commercial_trading_lease",
             "creative_entertainment": "venue_or_studio_lease",
         }.get(sector, "commercial_occupancy_lease")
+        current_owner_year = _number(property_id + "-owner-current-year", 2012, 2026)
+        use_head_lease = (
+            _number(property_id + "-independent-landlord", 1, 5) == 1
+            and start_year >= current_owner_year
+        )
+        if use_head_lease:
+            head_lessee_id = head_lessee_by_property.get(property_id)
+            if head_lessee_id is None:
+                head_lessee_id = f"SWORG-HL-{_slug(property_id)}"
+                head_lessee_by_property[property_id] = head_lessee_id
+                head_lessee_organisations.append({
+                    "organisation_id": head_lessee_id,
+                    "display_name": f"{_pick(['Atlantic','Meridian','Crown','Harbour','Westgate','Northbank'], property_id+'-head-lessee-name')} Head Lease Holdings {_number(property_id+'-head-lessee-suffix', 1, 99):02d}",
+                    "organisation_type": "head_lessee_property_operator",
+                    "registered_city": "Saltwater",
+                    "status": "active",
+                    "fictional_entity": True,
+                })
+            landlord_id = head_lessee_id
+        else:
+            landlord_id = interest["owner_organisation_id"]
         agreements.append({
             "agreement_id": agreement_id,
             "agreement_type": agreement_type,
@@ -191,7 +214,8 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "building_id": unit["building_id"],
             "premises_id": unit["premises_id"],
             "unit_id": unit_id,
-            "landlord_organisation_id": interest["owner_organisation_id"],
+            "landlord_organisation_id": landlord_id,
+            "letting_authority_id": f"SWLA-{_slug(property_id)}" if use_head_lease else None,
             "tenant_business_id": business_id,
             "operator_business_id": operator_business_id,
             "establishment_id": establishment["establishment_id"],
@@ -334,7 +358,38 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
                 "financial_transaction_created": False,
             })
 
-    all_organisations = list(owners.values()) + managers
+    for property_id, head_lessee_id in sorted(head_lessee_by_property.items()):
+        owner_id = current_interests[property_id]["owner_organisation_id"]
+        authority_id = f"SWLA-{_slug(property_id)}"
+        authority_year = _number(property_id + "-owner-current-year", 2012, 2026)
+        instrument_ref = f"SW-INSTR-{_slug(property_id)}-HEADLEASE"
+        letting_authorities.append({
+            "letting_authority_id": authority_id,
+            "property_id": property_id,
+            "unit_id": None,
+            "grantor_organisation_id": owner_id,
+            "grantee_organisation_id": head_lessee_id,
+            "authority_type": "head_lease",
+            "authority_status": "current",
+            "effective_from_year": authority_year,
+            "effective_to_year": None,
+            "source_instrument_ref": instrument_ref,
+            "source_basis": "generated_fictional_canon",
+        })
+        letting_authority_events.append({
+            "letting_authority_event_id": f"SWLAE-{_slug(property_id)}-GRANT",
+            "letting_authority_id": authority_id,
+            "event_type": "authority_granted",
+            "effective_year": authority_year,
+            "recorded_tick": 0,
+            "actor_ref": owner_id,
+            "source_ref": instrument_ref,
+            "idempotency_key": f"SWLAE-{_slug(property_id)}-GRANT",
+            "evidence_class": "generated_fictional_canon",
+            "event_payload": {"authority_type": "head_lease", "fictional_canon": True},
+        })
+
+    all_organisations = list(owners.values()) + managers + head_lessee_organisations
     body = {
         "schema": "saltwater-property-tenure/1.0",
         "dataset_id": "SW-PROPERTY-TENURE-V1",
@@ -350,6 +405,13 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "historical_owner_organisation_count": len(historical_owners),
             "property_management_appointment_count": len(management_appointments),
             "property_manager_organisation_count": len(managers),
+            "independent_head_lessee_property_count": len(head_lessee_by_property),
+            "letting_authority_count": len(letting_authorities),
+            "letting_authority_event_count": len(letting_authority_events),
+            "current_non_owner_landlord_agreement_count": sum(
+                agreement["letting_authority_id"] is not None
+                for agreement in agreements if agreement["expiry_year"] is None
+            ),
             "current_lease_or_concession_count": len(businesses),
             "historical_expired_agreement_count": len(agreements) - len(businesses),
             "agreement_event_count": len(agreement_event_history),
@@ -365,6 +427,8 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         "current_ownership_interests": list(current_interests.values()),
         "ownership_events": ownership_events,
         "management_appointments": management_appointments,
+        "letting_authorities": letting_authorities,
+        "letting_authority_events": letting_authority_events,
         "agreements": agreements,
         "agreement_event_history": agreement_event_history,
         "occupancies": occupancies,
@@ -377,7 +441,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         },
         "gameplay": {
             "ownership": "Chronological acquisition and transfer events resolve to the current property ownership interest.",
-            "tenancy": "Each registered business establishment has a current lease, licence or operating concession linked to its unit and landlord. Agreement history is append-only; execution dates remain explicitly unrecorded unless evidenced.",
+            "tenancy": "Each registered business establishment has a current lease, licence or operating concession linked to its unit and landlord. A non-owner landlord resolves through a property-scoped authority granted by the current title holder. Agreement history is append-only; execution dates remain explicitly unrecorded unless evidenced.",
             "occupancy": "Business occupancy is explicit; residential units remain unallocated until the separate population-allocation process.",
             "population": "No person records, residents, tenants-as-persons, employees or police personnel are created.",
             "finance_boundary": "Rent bands and contract terms are references only; rent postings, balances and accounting remain BP-34.",
