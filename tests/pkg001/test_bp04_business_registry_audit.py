@@ -103,16 +103,43 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             row for row in registry["establishments"]
             if row["establishment_id"] == business["primary_establishment_id"]
         )
+        used_units = {row["unit_id"] for row in registry["establishments"]}
+        unit_table = self.property_world_document["tables"]["units"]
+        unit_columns = {name: index for index, name in enumerate(unit_table["columns"])}
+        address_table = self.property_world_document["tables"]["addresses"]
+        address_columns = {name: index for index, name in enumerate(address_table["columns"])}
+        addresses = {
+            row[address_columns["address_id"]]: (
+                row[address_columns["district_id"]],
+                row[address_columns["neighbourhood_id"]],
+            )
+            for row in address_table["rows"]
+        }
+        branch_unit = None
+        for values in unit_table["rows"]:
+            unit_id = values[unit_columns["unit_id"]]
+            unit_class = values[unit_columns["unit_class"]]
+            if unit_id in used_units or unit_class in {"dwelling", "residential"}:
+                continue
+            address_id = values[unit_columns["address_id"]]
+            district_id, neighbourhood_id = addresses[address_id]
+            branch_unit = {
+                "unit_id": unit_id,
+                "property_id": values[unit_columns["property_id"]],
+                "building_id": values[unit_columns["building_id"]],
+                "premises_id": values[unit_columns["premises_id"]],
+                "address_id": address_id,
+                "district_id": district_id,
+                "neighbourhood_id": neighbourhood_id,
+            }
+            break
+        self.assertIsNotNone(branch_unit, "a valid unused commercial property-world unit is required")
+
         branch = copy.deepcopy(primary)
         branch.update({
             "establishment_id": "SWEST-BRANCH-ANTI-INFLATION-TEST",
-            "address_id": "SWADDR-BRANCH-TEST",
-            "property_id": "SWPROP-BRANCH-TEST",
-            "building_id": "SWBLDG-BRANCH-TEST",
-            "premises_id": "SWPREM-BRANCH-TEST",
-            "unit_id": "SWUNIT-BRANCH-TEST",
-            "district_id": "SWDIST-BRANCH-TEST",
-            "neighbourhood_id": "SWNEIGH-BRANCH-TEST",
+            **branch_unit,
+            "establishment_type": "branch",
         })
         registry["establishments"].append(branch)
         primary_link = next(
@@ -128,13 +155,18 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
         })
         registry["business_unit_links"].append(branch_link)
 
-        report = audit_business_registry(registry)
+        report = audit_business_registry(
+            registry,
+            property_world_document=self.property_world_document,
+            geography=self.geography,
+        )
         self.assertEqual(report["business_count"], 10000)
         self.assertEqual(report["distinct_business_ids"], 10000)
         self.assertEqual(report["establishment_count"], 10001)
         self.assertEqual(report["business_unit_link_count"], 10001)
         self.assertEqual(report["multi_establishment_businesses"], 1)
-        self.assertTrue(report["valid_10k_business_minimum"])
+        self.assertEqual(report["spatial_lineage"]["establishments_checked"], 10001)
+        self.assertEqual(report["spatial_lineage"]["exception_count"], 0)
 
     def test_brand_and_alias_records_never_inflate_business_count(self):
         registry = copy.deepcopy(self.registry)
