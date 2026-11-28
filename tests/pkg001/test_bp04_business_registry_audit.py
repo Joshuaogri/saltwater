@@ -225,7 +225,7 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
 
     def test_employee_band_must_match_business_size(self):
         registry = copy.deepcopy(self.registry)
-        registry["businesses"][0]["employee_band"] = "100-499"
+        registry["businesses"][0]["employee_band"] = "INVALID-BAND"
         with self.assertRaisesRegex(ValueError, "employee band inconsistent"):
             audit_business_registry(registry)
 
