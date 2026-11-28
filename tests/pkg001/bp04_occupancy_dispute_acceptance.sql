@@ -8,52 +8,52 @@ INSERT INTO sw_property.organisation(
   ('SWC22-CLAIMANT','C22 Fictional Claimant','property_holding_company','Saltwater','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.business(
-  business_id,display_name,sector,primary_activity,status,source_dataset,source_record
+  business_id,display_name,sector,primary_activity,status,source_dataset
 ) VALUES
-  ('SWC22-TENANT','C22 Fictional Occupant','retail','shop','active','bp04_occupancy_dispute_acceptance','{}'::jsonb),
-  ('SWC22-OTHER','C22 Other Occupant','retail','shop','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  ('SWC22-TENANT','C22 Fictional Occupant','retail','shop','active','bp04_occupancy_dispute_acceptance'),
+  ('SWC22-OTHER','C22 Other Occupant','retail','shop','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.property_site(
-  property_id,display_name,use_class,lifecycle_status,source_dataset,source_record
-) VALUES ('SWC22-PROPERTY','C22 Dispute Test Property','commercial','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  property_id,display_name,use_class,lifecycle_status,source_dataset
+) VALUES ('SWC22-PROPERTY','C22 Dispute Test Property','commercial','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.building(
-  building_id,property_id,display_name,building_use,lifecycle_status,source_dataset,source_record
-) VALUES ('SWC22-BUILDING','SWC22-PROPERTY','C22 Test Building','retail','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  building_id,property_id,display_name,building_use,lifecycle_status,source_dataset
+) VALUES ('SWC22-BUILDING','SWC22-PROPERTY','C22 Test Building','retail','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.premises(
-  premises_id,property_id,building_id,display_name,premises_use,lifecycle_status,source_dataset,source_record
+  premises_id,property_id,building_id,display_name,premises_use,lifecycle_status,source_dataset
 ) VALUES
-  ('SWC22-PREMISES-A','SWC22-PROPERTY','SWC22-BUILDING','C22 Unit A Premises','retail','active','bp04_occupancy_dispute_acceptance','{}'::jsonb),
-  ('SWC22-PREMISES-B','SWC22-PROPERTY','SWC22-BUILDING','C22 Unit B Premises','retail','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  ('SWC22-PREMISES-A','SWC22-PROPERTY','SWC22-BUILDING','C22 Unit A Premises','retail','active','bp04_occupancy_dispute_acceptance'),
+  ('SWC22-PREMISES-B','SWC22-PROPERTY','SWC22-BUILDING','C22 Unit B Premises','retail','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.unit_space(
-  unit_id,property_id,building_id,premises_id,display_name,unit_class,use_class,lifecycle_status,source_dataset,source_record
+  unit_id,property_id,building_id,premises_id,display_name,unit_class,use_class,lifecycle_status,source_dataset
 ) VALUES
-  ('SWC22-UNIT-A','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-A','C22 Unit A','shop','retail','active','bp04_occupancy_dispute_acceptance','{}'::jsonb),
-  ('SWC22-UNIT-B','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-B','C22 Unit B','shop','retail','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  ('SWC22-UNIT-A','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-A','C22 Unit A','shop','retail','active','bp04_occupancy_dispute_acceptance'),
+  ('SWC22-UNIT-B','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-B','C22 Unit B','shop','retail','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.occupancy_agreement(
   agreement_id,property_id,building_id,premises_id,unit_id,landlord_organisation_id,
   tenant_business_id,agreement_type,commencement_year,expiry_year,agreement_status,
-  source_dataset,source_record
+  source_dataset
 ) VALUES
   ('SWC22-AGREEMENT-A','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-A','SWC22-UNIT-A',
-   'SWC22-LANDLORD','SWC22-TENANT','lease',2027,2030,'active','bp04_occupancy_dispute_acceptance','{}'::jsonb),
+   'SWC22-LANDLORD','SWC22-TENANT','lease',2027,2030,'active','bp04_occupancy_dispute_acceptance'),
   ('SWC22-AGREEMENT-B','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-B','SWC22-UNIT-B',
-   'SWC22-LANDLORD','SWC22-OTHER','lease',2027,2030,'active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+   'SWC22-LANDLORD','SWC22-OTHER','lease',2027,2030,'active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.occupancy(
   occupancy_id,property_id,building_id,premises_id,unit_id,occupant_business_id,
   agreement_id,occupant_type,occupancy_status,effective_from_year,effective_to_year,
-  source_dataset,source_record
+  source_dataset
 ) VALUES
   ('SWC22-OCCUPANCY-A','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-A','SWC22-UNIT-A',
    'SWC22-TENANT','SWC22-AGREEMENT-A','business_tenant','current',2027,NULL,
-   'bp04_occupancy_dispute_acceptance','{}'::jsonb),
+   'bp04_occupancy_dispute_acceptance'),
   ('SWC22-OCCUPANCY-B','SWC22-PROPERTY','SWC22-BUILDING','SWC22-PREMISES-B','SWC22-UNIT-B',
    'SWC22-OTHER','SWC22-AGREEMENT-B','business_tenant','current',2027,NULL,
-   'bp04_occupancy_dispute_acceptance','{}'::jsonb);
+   'bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.contractual_rights_index(
   property_right_id,property_id,building_id,premises_id,unit_id,right_type,
