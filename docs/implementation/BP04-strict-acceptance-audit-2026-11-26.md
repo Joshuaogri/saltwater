@@ -2,8 +2,10 @@
 
 **Decision: NOT COMPLETE.** The former sequence-based naming defect has been remediated; AC-A04 is now PARTIAL pending complete global name reservation. This audit supersedes the premature closure wording in `BP04-completion-record-2026-11-26.md`. It evaluates the current BP-04 draft specification's 48 explicit acceptance criteria (AC-A01 through AC-G07) against evidence available on `main`. A successful workflow, source archive deployment or implemented adapter is not treated as proof of an entire criterion unless the test covers the stated requirement.
 
+**Current criterion-table snapshot (2026-11-28):** 48 criteria — 22 PASS, 18 PARTIAL, 1 BLOCKED, 7 NOT VERIFIED and 0 FAIL. These counts are calculated from the 48 criterion rows below. Older dated progress notes retain the counts that were accurate when those updates were written.
+
 **Specification authority:** `docs/blueprint/divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md` (`DESIGNED`; the eight design decisions are resolved in Section 23; implementation and acceptance continue).  
-**Status register:** `docs/blueprint/DIVISION-SPECIFICATION-REGISTER.md` records BP04 as IMPLEMENTED / TESTED / BLOCKED.  
+**Status register:** `docs/blueprint/DIVISION-SPECIFICATION-REGISTER.md` records BP04 implementation and testing as IN_PROGRESS; verification is not complete.  
 **Latest relevant CI:** BP02 canonical parcel/address/access release and BP04 spatial binding passed in [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735): 420/420 properties and addresses bound, 2,948 operational access points released, 2,984 BP04 access locators effective-dated, zero unresolved address-road-access exceptions. The BP04/PKG disposable integration [run 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed on PostgreSQL 16 and 18. These runs validate specific slices, not all 48 BP04 criteria.  
 **Production archive:** [45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) passed archive-only source deployment. Production storage was measured separately.
 
@@ -259,7 +261,7 @@ The property-world generator and regression passed in [run 46143969167](https://
 
 The user requested direct completion of the remaining NPC integration work without player-approval gates. Migrations 0025–0032 and their acceptance fixtures now cover: subletting end/start concurrency; third-party occupancy and independent NPC party roles; BP03 person/BP33 employment linkage and one-person population counting; BP34 rent schedules, charges, payments, allocations and tenancy separation; and organisation/facility/healthcare/transport service interfaces. The complete [110-table disposable PostgreSQL 16/18 workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed, including archive import, gameplay lookup, player find/inspect, 10k lookup benchmark and repeat-import storage stability. No production Neon write occurred.
 
-**Latest criterion counts:** 18 PASS, 15 PARTIAL, 1 BLOCKED, 14 NOT VERIFIED, 0 FAIL. AC-C04, AC-C05, AC-D01, AC-D06, AC-E01 and AC-E02 are now PASS. BP04 itself remains **NOT COMPLETE** because unrelated criteria remain PARTIAL, BLOCKED or NOT VERIFIED.
+**Criterion counts at the time of this NPC integration batch:** 18 PASS, 15 PARTIAL, 1 BLOCKED, 14 NOT VERIFIED, 0 FAIL. AC-C04, AC-C05, AC-D01, AC-D06, AC-E01 and AC-E02 were recorded as PASS at that stage. This is a historical progress snapshot; use the current 48-row criterion table and the current snapshot at the top of this audit for present status. BP04 remains **NOT COMPLETE**.
 
 
 ## 2026-11-28 deterministic NPC tenant/operator role combinations — passed
