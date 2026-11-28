@@ -12,6 +12,12 @@ from runtime.dataset_io import load_json
 from pathlib import Path
 
 from runtime.property_world_generator import build_property_world, to_columnar_document
+from runtime.naming import normalize_name
+from runtime.naming_inventory import inventory_geography_names
+from runtime.organisation_naming import (
+    organisation_name_reservations,
+    unique_organisation_name,
+)
 
 GENERATOR = "SW-PROPERTY-TENURE-GENERATOR-001"
 
@@ -29,12 +35,14 @@ def _slug(value: str) -> str:
     return "".join(c for c in value.upper() if c.isalnum())[:24]
 
 
-def _manager_model(model: str, property_id: str):
+def _manager_model(model: str, property_id: str, reserved_names: set[str]):
     if model == "direct_owner_management":
         return None
     return {
         "organisation_id": f"SWORG-MGR-{_slug(property_id)}",
-        "display_name": f"{_pick(['Meridian','Harbour','Civic','Northbank','Quayside','Crown'], property_id+'-mgr-name')} Property Management {_number(property_id+'-mgr-suffix', 1, 99):02d}",
+        "display_name": unique_organisation_name(
+            f"SWORG-MGR-{_slug(property_id)}", "property_manager", reserved_names
+        ),
         "organisation_type": "property_management_company",
         "registered_city": "Saltwater",
         "status": "active",
@@ -64,6 +72,22 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
     businesses = {x["business_id"]: x for x in registry["businesses"]}
     establishments = {x["establishment_id"]: x for x in registry["establishments"]}
 
+    organisation_display_names = [x["display_name"] for x in owners.values()]
+    reserved_organisation_names = organisation_name_reservations(organisation_display_names)
+    reserved_organisation_names.update(
+        normalize_name(item.display_name)
+        for item in inventory_geography_names(source).candidates
+    )
+    for business in businesses.values():
+        for field in ("trading_name", "registered_name", "display_name"):
+            if business.get(field):
+                reserved_organisation_names.add(normalize_name(business[field]))
+    for collection in (world["properties"], world["buildings"], world["premises"]):
+        for item in collection:
+            display = item.get("display_name") or item.get("property_name") or item.get("building_name") or item.get("premises_name") or item.get("name")
+            if display:
+                reserved_organisation_names.add(normalize_name(display))
+
     ownership_events, historical_owners = [], []
     management_appointments, managers = [], []
     manager_by_property = {}
@@ -76,7 +100,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             prior_id = f"SWORG-HOWN-{_slug(property_id)}"
             prior = {
                 "organisation_id": prior_id,
-                "display_name": f"{_pick(['Atlantic','Crown','Meridian','Harbour','Civic','Westgate'], property_id+'-prior-name')} Estates {_number(property_id+'-prior-number', 1, 999):03d}",
+                "display_name": unique_organisation_name(
+                    prior_id, "historical_owner", reserved_organisation_names
+                ),
                 "organisation_type": "historical_property_holding_organisation",
                 "registered_city": "Saltwater",
                 "status": "historical",
@@ -126,7 +152,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
                 "is_historical": False,
             })
 
-        manager = _manager_model(interest["management_model"], property_id)
+        manager = _manager_model(
+            interest["management_model"], property_id, reserved_organisation_names
+        )
         if manager:
             managers.append(manager)
             manager_by_property[property_id] = manager["organisation_id"]
@@ -214,7 +242,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
                 head_lessee_by_property[property_id] = head_lessee_id
                 head_lessee_organisations.append({
                     "organisation_id": head_lessee_id,
-                    "display_name": f"{_pick(['Atlantic','Meridian','Crown','Harbour','Westgate','Northbank'], property_id+'-head-lessee-name')} Head Lease Holdings {_number(property_id+'-head-lessee-suffix', 1, 99):02d}",
+                    "display_name": unique_organisation_name(
+                        head_lessee_id, "head_lessee", reserved_organisation_names
+                    ),
                     "organisation_type": "head_lessee_property_operator",
                     "registered_city": "Saltwater",
                     "status": "active",
