@@ -16,6 +16,9 @@ from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import nearest_points
 
 from runtime.physical_asset_inventory_generator import build_asset_inventory
+from runtime.naming import normalize_name
+from runtime.naming_inventory import inventory_geography_names
+from runtime.organisation_naming import unique_organisation_name
 
 GENERATOR = "SW-PROPERTY-WORLD-GENERATOR-001"
 ACTOR = "SW-WORLD-BUILDER-001"
@@ -61,6 +64,15 @@ def _address_number(parcel_id, road_id, counters):
 
 def build_property_world(source: dict) -> dict:
     base = build_asset_inventory(source)
+    reserved_organisation_names = {
+        normalize_name(item.display_name)
+        for item in inventory_geography_names(source).candidates
+    }
+    for collection in (base["properties"], base["buildings"], base["premises"]):
+        for item in collection:
+            display = item.get("display_name") or item.get("name")
+            if display:
+                reserved_organisation_names.add(normalize_name(display))
     roads = {r["id"]: r for r in source["roads"]}
     neighbourhoods = {n["id"]: n for n in source["neighbourhoods"]}
     districts = {d["id"]: d for d in source["districts"]}
@@ -133,7 +145,9 @@ def build_property_world(source: dict) -> dict:
         address_for_property[pid] = address_id
 
         owner_id = f"SWORG-OWN-{_slug(parcel_id)}"
-        owner_name = f"{_pick(['Saltwater Property Holdings','Harbour Estates','Civic Land Trust','Meridian Property Group','Westgate Land Company','Northbank Estates'], parcel_id)} {_num(parcel_id+'-owner', 1, 19):02d}"
+        owner_name = unique_organisation_name(
+            owner_id, "property_owner", reserved_organisation_names
+        )
         owner_organisations.append({
             "organisation_id": owner_id, "display_name": owner_name,
             "organisation_type": "property_holding_organisation",
