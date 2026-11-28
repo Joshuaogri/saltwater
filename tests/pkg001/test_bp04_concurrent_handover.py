@@ -764,7 +764,6 @@ def test_competing_title_transfers_serialize_and_preserve_tenancy():
     # Remove only this disposable concurrency fixture after all assertions pass.
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
-            cur.execute("UPDATE sw_property.occupancy_agreement SET landlord_organisation_id=NULL WHERE agreement_id=%s", (agreements[0],))
             cur.execute("DELETE FROM sw_property.property_transaction_index WHERE property_id=%s", (prop,))
             cur.execute("DELETE FROM sw_property.property_title_instrument WHERE property_id=%s", (prop,))
             cur.execute("ALTER TABLE sw_property.property_lifecycle_event DISABLE TRIGGER property_lifecycle_event_immutable")
@@ -773,6 +772,7 @@ def test_competing_title_transfers_serialize_and_preserve_tenancy():
             cur.execute("DELETE FROM sw_property.property_rights_schedule WHERE property_id=%s", (prop,))
             cur.execute("DELETE FROM sw_property.property_interest_record WHERE property_id=%s", (prop,))
             cur.execute("DELETE FROM sw_property.property_title_register WHERE property_id=%s", (prop,))
+            cur.execute("UPDATE sw_property.occupancy_agreement SET landlord_organisation_id=NULL WHERE agreement_id=%s", (agreements[0],))
             cur.execute("DELETE FROM sw_property.ownership_interest WHERE property_id=%s", (prop,))
             cur.execute(
                 "DELETE FROM sw_property.organisation WHERE organisation_id IN (%s,%s,%s)",
