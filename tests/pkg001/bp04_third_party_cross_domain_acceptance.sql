@@ -126,11 +126,11 @@ BEGIN
 
   BEGIN
     INSERT INTO sw_property.staff_role_link(
-      staff_role_link_id,person_id,employer_business_id,bp33_employment_ref,role_title,
+      staff_role_link_id,person_id,employer_business_id,bp33_employment_ref,
       effective_from_tick,source_ref,actor_ref,evidence_class
     ) VALUES (
       'SWX-STAFF-ROLE',-999999,'SWX-TENANT','SW33-EMPLOYMENT-UNKNOWN',
-      'NPC Service Technician',0,'generated:staff-link','npc:hr',
+      0,'generated:staff-link','npc:hr',
       'generated_fictional_canon'
     );
     RAISE EXCEPTION 'staff role link accepted a person not registered by BP03';
@@ -164,19 +164,35 @@ BEGIN
     v_person_id,false,true,false,'bp04-cross-domain-person-present',
     'npc:hr','NPC employee is physically present in Saltwater'
   );
-  INSERT INTO sw_property.staff_role_link(
-    staff_role_link_id,person_id,employer_business_id,bp33_employment_ref,role_title,
-    effective_from_tick,source_ref,actor_ref,evidence_class
+  INSERT INTO sw_hr.employment(
+    employment_id,person_id,employer_business_id,establishment_id,role_title,
+    employment_status,effective_from_tick,recorded_tick,source_ref,actor_ref,
+    evidence_class,idempotency_key
   ) VALUES (
-    'SWX-STAFF-ROLE-VALID-1',v_person_id,'SWX-TENANT','SW33-EMPLOYMENT-01',
-    'Service Technician',0,'generated:staff-link-01','npc:hr','generated_fictional_canon'
+    'SW33-EMPLOYMENT-01',v_person_id,'SWX-TENANT','SWX-EST-TENANT','Service Technician',
+    'active',0,0,'generated:employment-01','npc:hr','generated_fictional_canon','swx:employment:01'
+  );
+  INSERT INTO sw_hr.employment(
+    employment_id,person_id,employer_organisation_id,role_title,
+    employment_status,effective_from_tick,recorded_tick,source_ref,actor_ref,
+    evidence_class,idempotency_key
+  ) VALUES (
+    'SW33-EMPLOYMENT-02',v_person_id,'SWX-EMPLOYER-ORG','Part-time Coordinator',
+    'active',0,0,'generated:employment-02','npc:hr','generated_fictional_canon','swx:employment:02'
   );
   INSERT INTO sw_property.staff_role_link(
-    staff_role_link_id,person_id,employer_organisation_id,bp33_employment_ref,role_title,
+    staff_role_link_id,person_id,employer_business_id,establishment_id,
+    bp33_employment_ref,effective_from_tick,source_ref,actor_ref,evidence_class
+  ) VALUES (
+    'SWX-STAFF-ROLE-VALID-1',v_person_id,'SWX-TENANT','SWX-EST-TENANT',
+    'SW33-EMPLOYMENT-01',0,'generated:staff-link-01','npc:hr','generated_fictional_canon'
+  );
+  INSERT INTO sw_property.staff_role_link(
+    staff_role_link_id,person_id,employer_organisation_id,bp33_employment_ref,
     effective_from_tick,source_ref,actor_ref,evidence_class
   ) VALUES (
-    'SWX-STAFF-ROLE-VALID-2',v_person_id,'SWX-EMPLOYER-ORG','SW33-EMPLOYMENT-02',
-    'Part-time Coordinator',0,'generated:staff-link-02','npc:hr','generated_fictional_canon'
+    'SWX-STAFF-ROLE-VALID-2',v_person_id,'SWX-EMPLOYER-ORG',
+    'SW33-EMPLOYMENT-02',0,'generated:staff-link-02','npc:hr','generated_fictional_canon'
   );
   INSERT INTO sw_property.occupancy(
     occupancy_id,property_id,premises_id,unit_id,occupant_person_id,agreement_id,
@@ -199,6 +215,16 @@ BEGIN
   );
   SELECT living_included INTO v_population_count FROM sw_people.population_counter WHERE singleton=1;
   IF v_population_count<>1 THEN RAISE EXCEPTION 'one canonical person with multiple roles must count exactly once'; END IF;
+  PERFORM * FROM sw_hr.end_employment(
+    'SW33-EMPLOYMENT-02',20,20,'npc:hr','generated:employment-end','swx:employment:end:02'
+  );
+  IF (SELECT employment_status FROM sw_hr.employment WHERE employment_id='SW33-EMPLOYMENT-02')<>'ended'
+     OR (SELECT living_included FROM sw_people.population_counter WHERE singleton=1)<>1 THEN
+    RAISE EXCEPTION 'employment end changed person identity or population count';
+  END IF;
+  IF (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWX-PERSON-OCCUPANCY')<>'occupied' THEN
+    RAISE EXCEPTION 'employment end silently changed physical occupancy';
+  END IF;
   SELECT count(DISTINCT person_id) INTO v_count FROM sw_property.staff_role_link
   WHERE person_id=v_person_id;
   IF v_count<>1 OR (SELECT count(*) FROM sw_property.staff_role_link WHERE person_id=v_person_id)<>2 THEN
