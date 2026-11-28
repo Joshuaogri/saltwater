@@ -551,7 +551,216 @@ def test_competing_and_idempotent_handover_writers_serialize():
     print("BP04 concurrent handover serialization and idempotency acceptance passed")
 
 
+def _call_title_transfer(dsn: str, app_name: str, barrier: Barrier, args: tuple):
+    try:
+        with psycopg.connect(dsn, application_name=app_name, options="-c statement_timeout=60000") as conn:
+            with conn.cursor() as cur:
+                barrier.wait(timeout=15)
+                cur.execute(
+                    """SELECT * FROM sw_property.transfer_property_ownership(
+                       %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    args,
+                )
+                return ("ok", cur.fetchone(), None)
+    except Exception as exc:
+        return ("error", None, str(exc))
+
+
+def test_competing_title_transfers_serialize_and_preserve_tenancy():
+    """Only one concurrent transfer from an expected proprietor may win."""
+    dsn = os.environ["DATABASE_URL"]
+    token = uuid.uuid4().hex[:12]
+    prop, unit, businesses, agreements, occupancy = _seed_fixture(dsn, token)
+    owner = f"SWCONC-ORG-{token}-OWNER"
+    successor_a = f"SWCONC-ORG-{token}-A"
+    successor_b = f"SWCONC-ORG-{token}-B"
+    ownership = f"SWCONC-OWN-{token}"
+    title = f"SWCONC-TITLE-{token}"
+    interest = f"SWCONC-INTEREST-{token}"
+    rights = f"SWCONC-RIGHTS-{token}"
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO sw_property.organisation(
+                  organisation_id,display_name,organisation_type,registered_city,status,source_dataset
+                ) VALUES
+                  (%s,%s,'property_holding_company','Saltwater','active','bp04_title_transfer_race'),
+                  (%s,%s,'property_holding_company','Saltwater','active','bp04_title_transfer_race'),
+                  (%s,%s,'property_holding_company','Saltwater','active','bp04_title_transfer_race')
+                """,
+                (owner, "Concurrent Title Owner", successor_a, "Title Successor A",
+                 successor_b, "Title Successor B"),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.ownership_interest(
+                  ownership_interest_id,property_id,owner_organisation_id,
+                  management_model,interest_type,source_dataset
+                ) VALUES (%s,%s,%s,'direct_owner','freehold','bp04_title_transfer_race')
+                """,
+                (ownership, prop, owner),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.property_title_register(
+                  title_register_id,property_id,current_ownership_interest_id,
+                  registered_proprietor_organisation_id,title_status,tenure_type,
+                  registration_tick,source_basis,boundary_record_id,
+                  active_dispute_count,unresolved_title_issue_count,source_dataset
+                ) VALUES (%s,%s,%s,%s,'registered_current','freehold',0,
+                          'generated_fixture','fixture-boundary',0,0,'bp04_title_transfer_race')
+                """,
+                (title, prop, ownership, owner),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.property_interest_record(
+                  property_interest_record_id,property_id,ownership_interest_id,
+                  interest_holder_organisation_id,interest_type,interest_status,
+                  priority_order,source_basis,source_dataset
+                ) VALUES (%s,%s,%s,%s,'registered_ownership','current',1,
+                          'generated_fixture','bp04_title_transfer_race')
+                """,
+                (interest, prop, ownership, owner),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.property_rights_schedule(
+                  property_rights_schedule_id,property_id,title_register_id,
+                  registered_ownership_interest_id,registered_owner_organisation_id,
+                  current_contractual_right_count,historical_contractual_right_count,
+                  right_class_coverage,unverified_right_classes,schedule_status,
+                  legal_search_required_before_disposition_or_works,source_dataset
+                ) VALUES (%s,%s,%s,%s,%s,1,0,
+                          ARRAY['ownership','leasehold_or_occupancy']::text[],
+                          ARRAY['easement']::text[],'generated_fixture',true,
+                          'bp04_title_transfer_race')
+                """,
+                (rights, prop, title, ownership, owner),
+            )
+
+    common = (prop, owner)
+    left = common + (
+        successor_a, 11, 11, 2028, 2028, "actor:title-race",
+        "source:title-race", f"title-race:{token}:a", "gameplay_action",
+    )
+    right = common + (
+        successor_b, 11, 11, 2028, 2028, "actor:title-race",
+        "source:title-race", f"title-race:{token}:b", "gameplay_action",
+    )
+
+    blocker = psycopg.connect(
+        dsn, application_name="bp04-title-transfer-blocker",
+        options="-c statement_timeout=60000",
+    )
+    try:
+        with blocker.cursor() as cur:
+            cur.execute(
+                "SELECT title_register_id FROM sw_property.property_title_register WHERE title_register_id=%s FOR UPDATE",
+                (title,),
+            )
+            assert cur.fetchone() == (title,)
+        barrier = Barrier(3)
+        names = ("bp04-title-transfer-left", "bp04-title-transfer-right")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first_future = pool.submit(_call_title_transfer, dsn, names[0], barrier, left)
+            second_future = pool.submit(_call_title_transfer, dsn, names[1], barrier, right)
+            barrier.wait(timeout=15)
+            deadline = time.monotonic() + 10
+            waiting = 0
+            while time.monotonic() < deadline:
+                with blocker.cursor() as cur:
+                    cur.execute(
+                        """
+                        SELECT wait_event_type,pg_blocking_pids(pid)
+                        FROM pg_stat_activity WHERE application_name IN (%s,%s)
+                        """,
+                        names,
+                    )
+                    states = cur.fetchall()
+                waiting = sum(1 for state in states if state[0] == "Lock" and state[1])
+                if waiting == 2:
+                    break
+                time.sleep(0.05)
+            if waiting != 2:
+                raise AssertionError(
+                    "expected both ownership-transfer writers blocked on the title row; "
+                    f"observed sessions={states!r}"
+                )
+            blocker.commit()
+            first, second = first_future.result(timeout=30), second_future.result(timeout=30)
+    finally:
+        if not blocker.closed:
+            blocker.rollback()
+            blocker.close()
+
+    outcomes = (first, second)
+    assert sum(result[0] == "ok" for result in outcomes) == 1, outcomes
+    assert sum(result[0] == "error" for result in outcomes) == 1, outcomes
+    winner = first if first[0] == "ok" else second
+    winning_owner = winner[1][2]
+    assert winning_owner in (successor_a, successor_b)
+
+    with psycopg.connect(dsn) as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT registered_proprietor_organisation_id FROM sw_property.property_title_register WHERE title_register_id=%s",
+                (title,),
+            )
+            assert cur.fetchone()[0] == winning_owner
+            cur.execute(
+                "SELECT owner_organisation_id FROM sw_property.ownership_interest WHERE ownership_interest_id=%s",
+                (ownership,),
+            )
+            assert cur.fetchone()[0] == winning_owner
+            cur.execute(
+                "SELECT interest_holder_organisation_id FROM sw_property.property_interest_record WHERE property_interest_record_id=%s",
+                (interest,),
+            )
+            assert cur.fetchone()[0] == winning_owner
+            cur.execute(
+                "SELECT registered_owner_organisation_id FROM sw_property.property_rights_schedule WHERE property_rights_schedule_id=%s",
+                (rights,),
+            )
+            assert cur.fetchone()[0] == winning_owner
+            cur.execute(
+                "SELECT count(*) FROM sw_property.property_lifecycle_event WHERE property_id=%s AND event_type='ownership_transferred'",
+                (prop,),
+            )
+            assert cur.fetchone()[0] == 1
+            cur.execute(
+                "SELECT count(*) FROM sw_property.property_title_instrument WHERE property_id=%s",
+                (prop,),
+            )
+            assert cur.fetchone()[0] == 1
+            cur.execute(
+                "SELECT count(*) FROM sw_property.property_transaction_index WHERE property_id=%s",
+                (prop,),
+            )
+            assert cur.fetchone()[0] == 1
+            cur.execute(
+                "SELECT landlord_organisation_id,tenant_business_id,operator_business_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s",
+                (agreements[0],),
+            )
+            assert cur.fetchone() == (owner, businesses[0], businesses[0])
+            cur.execute(
+                "SELECT occupant_business_id,occupancy_status,effective_to_year FROM sw_property.occupancy WHERE occupancy_id=%s",
+                (occupancy,),
+            )
+            assert cur.fetchone() == (businesses[0], "occupied", None)
+            cur.execute(
+                "SELECT business_id,valid_to_tick FROM sw_property.business_unit_link WHERE unit_id=%s AND valid_to_tick IS NULL",
+                (unit,),
+            )
+            assert cur.fetchone() == (businesses[0], None)
+
+    print("BP04 competing title-transfer serialization and tenancy-preservation acceptance passed")
+
+
 if __name__ == '__main__':
     test_competing_and_idempotent_handover_writers_serialize()
     test_concurrent_exact_subletting_creation_is_idempotent()
     test_subletting_creation_serializes_with_tenant_assignment()
+    test_competing_title_transfers_serialize_and_preserve_tenancy()
