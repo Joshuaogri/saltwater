@@ -21,12 +21,12 @@ BUSINESSES = "SW-BUSINESS-REGISTRY-V1"
 COLLECTIONS = {
     WORLD: {
         "properties": ("property", "property_id", (
-            "property_id", "address_id", "source_candidate_parcel_id",
+            "property_id", "address_id", "bp02_parcel_id", "bp02_address_id", "source_candidate_parcel_id",
             "source_district_id", "source_neighbourhood_id", "primary_use",
             "site_state", "canonical_status", "building_ids",
         )),
         "addresses": ("address", "address_id", (
-            "address_id", "property_id", "address_label", "street_number",
+            "address_id", "bp02_address_id", "bp02_parcel_id", "property_id", "address_label", "street_number",
             "street_name", "road_id", "postcode", "district_id", "district_name",
             "neighbourhood_id", "neighbourhood_name", "building_ids",
             "address_type", "source_ref",
@@ -47,8 +47,10 @@ COLLECTIONS = {
             "operator_business_id",
         )),
         "access_points": ("access_point", "access_point_id", (
-            "access_point_id", "property_id", "building_id", "premises_id",
-            "unit_id", "access_type", "access_modes",
+            "access_point_id", "bp02_access_point_id", "bp02_locator_status",
+            "bp02_coordinate_reference", "point_m", "effective_from_tick",
+            "effective_to_tick", "canonical_status", "point_status",
+            "property_id", "building_id", "premises_id", "unit_id", "access_type", "access_modes",
         )),
     },
     BUSINESSES: {
@@ -71,7 +73,9 @@ COLLECTIONS = {
 ALIASES = {
     "property": "property", "property_id": "property",
     "parcel": "property", "parcel_id": "property", "parcel_design_id": "property",
+    "bp02_parcel_id": "property", "canonical_parcel_id": "property",
     "address": "address", "address_id": "address", "address_design_id": "address",
+    "bp02_address_id": "address", "canonical_address_id": "address",
     "building": "building", "building_id": "building",
     "premises": "premises", "premises_id": "premises",
     "unit": "unit", "unit_id": "unit",
@@ -81,11 +85,11 @@ ALIASES = {
 }
 
 SEARCH_FIELDS = {
-    "address": ("address_id", "address_design_id", "address_label", "street_name", "postcode",
+    "address": ("address_id", "bp02_address_id", "address_design_id", "address_label", "street_name", "postcode",
                 "district_name", "neighbourhood_name"),
     "business": ("business_id", "registered_name", "trading_name",
                  "sector", "primary_activity"),
-    "property": ("property_id", "parcel_design_id", "source_candidate_parcel_id",
+    "property": ("property_id", "bp02_parcel_id", "parcel_design_id", "source_candidate_parcel_id",
                  "primary_use", "source_district_id", "source_neighbourhood_id"),
 }
 SEARCH_ID_FIELDS = {"address": "address_id", "business": "business_id", "property": "property_id"}
@@ -160,18 +164,22 @@ class BP04Lookup:
                         candidate_id = record.get("source_candidate_parcel_id")
                         if not candidate_id:
                             raise ValueError(f"Property {key} has no parcel candidate identity")
-                        design_id = _stable_design_id("SWP", candidate_id)
+                        design_id = record.get("bp02_parcel_id") or _stable_design_id("SWP", candidate_id)
+                        is_canonical = bool(record.get("bp02_parcel_id"))
                         record.update({
+                            "parcel_id": design_id,
                             "parcel_design_id": design_id,
-                            "parcel_identity_status": "STABLE_DESIGN_IDENTITY",
-                            "parcel_operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
+                            "parcel_identity_status": "CANONICAL_GAMEPLAY_IDENTITY" if is_canonical else "STABLE_DESIGN_IDENTITY",
+                            "parcel_operational_status": "ACTIVE_IN_GAME" if is_canonical else "NOT_APPROVED_FOR_OPERATIONAL_SEED",
                         })
                     elif kind == "address":
-                        design_id = _stable_design_id("SWA", key)
+                        design_id = record.get("bp02_address_id") or _stable_design_id("SWA", key)
+                        is_canonical = bool(record.get("bp02_address_id"))
                         record.update({
+                            "bp02_address_id": design_id,
                             "address_design_id": design_id,
-                            "address_identity_status": "STABLE_DESIGN_IDENTITY",
-                            "address_operational_status": "NOT_APPROVED_FOR_OPERATIONAL_SEED",
+                            "address_identity_status": "CANONICAL_GAMEPLAY_IDENTITY" if is_canonical else "STABLE_DESIGN_IDENTITY",
+                            "address_operational_status": "ACTIVE_IN_GAME" if is_canonical else "NOT_APPROVED_FOR_OPERATIONAL_SEED",
                         })
                     else:
                         design_id = None
@@ -450,8 +458,14 @@ class BP04Lookup:
             "address": address,
             "buildings": buildings,
             "businesses": businesses,
-            "geography_binding": "bp02_design_identity_bound_operational_release_blocked",
-            "operational_geography_approved": False,
+            "geography_binding": "bp02_canonical_gameplay_identity_bound",
+            "bp02_parcel_id": prop.get("bp02_parcel_id"),
+            "bp02_address_id": prop.get("bp02_address_id"),
+            "operational_geography_approved": (
+                prop.get("parcel_operational_status") == "ACTIVE_IN_GAME"
+                and address is not None
+                and address.get("address_operational_status") == "ACTIVE_IN_GAME"
+            ),
         }
 
     def business_detail(self, business_id: str) -> dict | None:
