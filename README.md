@@ -1,3 +1,11 @@
+## BP03 full integrated opening-world acceptance — passed (2026-11-28)
+
+The integrated [SW-DB-001 disposable world provisioning and capacity proof](https://github.com/Joshuaogri/saltwater/actions/runs/46117963944) completed successfully on `main` at commit `b27c19c03b9cc5f40ab65007a3038558b3d06296`. Both workflow jobs passed: the Python regression job and the disposable PostgreSQL job. All 23 database execution steps completed successfully.
+
+The integrated database run passed BP03 tier progression and permanent police-relevance promotion, sourced attribute claims, person knowledge boundaries, routines and movement, BP02 operational geography package generation and import, BP04 schema measurements, and BP03 residence integration. It then provisioned the deterministic opening-world fixture, materialised exactly **9,000 civilian residents**, rejected a tampered dwelling-allocation replay, verified idempotent repeat materialisation, and reconciled the resident assignments and population. The final opening-world smoke check also passed.
+
+This closes the previously outstanding disposable BP03 end-to-end residence-materialisation acceptance gate. The test used disposable PostgreSQL only. It is not a production population seed or production Neon migration; production Neon remains unchanged and no production seed is authorised by this test result. The earlier candidate allocation remains a planning artifact until a separately approved production operation is undertaken.
+
 ## BP02 reconciliation reuses audited geometry (2026-11-28)
 
 The full BP02 audit previously regenerated the same parcel candidates, parcel
