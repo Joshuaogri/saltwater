@@ -13,7 +13,7 @@ import psycopg
 from tests.pkg001.test_bp04_concurrent_handover import _seed_fixture, _call_subletting
 
 
-def _prepare_subtenant(dsn, token, prop, unit, business, establishment, agreement):
+def _prepare_subtenant(dsn, token, prop, unit, business, establishment, agreement, superior_agreement):
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -46,7 +46,7 @@ def _prepare_subtenant(dsn, token, prop, unit, business, establishment, agreemen
                        false,'bp04_subletting_lifecycle_concurrency','not_required'
                 FROM sw_property.occupancy_agreement WHERE agreement_id=%s
                 """,
-                (f"SWLIFE-RIGHT-{token}", prop, unit, agreement, agreement),
+                (f"SWLIFE-RIGHT-{token}", prop, unit, superior_agreement, agreement),
             )
 
 
@@ -104,7 +104,7 @@ def test_exact_start_replay_interleaved_with_end_is_serialized():
     dsn = os.environ["DATABASE_URL"]
     token = uuid.uuid4().hex[:12]
     prop, unit, businesses, agreements, superior_occ = _seed_fixture(dsn, token)
-    _prepare_subtenant(dsn, token, prop, unit, businesses[1], f"SWCONC-EST-{token}-2", agreements[1])
+    _prepare_subtenant(dsn, token, prop, unit, businesses[1], f"SWCONC-EST-{token}-2", agreements[1], agreements[0])
     right = f"SWLIFE-RIGHT-{token}"
     relationship = f"SWLIFE-REL-{token}"
     start_key = f"sublet:lifecycle:start:{token}"
@@ -136,8 +136,8 @@ def test_new_subletting_start_interleaved_with_prior_relationship_end():
     dsn = os.environ["DATABASE_URL"]
     token = uuid.uuid4().hex[:12]
     prop, unit, businesses, agreements, superior_occ = _seed_fixture(dsn, token)
-    _prepare_subtenant(dsn, token+"A", prop, unit, businesses[1], f"SWCONC-EST-{token}-2", agreements[1])
-    _prepare_subtenant(dsn, token+"B", prop, unit, businesses[2], f"SWCONC-EST-{token}-3", agreements[2])
+    _prepare_subtenant(dsn, token+"A", prop, unit, businesses[1], f"SWCONC-EST-{token}-2", agreements[1], agreements[0])
+    _prepare_subtenant(dsn, token+"B", prop, unit, businesses[2], f"SWCONC-EST-{token}-3", agreements[2], agreements[0])
     first_right, second_right = f"SWLIFE-RIGHT-{token}A", f"SWLIFE-RIGHT-{token}B"
     first_rel, second_rel = f"SWLIFE-REL-{token}A", f"SWLIFE-REL-{token}B"
     first_start = (first_rel, agreements[0], agreements[1], superior_occ,
@@ -164,6 +164,16 @@ def test_new_subletting_start_interleaved_with_prior_relationship_end():
             assert cur.fetchone()[0] == 2
 
 
+import unittest
+
+
+class SublettingLifecycleConcurrencyTests(unittest.TestCase):
+    def test_exact_start_replay_interleaved_with_end_is_serialized(self):
+        test_exact_start_replay_interleaved_with_end_is_serialized()
+
+    def test_new_start_interleaved_with_prior_end_is_serialized(self):
+        test_new_subletting_start_interleaved_with_prior_relationship_end_is_serialized()
+
+
 if __name__ == "__main__":
-    import unittest
     unittest.main()
