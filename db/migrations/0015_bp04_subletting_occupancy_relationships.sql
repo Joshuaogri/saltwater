@@ -128,26 +128,6 @@ BEGIN
   PERFORM 1 FROM sw_property.occupancy_agreement
   WHERE agreement_id IN (p_superior_agreement_id,p_sub_agreement_id)
   ORDER BY agreement_id FOR UPDATE;
-
-  -- Recheck after acquiring both agreement locks. A concurrent exact request
-  -- may have committed while this transaction waited.
-  SELECT * INTO v_prior FROM sw_property.occupancy_relationship
-  WHERE idempotency_key=p_idempotency_key;
-  IF FOUND THEN
-    IF v_prior.relationship_id<>p_relationship_id
-       OR v_prior.superior_agreement_id<>p_superior_agreement_id
-       OR v_prior.sub_agreement_id<>p_sub_agreement_id
-       OR v_prior.superior_occupancy_id<>p_superior_occupancy_id
-       OR v_prior.sub_occupancy_id<>p_sub_occupancy_id
-       OR v_prior.subletting_right_id<>p_subletting_right_id
-       OR v_prior.effective_from_tick<>p_effective_tick
-       OR v_prior.recorded_tick<>p_recorded_tick
-       OR v_prior.actor_ref<>p_actor_ref OR v_prior.source_ref<>p_source_ref THEN
-      RAISE EXCEPTION 'subletting relationship idempotency key conflicts with prior definition';
-    END IF;
-    RETURN QUERY SELECT v_prior.relationship_id,v_prior.relationship_status;
-    RETURN;
-  END IF;
   SELECT * INTO v_superior FROM sw_property.occupancy_agreement
   WHERE agreement_id=p_superior_agreement_id;
   SELECT * INTO v_sub FROM sw_property.occupancy_agreement
