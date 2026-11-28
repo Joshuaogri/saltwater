@@ -237,7 +237,9 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                        WHERE NOT (
                          a.normalized_key='saltwater'
                          AND a.entity_type='GEOGRAPHY' AND b.entity_type='GEOGRAPHY'
-                         AND a.entity_ref='saltwater-state' AND b.entity_ref='saltwater-city'
+                         AND a.entity_ref IN ('saltwater-state','saltwater-city')
+                         AND b.entity_ref IN ('saltwater-state','saltwater-city')
+                         AND a.entity_ref<>b.entity_ref
                        )
                        ORDER BY a.ordinal,b.ordinal LIMIT 20"""
                 )
