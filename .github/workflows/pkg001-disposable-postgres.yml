@@ -78,7 +78,7 @@ on:
 
 concurrency:
   group: pkg001-disposable-postgres-main
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 permissions:
   contents: read
