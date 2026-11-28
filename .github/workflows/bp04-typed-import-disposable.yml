@@ -56,7 +56,7 @@ jobs:
         run: python scripts/migrate.py --apply
       - name: Import all mapped BP04 collections in typed-relational disposable mode
         run: python runtime/bp04_property_stack_importer.py --typed-relational
-      - name: Verify 14 datasets, 107 collections, 1,950,947 source rows and typed role links
+      - name: Verify 14 datasets, 108 collections, 1,950,947 source rows and typed role links
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
       - name: Measure typed database before idempotent repeat
         run: psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-before.txt
