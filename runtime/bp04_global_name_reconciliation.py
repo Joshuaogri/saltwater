@@ -184,34 +184,49 @@ def build_global_name_inventory() -> dict[str, Any]:
                 for word in words
                 for offset in range(max(0, len(f"  {word} ") - 2))
             )
-            overlap: dict[int, int] = defaultdict(int)
-            # Only compare across different domains. This avoids quadratic
-            # work among the 20,000 business names already checked by AC-A04's
-            # business-specific reservation suite.
+            # For a >=0.90 Jaccard match, at most floor(10% of the
+            # candidate trigrams) can be absent. Probe one more than that
+            # number of the rarest trigrams: every qualifying match must share
+            # at least one probe. This is an exact candidate filter, not a
+            # heuristic that can hide a qualifying near duplicate.
+            minimum_size = math.ceil(len(trigrams) * 0.90)
+            maximum_size = math.floor(len(trigrams) / 0.90)
+            anchor_count = max(1, math.floor(len(trigrams) * 0.10) + 1)
             for prior_domain, domain_index in postings.items():
                 if prior_domain == item.domain:
                     continue
-                minimum_size = math.ceil(len(trigrams) * 0.90)
-                maximum_size = math.floor(len(trigrams) / 0.90)
-                for prior_size in range(minimum_size, maximum_size + 1):
-                    size_index = domain_index.get(prior_size, {})
-                    for trigram in trigrams:
-                        for prior_index in size_index.get(trigram, ()):
-                            overlap[prior_index] += 1
-            for prior_index, common in overlap.items():
-                prior_trigrams, prior = signatures[prior_index]
-                if item.owner == prior.owner or key == normalize_name(prior.display_name):
-                    continue
-                required = math.ceil(0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90)
-                if common < required:
-                    continue
-                if pg_trgm_similarity(item.display_name, prior.display_name) >= 0.90:
-                    near_pairs.append({
-                        "left": {"domain": prior.domain, "entity_id": prior.entity_id,
-                                 "name": prior.display_name, "source": prior.source_ref},
-                        "right": {"domain": item.domain, "entity_id": item.entity_id,
-                                  "name": item.display_name, "source": item.source_ref},
-                    })
+                prior_sizes = range(minimum_size, maximum_size + 1)
+                frequencies = []
+                for trigram in trigrams:
+                    frequency = sum(
+                        len(domain_index.get(prior_size, {}).get(trigram, ()))
+                        for prior_size in prior_sizes
+                    )
+                    frequencies.append((frequency, trigram))
+                anchors = [trigram for _, trigram in sorted(frequencies)[:anchor_count]]
+                candidate_indices: set[int] = set()
+                for trigram in anchors:
+                    for prior_size in prior_sizes:
+                        candidate_indices.update(
+                            domain_index.get(prior_size, {}).get(trigram, ())
+                        )
+                for prior_index in candidate_indices:
+                    prior_trigrams, prior = signatures[prior_index]
+                    if item.owner == prior.owner or key == normalize_name(prior.display_name):
+                        continue
+                    common = len(trigrams & prior_trigrams)
+                    required = math.ceil(
+                        0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90
+                    )
+                    if common >= required and pg_trgm_similarity(
+                        item.display_name, prior.display_name
+                    ) >= 0.90:
+                        near_pairs.append({
+                            "left": {"domain": prior.domain, "entity_id": prior.entity_id,
+                                     "name": prior.display_name, "source": prior.source_ref},
+                            "right": {"domain": item.domain, "entity_id": item.entity_id,
+                                      "name": item.display_name, "source": item.source_ref},
+                        })
             signature_index = len(signatures)
             signatures.append((trigrams, item))
             for trigram in trigrams:
