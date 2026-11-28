@@ -129,6 +129,11 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='premises_lifecycle_event' AND column_name='lawful_use_certificate_id' AND data_type='text')
   THEN RAISE EXCEPTION 'typed property title, transaction or lifecycle fields missing'; END IF;
 
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='recorded_tick' AND data_type='bigint')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='idempotency_key' AND data_type='text')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='event_payload' AND data_type='jsonb')
+  THEN RAISE EXCEPTION 'append-only property lifecycle event provenance fields missing'; END IF;
+
   IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='sw_property' AND table_name='occupancy_relationship')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='occupancy_relationship' AND column_name='subletting_right_id' AND data_type='text')
   THEN RAISE EXCEPTION 'explicit subletting occupancy relationship schema missing'; END IF;
