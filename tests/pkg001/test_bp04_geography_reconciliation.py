@@ -175,8 +175,7 @@ class BP04CanonicalSpatialBindingTests(unittest.TestCase):
             "addresses": self.canonical_addresses,
             "access_points": [{
                 "candidate_access_point_id": "SWACC-001",
-                "property_id": "SWPROP-000", "building_id": "SWBLD-001",
-                "point_m": [10.0, 20.0],
+                "building_id": "SWBLD-001", "point_m": [10.0, 20.0],
             }],
         }
 
