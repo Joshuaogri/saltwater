@@ -46,6 +46,7 @@ SET search_path=pg_catalog,sw_names,sw_geo,sw_people,sw_property,sw_core AS $$
 DECLARE
   v_code text;
   v_kind smallint;
+  v_entity_name text;
 BEGIN
   PERFORM pg_advisory_xact_lock(725101001::bigint);
   IF NEW.normalized_key <> sw_names.normalize_name(NEW.display_name) THEN
@@ -68,26 +69,42 @@ BEGIN
       RAISE EXCEPTION 'business names must use trading or legal name form';
     END IF;
   ELSIF NEW.entity_type='PROPERTY' THEN
-    PERFORM 1 FROM sw_property.property_site WHERE property_id=NEW.entity_ref FOR UPDATE;
+    SELECT display_name INTO v_entity_name FROM sw_property.property_site
+    WHERE property_id=NEW.entity_ref FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'property identity does not exist'; END IF;
+    IF NEW.display_name <> v_entity_name THEN
+      RAISE EXCEPTION 'property reservation must match its canonical display name';
+    END IF;
     IF NEW.name_form <> 'canonical' THEN
       RAISE EXCEPTION 'property names must use canonical name form';
     END IF;
   ELSIF NEW.entity_type='BUILDING' THEN
-    PERFORM 1 FROM sw_property.building WHERE building_id=NEW.entity_ref FOR UPDATE;
+    SELECT display_name INTO v_entity_name FROM sw_property.building
+    WHERE building_id=NEW.entity_ref FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'building identity does not exist'; END IF;
+    IF NEW.display_name <> v_entity_name THEN
+      RAISE EXCEPTION 'building reservation must match its canonical display name';
+    END IF;
     IF NEW.name_form <> 'canonical' THEN
       RAISE EXCEPTION 'building names must use canonical name form';
     END IF;
   ELSIF NEW.entity_type='PREMISES' THEN
-    PERFORM 1 FROM sw_property.premises WHERE premises_id=NEW.entity_ref FOR UPDATE;
+    SELECT display_name INTO v_entity_name FROM sw_property.premises
+    WHERE premises_id=NEW.entity_ref FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'premises identity does not exist'; END IF;
+    IF NEW.display_name <> v_entity_name THEN
+      RAISE EXCEPTION 'premises reservation must match its canonical display name';
+    END IF;
     IF NEW.name_form <> 'canonical' THEN
       RAISE EXCEPTION 'premises names must use canonical name form';
     END IF;
   ELSIF NEW.entity_type='ORGANISATION' THEN
-    PERFORM 1 FROM sw_property.organisation WHERE organisation_id=NEW.entity_ref FOR UPDATE;
+    SELECT display_name INTO v_entity_name FROM sw_property.organisation
+    WHERE organisation_id=NEW.entity_ref FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'organisation identity does not exist'; END IF;
+    IF NEW.display_name <> v_entity_name THEN
+      RAISE EXCEPTION 'organisation reservation must match its canonical display name';
+    END IF;
     IF NEW.name_form <> 'canonical' THEN
       RAISE EXCEPTION 'organisation names must use canonical name form';
     END IF;
