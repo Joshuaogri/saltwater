@@ -9,6 +9,8 @@ on:
       - "runtime/property_tenure_generator.py"
       - "tests/pkg001/test_bp04_business_registry_audit.py"
       - "data/business/saltwater-business-registry-v1.json.gz"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "data/geography/saltwater-geography-v1.json"
       - ".github/workflows/bp04-business-registry-audit.yml"
   workflow_dispatch:
 
