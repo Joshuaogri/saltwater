@@ -14,6 +14,7 @@ on:
       - "runtime/road_corridor_audit.py"
       - "runtime/road_reserve_topology.py"
       - "data/geography/saltwater-geography-v1.json"
+      - "data/geography/saltwater-geography-v1.json.gz"
       - "tests/pkg001/test_property_world_generator.py"
       - ".github/workflows/saltwater-property-world-build.yml"
   workflow_dispatch:
@@ -61,6 +62,15 @@ jobs:
             exit 0
           fi
           git commit -m "Generate canonical Saltwater property world"
-          git fetch origin main
-          git rebase origin/main
-          git push origin HEAD:main
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 6 ]; then
+              echo "Unable to publish generated data after six main-branch retries." >&2
+              exit 1
+            fi
+            sleep "$attempt"
+          done
