@@ -7,10 +7,13 @@ from runtime.naming import normalize_name
 
 
 def audit_business_registry(registry: dict) -> dict:
-    """Audit business identity, local scope, lifecycle and establishment lineage.
+    """Audit distinct business identities without counting branches or names as businesses.
 
-    This is a read-only source audit. It does not persist reservations, create
-    people, or promote property/access records into operational status.
+    Establishments and occupancy links are separate child records. A business may
+    have multiple establishments (including branches), each with its own address
+    and unit link, while exactly one establishment remains its registered primary
+    establishment. Brand and alias records, when supplied by another owning
+    register, never contribute to the business identity count.
     """
     businesses = registry.get("businesses")
     establishments = registry.get("establishments")
@@ -32,18 +35,26 @@ def audit_business_registry(registry: dict) -> dict:
 
     by_business = {row["business_id"]: row for row in businesses}
     establishments_by_business: dict[str, list[dict]] = {}
+    establishments_by_id: dict[str, dict] = {}
     for row in establishments:
         business_id = row.get("business_id")
         if business_id not in by_business:
             raise ValueError(f"orphan establishment: {row.get('establishment_id')}")
         establishments_by_business.setdefault(business_id, []).append(row)
+        establishments_by_id[row["establishment_id"]] = row
 
-    links_by_business: dict[str, list[dict]] = {}
+    links_by_establishment: dict[str, list[dict]] = {}
     for row in links:
         business_id = row.get("business_id")
         if business_id not in by_business:
             raise ValueError(f"orphan business-unit link: {row.get('business_unit_link_id')}")
-        links_by_business.setdefault(business_id, []).append(row)
+        establishment_id = row.get("establishment_id")
+        establishment = establishments_by_id.get(establishment_id)
+        if establishment is None:
+            raise ValueError(f"orphan business-unit link establishment: {row.get('business_unit_link_id')}")
+        if establishment.get("business_id") != business_id:
+            raise ValueError(f"business-unit link owner mismatch: {row.get('business_unit_link_id')}")
+        links_by_establishment.setdefault(establishment_id, []).append(row)
 
     public_names: dict[str, tuple[str, str]] = {}
     sector_counts = Counter()
@@ -69,24 +80,37 @@ def audit_business_registry(registry: dict) -> dict:
         lifecycle_counts[row["status"]] += 1
 
         owned_establishments = establishments_by_business.get(business_id, [])
-        owned_links = links_by_business.get(business_id, [])
-        if len(owned_establishments) != 1 or len(owned_links) != 1:
-            raise ValueError(f"business {business_id} must have one primary establishment and one source occupancy link")
-        establishment = owned_establishments[0]
-        link = owned_links[0]
-        if establishment["establishment_id"] != row["primary_establishment_id"]:
-            raise ValueError(f"business {business_id} primary establishment reference mismatch")
-        if establishment.get("address_id") != row["registered_address_id"]:
-            raise ValueError(f"business {business_id} registered address differs from establishment address")
-        for field in ("unit_id", "premises_id", "property_id", "building_id", "address_id"):
-            if not isinstance(establishment.get(field), str) or not establishment[field].strip():
-                raise ValueError(f"establishment {establishment['establishment_id']} lacks {field}")
-        if link.get("establishment_id") != establishment["establishment_id"] or link.get("unit_id") != establishment["unit_id"] or link.get("premises_id") != establishment["premises_id"]:
-            raise ValueError(f"business {business_id} occupancy link does not match its establishment")
-        if link.get("occupancy_relationship") != "business_operator":
-            raise ValueError(f"business {business_id} has an invalid occupancy relationship")
-        if establishment.get("operating_status") != row["status"]:
-            raise ValueError(f"business {business_id} and establishment lifecycle status differ")
+        if not owned_establishments:
+            raise ValueError(f"business {business_id} must have at least one establishment")
+        primary_matches = [
+            establishment for establishment in owned_establishments
+            if establishment["establishment_id"] == row["primary_establishment_id"]
+        ]
+        if len(primary_matches) != 1:
+            raise ValueError(f"business {business_id} must reference exactly one owned primary establishment")
+        primary_establishment = primary_matches[0]
+        if primary_establishment.get("address_id") != row["registered_address_id"]:
+            raise ValueError(f"business {business_id} registered address differs from its primary establishment address")
+
+        for establishment in owned_establishments:
+            establishment_id = establishment["establishment_id"]
+            for field in ("unit_id", "premises_id", "property_id", "building_id", "address_id", "district_id", "neighbourhood_id", "operating_status", "source_generator"):
+                if not isinstance(establishment.get(field), str) or not establishment[field].strip():
+                    raise ValueError(f"establishment {establishment_id} lacks {field}")
+            establishment_links = links_by_establishment.get(establishment_id, [])
+            if not establishment_links:
+                raise ValueError(f"establishment {establishment_id} lacks an occupancy link")
+            current_links = [link for link in establishment_links if link.get("valid_to_tick") is None]
+            if len(current_links) != 1:
+                raise ValueError(f"establishment {establishment_id} must have exactly one current occupancy link")
+            for link in establishment_links:
+                if link.get("unit_id") != establishment["unit_id"] or link.get("premises_id") != establishment["premises_id"]:
+                    raise ValueError(f"business {business_id} occupancy link does not match establishment {establishment_id}")
+                if link.get("occupancy_relationship") != "business_operator":
+                    raise ValueError(f"establishment {establishment_id} has an invalid occupancy relationship")
+
+        if primary_establishment.get("operating_status") != row["status"]:
+            raise ValueError(f"business {business_id} and primary establishment lifecycle status differ")
 
     summary = {
         "business_count": len(businesses),
@@ -101,6 +125,8 @@ def audit_business_registry(registry: dict) -> dict:
         "multi_establishment_businesses": sum(1 for rows in establishments_by_business.values() if len(rows) > 1),
         "local_saltwater_businesses": sum(1 for row in businesses if row.get("registered_city") == "Saltwater"),
         "person_records_created": sum(row.get("person_records_created", 0) for row in businesses),
+        "brand_records_not_counted_as_businesses": len(registry.get("brands", [])),
+        "alias_records_not_counted_as_businesses": len(registry.get("business_aliases", [])),
         "persistent_name_reservations_performed": False,
         "operational_property_access_approval": False,
     }
