@@ -108,7 +108,9 @@ jobs:
           PGPASSWORD: test-only-password
         run: |
           cp -R db/migrations /tmp/saltwater-migrations-failure
-          cat > /tmp/saltwater-migrations-failure/0013_atomicity_failure.sql <<'SQL'
+          failure_version="$(printf '%04d' "$(( $(find db/migrations -maxdepth 1 -type f -name '*.sql' | wc -l) + 1 ))")"
+          failure_version_num="$((10#$failure_version))"
+          cat > "/tmp/saltwater-migrations-failure/${failure_version}_atomicity_failure.sql" <<'SQL'
           BEGIN;
           CREATE TABLE sw_core.bp38_atomicity_probe (id integer PRIMARY KEY);
           SELECT 1 / 0;
@@ -119,7 +121,7 @@ jobs:
             exit 1
           fi
           grep -q "division by zero" /tmp/bp38-failed-migration.log
-          rollback_check="$(psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -Atc "SELECT CASE WHEN to_regclass('sw_core.bp38_atomicity_probe') IS NULL AND NOT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = 13) THEN 'PASS' ELSE 'FAIL' END")"
+          rollback_check="$(psql -v ON_ERROR_STOP=1 -h localhost -U saltwater -d saltwater_test -Atc "SELECT CASE WHEN to_regclass('sw_core.bp38_atomicity_probe') IS NULL AND NOT EXISTS (SELECT 1 FROM sw_ops.schema_migration WHERE version = ${failure_version_num}) THEN 'PASS' ELSE 'FAIL' END")"
           test "$rollback_check" = "PASS"
       - name: Apply PKG-001 proposal to disposable PostgreSQL only
         env:
