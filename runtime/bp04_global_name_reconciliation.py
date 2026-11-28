@@ -170,12 +170,29 @@ def build_global_name_inventory() -> dict[str, Any]:
     # Existing per-domain suites screen within-domain near duplicates. This pass
     # focuses on cross-domain near duplicates while excluding multiple names
     # belonging to the same stable entity.
-    signatures: list[tuple[str, NameCandidate]] = []
+    signatures: list[tuple[frozenset[str], NameCandidate]] = []
+    postings: dict[str, list[int]] = defaultdict(list)
     near_pairs: list[dict[str, Any]] = []
     for key, group in sorted(by_key.items()):
         for item in group:
-            for prior_key, prior in signatures:
-                if item.domain == prior.domain or item.owner == prior.owner or key == prior_key:
+            words = key.split()
+            trigrams = frozenset(
+                f"  {word} "[offset:offset + 3]
+                for word in words
+                for offset in range(max(0, len(f"  {word} ") - 2))
+            )
+            overlap: dict[int, int] = defaultdict(int)
+            for trigram in trigrams:
+                for prior_index in postings.get(trigram, ()):
+                    overlap[prior_index] += 1
+            for prior_index, common in overlap.items():
+                prior_trigrams, prior = signatures[prior_index]
+                if item.domain == prior.domain or item.owner == prior.owner:
+                    continue
+                required = int(__import__("math").ceil(
+                    0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90
+                ))
+                if common < required:
                     continue
                 if pg_trgm_similarity(item.display_name, prior.display_name) >= 0.90:
                     near_pairs.append({
@@ -184,7 +201,10 @@ def build_global_name_inventory() -> dict[str, Any]:
                         "right": {"domain": item.domain, "entity_id": item.entity_id,
                                   "name": item.display_name, "source": item.source_ref},
                     })
-            signatures.append((key, item))
+            signature_index = len(signatures)
+            signatures.append((trigrams, item))
+            for trigram in trigrams:
+                postings[trigram].append(signature_index)
 
     domain_counts: dict[str, int] = defaultdict(int)
     for item in candidates:
