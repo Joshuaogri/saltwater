@@ -33,7 +33,7 @@ BEGIN
   ) OR NOT EXISTS (
     SELECT 1 FROM pg_trigger
     WHERE tgrelid='sw_property.third_party_occupancy_relationship'::regclass
-      AND tgname='third_party_occupancy_relationship_guard'
+      AND tgname='third_party_occupancy_guard'
       AND NOT tgisinternal
   ) THEN RAISE EXCEPTION 'third-party organisation occupancy party and permission guard schema missing'; END IF;
 
