@@ -44,6 +44,7 @@ class BuildingServicesTests(unittest.TestCase):
         self.assertTrue(all(x["building_system_id"] in system_ids for x in d["equipment_assets"]))
         self.assertTrue(all(x["building_system_id"] in system_ids for x in d["system_inspections"]))
 
+    # Link utility responsibility to the current occupancy through its stable unit ID.
     def test_current_business_utility_responsibilities_resolve(self):
         d = self.data
         occupancy_ids = {x["occupancy_id"] for x in self.tenure["occupancies"]}
