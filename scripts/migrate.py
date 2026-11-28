@@ -81,13 +81,13 @@ def ledger_rows(conn) -> list[tuple[int, str, str | None, str | None]]:
 
 
 def schema_fingerprint(conn) -> str:
-    """Hash stable schema metadata, excluding OIDs, owners and physical statistics."""
+    """Hash schemas owned by this runner, excluding BP02 sw_geo (which has its own migration ledger)."""
     catalogue = []
     queries = [
         ("schemas", """
             SELECT nspname,COALESCE(nspacl::text,'')
             FROM pg_namespace
-            WHERE left(nspname,3)='sw_'
+            WHERE left(nspname,3)='sw_' AND nspname <> 'sw_geo'
             ORDER BY nspname
         """),
         ( "relations", """
@@ -95,7 +95,7 @@ def schema_fingerprint(conn) -> str:
                    c.relrowsecurity,c.relforcerowsecurity,COALESCE(c.relacl::text,''),
                    COALESCE(pg_get_viewdef(c.oid, true), '')
             FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE left(n.nspname,3)='sw_'
+            WHERE left(n.nspname,3)='sw_' AND n.nspname <> 'sw_geo'
               AND c.relkind IN ('r','p','v','m','S')
             ORDER BY n.nspname,c.relname
         """),
@@ -108,7 +108,7 @@ def schema_fingerprint(conn) -> str:
             JOIN pg_class c ON c.oid=a.attrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
             LEFT JOIN pg_attrdef d ON d.adrelid=c.oid AND d.adnum=a.attnum
-            WHERE left(n.nspname,3)='sw_'
+            WHERE left(n.nspname,3)='sw_' AND n.nspname <> 'sw_geo'
               AND a.attnum>0 AND NOT a.attisdropped
             ORDER BY n.nspname,c.relname,a.attnum
         """),
@@ -118,20 +118,20 @@ def schema_fingerprint(conn) -> str:
             FROM pg_constraint con
             JOIN pg_class c ON c.oid=con.conrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE left(n.nspname,3)='sw_'
+            WHERE left(n.nspname,3)='sw_' AND n.nspname <> 'sw_geo'
             ORDER BY n.nspname,c.relname,con.conname
         """),
         ( "indexes", """
             SELECT schemaname,tablename,indexname,indexdef
             FROM pg_indexes
-            WHERE left(schemaname,3)='sw_'
+            WHERE left(schemaname,3)='sw_' AND schemaname <> 'sw_geo'
             ORDER BY schemaname,tablename,indexname
         """),
         ( "routines", """
             SELECT n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),
                    p.prokind,COALESCE(p.proacl::text,''),pg_get_functiondef(p.oid)
             FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-            WHERE left(n.nspname,3)='sw_' AND p.prokind IN ('f','p')
+            WHERE left(n.nspname,3)='sw_' AND n.nspname <> 'sw_geo' AND p.prokind IN ('f','p')
             ORDER BY n.nspname,p.proname,pg_get_function_identity_arguments(p.oid)
         """),
         ( "triggers", """
@@ -139,13 +139,13 @@ def schema_fingerprint(conn) -> str:
             FROM pg_trigger t
             JOIN pg_class c ON c.oid=t.tgrelid
             JOIN pg_namespace n ON n.oid=c.relnamespace
-            WHERE left(n.nspname,3)='sw_' AND NOT t.tgisinternal
+            WHERE left(n.nspname,3)='sw_' AND n.nspname <> 'sw_geo' AND NOT t.tgisinternal
             ORDER BY n.nspname,c.relname,t.tgname
         """),
         ( "policies", """
             SELECT schemaname,tablename,policyname,permissive,roles,cmd,qual,with_check
             FROM pg_policies
-            WHERE left(schemaname,3)='sw_'
+            WHERE left(schemaname,3)='sw_' AND schemaname <> 'sw_geo'
             ORDER BY schemaname,tablename,policyname
         """),
     ]
