@@ -358,12 +358,117 @@ BEGIN
   SET right_status='current'
   WHERE property_right_id='SWTEST-RIGHT-SUBLET-01';
 
+  -- Consent-required rights need a recorded decision from the explicitly named NPC authority.
+  UPDATE sw_property.contractual_rights_index
+  SET consent_requirement='required',
+      consent_authority_organisation_id='SWTEST-ORG-OWNER'
+  WHERE property_right_id='SWTEST-RIGHT-SUBLET-01';
+
+  BEGIN
+    PERFORM * FROM sw_property.request_contractual_right_consent(
+      'SWTEST-CONSENT-WRONG-AUTHORITY','SWTEST-RIGHT-SUBLET-01','subletting',
+      'SWTEST-BUS-01','SWTEST-BUS-02','SWTEST-ORG-NEW',
+      4,4,'npc:tenant','source:test:wrong-authority',
+      'test:consent:wrong-authority','generated_fictional_canon'
+    );
+    RAISE EXCEPTION 'consent request with an unnamed authority was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='consent request with an unnamed authority was accepted' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%named decision authority%' THEN RAISE; END IF;
+  END;
+
+  SELECT consent_status INTO v_status
+  FROM sw_property.request_contractual_right_consent(
+    'SWTEST-CONSENT-01','SWTEST-RIGHT-SUBLET-01','subletting',
+    'SWTEST-BUS-01','SWTEST-BUS-02','SWTEST-ORG-OWNER',
+    4,4,'npc:tenant','source:test:consent-request',
+    'test:consent:request','generated_fictional_canon'
+  );
+  IF v_status<>'pending' THEN RAISE EXCEPTION 'consent request did not enter pending state'; END IF;
+
+  SELECT consent_status INTO v_status
+  FROM sw_property.request_contractual_right_consent(
+    'SWTEST-CONSENT-01','SWTEST-RIGHT-SUBLET-01','subletting',
+    'SWTEST-BUS-01','SWTEST-BUS-02','SWTEST-ORG-OWNER',
+    4,4,'npc:tenant','source:test:consent-request',
+    'test:consent:request','generated_fictional_canon'
+  );
+  IF v_status<>'pending' THEN RAISE EXCEPTION 'exact consent request replay was not idempotent'; END IF;
+
+  BEGIN
+    PERFORM * FROM sw_property.record_subletting_relationship(
+      'SWTEST-REL-PENDING','SWTEST-AGR-04','SWTEST-AGR-05',
+      'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
+      5,5,'actor:test','source:test:pending-consent','test:sublet:pending-consent'
+    );
+    RAISE EXCEPTION 'subletting proceeded while consent was pending';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='subletting proceeded while consent was pending' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%explicit current consent for this subtenant%' THEN RAISE; END IF;
+  END;
+
+  PERFORM * FROM sw_property.decide_contractual_right_consent(
+    'SWTEST-CONSENT-01','pending','granted',4,5,
+    'npc:property-owner','source:test:consent-granted',
+    'test:consent:grant','generated_fictional_canon',
+    'NPC property owner grants subletting consent to the named subtenant.'
+  );
+  PERFORM * FROM sw_property.decide_contractual_right_consent(
+    'SWTEST-CONSENT-01','pending','granted',4,5,
+    'npc:property-owner','source:test:consent-granted',
+    'test:consent:grant','generated_fictional_canon',
+    'NPC property owner grants subletting consent to the named subtenant.'
+  );
+  IF (SELECT consent_status FROM sw_property.contractual_right_consent
+      WHERE consent_id='SWTEST-CONSENT-01')<>'granted' THEN
+    RAISE EXCEPTION 'consent decision did not grant the request';
+  END IF;
+
   SELECT r.relationship_id INTO v_relationship
   FROM sw_property.record_subletting_relationship(
     'SWTEST-REL-01','SWTEST-AGR-04','SWTEST-AGR-05',
     'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
     5,5,'actor:test','source:test:sublet','test:sublet:start'
   ) r;
+
+  PERFORM * FROM sw_property.decide_contractual_right_consent(
+    'SWTEST-CONSENT-01','granted','revoked',6,6,
+    'npc:property-owner','source:test:consent-revoked',
+    'test:consent:revoke','generated_fictional_canon',
+    'NPC property owner revokes future subletting permission.'
+  );
+
+  BEGIN
+    PERFORM * FROM sw_property.record_subletting_relationship(
+      'SWTEST-REL-AFTER-REVOKE','SWTEST-AGR-04','SWTEST-AGR-05',
+      'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
+      6,6,'actor:test','source:test:revoked-consent','test:sublet:revoked-consent'
+    );
+    RAISE EXCEPTION 'subletting proceeded after consent was revoked';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='subletting proceeded after consent was revoked' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%explicit current consent for this subtenant%' THEN RAISE; END IF;
+  END;
+
+  IF (SELECT relationship_status FROM sw_property.occupancy_relationship
+      WHERE relationship_id='SWTEST-REL-01')<>'active'
+     OR (SELECT occupancy_status FROM sw_property.occupancy
+         WHERE occupancy_id='SWTEST-OCC-03')<>'occupied'
+     OR (SELECT count(*) FROM sw_property.contractual_right_consent_event
+         WHERE consent_id='SWTEST-CONSENT-01')<>3 THEN
+    RAISE EXCEPTION 'consent revocation altered an existing occupancy or failed to retain its three-event history';
+  END IF;
+
+  BEGIN
+    UPDATE sw_property.contractual_right_consent_event
+    SET event_type='consent_refused'
+    WHERE consent_id='SWTEST-CONSENT-01';
+    RAISE EXCEPTION 'consent event history was mutable';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='consent event history was mutable' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%append-only%' THEN RAISE; END IF;
+  END;
+
 
   BEGIN
     PERFORM * FROM sw_property.handover_business_occupancy(
