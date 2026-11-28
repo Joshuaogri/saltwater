@@ -149,6 +149,9 @@ jobs:
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/proposals/0002_runtime_city_population.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/proposals/0009_universal_name_registry.sql
           psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f db/proposals/0010_bp03_population_qualification_union.sql
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE sw_runtime.state SET state=1 WHERE singleton=1"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE sw_runtime.state SET bootstrap_open=false WHERE singleton=1"
+          psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -c "UPDATE sw_runtime.state SET state=2,player_present=true WHERE singleton=1"
       - name: Verify third-party occupancy, BP03/BP33 staffing and BP34 financial boundaries
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_third_party_cross_domain_acceptance.sql
       - name: Verify organisation, facility, healthcare, transport and service dependencies
