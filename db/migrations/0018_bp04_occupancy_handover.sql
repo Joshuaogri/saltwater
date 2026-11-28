@@ -146,6 +146,9 @@ BEGIN
   FROM sw_property.occupancy_agreement AS a
   WHERE a.agreement_id=v_old_occupancy.agreement_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'prior occupancy agreement not found'; END IF;
+  IF v_old_agreement.property_id<>p_property_id OR v_old_agreement.unit_id<>p_unit_id THEN
+    RAISE EXCEPTION 'prior occupancy agreement does not match its property/unit';
+  END IF;
 
   SELECT a.* INTO v_new_agreement
   FROM sw_property.occupancy_agreement AS a
