@@ -848,3 +848,8 @@ Implementation migrations 0025–0032 and the complete [110-table disposable Pos
 BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write.
 
 AC-B01 (property-to-parcel/address identity) and AC-B05 (stable, spatially located, effective-dated access points) are now PASS. The remaining BP04 acceptance criteria continue under the strict audit; this does not declare BP04 complete.
+
+
+## 2026-11-28 NPC tenant/operator role matrix extension
+
+The property-tenure generator creates deterministic independent tenant/operator business pairs across every generated unit class, while retaining self-operated premises. Operator references resolve to canonical business identities. Both direct-owner and third-party property management appointments remain represented. The regenerated canonical tenure archive and all 14 focused regression tests passed in [workflow 46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). This extends AC-C01 evidence but does not close the criterion: independent landlord/title-holder and occupant/tenant combinations, plus broader database-level cross-register role coverage, remain outstanding. No production Neon write occurred.
