@@ -153,6 +153,7 @@ BEGIN
   FOR UPDATE;
   IF NOT FOUND OR v_new_agreement.property_id<>p_property_id
      OR v_new_agreement.unit_id<>p_unit_id
+     OR v_new_agreement.premises_id IS DISTINCT FROM v_old_occupancy.premises_id
      OR v_new_agreement.agreement_status NOT IN ('active','seasonal','temporarily_inactive')
      OR (v_new_agreement.tenant_business_id IS DISTINCT FROM p_new_occupant_business_id
          AND v_new_agreement.operator_business_id IS DISTINCT FROM p_new_occupant_business_id) THEN
@@ -242,7 +243,7 @@ BEGIN
   ) VALUES (
     v_new_link_id,p_new_occupant_business_id,v_new_agreement.establishment_id,
     p_unit_id,v_new_agreement.premises_id,p_effective_tick,NULL,
-    'primary_tenant','occupied','BP04-GAMEPLAY-OCCUPANCY-HANDOVER'
+    'primary_occupant','occupied','BP04-GAMEPLAY-OCCUPANCY-HANDOVER'
   );
 
   INSERT INTO sw_property.occupancy_handover_event(
