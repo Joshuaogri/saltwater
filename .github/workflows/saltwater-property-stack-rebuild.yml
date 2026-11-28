@@ -11,6 +11,7 @@ on:
       - "runtime/bp04_global_name_reconciliation.py"
       - "tests/pkg001/test_bp04_global_name_reconciliation.py"
       - "tests/pkg001/test_property_tenure_generator.py"
+      - "tests/pkg001/test_building_services_generator.py"
       - "runtime/property_development_control_generator.py"
       - "runtime/property_lifecycle_transactions_generator.py"
       - "tests/pkg001/test_property_lifecycle_transactions_generator.py"
