@@ -11,8 +11,6 @@ on:
       - "scripts/migrate_bp02.py"
       - "scripts/verify_legacy_baseline.py"
       - "tests/database/**"
-      - "tests/pkg001/**"
-      - "runtime/**"
       - ".github/workflows/database-validation.yml"
   pull_request:
     paths:
