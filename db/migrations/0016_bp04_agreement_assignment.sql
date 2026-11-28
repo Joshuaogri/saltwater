@@ -61,7 +61,9 @@ BEGIN
        OR v_prior.actor_ref<>p_actor_ref
        OR v_prior.source_ref<>p_source_ref
        OR v_prior.evidence_class<>p_evidence_class
-       OR v_prior.event_payload<>v_payload THEN
+       OR v_prior.event_payload->>'prior_tenant_business_id' IS DISTINCT FROM p_expected_tenant_business_id
+       OR v_prior.event_payload->>'new_tenant_business_id' IS DISTINCT FROM p_new_tenant_business_id
+       OR v_prior.event_payload->>'physical_occupancy_mutated' IS DISTINCT FROM 'false' THEN
       RAISE EXCEPTION 'agreement assignment idempotency key conflicts with prior event';
     END IF;
     RETURN QUERY SELECT p_agreement_id,p_new_tenant_business_id,v_prior.agreement_event_id;
