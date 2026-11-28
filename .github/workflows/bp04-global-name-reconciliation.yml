@@ -1,0 +1,39 @@
+name: BP04 global canon name reconciliation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "runtime/bp04_global_name_reconciliation.py"
+      - "runtime/naming.py"
+      - "runtime/naming_inventory.py"
+      - "tests/pkg001/test_bp04_global_name_reconciliation.py"
+      - "data/geography/saltwater-geography-v1.json"
+      - "data/business/saltwater-business-registry-v1.json.gz"
+      - "data/property/saltwater-property-world-v1.json.gz"
+      - "data/property/saltwater-property-tenure-v1.json.gz"
+      - "data/people/saltwater-opening-civilian-resident-seed-v1.json"
+      - "data/people/saltwater-opening-police-person-seed-v1.json"
+      - ".github/workflows/bp04-global-name-reconciliation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bp04-global-name-reconciliation-main
+  cancel-in-progress: true
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run cross-domain canon name reconciliation
+        run: python -m unittest discover -s tests/pkg001 -p "test_bp04_global_name_reconciliation.py" -v
