@@ -6,9 +6,22 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 112 THEN
-    RAISE EXCEPTION 'expected 112 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links, facility service profiles and letting authority, found %', v_count;
+  IF v_count <> 113 THEN
+    RAISE EXCEPTION 'expected 113 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links, facility service profiles and letting authority, found %', v_count;
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema='sw_property' AND table_name='business_operational_event'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.views
+    WHERE table_schema='sw_property' AND table_name='business_operational_state'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid='sw_property.business_operational_event'::regclass
+      AND tgname='business_operational_event_immutable'
+      AND NOT tgisinternal
+  ) THEN RAISE EXCEPTION 'business operational event history or observed-state view missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
