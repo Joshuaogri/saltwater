@@ -131,6 +131,7 @@ BEGIN
 
   IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='recorded_tick' AND data_type='bigint')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='idempotency_key' AND data_type='text')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='recorded_year' AND data_type='integer')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='event_payload' AND data_type='jsonb')
   THEN RAISE EXCEPTION 'append-only property lifecycle event provenance fields missing'; END IF;
 
