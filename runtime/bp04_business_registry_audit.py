@@ -67,6 +67,7 @@ def audit_business_registry(registry: dict) -> dict:
     public_names: dict[str, tuple[str, str]] = {}
     sector_counts = Counter()
     lifecycle_counts = Counter()
+    allowed_lifecycle_statuses = {"active", "seasonal", "temporarily_inactive"}
     for row in businesses:
         business_id = row["business_id"]
         for field in ("registered_name", "trading_name", "sector", "primary_activity", "legal_form", "business_size", "status", "registered_address_id", "primary_establishment_id", "source_generator"):
@@ -80,6 +81,13 @@ def audit_business_registry(registry: dict) -> dict:
             raise ValueError(f"business {business_id} does not use the stable text identity format")
         if row.get("person_records_created") != 0:
             raise ValueError(f"business {business_id} improperly creates person records")
+        if row["status"] not in allowed_lifecycle_statuses:
+            raise ValueError(f"business {business_id} has an unknown lifecycle status")
+        if not isinstance(row.get("year_established"), int) or not 1985 <= row["year_established"] <= 2026:
+            raise ValueError(f"business {business_id} has an implausible establishment year")
+        expected_employee_bands = {"micro": "1-4", "small": "5-19", "medium": "20-99", "large": "100-499"}
+        if row.get("employee_band") != expected_employee_bands.get(row.get("business_size")):
+            raise ValueError(f"business {business_id} has an employee band inconsistent with its size")
         if any(char.isdigit() for char in row["registered_name"] + row["trading_name"]):
             raise ValueError(f"business {business_id} contains a numeric placeholder name")
         for field in ("registered_name", "trading_name"):
@@ -148,8 +156,30 @@ def audit_business_registry(registry: dict) -> dict:
             raise ValueError(f"unit {unit_id} has overlapping exclusive business occupancy")
         current_unit_occupants[unit_id] = link["business_id"]
 
+    lifecycle_total = sum(lifecycle_counts.values())
+    if lifecycle_total != len(businesses):
+        raise ValueError("business lifecycle classes do not reconcile to the total registry")
+    embedded_summary = registry.get("summary")
+    if not isinstance(embedded_summary, dict):
+        raise ValueError("business registry summary is missing")
+    expected_lifecycle_counts = {
+        "active": embedded_summary.get("active_businesses"),
+        "seasonal": embedded_summary.get("seasonal_businesses"),
+        "temporarily_inactive": embedded_summary.get("temporarily_inactive_businesses"),
+    }
+    if any(not isinstance(value, int) for value in expected_lifecycle_counts.values()):
+        raise ValueError("business registry lifecycle summary counts are incomplete")
+    if dict(lifecycle_counts) != expected_lifecycle_counts:
+        raise ValueError("business lifecycle class counts do not match the registry summary")
+    if embedded_summary.get("distinct_business_count") != len(businesses):
+        raise ValueError("business registry summary total does not match business identities")
+
     summary = {
         "business_count": len(businesses),
+        "active_businesses": lifecycle_counts["active"],
+        "seasonal_businesses": lifecycle_counts["seasonal"],
+        "temporarily_inactive_businesses": lifecycle_counts["temporarily_inactive"],
+        "lifecycle_count_total": lifecycle_total,
         "distinct_business_ids": len(set(business_ids)),
         "establishment_count": len(establishments),
         "distinct_establishment_ids": len(set(establishment_ids)),
