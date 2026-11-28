@@ -162,6 +162,35 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid start tick"):
             audit_business_registry(registry)
 
+    def test_zero_count_lifecycle_classes_reconcile(self):
+        registry = copy.deepcopy(self.registry)
+        for business in registry["businesses"]:
+            business["status"] = "active"
+        for establishment in registry["establishments"]:
+            establishment["operating_status"] = "active"
+        for link in registry["business_unit_links"]:
+            if link.get("valid_to_tick") is None:
+                link["occupancy_status"] = "active"
+        registry["summary"]["active_businesses"] = len(registry["businesses"])
+        registry["summary"]["seasonal_businesses"] = 0
+        registry["summary"]["temporarily_inactive_businesses"] = 0
+
+        report = audit_business_registry(registry)
+        self.assertEqual(report["businesses_by_lifecycle_status"], {"active": 10000})
+        self.assertEqual(report["seasonal_businesses"], 0)
+        self.assertEqual(report["temporarily_inactive_businesses"], 0)
+
+    def test_boolean_values_are_not_accepted_as_ticks_or_counts(self):
+        registry = copy.deepcopy(self.registry)
+        registry["business_unit_links"][0]["valid_from_tick"] = True
+        with self.assertRaisesRegex(ValueError, "invalid start tick"):
+            audit_business_registry(registry)
+
+        registry = copy.deepcopy(self.registry)
+        registry["summary"]["active_businesses"] = True
+        with self.assertRaisesRegex(ValueError, "summary counts are incomplete"):
+            audit_business_registry(registry)
+
     def test_registry_must_be_marked_as_fictional_canon(self):
         registry = copy.deepcopy(self.registry)
         registry["canon_status"] = "UNVERIFIED"
