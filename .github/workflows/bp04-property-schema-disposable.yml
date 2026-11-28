@@ -34,6 +34,7 @@ on:
       - "db/migrations/0028_bp04_facility_health_transport_profiles.sql"
       - "db/migrations/0029_bp04_third_party_occupancy_end_writer_fix.sql"
       - "db/migrations/0030_bp33_npc_employment_population_integration.sql"
+      - "db/migrations/0031_bp34_rent_payment_tenancy_separation.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_third_party_cross_domain_acceptance.sql"
       - "tests/pkg001/bp04_facility_health_transport_acceptance.sql"
