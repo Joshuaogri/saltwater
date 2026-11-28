@@ -521,6 +521,7 @@ def audit_property_tenure_role_separation(
 
     organisation_ids = {row.get("organisation_id") for row in tenure["organisations"]}
     property_ids = {row.get("property_id") for row in property_world["properties"]}
+    unit_by_id = {row["unit_id"]: row for row in property_world["units"]}
     business_by_id = {row.get("business_id"): row for row in registry["businesses"]}
     establishment_by_id = {
         row.get("establishment_id"): row for row in registry["establishments"]
