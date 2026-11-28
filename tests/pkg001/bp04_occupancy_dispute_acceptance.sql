@@ -5,7 +5,7 @@ INSERT INTO sw_property.organisation(
   organisation_id,display_name,organisation_type,registered_city,status,source_dataset
 ) VALUES
   ('SWC22-LANDLORD','C22 Fictional Landlord','property_holding_company','Saltwater','active','bp04_occupancy_dispute_acceptance'),
-  ('SWC22-CLAIMANT','C22 Fictional Claimant','property_holding_company','Saltwater','active','bp04_occupancy_dispute_acceptance','{}'::jsonb);
+  ('SWC22-CLAIMANT','C22 Fictional Claimant','property_holding_company','Saltwater','active','bp04_occupancy_dispute_acceptance');
 
 INSERT INTO sw_property.business(
   business_id,display_name,sector,primary_activity,status,source_dataset,source_record
