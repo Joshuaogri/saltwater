@@ -188,7 +188,7 @@ BEGIN
   INSERT INTO sw_property.occupancy_relationship(
     relationship_id,property_id,unit_id,superior_agreement_id,sub_agreement_id,
     superior_occupancy_id,sub_occupancy_id,subletting_right_id,
-    granting_business_id,subtenant_business_id,effective_from_tick,
+    granting_business_id,subtenant_business_id,effective_from_tick,recorded_tick,
     actor_ref,source_ref,idempotency_key
   ) VALUES (
     p_relationship_id,v_superior.property_id,v_superior.unit_id,
