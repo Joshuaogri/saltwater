@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Blueprint:** BP-01–BP-44  
 **Version:** 0.1  
-**Status:** `IN_PROGRESS` — design decisions resolved; implementation and acceptance underway  
+**Status:** `DESIGNED` — design decisions resolved; implementation and acceptance underway  
 **Date:** 2026-11-22  
 **Owner:** BP-04  
 **Dependencies:** BP-01–BP-03, BP-06–BP-12, BP-14–BP-17, BP-20, BP-22–BP-24, BP-30–BP-42, BP-44  
