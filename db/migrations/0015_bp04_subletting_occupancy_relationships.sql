@@ -244,7 +244,9 @@ BEGIN
        OR v_prior_event.event_type<>'subletting_ended'
        OR v_prior_event.recorded_tick<>p_recorded_tick
        OR v_prior_event.actor_ref<>p_actor_ref
-       OR v_prior_event.source_ref<>p_source_ref THEN
+       OR v_prior_event.source_ref<>p_source_ref
+       OR v_prior_event.event_payload->>'relationship_id' IS DISTINCT FROM p_relationship_id
+       OR v_prior_event.event_payload->>'subtenant_business_id' IS DISTINCT FROM v_relationship.subtenant_business_id THEN
       RAISE EXCEPTION 'subletting end conflicts with prior terminal event';
     END IF;
     RETURN QUERY SELECT v_relationship.relationship_id,'ended'::text;
