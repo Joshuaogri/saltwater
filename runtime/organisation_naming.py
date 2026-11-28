@@ -37,6 +37,24 @@ ROLE_SUFFIX = {
 }
 
 
+def organisation_name_reservations(display_names) -> set[str]:
+    """Return normalized full-name and root reservations from existing names."""
+    reserved: set[str] = set()
+    normalized_suffixes = tuple(
+        sorted((normalize_name(value) for value in ROLE_SUFFIX.values()),
+               key=len, reverse=True)
+    )
+    for display in display_names:
+        key = normalize_name(str(display))
+        reserved.add(key)
+        for suffix in normalized_suffixes:
+            marker = " " + suffix
+            if key.endswith(marker):
+                reserved.add(key[:-len(marker)])
+                break
+    return reserved
+
+
 def unique_organisation_name(
     entity_id: str, role: str, reserved_names: MutableSet[str],
 ) -> str:
