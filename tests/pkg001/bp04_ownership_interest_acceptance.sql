@@ -20,16 +20,16 @@ INSERT INTO sw_property.ownership_interest(
   effective_from_tick,effective_to_tick,interest_status,dispute_status,recorded_tick
 ) VALUES
   ('SWC02-INTEREST-A','SWC02-PROPERTY','SWC02-OWNER-A','direct_owner_management','freehold',
-   'bp04_ownership_interest_acceptance','{"fixture":"joint registered co-owner A"}'::jsonb,
+   'bp04_ownership_interest_acceptance',
    'registered_ownership',1,2,0,NULL,'current','undisputed',0),
   ('SWC02-INTEREST-B','SWC02-PROPERTY','SWC02-OWNER-B','direct_owner_management','freehold',
-   'bp04_ownership_interest_acceptance','{"fixture":"joint registered co-owner B"}'::jsonb,
+   'bp04_ownership_interest_acceptance',
    'registered_ownership',1,2,0,NULL,'current','undisputed',0),
   ('SWC02-INTEREST-BENEFICIAL','SWC02-PROPERTY','SWC02-BENEFICIAL',NULL,'beneficial',
-   'bp04_ownership_interest_acceptance','{"fixture":"disputed beneficial claim"}'::jsonb,
+   'bp04_ownership_interest_acceptance',
    'beneficial_ownership',1,3,2,NULL,'current','disputed','claim:SWC02:beneficial:01',2),
   ('SWC02-INTEREST-HISTORIC','SWC02-PROPERTY','SWC02-HISTORIC',NULL,'freehold',
-   'bp04_ownership_interest_acceptance','{"fixture":"historical time-bounded interest"}'::jsonb,
+   'bp04_ownership_interest_acceptance',
    'registered_ownership',1,2,0,10,'historical','resolved','claim:SWC02:historic:resolved',10);
 
 DO $bp04$
@@ -74,7 +74,7 @@ BEGIN
       effective_from_tick,interest_status
     ) VALUES (
       'SWC02-OVERALLOCATED','SWC02-PROPERTY','SWC02-OWNER-C','freehold',
-      'bp04_ownership_interest_acceptance','{"fixture":"over-allocation"}'::jsonb,
+      'bp04_ownership_interest_acceptance',
       'registered_ownership',1,4,0,'current'
     );
     RAISE EXCEPTION 'registered ownership share over-allocation was accepted';
@@ -90,7 +90,7 @@ BEGIN
       effective_from_tick,effective_to_tick,interest_status
     ) VALUES (
       'SWC02-BAD-INTERVAL','SWC02-PROPERTY','SWC02-OWNER-C','freehold',
-      'bp04_ownership_interest_acceptance','{"fixture":"bad interval"}'::jsonb,
+      'bp04_ownership_interest_acceptance',
       'other_interest',1,1,10,10,'historical'
     );
     RAISE EXCEPTION 'zero-length ownership interest interval was accepted';
@@ -104,7 +104,7 @@ BEGIN
       effective_from_tick,interest_status,dispute_status
     ) VALUES (
       'SWC02-BAD-DISPUTE','SWC02-PROPERTY','SWC02-OWNER-C','beneficial',
-      'bp04_ownership_interest_acceptance','{"fixture":"missing dispute reference"}'::jsonb,
+      'bp04_ownership_interest_acceptance',
       'beneficial_ownership',1,4,0,'current','disputed'
     );
     RAISE EXCEPTION 'disputed ownership claim without a reference was accepted';
