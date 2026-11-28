@@ -229,8 +229,8 @@ BEGIN
      OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$' THEN
     RAISE EXCEPTION 'invalid subletting end request';
   END IF;
-  SELECT * INTO v_relationship FROM sw_property.occupancy_relationship
-  WHERE relationship_id=p_relationship_id FOR UPDATE;
+  SELECT rel.* INTO v_relationship FROM sw_property.occupancy_relationship AS rel
+  WHERE rel.relationship_id=p_relationship_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'occupancy relationship not found'; END IF;
 
   IF v_relationship.relationship_status='ended' THEN
@@ -266,7 +266,7 @@ BEGIN
   UPDATE sw_property.occupancy_relationship
   SET relationship_status='ended',effective_to_tick=p_effective_tick,
       end_idempotency_key=p_idempotency_key
-  WHERE relationship_id=p_relationship_id;
+  WHERE occupancy_relationship.relationship_id=p_relationship_id;
   -- The subtenant's physical occupancy is not ended by ending the legal
   -- relationship; a separate explicit occupancy action is required.
   RETURN QUERY SELECT p_relationship_id,'ended'::text;
