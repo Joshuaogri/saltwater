@@ -183,7 +183,12 @@ class PropertyTenureTests(unittest.TestCase):
             report["letting_authority_events_checked"],
         )
         self.assertGreater(report["independent_landlord_agreement_count"], 0)
-        unit_classes = {unit["unit_class"] for unit in self.world["units"]}
+        unit_by_id = {unit["unit_id"]: unit for unit in self.world["units"]}
+        unit_classes = {
+            unit_by_id[row["unit_id"]]["unit_class"]
+            for row in self.data["agreements"]
+            if row["expiry_year"] is None
+        }
         self.assertEqual(
             set(report["independent_landlord_role_coverage_by_unit_class"]),
             unit_classes,
