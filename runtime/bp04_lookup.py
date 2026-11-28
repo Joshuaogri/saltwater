@@ -80,6 +80,21 @@ ALIASES = {
     "establishment": "establishment", "establishment_id": "establishment",
 }
 
+SEARCH_FIELDS = {
+    "address": ("address_id", "address_design_id", "address_label", "street_name", "postcode",
+                "district_name", "neighbourhood_name"),
+    "business": ("business_id", "registered_name", "trading_name",
+                 "sector", "primary_activity"),
+    "property": ("property_id", "parcel_design_id", "source_candidate_parcel_id",
+                 "primary_use", "source_district_id", "source_neighbourhood_id"),
+}
+SEARCH_ID_FIELDS = {"address": "address_id", "business": "business_id", "property": "property_id"}
+
+
+def _bigrams(value: str) -> set[str]:
+    return {value[index:index + 2] for index in range(len(value) - 1)}
+
+
 
 def _stable_design_id(prefix: str, source_id: str) -> str:
     digest = hashlib.sha256(str(source_id).encode("utf-8")).hexdigest()[:16].upper()
@@ -172,6 +187,24 @@ class BP04Lookup:
         self._search_rows["address"] = list(self._by_id["address"].values())
         self._search_rows["property"] = list(self._by_id["property"].values())
         self._search_rows["business"] = list(self._by_id["business"].values())
+
+        # Build a compact bigram inverted index once. Search remains substring-
+        # compatible, but no longer normalises and scans all 10k business rows
+        # for every player query.
+        self._search_haystacks: dict[str, dict[str, tuple[str, dict]]] = {}
+        self._search_ngrams: dict[str, dict[str, set[str]]] = {}
+        for kind, records in self._search_rows.items():
+            id_field = SEARCH_ID_FIELDS[kind]
+            haystacks: dict[str, tuple[str, dict]] = {}
+            postings: dict[str, set[str]] = {}
+            for record in records:
+                key = str(record[id_field])
+                haystack = " ".join(_normalise(record.get(field)) for field in SEARCH_FIELDS[kind])
+                haystacks[key] = (haystack, record)
+                for gram in _bigrams(haystack):
+                    postings.setdefault(gram, set()).add(key)
+            self._search_haystacks[kind] = haystacks
+            self._search_ngrams[kind] = postings
 
         for address in self._by_id["address"].values():
             property_id = address.get("property_id")
@@ -368,7 +401,7 @@ class BP04Lookup:
         return dict(record) if record is not None else None
 
     def search(self, entity_type: str, query: str, limit: int = 20) -> list[dict]:
-        """Case-insensitive partial search; deterministic and strictly bounded."""
+        """Case-insensitive partial search using a prebuilt bounded-result index."""
         if not isinstance(limit, int) or isinstance(limit, bool) or not 1 <= limit <= 100:
             raise ValueError("limit must be an integer from 1 to 100")
         kind = ALIASES.get(entity_type)
@@ -377,23 +410,22 @@ class BP04Lookup:
         needle = _normalise(query)
         if len(needle) < 2:
             raise ValueError("search query must contain at least two characters")
-        fields = {
-            "address": ("address_id", "address_design_id", "address_label", "street_name", "postcode",
-                        "district_name", "neighbourhood_name"),
-            "business": ("business_id", "registered_name", "trading_name",
-                         "sector", "primary_activity"),
-            "property": ("property_id", "parcel_design_id", "source_candidate_parcel_id",
-                        "primary_use", "source_district_id", "source_neighbourhood_id"),
-        }[kind]
+
+        postings = self._search_ngrams[kind]
+        grams = _bigrams(needle)
+        candidate_sets = [postings.get(gram) for gram in grams]
+        if any(candidates is None for candidates in candidate_sets):
+            return []
+
+        candidate_ids = set.intersection(*(candidates for candidates in candidate_sets))
+        haystacks = self._search_haystacks[kind]
+        id_field = SEARCH_ID_FIELDS[kind]
         matches = []
-        for record in self._search_rows[kind]:
-            haystack = " ".join(_normalise(record.get(field)) for field in fields)
+        for key in candidate_ids:
+            haystack, record = haystacks[key]
             if needle in haystack:
                 matches.append(record)
-        matches.sort(key=lambda row: str(row.get({
-            "address": "address_id", "business": "business_id",
-            "property": "property_id"
-        }[kind])))
+        matches.sort(key=lambda row: str(row.get(id_field)))
         return [dict(row) for row in matches[:limit]]
 
     def property_detail(self, property_id: str) -> dict | None:
