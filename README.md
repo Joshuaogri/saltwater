@@ -1,5 +1,12 @@
 # Saltwater
 
+## BP04 canonical property/business stack rebuild — passed (2026-11-28)
+
+The full sequential property/business rebuild passed on GitHub Actions [run 46166467165](https://github.com/Joshuaogri/saltwater/actions/runs/46166467165), then published the consistent compressed dataset snapshot directly to `main` in commit [3a71d4988bf31af35c044584c062c6f12f2f0f64](https://github.com/Joshuaogri/saltwater/commit/3a71d4988bf31af35c044584c062c6f12f2f0f64). All stages passed: physical asset inventory; canonical property world; business registry and operations; ownership and utilities; maintenance, security and valuation; development, lifecycle and rights; insurance, facilities and estate audit; compression; global SW-UNS cross-domain reconciliation; and single-snapshot publication. The reproducible global-name reconciliation tests passed all four tests. The repository now stores the property/business datasets as compressed `.json.gz` archives. This is GitHub source-data publication and disposable acceptance only; no production Neon migration, import or write occurred.
+
+The separate persistent database-backed reservation workflow is still running; its result is not inferred from the property-stack pass. BP04 remains IN_PROGRESS until the complete 48-criterion audit is closed.
+
+
 ## Binding single-player NPC-world rule
 
 Saltwater has exactly one human player: the user, who controls one individual police officer. Every other person is an NPC, including all other officers, commanders, staff, residents, business owners, officials, suspects, witnesses and criminals. There are no other human players or player-controlled factions. NPCs maintain persistent identities, roles, knowledge boundaries, routines and relationships; they make decisions and interact with one another and the world autonomously. The simulation responds to the player's actions while preserving NPC agency and causal continuity. This rule applies across all 44 blueprint divisions.
