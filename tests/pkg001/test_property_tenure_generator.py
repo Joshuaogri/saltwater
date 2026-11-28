@@ -198,7 +198,7 @@ class PropertyTenureTests(unittest.TestCase):
         }
         independent = [
             row for row in self.data["agreements"]
-            if row["letting_authority_id"] is not None
+            if row.get("letting_authority_id") is not None
         ]
         for agreement in independent:
             authority = authorities[agreement["letting_authority_id"]]
@@ -214,7 +214,7 @@ class PropertyTenureTests(unittest.TestCase):
         tenure = json.loads(json.dumps(self.data))
         agreement = next(
             row for row in tenure["agreements"]
-            if row["letting_authority_id"] is not None
+            if row.get("letting_authority_id") is not None
         )
         agreement["letting_authority_id"] = None
         with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
