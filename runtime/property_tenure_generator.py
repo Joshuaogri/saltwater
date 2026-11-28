@@ -490,6 +490,8 @@ def audit_property_tenure_role_separation(
         "agreements": tenure.get("agreements"),
         "occupancies": tenure.get("occupancies"),
         "organisations": tenure.get("organisations"),
+        "letting_authorities": tenure.get("letting_authorities"),
+        "letting_authority_events": tenure.get("letting_authority_events"),
         "properties": property_world.get("properties"),
         "businesses": registry.get("businesses"),
         "establishments": registry.get("establishments"),
@@ -567,6 +569,14 @@ def audit_property_tenure_role_separation(
             ),
         }
 
+    authority_by_id = {
+        row.get("letting_authority_id"): row for row in tenure["letting_authorities"]
+    }
+    authority_event_ids = {
+        row.get("letting_authority_id")
+        for row in tenure["letting_authority_events"]
+        if row.get("event_type") == "authority_granted"
+    }
     agreement_by_id = {}
     for agreement in tenure["agreements"]:
         agreement_id = agreement.get("agreement_id")
@@ -581,8 +591,21 @@ def audit_property_tenure_role_separation(
             raise ValueError("agreement identities must be present and unique")
         if property_id not in property_ids or landlord_id not in organisation_ids:
             raise ValueError(f"landlord role for {agreement_id} does not resolve to an organisation/property")
+        authority_id = agreement.get("letting_authority_id")
         if landlord_id != owner_by_property[property_id]:
-            raise ValueError(f"landlord role for {agreement_id} does not match the current title owner")
+            authority = authority_by_id.get(authority_id)
+            if (
+                authority is None
+                or authority.get("property_id") != property_id
+                or authority.get("grantor_organisation_id") != owner_by_property[property_id]
+                or authority.get("grantee_organisation_id") != landlord_id
+                or agreement.get("commencement_year", 0) < authority.get("effective_from_year", 99999)
+                or (authority.get("effective_to_year") is not None and agreement.get("commencement_year", 99999) > authority["effective_to_year"])
+                or authority_id not in authority_event_ids
+            ):
+                raise ValueError(f"non-owner landlord role for {agreement_id} lacks matching title-holder letting authority")
+        elif authority_id is not None:
+            raise ValueError(f"owner landlord role for {agreement_id} must not claim a non-owner letting authority")
         if manager_id not in organisation_ids or manager_id != managers_by_property[property_id]:
             raise ValueError(f"manager role for {agreement_id} does not match the current appointment")
         if tenant_id not in business_by_id or operator_id not in business_by_id:
@@ -629,6 +652,12 @@ def audit_property_tenure_role_separation(
         "third_party_management_count": third_party_management,
         "management_role_coverage_by_unit_class": manager_role_coverage,
         "agreements_checked": len(agreement_by_id),
+        "letting_authorities_checked": len(authority_by_id),
+        "letting_authority_events_checked": len(tenure["letting_authority_events"]),
+        "independent_landlord_agreement_count": sum(
+            agreement.get("letting_authority_id") is not None
+            for agreement in agreement_by_id.values()
+        ),
         "occupancies_checked": len(occupancy_by_agreement),
         "business_identities_checked": len(business_by_id),
         "organisation_identities_checked": len(organisation_ids),
