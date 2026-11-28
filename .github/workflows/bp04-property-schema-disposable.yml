@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 97-table disposable PostgreSQL 16/18 benchmark
+name: BP04 canonical property stack — 98-table disposable PostgreSQL 16/18 benchmark
 # Keep the archive-only collection inventory assertion aligned with the expanded source stack.
 
 on:
@@ -25,9 +25,11 @@ on:
       - "db/migrations/0020_bp04_subletting_handover_serialization.sql"
       - "db/migrations/0021_bp04_effective_dated_joint_ownership_interests.sql"
       - "db/migrations/0022_bp04_occupancy_dispute_register.sql"
+      - "db/migrations/0023_bp04_joint_title_transfer_writer.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_ownership_interest_acceptance.sql"
       - "tests/pkg001/bp04_occupancy_dispute_acceptance.sql"
+      - "tests/pkg001/bp04_joint_title_transfer_acceptance.sql"
       - "tests/pkg001/test_bp04_concurrent_handover.py"
       - "tests/pkg001/bp04_business_search_performance.py"
       - "runtime/bp04_property_stack_importer.py"
@@ -119,7 +121,7 @@ jobs:
             exit 1
           fi
           grep -q "Production Neon imports are restricted to --archive-only mode" /tmp/bp04-prod-storage.log
-      - name: Verify 97-table typed inventory and integrity contracts
+      - name: Verify 98-table typed inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Verify agreement event history and lifecycle transition writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_agreement_event_history_acceptance.sql
@@ -127,6 +129,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_ownership_interest_acceptance.sql
       - name: Verify occupancy entitlement and consent dispute lifecycle
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_occupancy_dispute_acceptance.sql
+      - name: Verify coordinated joint-title transfer and continuing occupancy
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_joint_title_transfer_acceptance.sql
       - name: Verify concurrent occupancy handover serialization and idempotency
         run: python tests/pkg001/test_bp04_concurrent_handover.py
       - name: Benchmark 10k business substring search latency
