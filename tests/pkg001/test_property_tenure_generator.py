@@ -171,6 +171,63 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertGreater(report["same_tenant_operator_agreement_count"], 0)
         self.assertTrue(all(a["operator_business_id"] in business_by_id for a in agreements))
 
+    def test_independent_landlords_resolve_through_title_holder_authority(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        report = audit_property_tenure_role_separation(
+            self.data, self.world, self.registry
+        )
+        self.assertGreater(report["letting_authorities_checked"], 0)
+        self.assertEqual(
+            report["letting_authorities_checked"],
+            report["letting_authority_events_checked"],
+        )
+        self.assertGreater(report["independent_landlord_agreement_count"], 0)
+        owners = {
+            row["property_id"]: row["owner_organisation_id"]
+            for row in self.data["current_ownership_interests"]
+        }
+        authorities = {
+            row["letting_authority_id"]: row
+            for row in self.data["letting_authorities"]
+        }
+        grants = {
+            row["letting_authority_id"]
+            for row in self.data["letting_authority_events"]
+            if row["event_type"] == "authority_granted"
+        }
+        independent = [
+            row for row in self.data["agreements"]
+            if row["letting_authority_id"] is not None
+        ]
+        for agreement in independent:
+            authority = authorities[agreement["letting_authority_id"]]
+            self.assertEqual(authority["property_id"], agreement["property_id"])
+            self.assertEqual(authority["grantor_organisation_id"], owners[agreement["property_id"]])
+            self.assertEqual(authority["grantee_organisation_id"], agreement["landlord_organisation_id"])
+            self.assertIn(authority["letting_authority_id"], grants)
+            self.assertGreaterEqual(agreement["commencement_year"], authority["effective_from_year"])
+
+    def test_non_owner_landlord_without_authority_fails_role_audit(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        agreement = next(
+            row for row in tenure["agreements"]
+            if row["letting_authority_id"] is not None
+        )
+        agreement["letting_authority_id"] = None
+        with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_head_lessee_authority_must_match_title_holder_grantor(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        tenure["letting_authorities"][0]["grantor_organisation_id"] = "not-the-title-holder"
+        with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
     def test_tenant_cannot_be_resolved_through_organisation_register(self):
         from runtime.property_tenure_generator import audit_property_tenure_role_separation
 
