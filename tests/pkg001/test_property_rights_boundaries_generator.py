@@ -1,9 +1,17 @@
-import json,unittest
+import gzip,json,unittest
 from pathlib import Path
 from runtime.property_tenure_generator import _expand_columnar
 from runtime.property_rights_boundaries_generator import build_property_rights
 ROOT=Path(__file__).resolve().parents[2]
-def load(p): return _expand_columnar(json.loads((ROOT/p).read_text()))
+def load(path):
+ p=ROOT/path
+ if p.exists():
+  document=json.loads(p.read_text(encoding="utf-8"))
+ else:
+  compressed=p.with_suffix(p.suffix+".gz")
+  with gzip.open(compressed,"rt",encoding="utf-8") as handle:
+   document=json.load(handle)
+ return _expand_columnar(document)
 class PropertyRightsTests(unittest.TestCase):
  @classmethod
  def setUpClass(cls):
