@@ -388,12 +388,12 @@ BEGIN
     p_actor_ref,p_source_ref,p_idempotency_key,p_evidence_class,v_payload
   ) RETURNING occupancy_dispute_event.dispute_event_id INTO v_event_id;
 
-  UPDATE sw_property.occupancy_dispute
+  UPDATE sw_property.occupancy_dispute AS d
   SET dispute_status=p_resulting_status,
       resolved_effective_tick=p_effective_tick,
       resolved_recorded_tick=p_recorded_tick,
       resolution_outcome=p_resulting_status
-  WHERE dispute_id=p_dispute_id;
+  WHERE d.dispute_id=p_dispute_id;
 
   -- Resolution records the outcome only. It does not vacate the occupant,
   -- terminate the agreement, revoke a right or transfer title.
