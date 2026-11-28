@@ -4,6 +4,8 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import math
+from collections import defaultdict
 from runtime.dataset_io import load_json
 from pathlib import Path
 
@@ -100,6 +102,61 @@ def _possible_near_duplicate_roots(
     ))
 
 
+def _name_trigrams(normalized_name: str) -> frozenset[str]:
+    return frozenset(
+        f"  {word} "[offset:offset + 3]
+        for word in normalized_name.split()
+        for offset in range(max(0, len(f"  {word} ") - 2))
+    )
+
+
+def _build_canonical_name_index(names: tuple[str, ...]):
+    signatures: list[tuple[str, frozenset[str]]] = []
+    postings: dict[int, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+    for name in names:
+        signature = _name_trigrams(normalize_name(name))
+        if not signature:
+            continue
+        index = len(signatures)
+        signatures.append((name, signature))
+        for trigram in signature:
+            postings[len(signature)][trigram].append(index)
+    return signatures, postings
+
+
+def _has_canonical_near_duplicate(name: str, index) -> bool:
+    signatures, postings = index
+    normalized = normalize_name(name)
+    candidate = _name_trigrams(normalized)
+    if not candidate:
+        return False
+    minimum_size = math.ceil(len(candidate) * 0.90)
+    maximum_size = math.floor(len(candidate) / 0.90)
+    anchor_count = max(1, math.floor(len(candidate) * 0.10) + 1)
+    prior_sizes = range(minimum_size, maximum_size + 1)
+    frequencies = []
+    for trigram in candidate:
+        frequency = sum(
+            len(postings.get(size, {}).get(trigram, ())) for size in prior_sizes
+        )
+        if frequency:
+            frequencies.append((frequency, trigram))
+    anchors = [trigram for _, trigram in sorted(frequencies)[:anchor_count]]
+    possible: set[int] = set()
+    for trigram in anchors:
+        for size in prior_sizes:
+            possible.update(postings.get(size, {}).get(trigram, ()))
+    for prior_index in possible:
+        prior_name, prior_signature = signatures[prior_index]
+        common = len(candidate & prior_signature)
+        required = math.ceil(
+            0.90 * (len(candidate) + len(prior_signature)) / 1.90
+        )
+        if common >= required and pg_trgm_similarity(name, prior_name) > 0.90:
+            return True
+    return False
+
+
 def _generate_business_names_report(source: dict, property_world: dict | None = None) -> dict:
     config, _, legal_suffixes = _load_business_name_config()
     candidate_pool_count = TARGET_BUSINESSES + 2000
@@ -125,8 +182,9 @@ def _generate_business_names_report(source: dict, property_world: dict | None = 
     canonical_names = tuple(dict.fromkeys(canonical_names))
     reserved = {normalize_name(name) for name in canonical_names}
     # Screen candidates against every currently adopted geography/property/
-    # organisation name before assigning stable business IDs. The database
-    # remains the final authority for reservation and concurrency.
+    # organisation name before assigning stable business IDs. Use an exact
+    # rare-trigram candidate index instead of an O(names x canon) scan.
+    canonical_name_index = _build_canonical_name_index(canonical_names)
 
     adjective_vocab = tuple(dict.fromkeys(root.split(" ", 1)[0] for root in config.business_roots))
     noun_vocab = tuple(dict.fromkeys(root.split(" ", 1)[1] for root in config.business_roots))
@@ -164,9 +222,8 @@ def _generate_business_names_report(source: dict, property_world: dict | None = 
             continue
 
         canon_near_duplicate = any(
-            pg_trgm_similarity(public_name, canon_name) > 0.90
+            _has_canonical_near_duplicate(public_name, canonical_name_index)
             for public_name in public_names
-            for canon_name in canonical_names
         )
         if canon_near_duplicate:
             held_near_duplicates += 1
