@@ -118,8 +118,4 @@ LEFT JOIN LATERAL (
 COMMENT ON VIEW sw_property.facility_service_operational_state IS
   'Separates planned BP37 timetable references and declared capacity/availability from event-observed operational state. No observation means actual availability is unknown.';
 
-INSERT INTO sw_ops.schema_migration(version,migration_name)
-VALUES (35,'bp04_facility_operational_state')
-ON CONFLICT(version) DO NOTHING;
-
 COMMIT;
