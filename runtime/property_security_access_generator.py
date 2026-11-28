@@ -24,7 +24,7 @@ def build_property_security(world,tenure,services):
  access=world["access_points"]; routes={x["access_point_id"]:x for x in world["access_routes"]}
  managers={x["property_id"]:x["manager_organisation_id"] for x in tenure["management_appointments"]}
  owners={x["property_id"]:x["owner_organisation_id"] for x in tenure["current_ownership_interests"]}
- occ_by_unit={x["unit_id"]:x for x in tenure["occupancies"]}
+ occ_by_unit={x["unit_id"]:x for x in tenure["occupancies"] if x.get("occupant_business_id")}
  biz={x["business_id"]:x for x in _expand_columnar(__import__("json").loads((Path(__file__).resolve().parents[1]/"data/business/saltwater-business-registry-v1.json").read_text()))["businesses"]} if False else {}
  doors=[]; locks=[]; cylinders=[]; keys=[]; credentials=[]; devices=[]; zones=[]; groups=[]; permissions=[]; assignments=[]; cabinets=[]; policies=[]; events=[]
  access_groups={}
