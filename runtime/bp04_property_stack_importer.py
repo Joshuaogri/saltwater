@@ -431,7 +431,7 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 compare_current = ",".join(f'current."{column}"' for column in columns if column != pk)
                 compare_excluded = ",".join(f'excluded."{column}"' for column in columns if column != pk)
                 predicate = f"({compare_current}) IS DISTINCT FROM ({compare_excluded})"
-                if table == "letting_authority_event":
+                if table in {"letting_authority_event", "third_party_occupancy_relationship"}:
                     action = "DO NOTHING"
                 else:
                     action = f"DO UPDATE SET {updates} WHERE {predicate}" if updates else "DO NOTHING"
@@ -439,6 +439,20 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 values = [tuple(entry[c] for c in columns) for entry in entries]
                 with conn.cursor() as cur:
                     cur.executemany(sql, values)
+                if table == "third_party_occupancy_relationship":
+                    selected_columns = ",".join(f'"{column}"' for column in columns)
+                    for entry in entries:
+                        stored = conn.execute(
+                            f'SELECT {selected_columns} FROM sw_property."{table}" WHERE "{pk}"=%s',
+                            (entry[pk],),
+                        ).fetchone()
+                        expected_row = tuple(
+                            getattr(entry[column], "obj", entry[column]) for column in columns
+                        )
+                        if stored is None or tuple(stored) != expected_row:
+                            raise RuntimeError(
+                                f"Third-party occupancy relationship {entry[pk]} conflicts with the canonical source"
+                            )
                 if table == "letting_authority_event":
                     selected_columns = ",".join(f'"{column}"' for column in columns)
                     for entry in entries:
