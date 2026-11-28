@@ -1,0 +1,70 @@
+name: BP04 typed import acceptance — disposable PostgreSQL 16/18
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "data/property/*.json.gz"
+      - "data/business/*.json.gz"
+      - "runtime/bp04_property_stack_importer.py"
+      - "db/migrations/**"
+      - "tests/pkg001/bp04_property_import_acceptance.sql"
+
+permissions:
+  contents: read
+
+jobs:
+  typed-import:
+    name: typed-import (PostgreSQL ${{ matrix.postgres }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres: ["16", "18"]
+    services:
+      postgres:
+        image: postgres:${{ matrix.postgres }}
+        env:
+          POSTGRES_USER: saltwater_test
+          POSTGRES_PASSWORD: test-only-password
+          POSTGRES_DB: saltwater_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U saltwater_test -d saltwater_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://saltwater_test:test-only-password@localhost:5432/saltwater_test
+      PGPASSWORD: test-only-password
+      PGUSER: saltwater_test
+      PGHOST: localhost
+      PGPORT: 5432
+      PGDATABASE: saltwater_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install importer and migration dependencies
+        run: python -m pip install "psycopg[binary]>=3.2,<4"
+      - name: Apply all ordered migrations to disposable PostgreSQL
+        run: python scripts/migrate.py --apply
+      - name: Import all mapped BP04 collections in typed-relational disposable mode
+        run: python runtime/bp04_property_stack_importer.py --typed-relational
+      - name: Verify 14 datasets, 107 collections, 1,950,939 source rows and typed role links
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+      - name: Measure typed database before idempotent repeat
+        run: psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-before.txt
+      - name: Repeat typed import to verify immutable event and row idempotency
+        run: python runtime/bp04_property_stack_importer.py --typed-relational
+      - name: Recheck typed import acceptance after repeat
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
+      - name: Assert repeat import leaves database storage unchanged
+        run: |
+          psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-after.txt
+          diff -u /tmp/bp04-typed-size-before.txt /tmp/bp04-typed-size-after.txt
+          cat /tmp/bp04-typed-size-after.txt
