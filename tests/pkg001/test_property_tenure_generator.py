@@ -105,8 +105,11 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertEqual(d["summary"]["agreement_execution_date_recorded_count"], 0)
         self.assertEqual(d["summary"]["agreement_execution_date_unknown_count"], len(agreements))
         self.assertTrue(all(x["execution_date"] is None and x["execution_date_status"] == "not_recorded" for x in events))
+        events_by_agreement = {}
+        for event in events:
+            events_by_agreement.setdefault(event["agreement_id"], []).append(event)
         for agreement in agreements.values():
-            rows = [x for x in events if x["agreement_id"] == agreement["agreement_id"]]
+            rows = events_by_agreement.get(agreement["agreement_id"], [])
             self.assertEqual(sum(x["event_type"] == "agreement_baseline_registered" for x in rows), 1)
             self.assertEqual(sum(x["event_type"] == "agreement_commenced" for x in rows), 1)
             self.assertEqual(sum(x["event_type"] == "agreement_expired" for x in rows), int(agreement["expiry_year"] is not None))
