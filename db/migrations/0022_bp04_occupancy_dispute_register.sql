@@ -217,6 +217,31 @@ BEGIN
   WHERE u.unit_id=v_occupancy.unit_id AND u.property_id=v_occupancy.property_id
   FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'disputed occupancy unit does not exist'; END IF;
+
+  -- Recheck the idempotency key after the unit lock, so concurrent exact
+  -- requests serialize into a replay instead of surfacing a unique-key race.
+  SELECT * INTO v_prior FROM sw_property.occupancy_dispute
+  WHERE idempotency_key=p_idempotency_key;
+  IF FOUND THEN
+    IF v_prior.dispute_id<>p_dispute_id OR v_prior.occupancy_id<>p_occupancy_id
+       OR v_prior.claimant_organisation_id IS DISTINCT FROM p_claimant_organisation_id
+       OR v_prior.claimant_business_id IS DISTINCT FROM p_claimant_business_id
+       OR v_prior.respondent_organisation_id IS DISTINCT FROM p_respondent_organisation_id
+       OR v_prior.respondent_business_id IS DISTINCT FROM p_respondent_business_id
+       OR v_prior.claim_type<>p_claim_type OR v_prior.claim_summary<>p_claim_summary
+       OR v_prior.opened_effective_tick<>p_effective_tick
+       OR v_prior.opened_recorded_tick<>p_recorded_tick
+       OR v_prior.actor_ref<>p_actor_ref OR v_prior.source_ref<>p_source_ref
+       OR v_prior.evidence_class<>p_evidence_class
+       OR v_prior.agreement_id IS DISTINCT FROM p_agreement_id
+       OR v_prior.property_right_id IS DISTINCT FROM p_property_right_id
+       OR v_prior.occupancy_relationship_id IS DISTINCT FROM p_occupancy_relationship_id THEN
+      RAISE EXCEPTION 'occupancy dispute idempotency key conflicts with prior definition';
+    END IF;
+    RETURN QUERY SELECT v_prior.dispute_id,v_prior.dispute_status;
+    RETURN;
+  END IF;
+
   SELECT o.* INTO v_occupancy FROM sw_property.occupancy AS o
   WHERE o.occupancy_id=p_occupancy_id FOR UPDATE;
   IF NOT FOUND THEN RAISE EXCEPTION 'disputed occupancy does not exist'; END IF;
@@ -235,7 +260,8 @@ BEGIN
     WHERE r.property_right_id=p_property_right_id;
     IF NOT FOUND OR v_right.property_id<>v_occupancy.property_id
        OR (v_right.unit_id IS NOT NULL AND v_right.unit_id<>v_occupancy.unit_id)
-       OR (p_agreement_id IS NOT NULL AND v_right.source_agreement_id<>p_agreement_id) THEN
+       OR (COALESCE(p_agreement_id,v_occupancy.agreement_id) IS NOT NULL
+           AND v_right.source_agreement_id<>COALESCE(p_agreement_id,v_occupancy.agreement_id)) THEN
       RAISE EXCEPTION 'disputed contractual right must match the target occupancy property, unit and agreement';
     END IF;
   END IF;
