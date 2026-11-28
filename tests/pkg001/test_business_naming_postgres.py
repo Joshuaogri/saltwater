@@ -2,7 +2,9 @@
 import gzip
 import hashlib
 import json
+import math
 import os
+import time
 import unittest
 from pathlib import Path
 
@@ -297,6 +299,7 @@ class BusinessNamingPostgresTests(unittest.TestCase):
             # PostgreSQL advisory/name locks are transaction-scoped. Keep each
             # write transaction bounded, as a resumable production importer must.
             chunk_size = 500
+            write_started = time.perf_counter()
             for offset in range(0, len(reservations), chunk_size):
                 chunk = reservations[offset:offset + chunk_size]
                 reservation_count += registry.reserve_business_batch(
@@ -323,6 +326,12 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                         self.assertEqual(cur.fetchone()[0], 0)
                 conn.commit()
             self.assertEqual(reservation_count, 20000)
+            write_elapsed = time.perf_counter() - write_started
+            print(
+                "BP04 persistent business-name writes: "
+                f"{reservation_count} reservations in {write_elapsed:.3f}s "
+                f"({reservation_count / write_elapsed:.1f} reservations/s)"
+            )
             with conn.cursor() as cur:
                 cur.execute(
                     """SELECT count(*) FILTER (WHERE name_form='trading'),
@@ -342,6 +351,63 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     (self.rows[0]["trading_name"],),
                 )
                 self.assertEqual(cur.fetchone()[0], 1)
+
+    def test_database_business_name_and_identity_lookup_performance_budget(self):
+        """Measure indexed database lookups after the 20,000-name reservation batch."""
+        name_latencies_ms = []
+        business_latencies_ms = []
+        with connect() as conn:
+            with conn.cursor() as cur:
+                for index in range(1000):
+                    business = self.rows[(index * 7919) % len(self.rows)]
+                    started = time.perf_counter_ns()
+                    cur.execute(
+                        "SELECT * FROM sw_names.search_business_name(%s)",
+                        (business["trading_name"],),
+                    )
+                    result = cur.fetchone()
+                    name_latencies_ms.append((time.perf_counter_ns() - started) / 1_000_000)
+                    self.assertIsNotNone(result)
+                    self.assertEqual(result[1], "BUSINESS")
+                    self.assertEqual(result[2], business["business_id"])
+                    self.assertEqual(result[3], "trading")
+                    self.assertFalse(result[6])
+
+                    started = time.perf_counter_ns()
+                    cur.execute(
+                        """SELECT business_id,display_name,sector,status
+                           FROM sw_property.business WHERE business_id=%s""",
+                        (business["business_id"],),
+                    )
+                    business_result = cur.fetchone()
+                    business_latencies_ms.append((time.perf_counter_ns() - started) / 1_000_000)
+                    self.assertIsNotNone(business_result)
+                    self.assertEqual(business_result[0], business["business_id"])
+
+        def percentile(values, quantile):
+            ordered = sorted(values)
+            return ordered[math.ceil(quantile * len(ordered)) - 1]
+
+        name_p95 = percentile(name_latencies_ms, 0.95)
+        name_p99 = percentile(name_latencies_ms, 0.99)
+        business_p95 = percentile(business_latencies_ms, 0.95)
+        business_p99 = percentile(business_latencies_ms, 0.99)
+        print(
+            "BP04 PostgreSQL exact-name search, 1,000 queries: "
+            f"p50={percentile(name_latencies_ms, 0.50):.3f}ms "
+            f"p95={name_p95:.3f}ms p99={name_p99:.3f}ms "
+            f"max={max(name_latencies_ms):.3f}ms"
+        )
+        print(
+            "BP04 PostgreSQL business-ID lookup, 1,000 queries: "
+            f"p50={percentile(business_latencies_ms, 0.50):.3f}ms "
+            f"p95={business_p95:.3f}ms p99={business_p99:.3f}ms "
+            f"max={max(business_latencies_ms):.3f}ms"
+        )
+        self.assertLessEqual(name_p95, 25.0)
+        self.assertLessEqual(name_p99, 50.0)
+        self.assertLessEqual(business_p95, 25.0)
+        self.assertLessEqual(business_p99, 50.0)
 
     def test_python_similarity_matches_postgresql_pg_trgm(self):
         pairs = (
