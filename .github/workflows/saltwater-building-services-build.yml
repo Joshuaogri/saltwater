@@ -11,6 +11,7 @@ on:
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-building-services-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json"
+      - "data/property/saltwater-property-tenure-v1.json.gz"
       - "tests/pkg001/test_building_services_generator.py"
       - ".github/workflows/saltwater-building-services-build.yml"
   workflow_dispatch:
@@ -52,6 +53,15 @@ jobs:
             exit 0
           fi
           git commit -m "Generate Saltwater building systems and utility networks"
-          git fetch origin main
-          git rebase origin/main
-          git push origin HEAD:main
+          for attempt in 1 2 3 4 5 6; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 6 ]; then
+              echo "Unable to publish generated data after six main-branch retries." >&2
+              exit 1
+            fi
+            sleep "$attempt"
+          done
