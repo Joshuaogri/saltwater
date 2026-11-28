@@ -203,7 +203,10 @@ def build_global_name_inventory() -> dict[str, Any]:
                         for prior_size in prior_sizes
                     )
                     frequencies.append((frequency, trigram))
-                anchors = [trigram for _, trigram in sorted(frequencies)[:anchor_count]]
+                anchors = [
+                    trigram for _, trigram in
+                    sorted((entry for entry in frequencies if entry[0] > 0))[:anchor_count]
+                ]
                 candidate_indices: set[int] = set()
                 for trigram in anchors:
                     for prior_size in prior_sizes:
