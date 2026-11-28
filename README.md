@@ -6,11 +6,11 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
-## BP04 10,000-business lookup benchmark — PostgreSQL 18 pass (2026-11-28)
+## BP04 10,000-business lookup and concurrency benchmark — PostgreSQL 16/18 passed (2026-11-28)
 
 The gameplay archive lookup now builds a normalized bigram inverted index once, then uses it to narrow substring-search candidates instead of normalizing and scanning all 10,000 business rows on every query. The regression test compares indexed results with the previous linear substring semantics for 100 deterministic sample queries and benchmarks 1,000 lookups.
 
-PostgreSQL 18 workflow run [46126463362](https://github.com/Joshuaogri/saltwater/actions/runs/46126463362) passed the benchmark with 10,000 businesses and 1,000 queries: index build 2,291.555 ms; search p50 0.1411 ms, p95 0.5779 ms, p99 0.9797 ms, maximum 1.5855 ms; 20,000 result rows returned. The defined search budgets are p95 <= 10 ms and p99 <= 25 ms. PostgreSQL 16 has not yet completed the preceding concurrent handover test, so its benchmark and cross-version acceptance remain pending. These figures measure the in-memory gameplay lookup path, not database query latency or write throughput; BP04 performance acceptance remains partial.
+The full [95-table disposable PostgreSQL 16/18 workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46130180118) passed both versions, including real two-session competing handovers, concurrent idempotent replay, and the 10,000-business search benchmark. PostgreSQL 18: index build 2,065.485 ms; p50 0.0981 ms, p95 0.4410 ms, p99 0.7664 ms, maximum 0.8505 ms. PostgreSQL 16: index build 2,008.506 ms; p50 0.1147 ms, p95 0.4544 ms, p99 0.8602 ms, maximum 1.1616 ms. Each run processed 1,000 queries over 10,000 businesses and returned 20,000 result rows, against budgets of p95 <= 10 ms and p99 <= 25 ms. The concurrent handover test passed on both versions. These figures measure the in-memory gameplay lookup path, not database query latency or write throughput; BP04 performance acceptance remains partial for those unmeasured paths.
 
 ## BP04-12 agreement event history and lifecycle transitions — disposable acceptance passed (2026-11-28)
 
