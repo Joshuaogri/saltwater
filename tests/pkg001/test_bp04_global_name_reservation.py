@@ -160,9 +160,10 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
             with conn.cursor() as cur:
                 cur.execute(
                     """SELECT sw_names.record_generation_batch(
-                         %s,1,1,'SW-UNS-001-v1',20261128,%s,%s,
-                         'BP04-global-canon-name-inventory','ci-bp04-global-name',
-                         'BP04 global persistent canonical-name reservation')""",
+                         %s::text,1::smallint,1::smallint,'SW-UNS-001-v1'::text,
+                         20261128::bigint,%s::bytea,%s::integer,
+                         'BP04-global-canon-name-inventory'::text,'ci-bp04-global-name'::text,
+                         'BP04 global persistent canonical-name reservation'::text)""",
                     (entity_type, digest, len(records)),
                 )
                 batch_id = cur.fetchone()[0]
