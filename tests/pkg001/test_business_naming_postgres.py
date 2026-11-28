@@ -1,4 +1,5 @@
 """Disposable PostgreSQL acceptance for BP04 stable text-ID business names."""
+import gzip
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ from pathlib import Path
 import psycopg
 
 from runtime.naming import pg_trgm_similarity
+from runtime.naming_inventory import inventory_geography_names
 from runtime.postgres_naming import PostgresNameRegistry
 
 
@@ -154,6 +156,121 @@ class BusinessNamingPostgresTests(unittest.TestCase):
                     (business_id, name_form, name, batch_id),
                 )
                 return cur.fetchone()[0]
+
+
+    def test_opening_person_business_and_geography_names_share_one_collision_screen(self):
+        """Preflight the committed opening cohorts together, not just within each source."""
+        police_path = ROOT / "data/people/saltwater-opening-police-person-seed-v1.json"
+        civilian_path = ROOT / "data/people/saltwater-opening-civilian-resident-seed-v1.json.gz"
+        geography_path = ROOT / "data/geography/saltwater-geography-v1.json"
+
+        police = json.loads(police_path.read_text(encoding="utf-8"))["records"]
+        with gzip.open(civilian_path, "rt", encoding="utf-8") as handle:
+            civilians = json.load(handle)["records"]
+        geography_payload = json.loads(geography_path.read_text(encoding="utf-8"))
+        geography = inventory_geography_names(geography_payload).candidates
+
+        self.assertEqual(len(police), 500)
+        self.assertEqual(len(civilians), 9000)
+        self.assertEqual(len(geography), 102)
+        self.assertEqual(len(self.rows), 10000)
+
+        entries = []
+        for item in geography:
+            entries.append(("GEOGRAPHY", item.source_id, "canonical", item.display_name))
+        for item in police:
+            entries.append(("PERSON", item["candidate_ref"], "canonical", item["display_name"]))
+        for item in civilians:
+            entries.append(("PERSON", item["candidate_ref"], "canonical", item["display_name"]))
+        for item in self.rows:
+            entries.append(("BUSINESS", item["business_id"], "trading", item["trading_name"]))
+            entries.append(("BUSINESS", item["business_id"], "legal", item["registered_name"]))
+
+        self.assertEqual(len(entries), 29602)
+        with connect() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SET LOCAL pg_trgm.similarity_threshold='0.90'")
+                cur.execute(
+                    """CREATE TEMP TABLE bp04_global_name_preflight (
+                         ordinal integer PRIMARY KEY,
+                         entity_type text NOT NULL,
+                         entity_ref text NOT NULL,
+                         name_form text NOT NULL,
+                         display_name text NOT NULL,
+                         normalized_key text NOT NULL
+                       ) ON COMMIT DROP"""
+                )
+                cur.executemany(
+                    """INSERT INTO bp04_global_name_preflight
+                       (ordinal,entity_type,entity_ref,name_form,display_name,normalized_key)
+                       VALUES (%s,%s,%s,%s,%s,sw_names.normalize_name(%s))""",
+                    [
+                        (index, entity_type, entity_ref, name_form, display_name, display_name)
+                        for index, (entity_type, entity_ref, name_form, display_name)
+                        in enumerate(entries, start=1)
+                    ],
+                )
+                cur.execute(
+                    "CREATE INDEX bp04_global_name_preflight_key_idx "
+                    "ON bp04_global_name_preflight(normalized_key)"
+                )
+                cur.execute(
+                    "CREATE INDEX bp04_global_name_preflight_trgm_idx "
+                    "ON bp04_global_name_preflight USING gin(normalized_key sw_names.gin_trgm_ops)"
+                )
+                cur.execute("ANALYZE bp04_global_name_preflight")
+                cur.execute(
+                    """SELECT entity_type,count(*)
+                       FROM bp04_global_name_preflight
+                       GROUP BY entity_type ORDER BY entity_type"""
+                )
+                counts = dict(cur.fetchall())
+                self.assertEqual(counts, {"BUSINESS": 20000, "GEOGRAPHY": 102, "PERSON": 9500})
+
+                cur.execute(
+                    """SELECT a.entity_type,a.entity_ref,a.display_name,
+                              b.entity_type,b.entity_ref,b.display_name
+                       FROM bp04_global_name_preflight a
+                       JOIN bp04_global_name_preflight b
+                         ON a.ordinal < b.ordinal
+                        AND a.normalized_key=b.normalized_key
+                       WHERE NOT (
+                         a.normalized_key='saltwater'
+                         AND a.entity_type='GEOGRAPHY' AND b.entity_type='GEOGRAPHY'
+                         AND a.entity_ref='saltwater-state' AND b.entity_ref='saltwater-city'
+                       )
+                       ORDER BY a.ordinal,b.ordinal LIMIT 20"""
+                )
+                exact_conflicts = cur.fetchall()
+                self.assertEqual(exact_conflicts, [], f"global exact-name collisions: {exact_conflicts!r}")
+
+                cur.execute(
+                    """SELECT a.entity_type,a.entity_ref,a.display_name,
+                              b.entity_type,b.entity_ref,b.display_name,
+                              sw_names.similarity(a.normalized_key,b.normalized_key)
+                       FROM bp04_global_name_preflight a
+                       JOIN LATERAL (
+                         SELECT b.entity_type,b.entity_ref,b.display_name,b.normalized_key
+                         FROM bp04_global_name_preflight b
+                         WHERE b.entity_type<>a.entity_type
+                           AND b.normalized_key<>a.normalized_key
+                           AND b.normalized_key OPERATOR(sw_names.%) a.normalized_key
+                         ORDER BY sw_names.similarity(a.normalized_key,b.normalized_key) DESC
+                         LIMIT 1
+                       ) b ON sw_names.similarity(a.normalized_key,b.normalized_key)>0.90
+                       WHERE a.ordinal < (
+                         SELECT min(x.ordinal) FROM bp04_global_name_preflight x
+                         WHERE x.entity_type=b.entity_type
+                           AND x.entity_ref=b.entity_ref
+                           AND x.name_form=(
+                             SELECT y.name_form FROM bp04_global_name_preflight y
+                             WHERE y.ordinal=a.ordinal
+                           )
+                       )
+                       ORDER BY 7 DESC LIMIT 20"""
+                )
+                near_conflicts = cur.fetchall()
+                self.assertEqual(near_conflicts, [], f"global near-duplicate review cases: {near_conflicts!r}")
 
     def test_business_reservation_uses_advisory_lock_before_owner_row_lock(self):
         with connect() as conn:
