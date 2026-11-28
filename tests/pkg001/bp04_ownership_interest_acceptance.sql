@@ -21,10 +21,10 @@ INSERT INTO sw_property.ownership_interest(
 ) VALUES
   ('SWC02-INTEREST-A','SWC02-PROPERTY','SWC02-OWNER-A','direct_owner_management','freehold',
    'bp04_ownership_interest_acceptance',
-   'registered_ownership',1,2,0,NULL,'current','undisputed',0),
+   'registered_ownership',1,2,0,NULL,'current','undisputed',NULL,0),
   ('SWC02-INTEREST-B','SWC02-PROPERTY','SWC02-OWNER-B','direct_owner_management','freehold',
    'bp04_ownership_interest_acceptance',
-   'registered_ownership',1,2,0,NULL,'current','undisputed',0),
+   'registered_ownership',1,2,0,NULL,'current','undisputed',NULL,0),
   ('SWC02-INTEREST-BENEFICIAL','SWC02-PROPERTY','SWC02-BENEFICIAL',NULL,'beneficial',
    'bp04_ownership_interest_acceptance',
    'beneficial_ownership',1,3,2,NULL,'current','disputed','claim:SWC02:beneficial:01',2),
