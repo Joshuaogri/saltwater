@@ -8,6 +8,8 @@ on:
       - "data/property/*.json.gz"
       - "data/business/*.json.gz"
       - "runtime/bp04_property_stack_importer.py"
+      - "runtime/property_tenure_generator.py"
+      - "tests/pkg001/test_property_tenure_generator.py"
       - "db/migrations/**"
       - "tests/pkg001/bp04_property_import_acceptance.sql"
       - ".github/workflows/bp04-typed-import-disposable.yml"
