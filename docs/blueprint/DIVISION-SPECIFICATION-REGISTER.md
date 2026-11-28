@@ -14,7 +14,7 @@
 | BP-01 | Game Identity, Foundations and Governing Rules | DESIGNED | IN_PROGRESS | IN_PROGRESS | BLOCKED | [BP-01](divisions/BP-01-GAME-IDENTITY-FOUNDATIONS-GOVERNING-RULES.md) |
 | BP-02 | Sovereign City-State and Geographical Architecture | DESIGNED | IMPLEMENTED | TESTED | VERIFIED | [BP-02](divisions/BP-02-SOVEREIGN-CITY-STATE-GEOGRAPHY.md) |
 | BP-03 | Population and Individual Simulation | DESIGNED | IN_PROGRESS | IN_PROGRESS (individual-simulation, population-cap, identity, residence integration and full 9,000-resident materialisation/replay/idempotency/reconciliation acceptance passed in integrated run 46117963944; remaining division-wide requirements still open) | IN_PROGRESS | [BP-03](divisions/BP-03-POPULATION-AND-INDIVIDUAL-SIMULATION.md) |
-| BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | BLOCKED | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
+| BP-04 | Built World, Property, Businesses and Organisations | DESIGNED_DRAFT | IMPLEMENTED | TESTED | IN_PROGRESS | [BP-04](divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md) |
 | BP-05 | Police Architecture | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-05](divisions/BP-05-POLICE-ARCHITECTURE.md) |
 | BP-06 | Police Personnel | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-06](divisions/BP-06-POLICE-PERSONNEL.md) |
 | BP-07 | Career System | DESIGNED_DRAFT | NOT_STARTED | NOT_STARTED | NOT_STARTED | [BP-07](divisions/BP-07-CAREER-SYSTEM.md) |
@@ -183,3 +183,6 @@ Statuses are independent across specification, implementation, testing and verif
 ## BP-01 design disposition update — 2026-11-26
 
 The historical audit entries above that state all 44 division specifications remain `DESIGNED_DRAFT` record the position at the time of that audit and are superseded for BP-01 only. BP-01 version 1.0 is now `DESIGNED` following reconciliation against the approved master canon, SW-CANON-001, SW-CANON-002 and SW-UNS-001. Its implementation and tests are `IN_PROGRESS`; verification remains `BLOCKED` pending the cross-division evidence listed in [the BP-01 implementation register](../implementation/BP01-foundational-implementation-register.md). BP-02–BP-44 retain their individually recorded statuses. This update does not mark the whole game or its dependent divisions complete.
+
+
+**BP-04 acceptance update (2026-11-28):** The BP02 full parcel/address/access operational release passed in [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735), closing BP04 AC-B01 and AC-B05. The strict BP04 audit now records 18 PASS, 15 PARTIAL, 1 BLOCKED and 14 NOT VERIFIED. BP04 verification remains `IN_PROGRESS`; the division is not complete. See [strict criterion-level audit](../implementation/BP04-strict-acceptance-audit-2026-11-26.md).
