@@ -113,7 +113,4 @@ BEFORE INSERT OR UPDATE OF property_id,unit_id,landlord_organisation_id,
 ON sw_property.occupancy_agreement
 FOR EACH ROW EXECUTE FUNCTION sw_property.validate_agreement_landlord_authority();
 
-INSERT INTO sw_ops.schema_migration(version,migration_name)
-VALUES (33,'bp04_explicit_letting_authority')
-ON CONFLICT(version) DO NOTHING;
 COMMIT;
