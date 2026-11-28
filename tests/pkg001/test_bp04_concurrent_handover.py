@@ -304,15 +304,30 @@ def test_concurrent_exact_subletting_creation_is_idempotent():
     print("BP04 concurrent subletting exact-replay acceptance passed")
 
 
-def test_subletting_creation_serializes_with_exclusive_handover():
+def _call_assignment(dsn: str, app_name: str, barrier: Barrier, args: tuple):
+    try:
+        with psycopg.connect(dsn, application_name=app_name, options="-c statement_timeout=60000") as conn:
+            with conn.cursor() as cur:
+                barrier.wait(timeout=15)
+                cur.execute(
+                    """SELECT * FROM sw_property.assign_occupancy_agreement_tenant(
+                       %s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    args,
+                )
+                return ("ok", cur.fetchone(), None)
+    except Exception as exc:
+        return ("error", None, str(exc))
+
+
+def test_subletting_creation_serializes_with_tenant_assignment():
     dsn = os.environ["DATABASE_URL"]
     token = uuid.uuid4().hex[:12]
     prop, unit, businesses, agreements, superior_occupancy = _seed_fixture(dsn, token)
     sub_occupancy = f"SWCONC-OCC-{token}-SUB"
     right_id = f"SWCONC-RIGHT-{token}-SUB"
     relationship_id = f"SWCONC-REL-{token}-SUB"
-    sub_idempotency_key = f"sublet:handover-race:{token}"
-    handover_idempotency_key = f"handover:sublet-race:{token}"
+    sub_idempotency_key = f"sublet:assignment-race:{token}"
+    assignment_idempotency_key = f"assignment:sublet-race:{token}"
     sub_establishment = f"SWCONC-EST-{token}-2"
 
     with psycopg.connect(dsn) as conn:
@@ -329,7 +344,7 @@ def test_subletting_creation_serializes_with_exclusive_handover():
                   effective_from_year,effective_to_year,source_dataset
                 )
                 SELECT %s,%s,premises_id,unit_id,%s,%s,%s,'business_subtenant',
-                       'occupied',2027,NULL,'bp04_subletting_handover_race'
+                       'occupied',2027,NULL,'bp04_subletting_assignment_race'
                 FROM sw_property.occupancy_agreement WHERE agreement_id=%s
                 """,
                 (sub_occupancy, prop, businesses[1], sub_establishment, agreements[1], agreements[1]),
@@ -344,40 +359,43 @@ def test_subletting_creation_serializes_with_exclusive_handover():
                 VALUES (%s,%s,
                   (SELECT premises_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s),
                   %s,'subletting',%s,%s,2027,'current','commercial',
-                  'bp04_subletting_handover_race',false,'bp04_subletting_handover_race')
+                  'bp04_subletting_assignment_race',false,'bp04_subletting_assignment_race')
                 """,
                 (right_id, prop, agreements[0], unit, businesses[0], agreements[0]),
             )
 
     sub_args = (
         relationship_id, agreements[0], agreements[1], superior_occupancy,
-        sub_occupancy, right_id, 1, 1, "actor:mixed-race",
-        "source:mixed-race", sub_idempotency_key,
+        sub_occupancy, right_id, 1, 1, "actor:assignment-race",
+        "source:assignment-race", sub_idempotency_key,
     )
-    handover_args = (
-        prop, unit, superior_occupancy, agreements[2], businesses[2],
-        2028, 1, 1, "actor:mixed-race", "source:mixed-race",
-        handover_idempotency_key, "gameplay_action",
+    assignment_args = (
+        agreements[0], businesses[0], businesses[2], 1, 1,
+        "actor:assignment-race", "source:assignment-race",
+        assignment_idempotency_key, "gameplay_action",
     )
 
     blocker = psycopg.connect(
-        dsn, application_name="bp04-mixed-race-blocker",
+        dsn, application_name="bp04-assignment-race-blocker",
         options="-c statement_timeout=60000",
     )
     try:
         with blocker.cursor() as cur:
             cur.execute(
-                "SELECT unit_id FROM sw_property.unit_space WHERE unit_id=%s FOR UPDATE",
-                (unit,),
+                """
+                SELECT agreement_id FROM sw_property.occupancy_agreement
+                WHERE agreement_id IN (%s,%s) ORDER BY agreement_id FOR UPDATE
+                """,
+                (agreements[0], agreements[1]),
             )
-            assert cur.fetchone() is not None
+            assert len(cur.fetchall()) == 2
         barrier = Barrier(3)
         with ThreadPoolExecutor(max_workers=2) as pool:
             sub_future = pool.submit(
-                _call_subletting, dsn, "bp04-mixed-subletting", barrier, sub_args
+                _call_subletting, dsn, "bp04-race-subletting", barrier, sub_args
             )
-            handover_future = pool.submit(
-                _call_handover, dsn, "bp04-mixed-handover", barrier, handover_args
+            assignment_future = pool.submit(
+                _call_assignment, dsn, "bp04-race-assignment", barrier, assignment_args
             )
             barrier.wait(timeout=15)
             deadline = time.monotonic() + 10
@@ -388,7 +406,7 @@ def test_subletting_creation_serializes_with_exclusive_handover():
                         """
                         SELECT wait_event_type,pg_blocking_pids(pid)
                         FROM pg_stat_activity
-                        WHERE application_name IN ('bp04-mixed-subletting','bp04-mixed-handover')
+                        WHERE application_name IN ('bp04-race-subletting','bp04-race-assignment')
                         """
                     )
                     states = cur.fetchall()
@@ -397,54 +415,54 @@ def test_subletting_creation_serializes_with_exclusive_handover():
                     break
                 time.sleep(0.05)
             if waiting != 2:
-                raise AssertionError(f"expected both writers blocked on the same unit; observed {states!r}")
+                raise AssertionError(f"expected both writers blocked on agreement rows; observed {states!r}")
             blocker.commit()
             sub_result = sub_future.result(timeout=30)
-            handover_result = handover_future.result(timeout=30)
+            assignment_result = assignment_future.result(timeout=30)
     finally:
         if not blocker.closed:
             blocker.rollback()
             blocker.close()
 
-    outcomes = (sub_result, handover_result)
+    outcomes = (sub_result, assignment_result)
     assert sum(result[0] == "ok" for result in outcomes) == 1, outcomes
     assert sum(result[0] == "error" for result in outcomes) == 1, outcomes
 
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
             cur.execute(
+                "SELECT tenant_business_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s",
+                (agreements[0],),
+            )
+            tenant = cur.fetchone()[0]
+            cur.execute(
+                "SELECT right_status FROM sw_property.contractual_rights_index WHERE property_right_id=%s",
+                (right_id,),
+            )
+            right_status = cur.fetchone()[0]
+            cur.execute(
                 "SELECT relationship_status FROM sw_property.occupancy_relationship WHERE relationship_id=%s",
                 (relationship_id,),
             )
             relationship = cur.fetchone()
             cur.execute(
-                "SELECT occupancy_id,occupant_business_id,effective_to_year FROM sw_property.occupancy WHERE unit_id=%s AND occupancy_id<>%s ORDER BY occupancy_id",
-                (unit, superior_occupancy),
+                "SELECT occupant_business_id,effective_to_year FROM sw_property.occupancy WHERE occupancy_id=%s",
+                (superior_occupancy,),
             )
-            occupancy_rows = cur.fetchall()
-            cur.execute(
-                "SELECT business_id FROM sw_property.business_unit_link WHERE unit_id=%s AND valid_to_tick IS NULL",
-                (unit,),
-            )
-            current_links = cur.fetchall()
-            cur.execute(
-                "SELECT count(*) FROM sw_property.occupancy_handover_event WHERE unit_id=%s",
-                (unit,),
-            )
-            handover_count = cur.fetchone()[0]
+            physical_occupancy = cur.fetchone()
 
     if sub_result[0] == "ok":
+        assert tenant == businesses[0]
+        assert right_status == "current"
         assert relationship == ("active",)
-        assert current_links == [(businesses[0],)]
-        assert handover_count == 0
-        assert any(row[1] == businesses[0] and row[2] is None for row in occupancy_rows) is False
-        assert handover_result[0] == "error"
+        assert assignment_result[0] == "error"
     else:
+        assert tenant == businesses[2]
+        assert right_status == "historical_expired"
         assert relationship is None
-        assert current_links == [(businesses[2],)]
-        assert handover_count == 1
-        assert handover_result[0] == "ok"
-    print("BP04 subletting creation and exclusive handover serialization acceptance passed")
+        assert assignment_result[0] == "ok"
+    assert physical_occupancy == (businesses[0], None)
+    print("BP04 subletting creation and tenant assignment serialization acceptance passed")
 
 
 def test_competing_and_idempotent_handover_writers_serialize():
@@ -520,4 +538,4 @@ def test_competing_and_idempotent_handover_writers_serialize():
 if __name__ == '__main__':
     test_competing_and_idempotent_handover_writers_serialize()
     test_concurrent_exact_subletting_creation_is_idempotent()
-    test_subletting_creation_serializes_with_exclusive_handover()
+    test_subletting_creation_serializes_with_tenant_assignment()
