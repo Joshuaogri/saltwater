@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 100-table disposable PostgreSQL 16/18 benchmark
+name: BP04 canonical property stack — 110-table disposable PostgreSQL 16/18 benchmark
 # Keep the archive-only collection inventory assertion aligned with the expanded source stack.
 # BP04 subletting end/start and idempotent replay now share the physical-unit lock order.
 
@@ -30,7 +30,12 @@ on:
       - "db/migrations/0024_bp04_contractual_right_consent_lifecycle.sql"
       - "db/migrations/0025_bp04_subletting_end_start_serialization.sql"
       - "db/migrations/0026_bp04_subletting_replay_end_serialization.sql"
+      - "db/migrations/0027_bp04_third_party_staff_finance_interfaces.sql"
+      - "db/migrations/0028_bp04_facility_health_transport_profiles.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
+      - "tests/pkg001/bp04_third_party_cross_domain_acceptance.sql"
+      - "tests/pkg001/bp04_facility_health_transport_acceptance.sql"
+      - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/bp04_ownership_interest_acceptance.sql"
       - "tests/pkg001/bp04_occupancy_dispute_acceptance.sql"
       - "tests/pkg001/bp04_joint_title_transfer_acceptance.sql"
@@ -138,6 +143,10 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_joint_title_transfer_acceptance.sql
       - name: Verify concurrent occupancy handover serialization and idempotency
         run: python tests/pkg001/test_bp04_concurrent_handover.py
+      - name: Verify third-party occupancy, BP03/BP33 staffing and BP34 financial boundaries
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_third_party_cross_domain_acceptance.sql
+      - name: Verify organisation, facility, healthcare, transport and service dependencies
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_facility_health_transport_acceptance.sql
       - name: Verify subletting start/end interleavings under real concurrent sessions
         run: python -m unittest tests.pkg001.test_bp04_subletting_lifecycle_concurrency -v
       - name: Benchmark 10k business substring search latency
