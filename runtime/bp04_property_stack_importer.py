@@ -437,6 +437,20 @@ def import_package(root: Path, dsn: str, expected_database: str = "saltwater_tes
                 values = [tuple(entry[c] for c in columns) for entry in entries]
                 with conn.cursor() as cur:
                     cur.executemany(sql, values)
+                if table == "letting_authority_event":
+                    selected_columns = ",".join(f'"{column}"' for column in columns)
+                    for entry in entries:
+                        stored = conn.execute(
+                            f'SELECT {selected_columns} FROM sw_property."{table}" WHERE "{pk}"=%s',
+                            (entry[pk],),
+                        ).fetchone()
+                        expected_event = tuple(
+                            getattr(entry[column], "obj", entry[column]) for column in columns
+                        )
+                        if stored is None or tuple(stored) != expected_event:
+                            raise RuntimeError(
+                                f"Immutable letting authority event {entry[pk]} conflicts with the canonical source"
+                            )
 
             expected = {table:len(entries) for table,entries in batches.items()}
             expected["organisation"] = len({entry["organisation_id"] for entry in batches.get("organisation", [])})
