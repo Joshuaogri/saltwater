@@ -33,7 +33,7 @@ class PropertyTenureTests(unittest.TestCase):
         d = self.data
         self.assertEqual(d["summary"]["current_lease_or_concession_count"], 10000)
         self.assertEqual(len([x for x in d["occupancies"] if x["occupant_type"] == "business"]), 10000)
-        self.assertEqual(len(d["occupancies"]), 10420)
+        self.assertEqual(len(d["occupancies"]), 10032)
         agreements = {x["agreement_id"]: x for x in d["agreements"]}
         for occ in d["occupancies"]:
             if occ["occupant_type"] != "business":
@@ -51,10 +51,19 @@ class PropertyTenureTests(unittest.TestCase):
     def test_third_party_organisation_occupancy_matrix_covers_every_property(self):
         occupancies = {row["occupancy_id"]: row for row in self.data["occupancies"]}
         relationships = self.data["third_party_occupancy_relationships"]
-        self.assertEqual(len(relationships), 420)
-        self.assertEqual(len({row["relationship_id"] for row in relationships}), 420)
-        self.assertEqual(len({row["unit_id"] for row in relationships}), 420)
-        self.assertEqual({row["property_id"] for row in relationships}, {row["property_id"] for row in self.world["properties"]})
+        self.assertEqual(len(relationships), 32)
+        self.assertEqual(len({row["relationship_id"] for row in relationships}), 32)
+        self.assertEqual(len({row["unit_id"] for row in relationships}), 32)
+        active_property_ids = {
+            next(unit["property_id"] for unit in self.world["units"] if unit["unit_id"] == link["unit_id"])
+            for link in self.registry["business_unit_links"]
+        }
+        self.assertEqual({row["property_id"] for row in relationships}, active_property_ids)
+        unit_by_id = {unit["unit_id"]: unit for unit in self.world["units"]}
+        self.assertEqual(
+            {unit_by_id[row["unit_id"]]["unit_class"] for row in relationships},
+            {unit_by_id[link["unit_id"]]["unit_class"] for link in self.registry["business_unit_links"]},
+        )
         for relationship in relationships:
             occupancy = occupancies[relationship["occupancy_id"]]
             self.assertEqual(occupancy["occupant_type"], "organisation")
@@ -121,7 +130,7 @@ class PropertyTenureTests(unittest.TestCase):
         doc = to_columnar_document(self.data)
         doc["schema"] = "saltwater-property-tenure-columnar/1.0"
         self.assertEqual(doc["storage_format"], "textual_json_columnar_v1")
-        self.assertEqual(len(doc["tables"]["occupancies"]["rows"]), 10420)
+        self.assertEqual(len(doc["tables"]["occupancies"]["rows"]), 10032)
         self.assertEqual(len(doc["tables"]["unit_occupancy_states"]["rows"]), len(self.data["unit_occupancy_states"]))
         self.assertEqual(doc["metadata"]["summary"]["ownership_event_count"], len(self.data["ownership_events"]))
         self.assertIn("agreement_event_history", doc["tables"])
@@ -140,9 +149,9 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertEqual(report["ownership_interests_checked"], 420)
         self.assertEqual(report["management_appointments_checked"], 420)
         self.assertEqual(report["agreements_checked"], len(self.data["agreements"]))
-        self.assertEqual(report["occupancies_checked"], 10420)
+        self.assertEqual(report["occupancies_checked"], 10032)
         self.assertEqual(report["primary_business_occupancies_checked"], 10000)
-        self.assertEqual(report["third_party_occupancy_relationships_checked"], 420)
+        self.assertEqual(report["third_party_occupancy_relationships_checked"], 32)
         self.assertGreater(report["third_party_management_count"], 0)
         self.assertGreater(report["direct_owner_management_count"], 0)
         self.assertEqual(report["person_records_created"], 0)
