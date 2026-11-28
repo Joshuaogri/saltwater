@@ -198,6 +198,7 @@ def test_concurrent_exact_subletting_creation_is_idempotent():
     prop, unit, businesses, agreements, superior_occupancy = _seed_fixture(dsn, token)
     sub_occupancy = f"SWCONC-OCC-{token}-SUB"
     right_id = f"SWCONC-RIGHT-{token}-SUB"
+    lease_right_id = f"SWCONC-RIGHT-{token}-LEASE"
     relationship_id = f"SWCONC-REL-{token}-SUB"
     idempotency_key = f"sublet:concurrent:{token}"
     sub_establishment = f"SWCONC-EST-{token}-2"
@@ -348,6 +349,20 @@ def test_subletting_creation_serializes_with_tenant_assignment():
                 FROM sw_property.occupancy_agreement WHERE agreement_id=%s
                 """,
                 (sub_occupancy, prop, businesses[1], sub_establishment, agreements[1], agreements[1]),
+            )
+            cur.execute(
+                """
+                INSERT INTO sw_property.contractual_rights_index(
+                  property_right_id,property_id,premises_id,unit_id,right_type,
+                  holder_business_id,source_agreement_id,commencement_year,right_status,
+                  permitted_use,source_of_truth,new_legal_instrument_created,source_dataset
+                )
+                VALUES (%s,%s,
+                  (SELECT premises_id FROM sw_property.occupancy_agreement WHERE agreement_id=%s),
+                  %s,'contractual_lease_licence_or_concession',%s,%s,2027,'current','commercial',
+                  'bp04_subletting_assignment_race',false,'bp04_subletting_assignment_race')
+                """,
+                (lease_right_id, prop, agreements[0], unit, businesses[0], agreements[0]),
             )
             cur.execute(
                 """
