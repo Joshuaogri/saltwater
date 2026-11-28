@@ -326,6 +326,17 @@ BEGIN
     'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
     5,5,'actor:test','source:test:sublet','test:sublet:start'
   ) r;
+
+  BEGIN
+    PERFORM * FROM sw_property.handover_business_occupancy(
+      'SWTEST-PROP-01','SWTEST-UNIT-01','SWTEST-OCC-02','SWTEST-AGR-04',
+      'SWTEST-BUS-02',2028,6,6,'actor:test','source:test:handover',
+      'test:handover:blocked-active-sublet','gameplay_action'
+    );
+    RAISE EXCEPTION 'physical handover proceeded during active subletting';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='physical handover proceeded during active subletting' THEN RAISE; END IF;
+  END;
   PERFORM * FROM sw_property.record_subletting_relationship(
     'SWTEST-REL-01','SWTEST-AGR-04','SWTEST-AGR-05',
     'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
@@ -531,6 +542,14 @@ BEGIN
          WHERE handover_event_id=v_handover_event)<>1 THEN
     RAISE EXCEPTION 'physical handover changed legal agreements or left duplicate primary links';
   END IF;
+  BEGIN
+    UPDATE sw_property.occupancy_handover_event
+    SET event_payload='{}'::jsonb
+    WHERE handover_event_id=v_handover_event;
+    RAISE EXCEPTION 'occupancy handover event update was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='occupancy handover event update was accepted' THEN RAISE; END IF;
+  END;
 END
 $bp04$;
 
