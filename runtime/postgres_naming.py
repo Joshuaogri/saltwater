@@ -108,6 +108,87 @@ class PostgresNameRegistry:
             )
         return len(parameters)
 
+    def reserve_text_entity(
+        self, entity_type: str, entity_ref: str, display_name: str, *,
+        source_ref: str, actor_ref: str, reason: str, effective_tick: int,
+        generation_batch_id: int | None = None,
+    ) -> int:
+        """Reserve a canonical BP04 property/building/premises/organisation name."""
+        kind = entity_type.upper()
+        if kind not in {"PROPERTY", "BUILDING", "PREMISES", "ORGANISATION"}:
+            raise ValueError("unsupported text-ID naming entity type")
+        if not isinstance(entity_ref, str) or not entity_ref.strip() or len(entity_ref) > 120:
+            raise ValueError("a non-empty stable text entity ID is required")
+        normalize_name(display_name)
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT sw_names.reserve_text_entity_name(
+                     %s::text,%s::text,'canonical',%s::text,%s::text,%s::text,
+                     %s::text,%s::bigint,%s::bigint)""",
+                (
+                    kind, entity_ref, display_name, source_ref, actor_ref,
+                    reason, effective_tick, generation_batch_id,
+                ),
+            )
+            row = cursor.fetchone()
+        if not row:
+            raise RuntimeError("text entity name reservation returned no identifier")
+        return int(row[0])
+
+    def reserve_text_entity_batch(
+        self, reservations: Iterable[tuple[str, str, str]], *,
+        source_ref: str, actor_ref: str, reason: str, effective_tick: int,
+        generation_batch_id: int | None = None,
+    ) -> int:
+        """Reserve (entity_type, entity_ref, display_name) rows atomically."""
+        parameters = []
+        for entity_type, entity_ref, display_name in reservations:
+            kind = entity_type.upper()
+            if kind not in {"PROPERTY", "BUILDING", "PREMISES", "ORGANISATION"}:
+                raise ValueError("unsupported text-ID naming entity type")
+            if not isinstance(entity_ref, str) or not entity_ref.strip() or len(entity_ref) > 120:
+                raise ValueError("a non-empty stable text entity ID is required")
+            normalize_name(display_name)
+            parameters.append((
+                kind, entity_ref, display_name, source_ref, actor_ref,
+                reason, effective_tick, generation_batch_id,
+            ))
+        if not parameters:
+            return 0
+        with self._connection.cursor() as cursor:
+            cursor.executemany(
+                """SELECT sw_names.reserve_text_entity_name(
+                     %s::text,%s::text,'canonical',%s::text,%s::text,%s::text,
+                     %s::text,%s::bigint,%s::bigint)""",
+                parameters,
+            )
+        return len(parameters)
+
+    def search_text_entity(
+        self, entity_type: str, value: str,
+    ) -> tuple[PersistentNameRecord, ...]:
+        kind = entity_type.upper()
+        if kind not in {"PROPERTY", "BUILDING", "PREMISES", "ORGANISATION"}:
+            raise ValueError("unsupported text-ID naming entity type")
+        normalize_name(value)
+        with self._connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT reservation_id,entity_type,entity_ref,name_form,
+                          display_name,status,ambiguous
+                   FROM sw_names.search_text_entity_name(%s,%s)
+                   ORDER BY entity_ref,reservation_id""",
+                (kind, value),
+            )
+            rows = cursor.fetchall()
+        return tuple(
+            PersistentNameRecord(
+                reservation_id=row[0], entity_type=row[1], entity_id=None,
+                name_form=row[3], display_name=row[4], status=row[5],
+                ambiguous=row[6], entity_ref=row[2],
+            )
+            for row in rows
+        )
+
     def search_business(self, value: str) -> tuple[PersistentNameRecord, ...]:
         normalize_name(value)
         with self._connection.cursor() as cursor:
