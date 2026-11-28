@@ -1,4 +1,5 @@
 name: BP04 canonical property stack — 95-table disposable PostgreSQL 16/18 benchmark
+# Keep the archive-only collection inventory assertion aligned with the expanded source stack.
 
 on:
   push:
