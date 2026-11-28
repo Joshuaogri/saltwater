@@ -105,6 +105,9 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertEqual(len(doc["tables"]["occupancies"]["rows"]), 10000)
         self.assertEqual(len(doc["tables"]["unit_occupancy_states"]["rows"]), len(self.data["unit_occupancy_states"]))
         self.assertEqual(doc["metadata"]["summary"]["ownership_event_count"], len(self.data["ownership_events"]))
+        self.assertIn("agreement_event_history", doc["tables"])
+        self.assertEqual(len(doc["tables"]["agreement_event_history"]["rows"]), len(self.data["agreement_event_history"]))
+        self.assertEqual(len(doc["tables"]["agreement_event_history"]["rows"]), doc["metadata"]["summary"]["agreement_event_count"])
 
 
 if __name__ == "__main__":
