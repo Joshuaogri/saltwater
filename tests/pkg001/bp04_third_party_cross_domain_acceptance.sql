@@ -116,6 +116,79 @@ BEGIN
      OR (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWX-OCCUPANCY')<>'occupied' THEN
     RAISE EXCEPTION 'BP34 reference link mutated agreement or physical occupancy state';
   END IF;
+
+  INSERT INTO sw_finance.rent_schedule(
+    schedule_id,agreement_id,payer_business_id,payee_organisation_id,currency_code,
+    recurring_amount_minor,frequency,period_length_ticks,effective_from_tick,
+    schedule_status,source_ref,actor_ref,idempotency_key
+  ) VALUES (
+    'SW34-RENT-01','SWX-AGREEMENT','SWX-TENANT','SWX-OWNER','SWC',
+    50000,'monthly',100,0,'active','generated:rent-schedule','npc:landlord','sw34:schedule:01'
+  );
+  INSERT INTO sw_finance.rent_charge(
+    charge_id,schedule_id,agreement_id,period_start_tick,period_end_tick,due_tick,
+    amount_minor,currency_code,source_ref,actor_ref,idempotency_key
+  ) VALUES (
+    'SW34-CHARGE-01','SW34-RENT-01','SWX-AGREEMENT',0,100,80,
+    50000,'SWC','generated:rent-charge','npc:finance','sw34:charge:01'
+  );
+  PERFORM sw_finance.record_rent_payment(
+    'SW34-PAYMENT-01','SWX-TENANT','SWX-OWNER',20000,'SWC',80,
+    'bank_transfer','NPC-PAYMENT-01','generated:rent-payment-01','npc:tenant','sw34:payment:01'
+  );
+  PERFORM sw_finance.record_rent_payment(
+    'SW34-PAYMENT-01','SWX-TENANT','SWX-OWNER',20000,'SWC',80,
+    'bank_transfer','NPC-PAYMENT-01','generated:rent-payment-01','npc:tenant','sw34:payment:01'
+  );
+  PERFORM sw_finance.allocate_rent_payment(
+    'SW34-ALLOCATION-01','SW34-PAYMENT-01','SW34-CHARGE-01',20000,80,
+    'generated:rent-allocation-01','npc:finance','sw34:allocation:01'
+  );
+  IF (SELECT outstanding_minor FROM sw_finance.rent_charge_balance WHERE charge_id='SW34-CHARGE-01')<>30000
+     OR (SELECT derived_payment_state FROM sw_finance.rent_charge_balance WHERE charge_id='SW34-CHARGE-01')<>'partially_paid' THEN
+    RAISE EXCEPTION 'BP34 partial NPC rent payment did not produce the correct outstanding balance';
+  END IF;
+  IF (SELECT agreement_status FROM sw_property.occupancy_agreement WHERE agreement_id='SWX-AGREEMENT')<>'active'
+     OR (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWX-OCCUPANCY')<>'occupied' THEN
+    RAISE EXCEPTION 'partial rent payment or arrears changed BP04 tenancy/occupancy state';
+  END IF;
+  PERFORM sw_finance.record_rent_payment(
+    'SW34-PAYMENT-02','SWX-TENANT','SWX-OWNER',30000,'SWC',90,
+    'bank_transfer','NPC-PAYMENT-02','generated:rent-payment-02','npc:tenant','sw34:payment:02'
+  );
+  PERFORM sw_finance.allocate_rent_payment(
+    'SW34-ALLOCATION-02','SW34-PAYMENT-02','SW34-CHARGE-01',30000,90,
+    'generated:rent-allocation-02','npc:finance','sw34:allocation:02'
+  );
+  IF (SELECT outstanding_minor FROM sw_finance.rent_charge_balance WHERE charge_id='SW34-CHARGE-01')<>0
+     OR (SELECT derived_payment_state FROM sw_finance.rent_charge_balance WHERE charge_id='SW34-CHARGE-01')<>'paid' THEN
+    RAISE EXCEPTION 'BP34 full NPC rent settlement did not close the charge balance';
+  END IF;
+  IF (SELECT agreement_status FROM sw_property.occupancy_agreement WHERE agreement_id='SWX-AGREEMENT')<>'active'
+     OR (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWX-OCCUPANCY')<>'occupied' THEN
+    RAISE EXCEPTION 'rent settlement changed BP04 tenancy/occupancy state';
+  END IF;
+  BEGIN
+    PERFORM sw_finance.record_rent_payment(
+      'SW34-OVERPAY','SWX-TENANT','SWX-OWNER',1000,'SWC',91,
+      'cash','NPC-OVERPAY','generated:rent-overpay','npc:tenant','sw34:payment:overpay'
+    );
+    PERFORM sw_finance.allocate_rent_payment(
+      'SW34-OVERALLOC','SW34-OVERPAY','SW34-CHARGE-01',1000,91,
+      'generated:over-allocation','npc:finance','sw34:allocation:overpay'
+    );
+    RAISE EXCEPTION 'BP34 accepted an overpayment allocation';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='BP34 accepted an overpayment allocation' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%rent charge cannot be overpaid%' THEN RAISE; END IF;
+  END;
+  BEGIN
+    UPDATE sw_finance.rent_payment SET amount_minor=1 WHERE payment_id='SW34-PAYMENT-01';
+    RAISE EXCEPTION 'BP34 rent payment allowed mutation';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='BP34 rent payment allowed mutation' THEN RAISE; END IF;
+    IF SQLERRM NOT LIKE '%append-only%' THEN RAISE; END IF;
+  END;
   IF EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema='sw_property' AND table_name='occupancy_financial_reference'
