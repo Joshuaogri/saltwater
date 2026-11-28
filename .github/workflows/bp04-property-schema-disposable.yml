@@ -39,6 +39,7 @@ on:
       - "db/migrations/0033_bp04_explicit_letting_authority.sql"
       - "db/migrations/0034_bp04_letting_authority_validation_hardening.sql"
       - "db/migrations/0035_bp04_facility_operational_state.sql"
+      - "db/migrations/0036_bp04_business_operational_state.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_third_party_cross_domain_acceptance.sql"
       - "tests/pkg001/bp04_facility_health_transport_acceptance.sql"
@@ -48,6 +49,7 @@ on:
       - "tests/pkg001/bp04_joint_title_transfer_acceptance.sql"
       - "tests/pkg001/bp04_letting_authority_acceptance.sql"
       - "tests/pkg001/bp04_facility_operational_state_acceptance.sql"
+      - "tests/pkg001/bp04_business_operational_state_acceptance.sql"
       - "tests/pkg001/test_bp04_concurrent_handover.py"
       - "tests/pkg001/test_bp04_subletting_lifecycle_concurrency.py"
       - "tests/pkg001/bp04_business_search_performance.py"
@@ -169,6 +171,8 @@ jobs:
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_facility_health_transport_acceptance.sql
       - name: Verify actual availability, capacity, timetable and temporary closure separation
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_facility_operational_state_acceptance.sql
+      - name: Verify business schedules versus actual opening, temporary closure and capacity
+        run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_business_operational_state_acceptance.sql
       - name: Verify subletting start/end interleavings under real concurrent sessions
         run: python -m unittest tests.pkg001.test_bp04_subletting_lifecycle_concurrency -v
       - name: Benchmark 10k business substring search latency
