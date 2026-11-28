@@ -172,7 +172,7 @@ def build_global_name_inventory() -> dict[str, Any]:
     # focuses on cross-domain near duplicates while excluding multiple names
     # belonging to the same stable entity.
     signatures: list[tuple[frozenset[str], NameCandidate]] = []
-    postings: dict[str, list[int]] = defaultdict(list)
+    postings: dict[str, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
     near_pairs: list[dict[str, Any]] = []
     for key, group in sorted(by_key.items()):
         for item in group:
@@ -183,12 +183,18 @@ def build_global_name_inventory() -> dict[str, Any]:
                 for offset in range(max(0, len(f"  {word} ") - 2))
             )
             overlap: dict[int, int] = defaultdict(int)
-            for trigram in trigrams:
-                for prior_index in postings.get(trigram, ()):
-                    overlap[prior_index] += 1
+            # Only compare across different domains. This avoids quadratic
+            # work among the 20,000 business names already checked by AC-A04's
+            # business-specific reservation suite.
+            for prior_domain, domain_index in postings.items():
+                if prior_domain == item.domain:
+                    continue
+                for trigram in trigrams:
+                    for prior_index in domain_index.get(trigram, ()):
+                        overlap[prior_index] += 1
             for prior_index, common in overlap.items():
                 prior_trigrams, prior = signatures[prior_index]
-                if item.domain == prior.domain or item.owner == prior.owner:
+                if item.owner == prior.owner or key == normalize_name(prior.display_name):
                     continue
                 required = math.ceil(0.90 * (len(trigrams) + len(prior_trigrams)) / 1.90)
                 if common < required:
@@ -203,7 +209,7 @@ def build_global_name_inventory() -> dict[str, Any]:
             signature_index = len(signatures)
             signatures.append((trigrams, item))
             for trigram in trigrams:
-                postings[trigram].append(signature_index)
+                postings[item.domain][trigram].append(signature_index)
 
     domain_counts: dict[str, int] = defaultdict(int)
     for item in candidates:
