@@ -6,7 +6,7 @@ from collections import Counter
 from runtime.naming import normalize_name
 
 
-def audit_business_registry(registry: dict) -> dict:
+def audit_business_registry(registry: dict, *, property_world_document: dict | None = None, geography: dict | None = None) -> dict:
     """Audit distinct business identities without counting branches or names as businesses.
 
     Establishments and occupancy links are separate child records. A business may
@@ -196,5 +196,119 @@ def audit_business_registry(registry: dict) -> dict:
         "persistent_name_reservations_performed": False,
         "operational_property_access_approval": False,
     }
+
     summary["valid_10k_business_minimum"] = summary["business_count"] >= 10000 and summary["distinct_business_ids"] == summary["business_count"] and summary["local_saltwater_businesses"] == summary["business_count"]
+    if (property_world_document is None) != (geography is None):
+        raise ValueError("property-world and geography references must be supplied together")
+    if property_world_document is not None and geography is not None:
+        summary["spatial_lineage"] = audit_business_registry_spatial_lineage(
+            registry, property_world_document, geography
+        )
     return summary
+
+
+def audit_business_registry_spatial_lineage(
+    registry: dict, property_world_document: dict, geography: dict
+) -> dict:
+    """Resolve every business address and establishment through canonical BP04/BP02 IDs."""
+    if property_world_document.get("schema") != "saltwater-canonical-property-world-columnar/1.0":
+        raise ValueError("unsupported canonical property-world archive schema")
+    metadata = property_world_document.get("metadata")
+    tables = property_world_document.get("tables")
+    if not isinstance(metadata, dict) or not isinstance(tables, dict):
+        raise ValueError("canonical property-world metadata or tables are missing")
+    if metadata.get("dataset_id") != "SW-PROPERTY-WORLD-V1" or metadata.get("city") != "Saltwater":
+        raise ValueError("canonical property-world identity or city mismatch")
+    lineage = metadata.get("lineage")
+    if not isinstance(lineage, dict) or lineage.get("fictional_world_facts") is not True:
+        raise ValueError("canonical property-world provenance is not fictional game canon")
+    if lineage.get("source_geography_dataset") != geography.get("dataset_id"):
+        raise ValueError("property-world and geography source dataset identities do not match")
+
+    def index(table_name: str, key_field: str, fields: tuple[str, ...]) -> dict:
+        table = tables.get(table_name)
+        if not isinstance(table, dict) or not isinstance(table.get("columns"), list) or not isinstance(table.get("rows"), list):
+            raise ValueError(f"canonical property-world {table_name} table is missing")
+        columns = table["columns"]
+        try:
+            key_index = columns.index(key_field)
+            field_indexes = tuple(columns.index(field) for field in fields)
+        except ValueError as exc:
+            raise ValueError(f"canonical property-world {table_name} table lacks a required field") from exc
+        result = {}
+        for row in table["rows"]:
+            if len(row) != len(columns):
+                raise ValueError(f"canonical property-world {table_name} row width mismatch")
+            key = row[key_index]
+            if not isinstance(key, str) or not key.strip() or key in result:
+                raise ValueError(f"canonical property-world {table_name} has an invalid or duplicate identity")
+            result[key] = tuple(row[i] for i in field_indexes)
+        return result
+
+    properties = index("properties", "property_id", ("address_id",))
+    addresses = index("addresses", "address_id", ("property_id", "district_id", "neighbourhood_id"))
+    buildings = index("buildings", "building_id", ("property_id", "address_id"))
+    premises = index("premises", "premises_id", ("property_id", "building_id", "address_id"))
+    units = index("units", "unit_id", ("property_id", "building_id", "premises_id", "address_id"))
+
+    districts = geography.get("districts")
+    neighbourhoods = geography.get("neighbourhoods")
+    if not isinstance(districts, list) or not isinstance(neighbourhoods, list):
+        raise ValueError("BP02 district and neighbourhood inventories are missing")
+    district_ids = {row.get("id") for row in districts}
+    neighbourhood_ids = {row.get("id") for row in neighbourhoods}
+    if None in district_ids or None in neighbourhood_ids:
+        raise ValueError("BP02 geography contains a missing district or neighbourhood identity")
+
+    establishments = {row["establishment_id"]: row for row in registry["establishments"]}
+    for business in registry["businesses"]:
+        primary = establishments[business["primary_establishment_id"]]
+        address = addresses.get(business["registered_address_id"])
+        if address is None:
+            raise ValueError(f"business {business['business_id']} references an unknown canonical address")
+        if address[0] != primary["property_id"]:
+            raise ValueError(f"business {business['business_id']} registered address belongs to another property")
+
+    for establishment in registry["establishments"]:
+        establishment_id = establishment["establishment_id"]
+        property_id = establishment["property_id"]
+        building_id = establishment["building_id"]
+        premises_id = establishment["premises_id"]
+        unit_id = establishment["unit_id"]
+        address_id = establishment["address_id"]
+        district_id = establishment["district_id"]
+        neighbourhood_id = establishment["neighbourhood_id"]
+
+        prop = properties.get(property_id)
+        building = buildings.get(building_id)
+        premise = premises.get(premises_id)
+        unit = units.get(unit_id)
+        address = addresses.get(address_id)
+        if prop is None or building is None or premise is None or unit is None or address is None:
+            raise ValueError(f"establishment {establishment_id} has an off-map or unknown property/building/premises/unit/address reference")
+        if prop[0] != address_id:
+            raise ValueError(f"establishment {establishment_id} address does not match its canonical property")
+        if building != (property_id, address_id):
+            raise ValueError(f"establishment {establishment_id} building does not belong to its property/address")
+        if premise != (property_id, building_id, address_id):
+            raise ValueError(f"establishment {establishment_id} premises does not belong to its building/property/address")
+        if unit != (property_id, building_id, premises_id, address_id):
+            raise ValueError(f"establishment {establishment_id} unit does not belong to its premises/building/property/address")
+        if address != (property_id, district_id, neighbourhood_id):
+            raise ValueError(f"establishment {establishment_id} address district/neighbourhood lineage mismatch")
+        if district_id not in district_ids or neighbourhood_id not in neighbourhood_ids:
+            raise ValueError(f"establishment {establishment_id} references an unknown BP02 district/neighbourhood")
+
+    return {
+        "businesses_checked": len(registry["businesses"]),
+        "establishments_checked": len(registry["establishments"]),
+        "canonical_properties_checked": len({row["property_id"] for row in registry["establishments"]}),
+        "canonical_buildings_checked": len({row["building_id"] for row in registry["establishments"]}),
+        "canonical_premises_checked": len({row["premises_id"] for row in registry["establishments"]}),
+        "canonical_units_checked": len({row["unit_id"] for row in registry["establishments"]}),
+        "canonical_addresses_checked": len({row["address_id"] for row in registry["establishments"]}),
+        "districts_referenced": len({row["district_id"] for row in registry["establishments"]}),
+        "neighbourhoods_referenced": len({row["neighbourhood_id"] for row in registry["establishments"]}),
+        "exception_count": 0,
+        "validation_status": "PASS",
+    }
