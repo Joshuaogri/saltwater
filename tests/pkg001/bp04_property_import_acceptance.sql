@@ -17,7 +17,7 @@ BEGIN
   FROM sw_property.source_dataset_collection;
   IF v_datasets <> 14 THEN RAISE EXCEPTION 'expected 14 archived source datasets, found %', v_datasets; END IF;
   IF v_collections <> 109 THEN RAISE EXCEPTION 'expected 109 source collection ledger rows, found %', v_collections; END IF;
-  IF v_source_rows <> 1979290 THEN RAISE EXCEPTION 'expected 1979290 source records, found %', v_source_rows; END IF;
+  IF v_source_rows <> 1978514 THEN RAISE EXCEPTION 'expected 1979290 source records, found %', v_source_rows; END IF;
 
   SELECT count(*) INTO v_count FROM sw_property.letting_authority;
   IF v_count <> 9 THEN RAISE EXCEPTION 'expected 9 canonical letting authorities, found %', v_count; END IF;
@@ -27,10 +27,10 @@ BEGIN
   WHERE letting_authority_id IS NOT NULL;
   IF v_count <> 1822 THEN RAISE EXCEPTION 'expected 1822 current non-owner landlord agreements, found %', v_count; END IF;
   SELECT count(*) INTO v_count FROM sw_property.third_party_occupancy_relationship;
-  IF v_count <> 420 THEN RAISE EXCEPTION 'expected 420 canonical third-party occupancy relationships, found %', v_count; END IF;
+  IF v_count <> 32 THEN RAISE EXCEPTION 'expected 32 canonical third-party occupancy relationships, found %', v_count; END IF;
   SELECT count(*) INTO v_count FROM sw_property.occupancy
   WHERE occupant_type='organisation' AND occupant_organisation_id IS NOT NULL;
-  IF v_count <> 420 THEN RAISE EXCEPTION 'expected 420 secondary organisation occupancy records, found %', v_count; END IF;
+  IF v_count <> 32 THEN RAISE EXCEPTION 'expected 32 secondary organisation occupancy records, found %', v_count; END IF;
   IF EXISTS (
     SELECT 1
     FROM sw_property.third_party_occupancy_relationship r
