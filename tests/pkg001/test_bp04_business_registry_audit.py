@@ -228,7 +228,6 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
                 "district_id": district_id,
                 "neighbourhood_id": neighbourhood_id,
                 "unit_class": unit_class,
-                "use_class": values[unit_columns["use_class"]],
             }
             shared_existing = existing_by_building[building_id]
             break
