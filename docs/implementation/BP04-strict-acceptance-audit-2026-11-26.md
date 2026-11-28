@@ -138,3 +138,21 @@ The business registry and deterministic gzip were regenerated and committed to `
 **Concrete database adapter blocker:** the current SW-NAM-001 proposal 0009 reservation table stores `entity_id bigint` and its trigger only supports `GEOGRAPHY` and `PERSON`. BP04's authoritative `sw_property.business.business_id` is a text stable ID (for example, `SWBIZ-000001`). Proposal 0011 broadens the entity-type check but does not extend the trigger or bigint identity column, so it does not make BUSINESS reservation functional. A safe BP04 adapter needs a text stable-reference path, explicit business-row existence validation, transactional reservation and search support, tested against the actual disposable BP04 schema. Do not cast business IDs to integers or treat an unrelated surrogate as their stable identity.
 
 **Next implementation task:** design and test the missing text-ID BUSINESS adapter against the actual BP04 disposable schema, build a complete dry-run inventory of all adopted global canon names, then exercise a 10,000-name bulk reservation/import against disposable PostgreSQL. Report exact collisions, near-duplicate review cases, idempotent retries and rollback outcomes. Do not write the production Neon naming registry without fresh explicit approval.
+
+
+## BP04 follow-up — persistent business naming acceptance passed (2026-11-28)
+
+This section supersedes the 2026-11-26 statement that business names had not yet been persistently reserved in disposable PostgreSQL. It does not change the production write boundary or imply that every part of AC-A04 is complete.
+
+- **Workflow:** [PKG-001 run 46120150588](https://github.com/Joshuaogri/saltwater/actions/runs/46120150588), completed successfully on `main`.
+- **Disposable PostgreSQL job:** all 19 execution steps passed, including the 20,000-name acceptance, NPC dispatch integration and final smoke check.
+- **Python regression job:** all 36 steps passed.
+- **Dedicated naming suite:** 10 tests passed in 1,043.796 seconds.
+- **Bulk result:** 10,000 business identities; 20,000 persistent reservations (10,000 trading + 10,000 legal); stable text business IDs; global namespace collision controls; exact/near-duplicate checks; deterministic generation manifest; bounded transactions.
+- **Negative paths:** exact collision, cross-business name reuse, near-duplicate review, unknown business identity and rollback were rejected as expected; their tests passed.
+- **Integration:** NPC dispatch test passed; vacant establishments did not create fictional dispatch crews. Final smoke check found 1,000 people and the runtime, naming registry and population counter relations.
+- **Isolation:** disposable PostgreSQL only. No production Neon write, grant, name reservation, geography promotion or seed.
+
+**Revised criterion status:** AC-A04 remains PARTIAL because the acceptance now covers the persistent business reservation adapter and the tested 20,000 business public names, but the complete adopted canonical-name inventory across every domain is not yet evidenced. AC-A01 remains PARTIAL pending record-level plausibility/local-scope/lifecycle reconciliation and branch/brand/alias anti-inflation evidence. AC-G03 remains NOT VERIFIED because this correctness run did not measure a defined 10,000-business query latency/throughput budget. The 1,043.796-second naming-suite duration is retained as a performance observation and warrants a focused optimisation/benchmark task; no acceptance assertions should be weakened.
+
+The next BP04 work is therefore not to rebuild the naming adapter. It is to (1) complete the global adopted-canon inventory and business registry reconciliation, then (2) address the temporal ownership/tenancy acceptance matrix. Keep operational property/address blockers separate from BP04-owned work and keep all production Neon writes out of scope.
