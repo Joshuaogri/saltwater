@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from runtime.property_tenure_generator import build_property_tenure, _expand_columnar
+from runtime.dataset_io import load_json
 from runtime.property_world_generator import to_columnar_document
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -11,8 +12,8 @@ ROOT = Path(__file__).resolve().parents[2]
 class PropertyTenureTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        world = _expand_columnar(json.loads((ROOT / "data/property/saltwater-property-world-v1.json").read_text()))
-        registry = _expand_columnar(json.loads((ROOT / "data/business/saltwater-business-registry-v1.json").read_text()))
+        world = _expand_columnar(load_json(ROOT / "data/property/saltwater-property-world-v1.json"))
+        registry = _expand_columnar(load_json(ROOT / "data/business/saltwater-business-registry-v1.json"))
         cls.world = world
         cls.registry = registry
         cls.data = build_property_tenure({}, property_world=world, registry=registry)
