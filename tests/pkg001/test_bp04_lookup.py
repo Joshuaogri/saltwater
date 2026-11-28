@@ -3,7 +3,7 @@ import hashlib
 import json
 import unittest
 
-from runtime.bp04_lookup import BP04Lookup
+from runtime.bp04_lookup import BP04Lookup, _stable_design_id
 
 
 def archive(dataset_id, tables):
@@ -53,6 +53,8 @@ class BP04LookupTests(unittest.TestCase):
         world = {
             "properties": [{
                 "property_id": "SWPROP-0001", "address_id": "SWADDR-0001",
+                "bp02_parcel_id": _stable_design_id("SWP", "SWPAR-0001"),
+                "bp02_address_id": _stable_design_id("SWA", "SWADDR-0001"),
                 "source_candidate_parcel_id": "SWPAR-0001",
                 "source_district_id": "DISTRICT-01",
                 "source_neighbourhood_id": "NEIGHBOURHOOD-01",
@@ -61,6 +63,8 @@ class BP04LookupTests(unittest.TestCase):
             }],
             "addresses": [{
                 "address_id": "SWADDR-0001", "property_id": "SWPROP-0001",
+                "bp02_address_id": _stable_design_id("SWA", "SWADDR-0001"),
+                "bp02_parcel_id": _stable_design_id("SWP", "SWPAR-0001"),
                 "address_label": "10 Harbour Avenue, Central, Saltwater",
                 "street_number": 10, "street_name": "Harbour Avenue",
                 "road_id": "SWROAD-01", "postcode": "SW-01 1AB",
@@ -92,8 +96,13 @@ class BP04LookupTests(unittest.TestCase):
                 "occupancy_state": "unassigned", "operator_business_id": "SWBIZ-000001",
             }],
             "access_points": [{
-                "access_point_id": "SWACC-0001", "property_id": "SWPROP-0001",
-                "building_id": "SWBLD-0001", "premises_id": "SWPRE-0001",
+                "access_point_id": "SWACC-0001", "bp02_access_point_id": "SWACC-0001",
+                "bp02_locator_status": "BOUND_TO_BP02_ACCESS_POINT",
+                "bp02_coordinate_reference": "SW-LOCAL-METRE-GRID-V1",
+                "point_m": [10.0, 20.0], "effective_from_tick": 0,
+                "effective_to_tick": None, "canonical_status": "active",
+                "point_status": "CANONICAL_FICTIONAL_ACCESS_POINT",
+                "property_id": "SWPROP-0001", "building_id": "SWBLD-0001", "premises_id": "SWPRE-0001",
                 "unit_id": "SWUNIT-0001", "access_type": "public_entrance",
                 "access_modes": ["pedestrian"],
             }],
@@ -153,9 +162,21 @@ class BP04LookupTests(unittest.TestCase):
         self.assertEqual(detail["address"]["address_id"], "SWADDR-0001")
         self.assertEqual(detail["buildings"][0]["building_id"], "SWBLD-0001")
         self.assertEqual(detail["businesses"][0]["business_id"], "SWBIZ-000001")
-        self.assertEqual(detail["geography_binding"], "bp02_design_identity_bound_operational_release_blocked")
-        self.assertFalse(detail["operational_geography_approved"])
+        self.assertEqual(detail["geography_binding"], "bp02_canonical_gameplay_identity_bound")
+        self.assertTrue(detail["operational_geography_approved"])
+        self.assertEqual(detail["bp02_parcel_id"], _stable_design_id("SWP", "SWPAR-0001"))
+        self.assertEqual(detail["bp02_address_id"], _stable_design_id("SWA", "SWADDR-0001"))
         self.assertTrue(detail["property"]["parcel_design_id"].startswith("SWP-"))
+
+    def test_access_point_exposes_bp02_locator_and_effective_state(self):
+        access = self.lookup.get("access_point", "SWACC-0001")
+        self.assertEqual(access["bp02_access_point_id"], "SWACC-0001")
+        self.assertEqual(access["bp02_locator_status"], "BOUND_TO_BP02_ACCESS_POINT")
+        self.assertEqual(access["bp02_coordinate_reference"], "SW-LOCAL-METRE-GRID-V1")
+        self.assertEqual(access["point_m"], [10.0, 20.0])
+        self.assertEqual(access["effective_from_tick"], 0)
+        self.assertIsNone(access["effective_to_tick"])
+        self.assertEqual(access["canonical_status"], "active")
 
     def test_address_detail_returns_property_dossier(self):
         self.assertEqual(
@@ -163,14 +184,14 @@ class BP04LookupTests(unittest.TestCase):
             "SWPROP-0001",
         )
 
-    def test_parcel_and_address_design_ids_resolve_without_operational_promotion(self):
+    def test_bp02_canonical_parcel_and_address_ids_resolve_as_active_gameplay_identity(self):
         prop = self.lookup.get("property", "SWPROP-0001")
         address = self.lookup.get("address", "SWADDR-0001")
         parcel_id = prop["parcel_design_id"]
         address_id = address["address_design_id"]
         self.assertEqual(self.lookup.get("parcel", parcel_id)["property_id"], "SWPROP-0001")
         self.assertEqual(self.lookup.get("parcel_id", parcel_id)["parcel_identity_status"],
-                         "STABLE_DESIGN_IDENTITY")
+                         "CANONICAL_GAMEPLAY_IDENTITY")
         self.assertEqual(self.lookup.get("address_design_id", address_id)["address_id"],
                          "SWADDR-0001")
         self.assertEqual(self.lookup.property_detail(parcel_id)["property"]["property_id"],
@@ -178,7 +199,7 @@ class BP04LookupTests(unittest.TestCase):
         self.assertEqual(self.lookup.address_detail(address_id)["property"]["property_id"],
                          "SWPROP-0001")
         self.assertEqual(self.lookup.get("parcel", parcel_id)["parcel_operational_status"],
-                         "NOT_APPROVED_FOR_OPERATIONAL_SEED")
+                         "ACTIVE_IN_GAME")
         self.assertEqual(self.lookup.get("address", address_id)["address_operational_status"],
                          "NOT_APPROVED_FOR_OPERATIONAL_SEED")
 
