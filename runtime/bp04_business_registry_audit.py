@@ -217,8 +217,12 @@ def audit_business_registry_spatial_lineage(
     tables = property_world_document.get("tables")
     if not isinstance(metadata, dict) or not isinstance(tables, dict):
         raise ValueError("canonical property-world metadata or tables are missing")
-    if metadata.get("dataset_id") != "SW-PROPERTY-WORLD-V1" or metadata.get("city") != "Saltwater":
-        raise ValueError("canonical property-world identity or city mismatch")
+    if (
+        metadata.get("dataset_id") != "SW-PROPERTY-WORLD-V1"
+        or metadata.get("canon_status") != "CANONICAL_FICTIONAL_GAME_WORLD"
+        or metadata.get("generator") != "SW-PROPERTY-WORLD-GENERATOR-001"
+    ):
+        raise ValueError("canonical property-world identity, canon status or generator mismatch")
     lineage = metadata.get("lineage")
     if not isinstance(lineage, dict) or lineage.get("fictional_world_facts") is not True:
         raise ValueError("canonical property-world provenance is not fictional game canon")
