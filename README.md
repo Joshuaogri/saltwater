@@ -6,6 +6,27 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## BP04 spatial integration — accepted (2026-11-28)
+
+BP02 canonical gameplay geography is released and BP04 is explicitly bound to it:
+
+- 420/420 BP04 properties link to BP02 canonical parcel IDs.
+- 420/420 BP04 primary addresses link to BP02 canonical address IDs.
+- 2,948 building access points bind to BP02 locators; 36 additional BP04 site entrances use the BP02 local coordinate reference.
+- All 2,984 BP04 access locators have stable IDs, spatial coordinates, active canonical state and effective dates.
+- BP04 player/police lookup exposes the canonical BP02 IDs and access-point state.
+
+Acceptance evidence:
+- [BP02 full parcel/address/access audit — PASS](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735)
+- [Property-world generation and regression — PASS](https://github.com/Joshuaogri/saltwater/actions/runs/46143969167)
+- [BP04 110-table disposable PostgreSQL 16/18 workflow — PASS](https://github.com/Joshuaogri/saltwater/actions/runs/46145689458)
+- [Full Python regression suite — PASS](https://github.com/Joshuaogri/saltwater/actions/runs/46145689461)
+
+The BP04 design decisions are resolved. NPCs make ordinary fictional decisions autonomously; no human-player approval gates are used for routine in-game activity. Production Neon writes remain separate and were not performed.
+
+**BP04 remains in progress:** the strict 48-criterion audit now records 18 PASS, 15 PARTIAL, 1 BLOCKED, 14 NOT VERIFIED and 0 FAIL. Continue from the remaining criteria; do not rebuild the accepted spatial integration.
+
+
 ## BP04 spatial integration — passed (2026-11-28)
 
 BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write. BP04 criteria AC-B01 and AC-B05 are now PASS. The updated strict audit records 18 PASS, 15 PARTIAL, 1 BLOCKED and 14 NOT VERIFIED; BP04 remains IN_PROGRESS until the remaining criteria are accepted. No production Neon write occurred.
