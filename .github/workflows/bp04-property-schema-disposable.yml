@@ -36,6 +36,8 @@ on:
       - "db/migrations/0030_bp33_npc_employment_population_integration.sql"
       - "db/migrations/0031_bp34_rent_payment_tenancy_separation.sql"
       - "db/migrations/0032_bp34_rent_schedule_guard_alias_fix.sql"
+      - "db/migrations/0033_bp04_explicit_letting_authority.sql"
+      - "db/migrations/0034_bp04_letting_authority_validation_hardening.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_third_party_cross_domain_acceptance.sql"
       - "tests/pkg001/bp04_facility_health_transport_acceptance.sql"
@@ -43,12 +45,14 @@ on:
       - "tests/pkg001/bp04_ownership_interest_acceptance.sql"
       - "tests/pkg001/bp04_occupancy_dispute_acceptance.sql"
       - "tests/pkg001/bp04_joint_title_transfer_acceptance.sql"
+      - "tests/pkg001/bp04_letting_authority_acceptance.sql"
       - "tests/pkg001/test_bp04_concurrent_handover.py"
       - "tests/pkg001/test_bp04_subletting_lifecycle_concurrency.py"
       - "tests/pkg001/bp04_business_search_performance.py"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
       - "tests/pkg001/test_bp04_property_stack_importer.py"
+      - "tests/pkg001/test_property_tenure_generator.py"
       - "runtime/bp04_archive_reader.py"
       - "tests/pkg001/test_bp04_archive_reader.py"
       - "runtime/bp04_lookup.py"
@@ -145,6 +149,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_occupancy_dispute_acceptance.sql
       - name: Verify coordinated joint-title transfer and continuing occupancy
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_joint_title_transfer_acceptance.sql
+      - name: Verify explicit non-owner landlord letting authority and immutable history
+        run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_letting_authority_acceptance.sql
       - name: Verify concurrent occupancy handover serialization and idempotency
         run: python tests/pkg001/test_bp04_concurrent_handover.py
       - name: Provision disposable BP03 person and population interfaces
