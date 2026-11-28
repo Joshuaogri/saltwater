@@ -136,5 +136,39 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             audit_business_registry(registry)
 
 
+    def test_generator_provenance_mismatch_fails_closed(self):
+        registry = copy.deepcopy(self.registry)
+        registry["businesses"][0]["source_generator"] = "untrusted-generator"
+        with self.assertRaisesRegex(ValueError, "mismatched generator provenance"):
+            audit_business_registry(registry)
+
+    def test_current_occupancy_status_must_match_business_lifecycle(self):
+        registry = copy.deepcopy(self.registry)
+        registry["business_unit_links"][0]["occupancy_status"] = "seasonal"
+        with self.assertRaisesRegex(ValueError, "current occupancy lifecycle status mismatch"):
+            audit_business_registry(registry)
+
+    def test_current_exclusive_business_occupancy_cannot_overlap_on_one_unit(self):
+        registry = copy.deepcopy(self.registry)
+        first_unit = registry["establishments"][0]["unit_id"]
+        registry["establishments"][1]["unit_id"] = first_unit
+        registry["business_unit_links"][1]["unit_id"] = first_unit
+        with self.assertRaisesRegex(ValueError, "overlapping exclusive business occupancy"):
+            audit_business_registry(registry)
+
+    def test_occupancy_link_temporal_order_must_be_valid(self):
+        registry = copy.deepcopy(self.registry)
+        registry["business_unit_links"][0]["valid_from_tick"] = 10
+        registry["business_unit_links"][0]["valid_to_tick"] = 9
+        with self.assertRaisesRegex(ValueError, "invalid end tick"):
+            audit_business_registry(registry)
+
+    def test_registry_must_be_marked_as_fictional_canon(self):
+        registry = copy.deepcopy(self.registry)
+        registry["canon_status"] = "UNVERIFIED"
+        with self.assertRaisesRegex(ValueError, "not marked as fictional"):
+            audit_business_registry(registry)
+
+
 if __name__ == "__main__":
     unittest.main()
