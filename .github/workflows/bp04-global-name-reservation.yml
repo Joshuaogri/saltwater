@@ -18,7 +18,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: bp04-global-name-reservation-main
+  group: bp04-global-name-reservation-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
