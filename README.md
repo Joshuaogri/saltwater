@@ -6,6 +6,10 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## BP04 competing title-transfer acceptance — passed on PostgreSQL 16/18 (2026-11-28)
+
+Added a real two-session race test for two different title transfers that both expect the same current proprietor. Exactly one succeeds; the registered proprietor, ownership interest, current property-interest record and property-rights schedule all resolve to the winning owner. The existing landlord, tenant, operator, physical occupant and primary business-unit link remain unchanged. The test cleans up its disposable organisation/title fixture so the archive-only importer retains its empty organisation baseline. The full [95-table BP04 disposable workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46138418805) passed on PostgreSQL 16 and 18, including schema/lifecycle acceptance, concurrency, 10k lookup benchmark, archive import, gameplay lookup and repeat-import storage stability. No production Neon write occurred. BP04 remains IN_PROGRESS; subletting end/start interleavings, joint/disputed interests, wider NPC role combinations and cross-register acceptance remain open.
+
 
 ## GitHub Actions main-branch publication race hardening — 2026-11-28
 
@@ -30,7 +34,7 @@ New migration [0020](db/migrations/0020_bp04_subletting_handover_serialization.s
 
 ## BP04 concurrent subletting idempotency — PostgreSQL 16/18 passed (2026-11-28)
 
-A race in subletting creation was closed with new migration [0019](db/migrations/0019_bp04_subletting_idempotency_race_fix.sql). Migration 0015 remains unchanged; 0019 rechecks the idempotency record after locking both agreements. A real two-session regression holds both agreement rows, starts two identical requests, releases the lock and verifies the same relationship result with one relationship row and one append-only agreement event. The full [95-table BP04 disposable schema/archive workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46132286834) passed on PostgreSQL 16 and 18, including archive-only import, gameplay lookup and repeat-import storage stability. [Migration-ledger validation](https://github.com/Joshuaogri/saltwater/actions/runs/46132269015) also passed. No production Neon write occurred. BP04 remains IN_PROGRESS; assignment/title-transfer concurrency and broader cross-register tests remain open.
+A race in subletting creation was closed with new migration [0019](db/migrations/0019_bp04_subletting_idempotency_race_fix.sql). Migration 0015 remains unchanged; 0019 rechecks the idempotency record after locking both agreements. A real two-session regression holds both agreement rows, starts two identical requests, releases the lock and verifies the same relationship result with one relationship row and one append-only agreement event. The full [95-table BP04 disposable schema/archive workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46132286834) passed on PostgreSQL 16 and 18, including archive-only import, gameplay lookup and repeat-import storage stability. [Migration-ledger validation](https://github.com/Joshuaogri/saltwater/actions/runs/46132269015) also passed. No production Neon write occurred. BP04 remains IN_PROGRESS; subletting end/start interleavings and broader cross-register tests remain open.
 
 ## BP04 business registry audit hardening — 21 tests passed (2026-11-28)
 
@@ -60,7 +64,7 @@ The acceptance now includes real multi-session concurrency: two independent writ
 
 The full [95-table BP04 disposable schema/archive workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46125653046) passed on PostgreSQL 16 and 18, including agreement history, lifecycle transitions, subletting, assignment, title transfer, physical handover, real concurrent handover races, failure-injected rollback, archive-only import, gameplay lookup, repeat-import idempotency and storage stability. Migration checksum/schema validation and the version-dynamic atomic rollback test passed in [run 46125653012](https://github.com/Joshuaogri/saltwater/actions/runs/46125653012).
 
-**Remaining lifecycle scope:** assignment/title-transfer/subletting concurrency stress, complete BP03/BP34/BP35 cross-register integration, broader multi-register rollback and the remaining BP04 acceptance matrix remain open. This writer does not create rent postings, alter population, infer missing execution dates or dispatch BP35 events. All checks used disposable PostgreSQL; no production Neon write or seed was performed. BP04 remains `IN_PROGRESS`.
+**Remaining lifecycle scope:** broader subletting end/start concurrency stress, complete BP03/BP34/BP35 cross-register integration, broader multi-register rollback and the remaining BP04 acceptance matrix remain open. This writer does not create rent postings, alter population, infer missing execution dates or dispatch BP35 events. All checks used disposable PostgreSQL; no production Neon write or seed was performed. BP04 remains `IN_PROGRESS`.
 
 
 ## Main and BP02 migration-ledger verification — read-only Neon check passed (2026-11-28)
