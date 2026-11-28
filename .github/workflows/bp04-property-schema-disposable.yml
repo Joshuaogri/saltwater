@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 93-table disposable PostgreSQL 16/18 benchmark
+name: BP04 canonical property stack — 94-table disposable PostgreSQL 16/18 benchmark
 
 on:
   push:
@@ -16,6 +16,7 @@ on:
       - "db/migrations/0012_bp04_property_rights_boundaries.sql"
       - "db/migrations/0013_bp04_agreement_event_history.sql"
       - "db/migrations/0014_bp04_agreement_lifecycle_transitions.sql"
+      - "db/migrations/0015_bp04_subletting_occupancy_relationships.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
