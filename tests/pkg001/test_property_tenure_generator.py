@@ -54,12 +54,9 @@ class PropertyTenureTests(unittest.TestCase):
         self.assertEqual(len(relationships), 32)
         self.assertEqual(len({row["relationship_id"] for row in relationships}), 32)
         self.assertEqual(len({row["unit_id"] for row in relationships}), 32)
-        active_property_ids = {
-            next(unit["property_id"] for unit in self.world["units"] if unit["unit_id"] == link["unit_id"])
-            for link in self.registry["business_unit_links"]
-        }
-        self.assertEqual({row["property_id"] for row in relationships}, active_property_ids)
         unit_by_id = {unit["unit_id"]: unit for unit in self.world["units"]}
+        active_property_ids = {unit_by_id[link["unit_id"]]["property_id"] for link in self.registry["business_unit_links"]}
+        self.assertEqual({row["property_id"] for row in relationships}, active_property_ids)
         self.assertEqual(
             {unit_by_id[row["unit_id"]]["unit_class"] for row in relationships},
             {unit_by_id[link["unit_id"]]["unit_class"] for link in self.registry["business_unit_links"]},
