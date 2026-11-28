@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 94 THEN
-    RAISE EXCEPTION 'expected 94 BP04 tables including agreement event and subletting relationships, found %', v_count;
+  IF v_count <> 95 THEN
+    RAISE EXCEPTION 'expected 95 BP04 tables including agreement event, subletting and occupancy handover, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -134,6 +134,10 @@ BEGIN
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='recorded_year' AND data_type='integer')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='property_lifecycle_event' AND column_name='event_payload' AND data_type='jsonb')
   THEN RAISE EXCEPTION 'append-only property lifecycle event provenance fields missing'; END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='sw_property' AND table_name='occupancy_handover_event')
+     OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='occupancy_handover_event' AND column_name='idempotency_key' AND data_type='text')
+  THEN RAISE EXCEPTION 'append-only occupancy handover event schema missing'; END IF;
 
   IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='sw_property' AND table_name='occupancy_relationship')
      OR NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='sw_property' AND table_name='occupancy_relationship' AND column_name='subletting_right_id' AND data_type='text')
