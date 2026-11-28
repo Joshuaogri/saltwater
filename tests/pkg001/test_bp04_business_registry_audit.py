@@ -258,6 +258,7 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             "business_id": new_business["business_id"],
             **shared_unit,
             "status": "active",
+            "operating_status": "active",
             "establishment_type": "primary",
             "source_generator": registry["generator"],
         })
@@ -273,7 +274,7 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             "establishment_id": new_establishment["establishment_id"],
             "unit_id": shared_unit["unit_id"],
             "premises_id": shared_unit["premises_id"],
-            "occupancy_status": "occupied",
+            "occupancy_status": "active",
         })
 
         registry["businesses"].append(new_business)
