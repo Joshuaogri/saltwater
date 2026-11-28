@@ -12,6 +12,7 @@ from __future__ import annotations
 import gzip
 import json
 from pathlib import Path
+from math import isfinite
 from typing import Iterable
 
 from runtime.geography_identity_reconciliation import validate_identity_map
@@ -129,7 +130,7 @@ def reconcile_collections(
         errors.append(f"orphan BP04 addresses: {orphan_addresses[:10]}")
 
     if errors:
-        raise ValueError("\\n".join(errors))
+        raise ValueError("\n".join(errors))
 
     canonical_parcel_matches = sum(
         1 for row in properties
@@ -197,6 +198,14 @@ def reconcile_canonical_property_bindings(
     building_by_id = {row.get("building_id"): row for row in buildings}
 
     errors = []
+    if any(not row.get("property_id") for row in properties):
+        errors.append("BP04 property stable IDs are missing")
+    if any(not row.get("address_id") for row in addresses):
+        errors.append("BP04 address stable IDs are missing")
+    if any(not row.get("building_id") for row in buildings):
+        errors.append("BP04 building stable IDs are missing")
+    if any(not row.get("access_point_id") for row in access_points):
+        errors.append("BP04 access-point stable IDs are missing")
     if len(property_by_id) != len(properties):
         errors.append("BP04 property IDs are missing or duplicated")
     if len(address_by_id) != len(addresses):
@@ -255,7 +264,7 @@ def reconcile_canonical_property_bindings(
         point = access.get("point_m")
         if (
             not isinstance(point, list) or len(point) != 2
-            or any(type(value) not in (int, float) or not __import__("math").isfinite(value) for value in point)
+            or any(type(value) not in (int, float) or not isfinite(value) for value in point)
         ):
             errors.append(f"{access_id}: spatial locator must contain two finite local-grid coordinates")
         if access.get("bp02_coordinate_reference") != "SW-LOCAL-METRE-GRID-V1":
