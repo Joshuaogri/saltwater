@@ -6,6 +6,10 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## BP04 property security/access correction — passed (2026-11-28)
+
+The organisation access generator now selects only occupancies with a canonical business occupant, preventing non-business occupancies on the same unit from being selected as the source of a business access assignment. The focused security/access build regenerated and persisted the corrected dataset on `main`; its regression tests passed in [workflow 46165014906](https://github.com/Joshuaogri/saltwater/actions/runs/46165014906). The full Python regression suite also passed in [workflow 46165014895](https://github.com/Joshuaogri/saltwater/actions/runs/46165014895). No production Neon write occurred.
+
 ## BP04 spatial integration — accepted (2026-11-28)
 
 BP02 canonical gameplay geography is released and BP04 is explicitly bound to it:
