@@ -2498,3 +2498,16 @@ Migration `0025_bp04_subletting_end_start_serialization.sql` makes subletting te
 ## BP04 subletting end/start serialization — disposable acceptance passed (2026-11-28)
 
 Migration 0025 makes subletting termination lock the physical unit before the relationship row. Migration 0026 also makes exact start replays acquire that same unit lock before returning prior state, preventing a stale `active` replay from racing a concurrent end. Two-session tests cover (1) exact start replay versus end and (2) new start versus prior relationship end at the same effective tick, on both PostgreSQL 16 and 18. Both versions passed the complete 100-table schema/archive workflow, including the new interleavings, 10k lookup benchmark, archive import, gameplay lookup and repeat-import storage stability: [workflow https://github.com/Joshuaogri/saltwater/actions/runs/46141933273]. No production Neon write occurred. AC-C03/C04 remain PARTIAL because broader third-party occupancy types and the independent NPC role matrix are still outstanding.
+
+
+## BP04 requested NPC integration batch — cleared on 2026-11-28
+
+The requested remaining work was implemented directly on `main` and passed the complete disposable PostgreSQL 16/18 workflow: [run 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466).
+
+- **Subletting start/end concurrency:** migrations 0025–0026 enforce unit-first serialization for ends and exact replays; real two-session interleavings pass.
+- **Third-party occupancy and NPC roles:** migration 0027 adds business, organisation and BP03-person occupancy references plus explicit third-party use relationships and immutable lifecycle events. Distinct owner/landlord, tenant, operator and occupant roles are tested.
+- **BP03/BP33 staffing:** migration 0030 adds NPC employment records in `sw_hr`; BP04 staff-role links resolve to BP03 person IDs and BP33 employment IDs. One NPC can hold multiple jobs while counting once in population.
+- **BP34 rent/payment separation:** migrations 0031–0032 add rent schedules, charges, payments, allocations and derived balances in `sw_finance`. Partial payment, full settlement, idempotent replay and overpayment rejection pass; finance postings do not mutate BP04 agreements or physical occupancy.
+- **Organisation/facility/healthcare/transport:** migration 0028 adds facility/service profiles, healthcare capability metadata, BP02 route/stop and BP37 timetable references, fleet/accessibility metadata, dependencies and append-only disruption events.
+
+The complete run also passed the 110-table BP04 schema/archive acceptance, 10k lookup benchmark, all 14 compressed source archives, gameplay lookup and repeat-import storage stability on both PostgreSQL versions. No production Neon writes were made. The five requested workstreams are cleared; the wider BP04 48-criterion audit remains IN_PROGRESS for unrelated outstanding criteria.
