@@ -17,7 +17,7 @@ INSERT INTO sw_property.property_site(
 INSERT INTO sw_property.ownership_interest(
   ownership_interest_id,property_id,owner_organisation_id,management_model,interest_type,
   source_dataset,interest_class,share_numerator,share_denominator,
-  effective_from_tick,effective_to_tick,interest_status,dispute_status,recorded_tick
+  effective_from_tick,effective_to_tick,interest_status,dispute_status,dispute_reference,recorded_tick
 ) VALUES
   ('SWC02-INTEREST-A','SWC02-PROPERTY','SWC02-OWNER-A','direct_owner_management','freehold',
    'bp04_ownership_interest_acceptance',
