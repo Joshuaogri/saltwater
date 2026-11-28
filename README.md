@@ -1,5 +1,10 @@
 # Saltwater
 
+## BP04 naming acceptance policy — practical 90% threshold (2026-11-28)
+
+Generated fictional names are accepted when at least 90% of a reviewed sample are plausible and usable. Minor awkward wording, stylistic repetition or a small number of imperfect names are not release blockers and do not trigger another exhaustive renaming cycle. Stable entity IDs, non-empty names, source lineage and protection against exact identity collisions remain required; obvious unusable names can be corrected opportunistically. Business-world development proceeds without waiting for subjective naming perfection. The 20,000 business public-name reservation stage has passed; the remaining property/building/premises/organisation reservation check is treated as a bounded implementation check, not a reason to hold up business gameplay. No production Neon writes are implied.
+
+
 ## BP04 canonical property/business stack rebuild — passed (2026-11-28)
 
 The full sequential property/business rebuild passed on GitHub Actions [run 46166467165](https://github.com/Joshuaogri/saltwater/actions/runs/46166467165), then published the consistent compressed dataset snapshot directly to `main` in commit [3a71d4988bf31af35c044584c062c6f12f2f0f64](https://github.com/Joshuaogri/saltwater/commit/3a71d4988bf31af35c044584c062c6f12f2f0f64). All stages passed: physical asset inventory; canonical property world; business registry and operations; ownership and utilities; maintenance, security and valuation; development, lifecycle and rights; insurance, facilities and estate audit; compression; global SW-UNS cross-domain reconciliation; and single-snapshot publication. The reproducible global-name reconciliation tests passed all four tests. The repository now stores the property/business datasets as compressed `.json.gz` archives. This is GitHub source-data publication and disposable acceptance only; no production Neon migration, import or write occurred.
