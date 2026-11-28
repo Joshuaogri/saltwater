@@ -31,6 +31,20 @@ BEGIN
   SELECT count(*) INTO v_count FROM sw_property.occupancy
   WHERE occupant_type='organisation' AND occupant_organisation_id IS NOT NULL;
   IF v_count <> 32 THEN RAISE EXCEPTION 'expected 32 secondary organisation occupancy records, found %', v_count; END IF;
+  SELECT count(*) INTO v_count FROM sw_property.third_party_occupancy_event
+  WHERE event_type='relationship_recorded';
+  IF v_count <> 32 THEN RAISE EXCEPTION 'expected 32 immutable third-party occupancy creation events, found %', v_count; END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM sw_property.third_party_occupancy_relationship r
+    LEFT JOIN sw_property.third_party_occupancy_event e
+      ON e.relationship_id=r.relationship_id
+     AND e.event_type='relationship_recorded'
+     AND e.idempotency_key=r.idempotency_key
+    GROUP BY r.relationship_id
+    HAVING count(e.relationship_id) <> 1
+  ) THEN RAISE EXCEPTION 'third-party occupancy relationship lacks exactly one matching creation event'; END IF;
+
   IF EXISTS (
     SELECT 1
     FROM sw_property.third_party_occupancy_relationship r
