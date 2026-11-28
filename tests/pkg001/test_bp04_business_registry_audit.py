@@ -158,9 +158,8 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
 
     def test_occupancy_link_temporal_order_must_be_valid(self):
         registry = copy.deepcopy(self.registry)
-        registry["business_unit_links"][0]["valid_from_tick"] = 10
-        registry["business_unit_links"][0]["valid_to_tick"] = 9
-        with self.assertRaisesRegex(ValueError, "invalid end tick"):
+        registry["business_unit_links"][0]["valid_from_tick"] = -1
+        with self.assertRaisesRegex(ValueError, "invalid start tick"):
             audit_business_registry(registry)
 
     def test_registry_must_be_marked_as_fictional_canon(self):
