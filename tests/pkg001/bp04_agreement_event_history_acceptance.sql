@@ -97,5 +97,91 @@ BEGIN
 END
 $bp04$;
 
+INSERT INTO sw_property.occupancy_agreement(
+ agreement_id,property_id,premises_id,unit_id,landlord_organisation_id,
+ tenant_business_id,operator_business_id,establishment_id,agreement_type,
+ commencement_year,agreement_status,source_dataset
+) VALUES
+ ('SWTEST-AGR-03','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01','SWTEST-ORG-OWNER',
+  'SWTEST-BUS-01','SWTEST-BUS-01','SWTEST-EST-01','commercial_occupancy_lease',2026,'draft','bp04_agreement_lifecycle_acceptance'),
+ ('SWTEST-AGR-04','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01','SWTEST-ORG-OWNER',
+  'SWTEST-BUS-01','SWTEST-BUS-01','SWTEST-EST-01','commercial_occupancy_lease',2027,'draft','bp04_agreement_lifecycle_acceptance');
+
+INSERT INTO sw_property.occupancy(
+ occupancy_id,property_id,premises_id,unit_id,occupant_business_id,
+ establishment_id,agreement_id,occupant_type,occupancy_status,
+ effective_from_year,effective_to_year,source_dataset
+) VALUES (
+ 'SWTEST-OCC-01','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+ 'SWTEST-BUS-01','SWTEST-EST-01','SWTEST-AGR-01','business','occupied',
+ 2025,NULL,'bp04_agreement_lifecycle_acceptance'
+);
+
+DO $bp04$
+DECLARE
+  v_first uuid;
+  v_replay uuid;
+  v_status text;
+BEGIN
+  SELECT t.agreement_event_id INTO v_first
+  FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-03','agreement_executed','draft',1,1,'actor:test','source:test:execute',
+    'test:transition:execute','gameplay_action',NULL,'{}'::jsonb
+  ) t;
+  SELECT t.agreement_event_id INTO v_replay
+  FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-03','agreement_executed','draft',1,1,'actor:test','source:test:execute',
+    'test:transition:execute','gameplay_action',NULL,'{}'::jsonb
+  ) t;
+  IF v_first<>v_replay THEN RAISE EXCEPTION 'transition replay did not return original event'; END IF;
+  IF (SELECT agreement_status FROM sw_property.occupancy_agreement WHERE agreement_id='SWTEST-AGR-03')<>'active' THEN
+    RAISE EXCEPTION 'execution did not activate the agreement';
+  END IF;
+
+  PERFORM * FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-03','agreement_varied','active',2,2,'actor:test','source:test:variation',
+    'test:transition:variation','gameplay_action',NULL,'{"rent_band":"B3"}'::jsonb
+  );
+  PERFORM * FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-03','agreement_renewed','active',3,3,'actor:test','source:test:renewal',
+    'test:transition:renewal','gameplay_action','SWTEST-AGR-04','{}'::jsonb
+  );
+  IF (SELECT agreement_status FROM sw_property.occupancy_agreement WHERE agreement_id='SWTEST-AGR-03')<>'renewed'
+     OR (SELECT agreement_status FROM sw_property.occupancy_agreement WHERE agreement_id='SWTEST-AGR-04')<>'active' THEN
+    RAISE EXCEPTION 'renewal did not close predecessor and activate successor';
+  END IF;
+
+  SELECT t.agreement_status INTO v_status
+  FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-01','agreement_expired','active',30,30,'actor:test','source:test:expiry',
+    'test:transition:expiry','gameplay_action',NULL,'{}'::jsonb
+  ) t;
+  IF v_status<>'expired' THEN RAISE EXCEPTION 'expiry transition did not return expired state'; END IF;
+  IF (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-01')<>'occupied'
+     OR (SELECT effective_to_year FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-01') IS NOT NULL THEN
+    RAISE EXCEPTION 'agreement expiry automatically changed physical occupancy';
+  END IF;
+
+  BEGIN
+    PERFORM * FROM sw_property.transition_occupancy_agreement(
+      'SWTEST-AGR-01','agreement_varied','active',31,31,'actor:test','source:test:bad',
+      'test:transition:bad-state','gameplay_action',NULL,'{}'::jsonb
+    );
+    RAISE EXCEPTION 'transition accepted an incorrect expected state';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='transition accepted an incorrect expected state' THEN RAISE; END IF;
+  END;
+
+  PERFORM * FROM sw_property.transition_occupancy_agreement(
+    'SWTEST-AGR-03','agreement_renewed','active',3,3,'actor:test','source:test:renewal',
+    'test:transition:renewal','gameplay_action','SWTEST-AGR-04','{}'::jsonb
+  );
+  IF (SELECT count(*) FROM sw_property.occupancy_agreement_event
+      WHERE agreement_id='SWTEST-AGR-03' AND idempotency_key='test:transition:renewal')<>1 THEN
+    RAISE EXCEPTION 'renewal replay created duplicate events';
+  END IF;
+END
+$bp04$;
+
 ROLLBACK;
 SELECT 'BP04 agreement event history acceptance passed' AS result;
