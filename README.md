@@ -6,6 +6,10 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## BP04 business registry audit hardening — 21 tests passed (2026-11-28)
+
+The business registry audit now handles lifecycle classes with zero records correctly and rejects booleans where strict integer ticks, years or summary counts are required. Its adversarial suite proves that an additional branch establishment, brand and alias records do not inflate the 10,000-business identity count, rejects a primary establishment owned by another business, and reconciles active/seasonal/temporarily inactive counts to the registry total. The focused [audit workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46131679025) passed all 21 tests; [migration validation](https://github.com/Joshuaogri/saltwater/actions/runs/46131679004) passed. The full [PKG-001 disposable PostgreSQL run](https://github.com/Joshuaogri/saltwater/actions/runs/46130013799) also completed successfully, including 20,000 persistent business-name reservations and NPC dispatch integration. No production Neon write or seed occurred. BP04 remains IN_PROGRESS.
+
 ## BP04 10,000-business lookup and concurrency benchmark — PostgreSQL 16/18 passed (2026-11-28)
 
 The gameplay archive lookup now builds a normalized bigram inverted index once, then uses it to narrow substring-search candidates instead of normalizing and scanning all 10,000 business rows on every query. The regression test compares indexed results with the previous linear substring semantics for 100 deterministic sample queries and benchmarks 1,000 lookups.
