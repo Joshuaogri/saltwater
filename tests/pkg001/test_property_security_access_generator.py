@@ -25,10 +25,11 @@ class PropertySecurityAccessTests(unittest.TestCase):
   self.assertEqual({x["premises_id"] for x in d["access_zones"] if x["zone_type"]=="premises_occupancy"},{x["premises_id"] for x in self.world["premises"]})
   self.assertEqual({x["unit_id"] for x in d["access_zones"] if x["zone_type"]=="individual_unit"},{x["unit_id"] for x in self.world["units"]})
  def test_business_assignments_follow_current_occupancy(self):
-  d=self.data; occ={x["occupancy_id"] for x in self.tenure["occupancies"]}
-  self.assertEqual(len(d["organisation_access_assignments"]),len(self.tenure["occupancies"]))
+  d=self.data; business_occupancies=[x for x in self.tenure["occupancies"] if x.get("occupant_business_id")]
+  occ={x["occupancy_id"] for x in business_occupancies}
+  self.assertEqual(len(d["organisation_access_assignments"]),len(business_occupancies))
   self.assertTrue(all(x["occupancy_id"] in occ for x in d["organisation_access_assignments"]))
-  expected_units={x["occupancy_id"]:x["unit_id"] for x in self.tenure["occupancies"]}
+  expected_units={x["occupancy_id"]:x["unit_id"] for x in business_occupancies}
   group_units={x["occupancy_id"]:x["unit_id"] for x in d["access_groups"]}
   self.assertEqual(group_units,expected_units)
   self.assertTrue(all(not x["member_person_ids"] for x in d["access_groups"]))
