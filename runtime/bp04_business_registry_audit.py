@@ -83,7 +83,7 @@ def audit_business_registry(registry: dict) -> dict:
             raise ValueError(f"business {business_id} improperly creates person records")
         if row["status"] not in allowed_lifecycle_statuses:
             raise ValueError(f"business {business_id} has an unknown lifecycle status")
-        if not isinstance(row.get("year_established"), int) or not 1985 <= row["year_established"] <= 2026:
+        if type(row.get("year_established")) is not int or not 1985 <= row["year_established"] <= 2026:
             raise ValueError(f"business {business_id} has an implausible establishment year")
         expected_employee_bands = {"micro": "1-4", "small": "5-19", "medium": "20-99", "large": "100-499"}
         if row.get("employee_band") != expected_employee_bands.get(row.get("business_size")):
@@ -132,10 +132,10 @@ def audit_business_registry(registry: dict) -> dict:
                     raise ValueError(f"business {business_id} occupancy link does not match establishment {establishment_id}")
                 if link.get("occupancy_relationship") != "business_operator":
                     raise ValueError(f"establishment {establishment_id} has an invalid occupancy relationship")
-                if not isinstance(link.get("valid_from_tick"), int) or link["valid_from_tick"] < 0:
+                if type(link.get("valid_from_tick")) is not int or link["valid_from_tick"] < 0:
                     raise ValueError(f"business {business_id} occupancy link has an invalid start tick")
                 if link.get("valid_to_tick") is not None and (
-                    not isinstance(link["valid_to_tick"], int)
+                    type(link["valid_to_tick"]) is not int
                     or link["valid_to_tick"] < link["valid_from_tick"]
                 ):
                     raise ValueError(f"business {business_id} occupancy link has an invalid end tick")
@@ -167,9 +167,9 @@ def audit_business_registry(registry: dict) -> dict:
         "seasonal": embedded_summary.get("seasonal_businesses"),
         "temporarily_inactive": embedded_summary.get("temporarily_inactive_businesses"),
     }
-    if any(not isinstance(value, int) for value in expected_lifecycle_counts.values()):
+    if any(type(value) is not int or value < 0 for value in expected_lifecycle_counts.values()):
         raise ValueError("business registry lifecycle summary counts are incomplete")
-    if dict(lifecycle_counts) != expected_lifecycle_counts:
+    if {status: lifecycle_counts[status] for status in allowed_lifecycle_statuses} != expected_lifecycle_counts:
         raise ValueError("business lifecycle class counts do not match the registry summary")
     if embedded_summary.get("distinct_business_count") != len(businesses):
         raise ValueError("business registry summary total does not match business identities")
