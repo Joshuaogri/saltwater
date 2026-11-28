@@ -20,6 +20,14 @@ def audit_business_registry(registry: dict) -> dict:
     links = registry.get("business_unit_links")
     if not all(isinstance(rows, list) for rows in (businesses, establishments, links)):
         raise ValueError("businesses, establishments and business_unit_links must be lists")
+    if registry.get("schema") != "saltwater-business-registry/1.0":
+        raise ValueError("unsupported business registry schema")
+    if registry.get("dataset_id") != "SW-BUSINESS-REGISTRY-V1":
+        raise ValueError("unexpected business registry dataset identity")
+    if registry.get("canon_status") != "CANONICAL_FICTIONAL_GAME_WORLD":
+        raise ValueError("business registry is not marked as fictional game-world canon")
+    if registry.get("city") != "Saltwater" or registry.get("generator") != "SW-BUSINESS-REGISTRY-GENERATOR-002":
+        raise ValueError("business registry city or generator provenance mismatch")
 
     business_ids = [row.get("business_id") for row in businesses]
     establishment_ids = [row.get("establishment_id") for row in establishments]
@@ -66,6 +74,10 @@ def audit_business_registry(registry: dict) -> dict:
                 raise ValueError(f"business {business_id} has missing {field}")
         if row.get("registered_city") != "Saltwater" or row.get("fictional_entity") is not True:
             raise ValueError(f"business {business_id} is not explicitly local Saltwater canon")
+        if row.get("source_generator") != registry["generator"]:
+            raise ValueError(f"business {business_id} has mismatched generator provenance")
+        if not business_id.startswith("SWBIZ-") or not business_id[6:].isdigit():
+            raise ValueError(f"business {business_id} does not use the stable text identity format")
         if row.get("person_records_created") != 0:
             raise ValueError(f"business {business_id} improperly creates person records")
         if any(char.isdigit() for char in row["registered_name"] + row["trading_name"]):
@@ -97,6 +109,10 @@ def audit_business_registry(registry: dict) -> dict:
             for field in ("unit_id", "premises_id", "property_id", "building_id", "address_id", "district_id", "neighbourhood_id", "operating_status", "source_generator"):
                 if not isinstance(establishment.get(field), str) or not establishment[field].strip():
                     raise ValueError(f"establishment {establishment_id} lacks {field}")
+            if establishment["source_generator"] != registry["generator"]:
+                raise ValueError(f"establishment {establishment_id} has mismatched generator provenance")
+            if not establishment_id.startswith("SWEST-"):
+                raise ValueError(f"establishment {establishment_id} does not use the stable text identity format")
             establishment_links = links_by_establishment.get(establishment_id, [])
             if not establishment_links:
                 raise ValueError(f"establishment {establishment_id} lacks an occupancy link")
@@ -108,9 +124,29 @@ def audit_business_registry(registry: dict) -> dict:
                     raise ValueError(f"business {business_id} occupancy link does not match establishment {establishment_id}")
                 if link.get("occupancy_relationship") != "business_operator":
                     raise ValueError(f"establishment {establishment_id} has an invalid occupancy relationship")
+                if not isinstance(link.get("valid_from_tick"), int) or link["valid_from_tick"] < 0:
+                    raise ValueError(f"business {business_id} occupancy link has an invalid start tick")
+                if link.get("valid_to_tick") is not None and (
+                    not isinstance(link["valid_to_tick"], int)
+                    or link["valid_to_tick"] < link["valid_from_tick"]
+                ):
+                    raise ValueError(f"business {business_id} occupancy link has an invalid end tick")
+                expected_occupancy_status = row["status"]
+                if link.get("valid_to_tick") is None and link.get("occupancy_status") != expected_occupancy_status:
+                    raise ValueError(f"business {business_id} current occupancy lifecycle status mismatch")
 
         if primary_establishment.get("operating_status") != row["status"]:
             raise ValueError(f"business {business_id} and primary establishment lifecycle status differ")
+
+    current_unit_occupants: dict[str, str] = {}
+    for link in links:
+        if link.get("valid_to_tick") is not None:
+            continue
+        unit_id = link["unit_id"]
+        prior_business = current_unit_occupants.get(unit_id)
+        if prior_business is not None and prior_business != link["business_id"]:
+            raise ValueError(f"unit {unit_id} has overlapping exclusive business occupancy")
+        current_unit_occupants[unit_id] = link["business_id"]
 
     summary = {
         "business_count": len(businesses),
