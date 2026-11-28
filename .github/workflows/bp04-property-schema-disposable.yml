@@ -28,6 +28,7 @@ on:
       - "db/migrations/0023_bp04_joint_title_transfer_writer.sql"
       - "db/migrations/0024_bp04_contractual_right_consent_lifecycle.sql"
       - "db/migrations/0025_bp04_subletting_end_start_serialization.sql"
+      - "db/migrations/0026_bp04_subletting_replay_end_serialization.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "tests/pkg001/bp04_ownership_interest_acceptance.sql"
       - "tests/pkg001/bp04_occupancy_dispute_acceptance.sql"
