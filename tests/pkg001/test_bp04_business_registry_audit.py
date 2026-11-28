@@ -227,6 +227,8 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
                 "address_id": address_id,
                 "district_id": district_id,
                 "neighbourhood_id": neighbourhood_id,
+                "unit_class": unit_class,
+                "use_class": values[unit_columns["use_class"]],
             }
             shared_existing = existing_by_building[building_id]
             break
@@ -257,6 +259,7 @@ class BP04BusinessRegistryAuditTests(unittest.TestCase):
             "business_id": new_business["business_id"],
             **shared_unit,
             "status": "active",
+            "establishment_type": "primary",
             "source_generator": registry["generator"],
         })
 
