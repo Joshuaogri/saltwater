@@ -70,3 +70,8 @@ This closes the BP04 spatial prerequisite: AC-B01 and AC-B05 are PASS. Do not re
 ## Independent tenant/operator combinations — accepted 2026-11-28
 
 The deterministic property-tenure generator now selects a separate canonical business operator for a portion of current and historical agreements, including at least one such pairing for every generated unit class. Same-tenant/operator cases remain present. All operator references resolve to canonical business IDs. The focused property-tenure workflow passed all 14 tests and persisted the regenerated archive on `main`: [46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). This closes the generated tenant/operator pairing subtask only; AC-C01 remains PARTIAL until landlord/title-holder and occupant/tenant combinations are fully covered. No production Neon write occurred.
+
+
+## Management role coverage by unit class — accepted 2026-11-28
+
+The runtime tenure audit now produces a per-unit-class breakdown of property count, direct-owner management and third-party management appointments. A regression test confirms that every generated unit class is represented in the audit and that each property's current appointment is classified exactly once. The property ownership/occupancy build passed all 15 focused tests in [workflow 46146300199](https://github.com/Joshuaogri/saltwater/actions/runs/46146300199). The canonical tenure archive did not change because this was an audit/test enhancement. This strengthens AC-C01 but does not resolve independent landlord/title-holder or occupant/tenant relationships, which remain open.
