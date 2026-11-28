@@ -51,9 +51,9 @@ BEGIN
     'physical_occupancy_mutated',false
   );
 
-  SELECT * INTO v_prior
-  FROM sw_property.occupancy_agreement_event
-  WHERE agreement_id=p_agreement_id AND idempotency_key=p_idempotency_key;
+  SELECT ev.* INTO v_prior
+  FROM sw_property.occupancy_agreement_event AS ev
+  WHERE ev.agreement_id=p_agreement_id AND ev.idempotency_key=p_idempotency_key;
   IF FOUND THEN
     IF v_prior.event_type<>'agreement_assigned'
        OR v_prior.effective_tick<>p_effective_tick
