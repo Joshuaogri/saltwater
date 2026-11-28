@@ -3,7 +3,7 @@
 **Project:** Saltwater  
 **Blueprint:** BP-01–BP-44  
 **Version:** 0.1  
-**Status:** `DESIGNED_DRAFT` — user review/approval pending  
+**Status:** `IN_PROGRESS` — design decisions resolved; implementation and acceptance underway  
 **Date:** 2026-11-22  
 **Owner:** BP-04  
 **Dependencies:** BP-01–BP-03, BP-06–BP-12, BP-14–BP-17, BP-20, BP-22–BP-24, BP-30–BP-42, BP-44  
@@ -805,32 +805,29 @@ Required test classes: identity/duplicate detection, minimum registry, entity re
 
 Full source wording and exact source JSON pointers remain in `SALTWATER-52-TO-44-CROSSWALK.md` and the preserved 52-division source JSON.
 
-## 23. Open decisions
+## 23. Resolved design decisions
 
-The following require canon/design resolution before BP-04 is marked `DESIGNED`:
-1. Whether the 10,000-business minimum means at least 10,000 total distinct local registry identities, at least 10,000 active businesses, or both. This draft uses 10,000 total distinct local registry identities and reports active separately.
-2. Initial sector distribution and approximate business size distribution.
-3. Business legal/registration model and whether formal registration identifiers are used in the fictional city-state.
-4. Initial property/building/premises counts and the city-wide addressing/parcel scheme, dependent on BP-02.
-5. Required detail level for non-police facilities and infrastructure operators.
-6. Whether inventory/stock is tracked only for relevant businesses or for defined sectors by default.
-7. Which service capacities and operating schedules are mandatory for all providers.
-8. The business registry baseline generation method and measured storage estimate before any Neon write.
+The master blueprint and current implementation establish the following choices. These are working design decisions, not separate player-approval gates:
 
-These open decisions do not weaken the 10,000 minimum, one-city-only rule, population cap, stable identity, historical continuity or ownership boundaries.
+1. **Business minimum:** at least 10,000 total distinct local business identities; active, seasonal and temporarily inactive counts are reported separately.
+2. **Sector and size distribution:** use the deterministic fictional business registry distribution and its recorded sector, activity, legal-form and size classifications. No additional quotas are required.
+3. **Registration model:** stable Saltwater business IDs and fictional legal/registration attributes are authoritative. No real-world registration numbers, jurisdiction or external legal system is implied.
+4. **Property and addressing:** BP-02 owns canonical parcel/address identities and spatial topology; BP-04 properties, buildings, premises and units link to those identities. Generated fictional records retain explicit source and confidence metadata.
+5. **Non-police detail:** model only the facility, provider, capacity, schedule, operator and service details needed for city and police gameplay.
+6. **Inventory:** track stock where the business or facility type enables inventory; do not create stock ledgers for every entity by default.
+7. **Service operations:** service capability, scheduled hours, capacity, actual availability and temporary disruption are separate facts. Actual NPC activity is not inferred from a timetable.
+8. **Generation and storage:** deterministic source generators, compressed archives, typed operational references and reproducible storage/performance measurements are used. Disposable validation is routine; production Neon writes retain the explicit release controls required by BP-38/BP-43/BP-44.
 
-## SW-NAM-001 — built-world naming adapter status
-
-The shared registry defines the typed adapter contract for business, organisation, property, building, premises and trading names. **BP-04 remains NOT CONNECTED**: the current authoritative schema proposal does not yet contain the complete BP-04 entity model needed to validate these stable IDs. No placeholder business/property identity tables or fabricated business distribution are introduced by SW-NAM-001. When BP-04's authoritative schema is implemented, its writes must reserve names through the same global registry and cannot bypass collision controls. The two-root `Saltwater` exception does not apply to any BP-04 entity.
+NPCs make ordinary ownership, management, tenancy, consent, service and business decisions autonomously. The simulation records the actor, source, authority where applicable, effective time and recorded time. No human-player approval is required for ordinary fictional NPC decisions or routine in-game state transitions.
 
 ## 24. Completion statement
 
-**Design status:** `DESIGNED_DRAFT`; full domain architecture, entity ownership, lifecycle, interfaces, exceptions, storage constraints and acceptance suite drafted. Open canon choices remain.  
-**Implementation status:** `NOT_STARTED` unless separately evidenced.  
-**Test status:** `NOT_STARTED`.  
-**Verification status:** `NOT_STARTED`.
+**Design status:** `DESIGNED`; the domain model and eight design choices above are resolved against the approved master blueprint and current fictional game canon.  
+**Implementation status:** `IN_PROGRESS`; source data, runtime interfaces and database migrations are being completed.  
+**Test status:** `PARTIALLY_ACCEPTED`; accepted criteria have reproducible disposable PostgreSQL and Python evidence.  
+**Verification status:** `IN_PROGRESS`; BP04 remains incomplete until all 48 acceptance criteria pass.
 
-No Neon schema, migration, seed, import, upload or database write is performed or authorised by this document.
+No separate human approval is required for NPC decisions, ordinary fictional records or routine in-game operations. Production Neon writes remain separately controlled and require the explicit release instruction required by the project.
 
 
 ## 2026-11-28 approved NPC integration implementation decisions
