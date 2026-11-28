@@ -10,6 +10,7 @@ on:
       - "runtime/bp04_property_stack_importer.py"
       - "db/migrations/**"
       - "tests/pkg001/bp04_property_import_acceptance.sql"
+      - ".github/workflows/bp04-typed-import-disposable.yml"
 
 permissions:
   contents: read
