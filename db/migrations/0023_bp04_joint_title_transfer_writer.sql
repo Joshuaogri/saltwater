@@ -81,7 +81,6 @@ DECLARE
 BEGIN
   IF p_property_id IS NULL
      OR p_interest_transfers IS NULL OR jsonb_typeof(p_interest_transfers)<>'array'
-     OR jsonb_array_length(p_interest_transfers)<2
      OR p_effective_tick IS NULL OR p_effective_tick<0
      OR p_recorded_tick IS NULL OR p_recorded_tick<0
      OR p_effective_year IS NULL OR p_effective_year<1
