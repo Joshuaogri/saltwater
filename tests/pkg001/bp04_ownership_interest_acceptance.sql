@@ -16,7 +16,7 @@ INSERT INTO sw_property.property_site(
 
 INSERT INTO sw_property.ownership_interest(
   ownership_interest_id,property_id,owner_organisation_id,management_model,interest_type,
-  source_dataset,source_record,interest_class,share_numerator,share_denominator,
+  source_dataset,interest_class,share_numerator,share_denominator,
   effective_from_tick,effective_to_tick,interest_status,dispute_status,recorded_tick
 ) VALUES
   ('SWC02-INTEREST-A','SWC02-PROPERTY','SWC02-OWNER-A','direct_owner_management','freehold',
@@ -70,7 +70,7 @@ BEGIN
   BEGIN
     INSERT INTO sw_property.ownership_interest(
       ownership_interest_id,property_id,owner_organisation_id,interest_type,
-      source_dataset,source_record,interest_class,share_numerator,share_denominator,
+      source_dataset,interest_class,share_numerator,share_denominator,
       effective_from_tick,interest_status
     ) VALUES (
       'SWC02-OVERALLOCATED','SWC02-PROPERTY','SWC02-OWNER-C','freehold',
@@ -86,7 +86,7 @@ BEGIN
   BEGIN
     INSERT INTO sw_property.ownership_interest(
       ownership_interest_id,property_id,owner_organisation_id,interest_type,
-      source_dataset,source_record,interest_class,share_numerator,share_denominator,
+      source_dataset,interest_class,share_numerator,share_denominator,
       effective_from_tick,effective_to_tick,interest_status
     ) VALUES (
       'SWC02-BAD-INTERVAL','SWC02-PROPERTY','SWC02-OWNER-C','freehold',
@@ -100,7 +100,7 @@ BEGIN
   BEGIN
     INSERT INTO sw_property.ownership_interest(
       ownership_interest_id,property_id,owner_organisation_id,interest_type,
-      source_dataset,source_record,interest_class,share_numerator,share_denominator,
+      source_dataset,interest_class,share_numerator,share_denominator,
       effective_from_tick,interest_status,dispute_status
     ) VALUES (
       'SWC02-BAD-DISPUTE','SWC02-PROPERTY','SWC02-OWNER-C','beneficial',
