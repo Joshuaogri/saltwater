@@ -188,11 +188,11 @@ BEGIN
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer did not update exactly one ownership interest'; END IF;
 
-  UPDATE sw_property.property_title_register
+  UPDATE sw_property.property_title_register AS ptr
   SET registered_proprietor_organisation_id=p_new_owner_organisation_id,
       registration_tick=p_recorded_tick
-  WHERE title_register_id=v_title.title_register_id
-    AND registered_proprietor_organisation_id=p_expected_owner_organisation_id;
+  WHERE ptr.title_register_id=v_title.title_register_id
+    AND ptr.registered_proprietor_organisation_id=p_expected_owner_organisation_id;
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer did not update exactly one title register'; END IF;
 
