@@ -40,7 +40,7 @@ BEGIN
 
   PERFORM sw_property.append_occupancy_agreement_event(
     'SWTEST-AGR-01','agreement_renewed',20,20,'actor:test','source:test:renewal',
-    'test:renewal:1','gameplay_action','SWTEST-AGR-01','SWTEST-AGR-02','{}'::jsonb
+    'test:renewal:1','gameplay_action',NULL,'SWTEST-AGR-02','{}'::jsonb
   );
   IF (SELECT count(*) FROM sw_property.occupancy_agreement_event WHERE agreement_id='SWTEST-AGR-01')<>2 THEN
     RAISE EXCEPTION 'agreement event history count is incorrect';
@@ -88,11 +88,11 @@ BEGIN
   BEGIN
     PERFORM sw_property.append_occupancy_agreement_event(
       'SWTEST-AGR-01','agreement_renewed',30,30,'actor:test','source:test:bad-renewal',
-      'test:bad-renewal:1','gameplay_action',NULL,'SWTEST-AGR-02','{}'::jsonb
+      'test:bad-renewal:1','gameplay_action',NULL,NULL,'{}'::jsonb
     );
-    RAISE EXCEPTION 'renewal without matching predecessor was accepted';
+    RAISE EXCEPTION 'renewal without a successor was accepted';
   EXCEPTION WHEN raise_exception THEN
-    IF SQLERRM='renewal without matching predecessor was accepted' THEN RAISE; END IF;
+    IF SQLERRM='renewal without a successor was accepted' THEN RAISE; END IF;
   END;
 END
 $bp04$;
