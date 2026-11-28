@@ -13,7 +13,7 @@ import psycopg
 
 def _call_handover(dsn: str, app_name: str, barrier: Barrier, args: tuple):
     try:
-        with psycopg.connect(dsn, application_name=app_name) as conn:
+        with psycopg.connect(dsn, application_name=app_name, options="-c statement_timeout=60000") as conn:
             with conn.cursor() as cur:
                 barrier.wait(timeout=15)
                 cur.execute(
@@ -31,7 +31,7 @@ def _call_handover(dsn: str, app_name: str, barrier: Barrier, args: tuple):
 
 
 def _run_locked_pair(dsn: str, unit_id: str, left: tuple, right: tuple):
-    blocker = psycopg.connect(dsn, application_name="bp04-concurrency-blocker")
+    blocker = psycopg.connect(dsn, application_name="bp04-concurrency-blocker", options="-c statement_timeout=60000")
     try:
         with blocker.cursor() as cur:
             cur.execute(
@@ -54,25 +54,30 @@ def _run_locked_pair(dsn: str, unit_id: str, left: tuple, right: tuple):
                 with blocker.cursor() as cur:
                     cur.execute(
                         """
-                        SELECT count(*)
+                        SELECT pid,application_name,state,wait_event_type,wait_event,
+                               pg_blocking_pids(pid)
                         FROM pg_stat_activity
                         WHERE application_name IN (
                           'bp04-concurrency-left','bp04-concurrency-right'
                         )
-                          AND state='active'
-                          AND wait_event_type='Lock'
+                        ORDER BY application_name
                         """
                     )
-                    waiting = cur.fetchone()[0]
+                    states = cur.fetchall()
+                waiting = sum(
+                    1 for row in states
+                    if row[2] == "active" and row[3] == "Lock" and bool(row[5])
+                )
                 if waiting == 2:
                     break
                 time.sleep(0.05)
             if waiting != 2:
                 raise AssertionError(
-                    f"expected two concurrent handover sessions waiting on the unit lock; found {waiting}"
+                    "expected two concurrent handover sessions blocked on the held unit row; "
+                    f"observed sessions={states!r}"
                 )
             blocker.commit()
-            return f1.result(timeout=20), f2.result(timeout=20)
+            return f1.result(timeout=30), f2.result(timeout=30)
     finally:
         if not blocker.closed:
             blocker.rollback()
