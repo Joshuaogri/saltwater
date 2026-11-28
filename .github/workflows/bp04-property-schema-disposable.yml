@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 95-table disposable PostgreSQL 16/18 benchmark
+name: BP04 canonical property stack — 97-table disposable PostgreSQL 16/18 benchmark
 # Keep the archive-only collection inventory assertion aligned with the expanded source stack.
 
 on:
@@ -119,7 +119,7 @@ jobs:
             exit 1
           fi
           grep -q "Production Neon imports are restricted to --archive-only mode" /tmp/bp04-prod-storage.log
-      - name: Verify typed table inventory and integrity contracts
+      - name: Verify 97-table typed inventory and integrity contracts
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_schema_acceptance.sql
       - name: Verify agreement event history and lifecycle transition writer
         run: psql -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_agreement_event_history_acceptance.sql
