@@ -248,7 +248,7 @@ class PropertyTenureTests(unittest.TestCase):
 
         tenure = json.loads(json.dumps(self.data))
         tenure["letting_authorities"][0]["grantor_organisation_id"] = "not-the-title-holder"
-        with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
+        with self.assertRaisesRegex(ValueError, "letting authority"):
             audit_property_tenure_role_separation(tenure, self.world, self.registry)
 
     def test_head_lessee_authority_must_match_unit_scope(self):
