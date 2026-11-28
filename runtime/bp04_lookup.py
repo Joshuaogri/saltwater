@@ -1,9 +1,9 @@
 """Gameplay-facing, in-memory lookup layer for the compressed BP04 source archives.
 
-The compressed Neon archives remain the sole static-world source of truth. This
-module builds small process-local indexes for identity and navigation; it does
-not create or persist typed property/business rows and does not claim BP-02
-canonical parcel/address activation.
+The compressed archives remain the sole static-world source of truth. This
+module builds small process-local indexes for identity and navigation, consumes
+canonical BP-02 gameplay parcel/address IDs and access locators, and does not
+create or persist typed property/business rows.
 """
 from __future__ import annotations
 
