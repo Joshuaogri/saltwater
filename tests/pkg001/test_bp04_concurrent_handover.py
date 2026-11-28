@@ -66,7 +66,7 @@ def _run_locked_pair(dsn: str, unit_id: str, left: tuple, right: tuple):
                     states = cur.fetchall()
                 waiting = sum(
                     1 for row in states
-                    if row[2] == "active" and row[3] == "Lock" and bool(row[5])
+                    if row[3] == "Lock" and bool(row[5])
                 )
                 if waiting == 2:
                     break
