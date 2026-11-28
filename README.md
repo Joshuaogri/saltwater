@@ -2493,3 +2493,8 @@ Added migration `0025_bp04_subletting_end_start_serialization.sql` and real two-
 ## BP04 subletting lifecycle concurrency — 2026-11-28
 
 Migration `0025_bp04_subletting_end_start_serialization.sql` makes subletting termination acquire the physical-unit lock before the relationship row, matching the start writer's lock order. New two-session acceptance covers exact start replay racing an end and a new subletting start racing the prior relationship's end. The disposable PostgreSQL 16/18 workflow now includes these tests. CI validation is pending; no pass is claimed. BP04 remains in progress. No production Neon write was made.
+
+
+## BP04 subletting end/start serialization — disposable acceptance passed (2026-11-28)
+
+Migration 0025 makes subletting termination lock the physical unit before the relationship row. Migration 0026 also makes exact start replays acquire that same unit lock before returning prior state, preventing a stale `active` replay from racing a concurrent end. Two-session tests cover (1) exact start replay versus end and (2) new start versus prior relationship end at the same effective tick, on both PostgreSQL 16 and 18. Both versions passed the complete 100-table schema/archive workflow, including the new interleavings, 10k lookup benchmark, archive import, gameplay lookup and repeat-import storage stability: [workflow https://github.com/Joshuaogri/saltwater/actions/runs/46141933273]. No production Neon write occurred. AC-C03/C04 remain PARTIAL because broader third-party occupancy types and the independent NPC role matrix are still outstanding.
