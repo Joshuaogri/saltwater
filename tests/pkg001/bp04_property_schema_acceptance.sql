@@ -6,9 +6,31 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 110 THEN
-    RAISE EXCEPTION 'expected 110 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links and facility service profiles, found %', v_count;
+  IF v_count <> 112 THEN
+    RAISE EXCEPTION 'expected 112 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links, facility service profiles and letting authority, found %', v_count;
   END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema='sw_property' AND table_name='letting_authority'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema='sw_property' AND table_name='letting_authority_event'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='sw_property' AND table_name='occupancy_agreement'
+      AND column_name='letting_authority_id' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid='sw_property.occupancy_agreement'::regclass
+      AND tgname='occupancy_agreement_landlord_authority_guard'
+      AND NOT tgisinternal
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid='sw_property.letting_authority_event'::regclass
+      AND tgname='letting_authority_event_immutable'
+      AND NOT tgisinternal
+  ) THEN RAISE EXCEPTION 'explicit letting authority, agreement guard or immutable event schema missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
