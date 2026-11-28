@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 93 THEN
-    RAISE EXCEPTION 'expected 93 BP04 tables including agreement event history, found %', v_count;
+  IF v_count <> 94 THEN
+    RAISE EXCEPTION 'expected 94 BP04 tables including agreement event and subletting relationships, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
