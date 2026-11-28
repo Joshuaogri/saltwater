@@ -6,6 +6,7 @@ on:
     paths:
       - "db/migrations/**"
       - "scripts/migrate.py"
+      - "scripts/migrate_bp02.py"
       - ".github/workflows/neon-migration-ledger-readonly.yml"
   workflow_dispatch:
 
@@ -33,6 +34,12 @@ jobs:
             exit 1
           fi
           python scripts/migrate.py --allow-pending
+      - name: Verify independent BP02 geography migration ledger (read-only)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          PGOPTIONS: "-c default_transaction_read_only=on"
+        run: |
+          python scripts/migrate_bp02.py --verify --expected-database neondb
       - name: Record non-secret production ledger and storage measurements
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
