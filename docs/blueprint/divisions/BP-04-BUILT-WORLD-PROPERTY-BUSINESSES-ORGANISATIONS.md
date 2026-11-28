@@ -853,3 +853,8 @@ AC-B01 (property-to-parcel/address identity) and AC-B05 (stable, spatially locat
 ## 2026-11-28 NPC tenant/operator role matrix extension
 
 The property-tenure generator creates deterministic independent tenant/operator business pairs across every generated unit class, while retaining self-operated premises. Operator references resolve to canonical business identities. Both direct-owner and third-party property management appointments remain represented. The regenerated canonical tenure archive and all 14 focused regression tests passed in [workflow 46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). This extends AC-C01 evidence but does not close the criterion: independent landlord/title-holder and occupant/tenant combinations, plus broader database-level cross-register role coverage, remain outstanding. No production Neon write occurred.
+
+
+## 2026-11-28 management-role coverage audit
+
+The property-tenure runtime audit now reports direct-owner versus third-party management appointment coverage for every generated unit class. Regression coverage confirms the class inventory is complete and each property's current management appointment is counted exactly once. The 15-test property ownership/occupancy build passed in [workflow 46146300199](https://github.com/Joshuaogri/saltwater/actions/runs/46146300199). This is additional AC-C01 verification; independent landlord/title-holder and occupant/tenant arrangements plus database-level role combinations remain outstanding.
