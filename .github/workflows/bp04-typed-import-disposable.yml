@@ -62,14 +62,18 @@ jobs:
         run: python runtime/bp04_property_stack_importer.py --typed-relational
       - name: Verify 14 datasets, 108 collections, 1,978,447 source rows and typed role links
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
-      - name: Measure typed database before idempotent repeat
-        run: psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-before.txt
+      - name: Measure typed database and relation sizes before idempotent repeat
+        run: |
+          psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-before.txt
+          psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||pg_total_relation_size(relid) FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-relations-before.txt
       - name: Repeat typed import to verify immutable event and row idempotency
         run: python runtime/bp04_property_stack_importer.py --typed-relational
       - name: Recheck typed import acceptance after repeat
         run: psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f tests/pkg001/bp04_property_import_acceptance.sql
-      - name: Assert repeat import leaves database storage unchanged
+      - name: Assert repeat import leaves database storage unchanged and identify any growing relations
         run: |
           psql "$DATABASE_URL" -Atc "SELECT pg_database_size(current_database())" > /tmp/bp04-typed-size-after.txt
+          psql "$DATABASE_URL" -Atc "SELECT schemaname||'.'||relname||'|'||pg_total_relation_size(relid) FROM pg_stat_user_tables ORDER BY schemaname,relname" > /tmp/bp04-typed-relations-after.txt
+          diff -u /tmp/bp04-typed-relations-before.txt /tmp/bp04-typed-relations-after.txt
           diff -u /tmp/bp04-typed-size-before.txt /tmp/bp04-typed-size-after.txt
           cat /tmp/bp04-typed-size-after.txt
