@@ -735,31 +735,65 @@ def audit_property_tenure_role_separation(
         agreement_by_id[agreement_id] = agreement
 
     occupancy_by_agreement = {}
+    occupancy_by_id = {}
     for occupancy in tenure["occupancies"]:
+        occupancy_id = occupancy.get("occupancy_id")
         agreement_id = occupancy.get("agreement_id")
         agreement = agreement_by_id.get(agreement_id)
-        occupant_id = occupancy.get("occupant_business_id")
-        if agreement is None or occupant_id not in business_by_id:
-            raise ValueError("occupant/agreement role does not resolve to canonical business records")
-        if agreement_id in occupancy_by_agreement:
-            raise ValueError(f"multiple current occupancy projections for agreement {agreement_id}")
-        if occupant_id != agreement.get("tenant_business_id"):
-            raise ValueError(f"occupant role for {agreement_id} differs from the contracted tenant")
+        if not occupancy_id or occupancy_id in occupancy_by_id or agreement is None:
+            raise ValueError("occupancy identity/agreement does not resolve uniquely")
         if occupancy.get("unit_id") != agreement.get("unit_id"):
             raise ValueError(f"occupancy for {agreement_id} differs from the contracted unit")
-        if occupancy.get("establishment_id") != agreement.get("establishment_id"):
-            raise ValueError(f"occupancy for {agreement_id} differs from the contracted establishment")
-        if occupancy.get("occupant_type") != "business":
-            raise ValueError("this canonical opening occupancy projection must identify business occupants")
         if occupancy.get("population_person_ids") != []:
             raise ValueError("property occupancy must not create or embed population person identities")
-        occupancy_by_agreement[agreement_id] = occupancy
+        if occupancy.get("occupant_type") == "business":
+            occupant_id = occupancy.get("occupant_business_id")
+            if occupant_id not in business_by_id or occupant_id != agreement.get("tenant_business_id"):
+                raise ValueError(f"occupant role for {agreement_id} differs from the contracted tenant")
+            if occupancy.get("establishment_id") != agreement.get("establishment_id"):
+                raise ValueError(f"occupancy for {agreement_id} differs from the contracted establishment")
+            if agreement_id in occupancy_by_agreement:
+                raise ValueError(f"multiple primary occupancy projections for agreement {agreement_id}")
+            occupancy_by_agreement[agreement_id] = occupancy
+        elif occupancy.get("occupant_type") == "organisation":
+            occupant_org = occupancy.get("occupant_organisation_id")
+            if occupant_org not in organisation_ids or occupancy.get("occupant_business_id") is not None:
+                raise ValueError("third-party organisation occupant does not resolve to canonical organisation")
+        else:
+            raise ValueError("unsupported generated occupant type")
+        occupancy_by_id[occupancy_id] = occupancy
 
     if set(occupancy_by_agreement) != {
         agreement["agreement_id"] for agreement in tenure["agreements"]
         if agreement.get("expiry_year") is None
     }:
-        raise ValueError("current occupancy projections do not match current agreements")
+        raise ValueError("primary business occupancy projections do not match current agreements")
+
+    third_party_relationships = tenure.get("third_party_occupancy_relationships", [])
+    third_party_by_unit_class = {}
+    for relationship in third_party_relationships:
+        occupancy = occupancy_by_id.get(relationship.get("occupancy_id"))
+        agreement = agreement_by_id.get(relationship.get("underlying_agreement_id"))
+        unit_id = relationship.get("unit_id")
+        if occupancy is None or agreement is None:
+            raise ValueError("third-party occupancy relationship lacks canonical occupancy/agreement")
+        if relationship.get("property_id") != agreement.get("property_id") or unit_id != agreement.get("unit_id"):
+            raise ValueError("third-party occupancy relationship crosses property/unit boundary")
+        if occupancy.get("occupant_type") != "organisation" or occupancy.get("occupant_organisation_id") != relationship.get("receiving_organisation_id"):
+            raise ValueError("third-party receiving organisation differs from its occupancy party")
+        if relationship.get("receiving_organisation_id") not in organisation_ids:
+            raise ValueError("third-party receiving organisation does not resolve")
+        if relationship.get("granting_business_id") not in {
+            agreement.get("tenant_business_id"), agreement.get("operator_business_id")
+        }:
+            raise ValueError("third-party granting business is not a tenant/operator agreement party")
+        if relationship.get("relationship_status") != "active" or relationship.get("permission_status") != "not_required":
+            raise ValueError("generated third-party permission status is inconsistent")
+        unit_class = unit_by_id[unit_id]["unit_class"]
+        third_party_by_unit_class[unit_class] = third_party_by_unit_class.get(unit_class, 0) + 1
+
+    if len(third_party_relationships) != len(occupancy_by_id) - len(occupancy_by_agreement):
+        raise ValueError("every generated secondary organisation occupancy must have one third-party relationship")
 
     return {
         "valid": True,
@@ -791,7 +825,10 @@ def audit_property_tenure_role_separation(
                 if agreement.get("expiry_year") is None
             })
         },
-        "occupancies_checked": len(occupancy_by_agreement),
+        "occupancies_checked": len(occupancy_by_id),
+        "primary_business_occupancies_checked": len(occupancy_by_agreement),
+        "third_party_occupancy_relationships_checked": len(third_party_relationships),
+        "third_party_occupancy_role_coverage_by_unit_class": third_party_by_unit_class,
         "business_identities_checked": len(business_by_id),
         "organisation_identities_checked": len(organisation_ids),
         "person_records_created": tenure.get("summary", {}).get("person_records_created", 0),
