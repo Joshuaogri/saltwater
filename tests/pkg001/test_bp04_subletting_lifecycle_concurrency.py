@@ -148,7 +148,7 @@ def test_new_subletting_start_interleaved_with_prior_relationship_end():
             cur.execute("SELECT * FROM sw_property.record_subletting_relationship(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", first_start)
             assert cur.fetchone()[1] == "active"
     second_start = (second_rel, agreements[0], agreements[2], superior_occ,
-                    f"SWLIFE-OCC-{token}B", second_right, 21, 21, "npc:tenant",
+                    f"SWLIFE-OCC-{token}B", second_right, 20, 20, "npc:tenant",
                     "generated:second-sublet", f"sublet:second:{token}")
     end_args = (first_rel, 20, 20, "npc:tenant", "generated:first-end", f"sublet:end-first:{token}")
     start = lambda dsn, name, barrier: _call_subletting(dsn, name, barrier, second_start)
