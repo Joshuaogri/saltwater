@@ -824,7 +824,7 @@ NPCs make ordinary ownership, management, tenancy, consent, service and business
 
 **Design status:** `DESIGNED`; the domain model and eight design choices above are resolved against the approved master blueprint and current fictional game canon.  
 **Implementation status:** `IN_PROGRESS`; source data, runtime interfaces and database migrations are being completed.  
-**Test status:** `PARTIALLY_ACCEPTED`; accepted criteria have reproducible disposable PostgreSQL and Python evidence.  
+**Test status:** `PARTIALLY_ACCEPTED`; 18 of 48 criteria currently pass, with reproducible disposable PostgreSQL, Python and BP02 operational-geography evidence.  
 **Verification status:** `IN_PROGRESS`; BP04 remains incomplete until all 48 acceptance criteria pass.
 
 No separate human approval is required for NPC decisions, ordinary fictional records or routine in-game operations. Production Neon writes remain separately controlled and require the explicit release instruction required by the project.
@@ -841,3 +841,10 @@ The playable simulation has one human player; all other people, businesses, orga
 5. BP04 facility/service profiles link organisation operators, healthcare capability/referral metadata, BP02 route/stop references, BP37 timetable references, fleet/accessibility metadata, utility dependencies and append-only disruption events. Clinical records remain outside BP04.
 
 Implementation migrations 0025–0032 and the complete [110-table disposable PostgreSQL 16/18 acceptance workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed on both versions, including archive import, gameplay lookup, player find/inspect, performance benchmark and repeat-import stability. These five requested workstreams are approved and cleared. This addendum does not declare the entire BP04 division complete; the remaining 48-criterion audit is authoritative for outstanding work.
+
+
+## 2026-11-28 BP02 operational geography and BP04 spatial binding acceptance
+
+BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write.
+
+AC-B01 (property-to-parcel/address identity) and AC-B05 (stable, spatially located, effective-dated access points) are now PASS. The remaining BP04 acceptance criteria continue under the strict audit; this does not declare BP04 complete.
