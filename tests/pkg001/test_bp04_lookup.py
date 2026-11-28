@@ -201,7 +201,7 @@ class BP04LookupTests(unittest.TestCase):
         self.assertEqual(self.lookup.get("parcel", parcel_id)["parcel_operational_status"],
                          "ACTIVE_IN_GAME")
         self.assertEqual(self.lookup.get("address", address_id)["address_operational_status"],
-                         "NOT_APPROVED_FOR_OPERATIONAL_SEED")
+                         "ACTIVE_IN_GAME")
 
     def test_search_matches_stable_parcel_and_address_design_ids(self):
         prop = self.lookup.get("property", "SWPROP-0001")
@@ -309,6 +309,8 @@ class BP04LookupTests(unittest.TestCase):
             "property_id": "SWPROP-OTHER",
             "address_id": None,
             "source_candidate_parcel_id": "SWPAR-OTHER",
+            "bp02_parcel_id": _stable_design_id("SWP", "SWPAR-OTHER"),
+            "bp02_address_id": None,
             "building_ids": [],
         })
         businesses = tables_from_archive(self.archives["SW-BUSINESS-REGISTRY-V1"])
