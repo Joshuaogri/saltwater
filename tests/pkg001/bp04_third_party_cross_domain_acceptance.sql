@@ -8,7 +8,8 @@ INSERT INTO sw_property.organisation(
  ('SWX-HEALTH-OP','NPC Health Operator','healthcare_provider','Saltwater','active','bp04_cross_domain_acceptance'),
  ('SWX-TRANSIT-OP','NPC Transit Operator','transport_operator','Saltwater','active','bp04_cross_domain_acceptance'),
  ('SWX-THIRD-PARTY','NPC Third Party Institution','public_institution','Saltwater','active','bp04_cross_domain_acceptance'),
- ('SWX-UTILITY','NPC Utility Provider','utility_provider','Saltwater','active','bp04_cross_domain_acceptance');
+ ('SWX-UTILITY','NPC Utility Provider','utility_provider','Saltwater','active','bp04_cross_domain_acceptance'),
+ ('SWX-EMPLOYER-ORG','NPC Second Employer','public_institution','Saltwater','active','bp04_cross_domain_acceptance');
 
 INSERT INTO sw_property.property_site(property_id,display_name,use_class,lifecycle_status,source_dataset)
 VALUES ('SWX-PROPERTY','Cross Domain Acceptance Property','mixed_use','active','bp04_cross_domain_acceptance');
@@ -54,7 +55,7 @@ INSERT INTO sw_property.third_party_occupancy_relationship(
 );
 
 DO $bp04$
-DECLARE v_count integer; v_status text;
+DECLARE v_count integer; v_status text; v_person_id integer; v_population_count integer;
 BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM sw_property.occupancy_agreement
@@ -151,6 +152,58 @@ BEGIN
     IF SQLERRM='occupancy accepted a person identity not registered by BP03' THEN RAISE; END IF;
     IF SQLERRM NOT LIKE '%BP03%' AND SQLERRM NOT LIKE '%does not resolve%' THEN RAISE; END IF;
   END;
+
+  -- Create one real canonical BP03 NPC, then reference that same identity in
+  -- multiple BP33 employment roles and BP04 occupancy without incrementing
+  -- the population more than once.
+  v_person_id:=sw_people.create_person(
+    'NPC','CrossDomain','bp04-cross-domain-person-01','npc:hr',
+    'BP03/BP33/BP04 integration acceptance'
+  );
+  PERFORM sw_people.set_population_qualifications(
+    v_person_id,false,true,false,'bp04-cross-domain-person-present',
+    'npc:hr','NPC employee is physically present in Saltwater'
+  );
+  INSERT INTO sw_property.staff_role_link(
+    staff_role_link_id,person_id,employer_business_id,bp33_employment_ref,role_title,
+    effective_from_tick,source_ref,actor_ref,evidence_class
+  ) VALUES (
+    'SWX-STAFF-ROLE-VALID-1',v_person_id,'SWX-TENANT','SW33-EMPLOYMENT-01',
+    'Service Technician',0,'generated:staff-link-01','npc:hr','generated_fictional_canon'
+  );
+  INSERT INTO sw_property.staff_role_link(
+    staff_role_link_id,person_id,employer_organisation_id,bp33_employment_ref,role_title,
+    effective_from_tick,source_ref,actor_ref,evidence_class
+  ) VALUES (
+    'SWX-STAFF-ROLE-VALID-2',v_person_id,'SWX-EMPLOYER-ORG','SW33-EMPLOYMENT-02',
+    'Part-time Coordinator',0,'generated:staff-link-02','npc:hr','generated_fictional_canon'
+  );
+  INSERT INTO sw_property.occupancy(
+    occupancy_id,property_id,premises_id,unit_id,occupant_person_id,agreement_id,
+    occupant_type,occupancy_status,effective_from_year,source_dataset
+  ) VALUES (
+    'SWX-PERSON-OCCUPANCY','SWX-PROPERTY','SWX-PREMISES','SWX-UNIT',v_person_id,
+    'SWX-AGREEMENT','person','occupied',2026,'bp04_cross_domain_acceptance'
+  );
+  INSERT INTO sw_property.third_party_occupancy_relationship(
+    relationship_id,occupancy_id,property_id,unit_id,underlying_agreement_id,use_type,
+    granting_business_id,receiving_person_id,permitted_purpose,access_scope,
+    permission_status,relationship_status,effective_from_tick,recorded_tick,
+    actor_ref,source_ref,evidence_class,idempotency_key
+  ) VALUES (
+    'SWX-PERSON-THIRD-PARTY-REL','SWX-PERSON-OCCUPANCY','SWX-PROPERTY','SWX-UNIT',
+    'SWX-AGREEMENT','contractor_access','SWX-TENANT',v_person_id,
+    'NPC contractor service','Specified work area','not_required','active',12,12,
+    'npc:tenant','generated:person-third-party-use','generated_fictional_canon',
+    'swx:person-third-party:01'
+  );
+  SELECT living_included INTO v_population_count FROM sw_people.population_counter WHERE singleton=1;
+  IF v_population_count<>1 THEN RAISE EXCEPTION 'one canonical person with multiple roles must count exactly once'; END IF;
+  SELECT count(DISTINCT person_id) INTO v_count FROM sw_property.staff_role_link
+  WHERE person_id=v_person_id;
+  IF v_count<>1 OR (SELECT count(*) FROM sw_property.staff_role_link WHERE person_id=v_person_id)<>2 THEN
+    RAISE EXCEPTION 'BP33 employment roles did not reuse one BP03 person identity';
+  END IF;
 END
 $bp04$;
 
