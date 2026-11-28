@@ -117,11 +117,53 @@ INSERT INTO sw_property.occupancy(
  2025,NULL,'bp04_agreement_lifecycle_acceptance'
 );
 
+INSERT INTO sw_property.business(business_id,display_name,sector,status,source_dataset)
+VALUES ('SWTEST-BUS-02','Test Subtenant','professional_services','active','bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.establishment(establishment_id,business_id,property_id,premises_id,unit_id,display_name,establishment_type,status,source_dataset)
+VALUES ('SWTEST-EST-02','SWTEST-BUS-02','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01','Test Subtenant Establishment','secondary','active','bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.occupancy_agreement(
+ agreement_id,property_id,premises_id,unit_id,tenant_business_id,
+ operator_business_id,establishment_id,agreement_type,commencement_year,
+ agreement_status,source_dataset
+) VALUES (
+ 'SWTEST-AGR-05','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+ 'SWTEST-BUS-02','SWTEST-BUS-02','SWTEST-EST-02','sublease',2027,'active',
+ 'bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.occupancy(
+ occupancy_id,property_id,premises_id,unit_id,occupant_business_id,
+ establishment_id,agreement_id,occupant_type,occupancy_status,
+ effective_from_year,effective_to_year,source_dataset
+) VALUES
+ ('SWTEST-OCC-02','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+  'SWTEST-BUS-01','SWTEST-EST-01','SWTEST-AGR-04','business','occupied',
+  2027,NULL,'bp04_agreement_lifecycle_acceptance'),
+ ('SWTEST-OCC-03','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+  'SWTEST-BUS-02','SWTEST-EST-02','SWTEST-AGR-05','business_subtenant','occupied',
+  2027,NULL,'bp04_agreement_lifecycle_acceptance');
+INSERT INTO sw_property.contractual_rights_index(
+ property_right_id,property_id,premises_id,unit_id,right_type,holder_business_id,
+ source_agreement_id,commencement_year,right_status,permitted_use,source_of_truth,
+ new_legal_instrument_created,source_dataset
+) VALUES (
+ 'SWTEST-RIGHT-SUBLET-01','SWTEST-PROP-01','SWTEST-PREM-01','SWTEST-UNIT-01',
+ 'subletting','SWTEST-BUS-01','SWTEST-AGR-04',2027,'current','commercial',
+ 'bp04_agreement_lifecycle_acceptance',false,'bp04_agreement_lifecycle_acceptance'
+);
+INSERT INTO sw_property.business_unit_link(
+ business_unit_link_id,business_id,establishment_id,unit_id,premises_id,
+ valid_from_tick,valid_to_tick,occupancy_relationship,occupancy_status,source_dataset
+) VALUES (
+ 'SWTEST-LINK-PRIMARY','SWTEST-BUS-01','SWTEST-EST-01','SWTEST-UNIT-01','SWTEST-PREM-01',
+ 0,NULL,'primary_tenant','occupied','bp04_agreement_lifecycle_acceptance'
+);
+
 DO $bp04$
 DECLARE
   v_first uuid;
   v_replay uuid;
   v_status text;
+  v_relationship text;
 BEGIN
   SELECT t.agreement_event_id INTO v_first
   FROM sw_property.transition_occupancy_agreement(
@@ -180,6 +222,61 @@ BEGIN
       WHERE agreement_id='SWTEST-AGR-03' AND idempotency_key='test:transition:renewal')<>1 THEN
     RAISE EXCEPTION 'renewal replay created duplicate events';
   END IF;
+
+  SELECT r.relationship_id INTO v_relationship
+  FROM sw_property.record_subletting_relationship(
+    'SWTEST-REL-01','SWTEST-AGR-04','SWTEST-AGR-05',
+    'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
+    5,5,'actor:test','source:test:sublet','test:sublet:start'
+  ) r;
+  PERFORM * FROM sw_property.record_subletting_relationship(
+    'SWTEST-REL-01','SWTEST-AGR-04','SWTEST-AGR-05',
+    'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-SUBLET-01',
+    5,5,'actor:test','source:test:sublet','test:sublet:start'
+  );
+  IF (SELECT count(*) FROM sw_property.business_unit_link
+      WHERE unit_id='SWTEST-UNIT-01' AND valid_to_tick IS NULL)<>1 THEN
+    RAISE EXCEPTION 'subletting created a second primary business-unit link';
+  END IF;
+
+  PERFORM * FROM sw_property.end_subletting_relationship(
+    'SWTEST-REL-01',6,6,'actor:test','source:test:sublet-end','test:sublet:end'
+  );
+  PERFORM * FROM sw_property.end_subletting_relationship(
+    'SWTEST-REL-01',6,6,'actor:test','source:test:sublet-end','test:sublet:end'
+  );
+  IF (SELECT relationship_status FROM sw_property.occupancy_relationship
+      WHERE relationship_id='SWTEST-REL-01')<>'ended' THEN
+    RAISE EXCEPTION 'subletting relationship was not ended';
+  END IF;
+  IF (SELECT occupancy_status FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-03')<>'occupied'
+     OR (SELECT effective_to_year FROM sw_property.occupancy WHERE occupancy_id='SWTEST-OCC-03') IS NOT NULL THEN
+    RAISE EXCEPTION 'ending subletting automatically evicted the physical occupant';
+  END IF;
+
+  BEGIN
+    PERFORM * FROM sw_property.record_subletting_relationship(
+      'SWTEST-REL-NORIGHT','SWTEST-AGR-04','SWTEST-AGR-05',
+      'SWTEST-OCC-02','SWTEST-OCC-03','SWTEST-RIGHT-MISSING',
+      7,7,'actor:test','source:test:sublet','test:sublet:no-right'
+    );
+    RAISE EXCEPTION 'subletting without an explicit right was accepted';
+  EXCEPTION WHEN raise_exception THEN
+    IF SQLERRM='subletting without an explicit right was accepted' THEN RAISE; END IF;
+  END;
+
+  BEGIN
+    INSERT INTO sw_property.business_unit_link(
+      business_unit_link_id,business_id,establishment_id,unit_id,premises_id,
+      valid_from_tick,occupancy_relationship,occupancy_status,source_dataset
+    ) VALUES (
+      'SWTEST-LINK-SUB','SWTEST-BUS-02','SWTEST-EST-02','SWTEST-UNIT-01','SWTEST-PREM-01',
+      5,'primary_tenant','occupied','bp04_agreement_lifecycle_acceptance'
+    );
+    RAISE EXCEPTION 'second current primary unit link was accepted';
+  EXCEPTION WHEN unique_violation THEN
+    NULL;
+  END;
 END
 $bp04$;
 
