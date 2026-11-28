@@ -216,8 +216,10 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
                     (entity_id,),
                 )
                 existing = cur.fetchone()
-                if existing is None:
-                    self._reserve_domain("ORGANISATION")
+        if existing is None:
+            self._reserve_domain("ORGANISATION")
+            with connect() as conn:
+                with conn.cursor() as cur:
                     cur.execute(
                         """SELECT reservation_id FROM sw_names.name_reservation
                            WHERE entity_type='ORGANISATION' AND entity_ref=%s
@@ -225,6 +227,9 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
                         (entity_id,),
                     )
                     existing = cur.fetchone()
+        self.assertIsNotNone(existing)
+        with connect() as conn:
+            with conn.cursor() as cur:
                 cur.execute(
                     """SELECT sw_names.reserve_text_entity_name(
                          'ORGANISATION',%s,'canonical',%s,
@@ -277,14 +282,16 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
 
         near_business_id = "SWBIZ-AC-A04-CROSSDOMAIN-002"
         near_organisation_id = "SWORG-AC-A04-CROSSDOMAIN-002"
+        near_business_name = "Mellifluous Quartz Holdings"
+        near_name = "Mellifluous Quartz Holding"
         with connect() as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     """INSERT INTO sw_property.business
                        (business_id,display_name,sector,primary_activity,status,source_dataset,source_record)
-                       VALUES (%s,'Qzvra Xylophonic Test Domains','Professional Services',
+                       VALUES (%s,%s,'Professional Services',
                                'Synthetic test','active','SW-AC-A04-TEST','{}'::jsonb)""",
-                    (near_business_id,),
+                    (near_business_id, near_business_name),
                 )
                 cur.execute(
                     """INSERT INTO sw_property.organisation
@@ -294,10 +301,10 @@ class BP04GlobalNameReservationTests(unittest.TestCase):
                 )
                 cur.execute(
                     """SELECT sw_names.reserve_business_name(
-                         %s,'trading','Qzvra Xylophonic Test Domains',
+                         %s,'trading',%s,
                          'SW-AC-A04-TEST','ci-bp04-global-name',
                          'shared namespace near-conflict fixture',0)""",
-                    (near_business_id,),
+                    (near_business_id, near_business_name),
                 )
         with self.assertRaises(psycopg.Error):
             with connect() as conn:
