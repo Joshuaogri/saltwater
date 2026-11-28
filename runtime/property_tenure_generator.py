@@ -711,9 +711,14 @@ def audit_property_tenure_role_separation(
                     agreement.get("letting_authority_id") is not None
                     and unit_by_id[agreement["unit_id"]]["unit_class"] == unit_class
                     for agreement in agreement_by_id.values()
+                    if agreement.get("expiry_year") is None
                 )
             }
-            for unit_class in sorted({unit["unit_class"] for unit in property_world.get("units", [])})
+            for unit_class in sorted({
+                unit_by_id[agreement["unit_id"]]["unit_class"]
+                for agreement in agreement_by_id.values()
+                if agreement.get("expiry_year") is None
+            })
         },
         "occupancies_checked": len(occupancy_by_agreement),
         "business_identities_checked": len(business_by_id),
