@@ -243,6 +243,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
                 "premises_id": unit["premises_id"],
                 "unit_id": unit_id,
                 "landlord_organisation_id": interest["owner_organisation_id"],
+                "letting_authority_id": None,
                 "tenant_business_id": business_id,
                 "operator_business_id": business_id,
                 "establishment_id": establishment["establishment_id"],
