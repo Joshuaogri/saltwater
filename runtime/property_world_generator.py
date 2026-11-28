@@ -290,7 +290,9 @@ def build_property_world(source: dict) -> dict:
         access_id = a["candidate_access_point_id"]
         access = {
             **a, "access_point_id": access_id, "bp02_access_point_id": access_id,
-            "bp02_locator_status": "BOUND_TO_BP02_ACCESS_POINT", "building_id": bid,
+            "bp02_locator_status": "BOUND_TO_BP02_ACCESS_POINT",
+            "bp02_coordinate_reference": "SW-LOCAL-METRE-GRID-V1",
+            "effective_to_tick": None, "building_id": bid,
             "property_id": pid, "access_type": access_type,
             "access_modes": ["pedestrian"] + (["vehicle"] if no == 1 and building["building_use"] in ("industrial","warehouse","port_maritime") else []),
             "door_type": _pick(["single_leaf_hinged","double_leaf_hinged","automatic_sliding","roller_shutter"], access_id+"-door"),
@@ -379,7 +381,9 @@ def build_property_world(source: dict) -> dict:
         access_id = f"SWA-{_slug(pid)}-SITE-A01"
         access_rows.append({
             "access_point_id": access_id, "bp02_access_point_id": None,
-            "bp02_locator_status": "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS", "property_id": pid,
+            "bp02_locator_status": "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS",
+            "bp02_coordinate_reference": "SW-LOCAL-METRE-GRID-V1",
+            "property_id": pid,
             "building_id": None, "access_type": "site_entrance_gate",
             "access_modes": ["pedestrian","maintenance_vehicle"],
             "point_m": [round(site_point.x, 6), round(site_point.y, 6)],
@@ -390,7 +394,9 @@ def build_property_world(source: dict) -> dict:
             "opening_schedule": "06:00-20:00", "door_condition": "good",
             "road_link_status": "connected_by_constructed_game_route",
             "route_kind": "site_maintenance_path", "point_status": "CANONICAL_FICTIONAL_ACCESS_POINT",
-            "canonical_status": "active",
+            "canonical_status": "active", "effective_from_tick": 0,
+            "effective_to_tick": None, "source_ref": f"{GENERATOR}:{access_id}:site-entrance",
+            "actor_ref": ACTOR, "confidence_code": "generated_design_value",
         })
         coords = [[round(site_point.x, 6), round(site_point.y, 6)], [round(road_point.x, 6), round(road_point.y, 6)]]
         route_rows.append({
