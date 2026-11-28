@@ -31,9 +31,11 @@ def connect():
 class BusinessNamingPostgresTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        document = json.loads(
-            (ROOT / "data/business/saltwater-business-registry-v1.json").read_text(encoding="utf-8")
-        )
+        with gzip.open(
+            ROOT / "data/business/saltwater-business-registry-v1.json.gz",
+            "rt", encoding="utf-8",
+        ) as handle:
+            document = json.load(handle)
         table = document["tables"]["businesses"]
         columns = table["columns"]
         cls.rows = [dict(zip(columns, values)) for values in table["rows"]]
