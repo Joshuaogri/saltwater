@@ -100,7 +100,7 @@ def _possible_near_duplicate_roots(
     ))
 
 
-def _generate_business_names_report(source: dict) -> dict:
+def _generate_business_names_report(source: dict, property_world: dict | None = None) -> dict:
     config, _, legal_suffixes = _load_business_name_config()
     candidate_pool_count = TARGET_BUSINESSES + 2000
     candidates = generate_candidates(
@@ -108,14 +108,25 @@ def _generate_business_names_report(source: dict) -> dict:
     )
     geography = inventory_geography_names(source)
     geography_names = tuple(item.display_name for item in geography.candidates)
-    reserved = {normalize_name(name) for name in geography_names}
-    # PostgreSQL's registry rejects high-similarity collisions against every
-    # already adopted global name, not merely exact geography-key collisions.
-    # Hold these candidates before assigning stable business IDs.
-    reserved_near_duplicate_keys = {
-        normalize_name(name)
-        for name in geography_names
-    }
+    canonical_names = list(geography_names)
+    if property_world:
+        for organisation in property_world.get("owner_organisations", []):
+            if organisation.get("display_name"):
+                canonical_names.append(organisation["display_name"])
+        for collection in ("properties", "buildings", "premises"):
+            for item in property_world.get(collection, []):
+                display = (
+                    item.get("display_name") or item.get("property_name")
+                    or item.get("building_name") or item.get("premises_name")
+                    or item.get("name")
+                )
+                if display:
+                    canonical_names.append(display)
+    canonical_names = tuple(dict.fromkeys(canonical_names))
+    reserved = {normalize_name(name) for name in canonical_names}
+    # Screen candidates against every currently adopted geography/property/
+    # organisation name before assigning stable business IDs. The database
+    # remains the final authority for reservation and concurrency.
 
     adjective_vocab = tuple(dict.fromkeys(root.split(" ", 1)[0] for root in config.business_roots))
     noun_vocab = tuple(dict.fromkeys(root.split(" ", 1)[1] for root in config.business_roots))
@@ -152,12 +163,12 @@ def _generate_business_names_report(source: dict) -> dict:
             held_exact_collisions += 1
             continue
 
-        geography_near_duplicate = any(
-            pg_trgm_similarity(public_name, geography_name) > 0.90
+        canon_near_duplicate = any(
+            pg_trgm_similarity(public_name, canon_name) > 0.90
             for public_name in public_names
-            for geography_name in geography_names
+            for canon_name in canonical_names
         )
-        if geography_near_duplicate:
+        if canon_near_duplicate:
             held_near_duplicates += 1
             held_geography_near_duplicates += 1
             continue
@@ -205,6 +216,7 @@ def _generate_business_names_report(source: dict) -> dict:
         "near_duplicate_threshold": 0.90,
         "similarity_algorithm": "POSTGRES_PG_TRGM_COMPATIBLE",
         "geography_names_checked": len(geography_names),
+        "adopted_canonical_names_checked": len(canonical_names),
         "public_name_count": len(accepted_public_keys),
     }
 
@@ -230,7 +242,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
         raise ValueError("Not enough canonical units to host the business registry")
     selected_units = ordered_units[:TARGET_BUSINESSES]
 
-    name_report = _generate_business_names_report(source)
+    name_report = _generate_business_names_report(source, property_world)
     trade_names = name_report["names"]
     registered_names = name_report["registered_names"]
     businesses, establishments, occupancy_links = [], [], []
@@ -355,6 +367,7 @@ def build_business_registry(source: dict, property_world: dict | None = None) ->
             "similarity_algorithm": name_report["similarity_algorithm"],
             "near_duplicate_screen": "PASS_WITHIN_ALL_GENERATED_PUBLIC_NAMES",
             "geography_names_checked": name_report["geography_names_checked"],
+            "adopted_canonical_names_checked": name_report["adopted_canonical_names_checked"],
             "public_name_count": name_report["public_name_count"],
             "reservation_status": "DRY_RUN_CANDIDATES_NOT_YET_PERSISTENTLY_RESERVED",
             "exact_geography_collision_check": "PASS",
