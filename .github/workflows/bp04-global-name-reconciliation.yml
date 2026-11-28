@@ -12,6 +12,7 @@ on:
       - "data/business/saltwater-business-registry-v1.json.gz"
       - "data/property/saltwater-property-world-v1.json.gz"
       - "data/property/saltwater-property-tenure-v1.json.gz"
+      - "data/property/saltwater-building-services-v1.json.gz"
       - "data/people/saltwater-opening-civilian-resident-seed-v1.json"
       - "data/people/saltwater-opening-police-person-seed-v1.json"
       - ".github/workflows/bp04-global-name-reconciliation.yml"
