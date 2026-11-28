@@ -74,9 +74,13 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
 
     organisation_display_names = [x["display_name"] for x in owners.values()]
     reserved_organisation_names = organisation_name_reservations(organisation_display_names)
+    geography_source = source
+    if not geography_source:
+        geography_path = Path(__file__).resolve().parents[1] / "data/geography/saltwater-geography-v1.json"
+        geography_source = json.loads(geography_path.read_text(encoding="utf-8"))
     reserved_organisation_names.update(
         normalize_name(item.display_name)
-        for item in inventory_geography_names(source).candidates
+        for item in inventory_geography_names(geography_source).candidates
     )
     for business in businesses.values():
         for field in ("trading_name", "registered_name", "display_name"):
