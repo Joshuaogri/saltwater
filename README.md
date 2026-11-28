@@ -2541,3 +2541,8 @@ The complete run also passed the 110-table BP04 schema/archive acceptance, 10k l
 
 
 **BP04 management-role audit — 2026-11-28:** the runtime audit now reports direct-owner and third-party management coverage by generated property unit class. All 15 focused property-tenure tests passed in [workflow 46146300199](https://github.com/Joshuaogri/saltwater/actions/runs/46146300199). This adds role-coverage evidence without changing the canonical tenure archive. AC-C01 remains PARTIAL pending independent landlord/title-holder and occupant/tenant combinations and full database-level cross-register coverage.
+
+
+## BP04 non-owner landlord authority — database acceptance passed (2026-11-28)
+
+Migrations 0033–0034 add explicit title-holder-granted letting authority for head-lessees and other authorised non-owner landlords. Disposable PostgreSQL acceptance [46147360337](https://github.com/Joshuaogri/saltwater/actions/runs/46147360337) passed: valid head-lessee and direct-owner agreements are accepted; missing, wrong-grantor, wrong-unit and out-of-term authority are rejected; authority grant events cannot be updated or deleted. AC-C01 remains PARTIAL until independent landlord/title-holder combinations are generated and imported into the canonical tenure graph and the wider occupant/tenant matrix is covered. No production Neon writes were made.
