@@ -8,6 +8,7 @@ on:
       - "runtime/naming.py"
       - "data/naming/saltwater-person-naming-v1.json"
       - "data/naming/saltwater-person-naming-v1.json.gz"
+      - "data/naming/saltwater-person-naming-v1.json.gz"
       - "tests/pkg001/test_opening_police_person_seed.py"
       - "tests/pkg001/test_opening_resident_person_seed.py"
       - ".github/workflows/saltwater-opening-police-person-seed-build.yml"
