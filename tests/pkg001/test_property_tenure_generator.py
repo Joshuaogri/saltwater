@@ -183,6 +183,13 @@ class PropertyTenureTests(unittest.TestCase):
             report["letting_authority_events_checked"],
         )
         self.assertGreater(report["independent_landlord_agreement_count"], 0)
+        unit_classes = {unit["unit_class"] for unit in self.world["units"]}
+        self.assertEqual(
+            set(report["independent_landlord_role_coverage_by_unit_class"]),
+            unit_classes,
+        )
+        for unit_class, coverage in report["independent_landlord_role_coverage_by_unit_class"].items():
+            self.assertGreater(coverage["agreement_count"], 0, unit_class)
         owners = {
             row["property_id"]: row["owner_organisation_id"]
             for row in self.data["current_ownership_interests"]
@@ -237,6 +244,37 @@ class PropertyTenureTests(unittest.TestCase):
         tenure = json.loads(json.dumps(self.data))
         tenure["letting_authorities"][0]["grantor_organisation_id"] = "not-the-title-holder"
         with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_head_lessee_authority_must_match_unit_scope(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        agreement = next(row for row in tenure["agreements"] if row.get("letting_authority_id"))
+        authority = next(
+            row for row in tenure["letting_authorities"]
+            if row["letting_authority_id"] == agreement["letting_authority_id"]
+        )
+        authority["unit_id"] = "SWUNIT-NOT-IN-SCOPE"
+        with self.assertRaisesRegex(ValueError, "lacks matching title-holder letting authority"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_letting_authority_requires_one_matching_grant_event(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        tenure["letting_authority_events"][0]["effective_year"] -= 1
+        with self.assertRaisesRegex(ValueError, "grant event does not match its effective date"):
+            audit_property_tenure_role_separation(tenure, self.world, self.registry)
+
+    def test_duplicate_letting_authority_event_idempotency_is_rejected(self):
+        from runtime.property_tenure_generator import audit_property_tenure_role_separation
+
+        tenure = json.loads(json.dumps(self.data))
+        duplicate = json.loads(json.dumps(tenure["letting_authority_events"][0]))
+        duplicate["letting_authority_event_id"] = "00000000-0000-0000-0000-000000000001"
+        tenure["letting_authority_events"].append(duplicate)
+        with self.assertRaisesRegex(ValueError, "identities and idempotency keys must be unique"):
             audit_property_tenure_role_separation(tenure, self.world, self.registry)
 
     def test_tenant_cannot_be_resolved_through_organisation_register(self):
