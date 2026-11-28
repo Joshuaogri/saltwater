@@ -208,6 +208,17 @@ class PropertyTenureTests(unittest.TestCase):
             self.assertIn(authority["letting_authority_id"], grants)
             self.assertGreaterEqual(agreement["commencement_year"], authority["effective_from_year"])
 
+    def test_letting_authority_event_ids_are_stable_uuids(self):
+        import uuid
+
+        event_ids = [
+            row["letting_authority_event_id"]
+            for row in self.data["letting_authority_events"]
+        ]
+        self.assertEqual(len(event_ids), len(set(event_ids)))
+        self.assertTrue(all(str(uuid.UUID(value)) == value for value in event_ids))
+        self.assertTrue(all("letting_authority_id" in row for row in self.data["agreements"]))
+
     def test_non_owner_landlord_without_authority_fails_role_audit(self):
         from runtime.property_tenure_generator import audit_property_tenure_role_separation
 
