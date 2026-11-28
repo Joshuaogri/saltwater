@@ -6,6 +6,11 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+
+## GitHub Actions main-branch publication race hardening — 2026-11-28
+
+All 16 Saltwater generated-data workflows now use bounded fetch/rebase/push retries before publishing to `main`, rather than failing on a transient concurrent ref update. Their data path filters also include compressed `.json.gz` inputs, matching the canonical archive layout. The facilities workflow previously passed its six regression tests but lost the final push to a simultaneous main update; after the retry fix it passed end-to-end in [run 46136060202](https://github.com/Joshuaogri/saltwater/actions/runs/46136060202). The insurance/claims and rights/boundaries workflows also passed after their compressed-fixture and publisher fixes in [run 46136122138](https://github.com/Joshuaogri/saltwater/actions/runs/46136122138) and [run 46136125204](https://github.com/Joshuaogri/saltwater/actions/runs/46136125204). This is CI reliability work only; all commits remain on `main`, and no production Neon write occurred.
+
 ## BP04 ownership and occupancy role audit — passed (2026-11-28)
 
 A new runtime audit validates the generated owner, manager, landlord, tenant, operator and occupant relationships against canonical organisation, business, property and establishment identities. It checks 420 ownership interests and management appointments, all generated agreements and 10,000 current occupancies. Four adversarial tests reject cross-domain role substitution and occupant/tenant mismatch. Both direct-owner and third-party management arrangements are represented, and property occupancy creates no person identities. The [property tenure build](https://github.com/Joshuaogri/saltwater/actions/runs/46135724758) and [full Python regression suite](https://github.com/Joshuaogri/saltwater/actions/runs/46135724768) passed. AC-C01 remains PARTIAL because the complete independent-role and third-party-occupancy matrix is still open; BP04 remains IN_PROGRESS. No production Neon write occurred.
