@@ -170,6 +170,151 @@ def reconcile_collections(
     }
 
 
+
+def reconcile_canonical_property_bindings(
+    property_document: dict, canonical_geography: dict
+) -> dict:
+    """Verify BP04 properties, addresses and access locators against BP02 gameplay canon."""
+    properties = _rows(property_document, "properties")
+    addresses = _rows(property_document, "addresses")
+    buildings = _rows(property_document, "buildings")
+    access_points = _rows(property_document, "access_points")
+
+    parcels_by_candidate = {
+        row.get("source_candidate_parcel_id"): row
+        for row in canonical_geography.get("parcels", [])
+    }
+    addresses_by_source = {
+        row.get("source_address_id"): row
+        for row in canonical_geography.get("addresses", [])
+    }
+    bp02_access_by_id = {
+        row.get("candidate_access_point_id"): row
+        for row in canonical_geography.get("access_points", [])
+    }
+    property_by_id = {row.get("property_id"): row for row in properties}
+    address_by_id = {row.get("address_id"): row for row in addresses}
+    building_by_id = {row.get("building_id"): row for row in buildings}
+
+    errors = []
+    if len(property_by_id) != len(properties):
+        errors.append("BP04 property IDs are missing or duplicated")
+    if len(address_by_id) != len(addresses):
+        errors.append("BP04 address IDs are missing or duplicated")
+    if len(building_by_id) != len(buildings):
+        errors.append("BP04 building IDs are missing or duplicated")
+    if len({row.get("access_point_id") for row in access_points}) != len(access_points):
+        errors.append("BP04 access-point IDs are missing or duplicated")
+
+    parcel_bindings = 0
+    address_bindings = 0
+    for prop in properties:
+        candidate_id = prop.get("source_candidate_parcel_id")
+        parcel = parcels_by_candidate.get(candidate_id)
+        if parcel is None:
+            errors.append(f"{prop.get('property_id')}: no BP02 parcel for source candidate {candidate_id}")
+            continue
+        if prop.get("bp02_parcel_id") != parcel.get("parcel_id"):
+            errors.append(f"{prop.get('property_id')}: BP02 parcel ID is absent or mismatched")
+        else:
+            parcel_bindings += 1
+
+        source_address_id = prop.get("address_id")
+        address = address_by_id.get(source_address_id)
+        canonical_address = addresses_by_source.get(source_address_id)
+        if address is None or address.get("property_id") != prop.get("property_id"):
+            errors.append(f"{prop.get('property_id')}: primary BP04 address is absent or mismatched")
+            continue
+        if canonical_address is None:
+            errors.append(f"{prop.get('property_id')}: no BP02 canonical address for {source_address_id}")
+            continue
+        canonical_address_id = canonical_address.get("address_id")
+        if (
+            prop.get("bp02_address_id") != canonical_address_id
+            or address.get("bp02_address_id") != canonical_address_id
+            or address.get("bp02_parcel_id") != parcel.get("parcel_id")
+            or canonical_address.get("parcel_id") != parcel.get("parcel_id")
+        ):
+            errors.append(f"{prop.get('property_id')}: BP02 address/parcel binding is inconsistent")
+        else:
+            address_bindings += 1
+
+    building_access_bindings = 0
+    site_access_locators = 0
+    for access in access_points:
+        access_id = access.get("access_point_id")
+        property_id = access.get("property_id")
+        if property_id not in property_by_id:
+            errors.append(f"{access_id}: access point references an unknown property")
+        building_id = access.get("building_id")
+        if building_id is not None:
+            building = building_by_id.get(building_id)
+            if building is None or building.get("property_id") != property_id:
+                errors.append(f"{access_id}: building/property parent relationship is invalid")
+
+        point = access.get("point_m")
+        if (
+            not isinstance(point, list) or len(point) != 2
+            or any(type(value) not in (int, float) or not __import__("math").isfinite(value) for value in point)
+        ):
+            errors.append(f"{access_id}: spatial locator must contain two finite local-grid coordinates")
+        if access.get("bp02_coordinate_reference") != "SW-LOCAL-METRE-GRID-V1":
+            errors.append(f"{access_id}: BP02 coordinate reference is missing or invalid")
+        if type(access.get("effective_from_tick")) is not int or access["effective_from_tick"] < 0:
+            errors.append(f"{access_id}: effective_from_tick is missing or invalid")
+        end_tick = access.get("effective_to_tick")
+        if end_tick is not None and (
+            type(end_tick) is not int or end_tick <= access.get("effective_from_tick", -1)
+        ):
+            errors.append(f"{access_id}: effective access-point interval is invalid")
+        if access.get("canonical_status") != "active" or access.get("point_status") != "CANONICAL_FICTIONAL_ACCESS_POINT":
+            errors.append(f"{access_id}: access-point gameplay status is not active canonical state")
+
+        locator_status = access.get("bp02_locator_status")
+        if locator_status == "BOUND_TO_BP02_ACCESS_POINT":
+            bp02_access = bp02_access_by_id.get(access.get("bp02_access_point_id"))
+            if (
+                bp02_access is None
+                or access.get("bp02_access_point_id") != access_id
+                or bp02_access.get("property_id") != property_id
+                or bp02_access.get("building_id") != building_id
+                or bp02_access.get("point_m") != point
+            ):
+                errors.append(f"{access_id}: BP02 access-point identity or spatial locator does not match")
+            else:
+                building_access_bindings += 1
+        elif locator_status == "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS":
+            if building_id is not None or access.get("bp02_access_point_id") is not None:
+                errors.append(f"{access_id}: site locator must not claim a building access-point identity")
+            else:
+                site_access_locators += 1
+        else:
+            errors.append(f"{access_id}: BP02 spatial locator binding status is missing or unknown")
+
+    if len(properties) != 420 or len(addresses) != 420:
+        errors.append("BP04 property/address source count must be 420 each")
+    if parcel_bindings != len(properties) or address_bindings != len(addresses):
+        errors.append("Not every BP04 property and address resolves to BP02 canonical identity")
+    if building_access_bindings + site_access_locators != len(access_points):
+        errors.append("Not every BP04 access point has a stable spatial locator and effective state")
+    if errors:
+        raise ValueError("\\n".join(errors))
+
+    return {
+        "status": "PASS",
+        "property_count": len(properties),
+        "bp02_parcel_bindings": parcel_bindings,
+        "address_count": len(addresses),
+        "bp02_address_bindings": address_bindings,
+        "access_point_count": len(access_points),
+        "bp02_building_access_point_bindings": building_access_bindings,
+        "bp04_site_access_locators": site_access_locators,
+        "effective_dated_access_points": len(access_points),
+        "unresolved_bindings": 0,
+        "database_write_performed": False,
+    }
+
+
 def _resolve_geometry_manifests(geo: dict, candidate_manifest=None,
                                 parcel_dossiers=None, physical_assets=None):
     """Reuse validated geometry products when an upstream audit already built them."""
