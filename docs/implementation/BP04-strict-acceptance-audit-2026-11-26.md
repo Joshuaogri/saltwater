@@ -4,8 +4,14 @@
 
 **Specification authority:** `docs/blueprint/divisions/BP-04-BUILT-WORLD-PROPERTY-BUSINESSES-ORGANISATIONS.md` (still `DESIGNED_DRAFT`; eight open design decisions remain).  
 **Status register:** `docs/blueprint/DIVISION-SPECIFICATION-REGISTER.md` records BP04 as IMPLEMENTED / TESTED / BLOCKED.  
-**Latest relevant CI:** Business registry build and its 9 regression tests [45840815853](https://github.com/Joshuaogri/saltwater/actions/runs/45840815853) passed; migration validation [45840815670](https://github.com/Joshuaogri/saltwater/actions/runs/45840815670) passed; PKG-001 disposable PostgreSQL [45840815690](https://github.com/Joshuaogri/saltwater/actions/runs/45840815690) passed both Python and PostgreSQL jobs. BP04 integration [45834691417](https://github.com/Joshuaogri/saltwater/actions/runs/45834691417) and earlier PKG-001 [45837315742](https://github.com/Joshuaogri/saltwater/actions/runs/45837315742) passed. These runs validate specific slices, not all 48 BP04 criteria.  
+**Latest relevant CI:** BP02 canonical parcel/address/access release and BP04 spatial binding passed in [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735): 420/420 properties and addresses bound, 2,948 operational access points released, 2,984 BP04 access locators effective-dated, zero unresolved address-road-access exceptions. The BP04/PKG disposable integration [run 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed on PostgreSQL 16 and 18. These runs validate specific slices, not all 48 BP04 criteria.  
 **Production archive:** [45675735246](https://github.com/Joshuaogri/saltwater/actions/runs/45675735246) passed archive-only source deployment. Production storage was measured separately.
+
+## 2026-11-28 BP02 operational geography release and BP04 spatial binding — passed
+
+BP02 full parcel/address/access acceptance [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735) passed on 2026-11-28. It released 420/420 canonical parcels and addresses, 2,948 operational access points, and 2,984 BP04 access locators with effective dates; all structural checks passed, all five frontage exceptions received geometry dispositions, and zero address-road-access exceptions remain unresolved. The run performed no database or Neon write.
+
+AC-B01 and AC-B05 are now PASS. The strict audit changes from 16 PASS / 15 PARTIAL / 3 BLOCKED / 14 NOT VERIFIED to 18 PASS / 15 PARTIAL / 1 BLOCKED / 14 NOT VERIFIED. No production Neon write occurred.
 
 ## 2026-11-28 subletting/assignment serialization and physical-unit lock order
 
@@ -74,11 +80,11 @@ These benchmark figures cover the in-memory archive lookup path, not database-ba
 
 | Criterion | Status | Evidence / gap |
 |---|---|---|
-| AC-B01 — every property links to valid BP02 parcel/address or explicit unresolved state | BLOCKED | 420 design identities reconcile, but operational canonical parcel/address release remains unapproved. The current design-only status is explicit; operational binding is not accepted. |
+| AC-B01 — every property links to valid BP02 parcel/address or explicit unresolved state | PASS | The complete BP02 acceptance resolves all 420 BP04 properties to canonical BP02 parcels and all 420 BP04 addresses to canonical BP02 addresses; zero unresolved address-road-access exceptions remain. Evidence: [BP02 full parcel/address/access acceptance run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735), overall and operational release status PASS. |
 | AC-B02 — building, premises, unit and access-point parent relationships valid | PASS | Source hierarchy, archive integrity and real-archive lookup tests validate core parent references; Stage E disposable ingestion and backup/restore also passed. |
 | AC-B03 — multiple businesses can share a building without identity collision | PASS | An adversarial fixture adds a distinct second business in a separate unused non-residential unit within a building already occupied by another business. It verifies different business IDs and unit IDs, the same building ID, and full canonical property/address/geography lineage for all 10,001 establishments. Evidence: `tests/pkg001/test_bp04_business_registry_audit.py`, focused 24-test workflow run [46134959362](https://github.com/Joshuaogri/saltwater/actions/runs/46134959362). |
 | AC-B04 — one business can operate multiple establishments without duplicate identity | PASS | An adversarial branch test adds a second establishment for one existing business using a valid unused canonical non-residential unit and address. The full audit resolves all 10,001 establishment records through BP04 property/building/premises/unit/address IDs and BP02 district/neighbourhood IDs, while retaining exactly 10,000 distinct businesses and one multi-establishment business. Evidence: `tests/pkg001/test_bp04_business_registry_audit.py`, focused workflow run [46134326123](https://github.com/Joshuaogri/saltwater/actions/runs/46134326123). |
-| AC-B05 — access points have stable IDs, spatial locators and effective-dated status | BLOCKED | 2,948 generated access candidates are design candidates; operational spatial binding, approved entrances and effective-dated operational access state are not released. |
+| AC-B05 — access points have stable IDs, spatial locators and effective-dated status | PASS | The full BP02 acceptance releases 2,948 operational access points and validates all 2,984 BP04 access locators with stable IDs, spatial coordinates, canonical building/site lineage and effective dates. No unresolved spatial or frontage exceptions remain. Evidence: [run 46144797735](https://github.com/Joshuaogri/saltwater/actions/runs/46144797735). |
 | AC-B06 — historical building/premises changes do not rewrite past event locations | NOT VERIFIED | No end-to-end BP04 property-change / historical incident-location immutability acceptance is linked. |
 
 ## C. Ownership, tenancy and occupancy
@@ -166,9 +172,9 @@ A pre-insert guard on occupancy relationships enforces the permission at the act
 
 | Result | Count |
 |---|---:|
-| PASS | 16 |
+| PASS | 18 |
 | PARTIAL | 15 |
-| BLOCKED | 3 |
+| BLOCKED | 1 |
 | NOT VERIFIED | 14 |
 | FAIL | 0 |\n| **Total** | **48** |
 
