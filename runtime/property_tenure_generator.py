@@ -151,7 +151,17 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
 
     agreements, occupancies, unit_states = [], [], []
     agreement_by_business = {}
-    for sequence, business_id in enumerate(sorted(businesses), 1):
+    business_ids = sorted(businesses)
+    business_position = {business_id: index for index, business_id in enumerate(business_ids)}
+    # Ensure every generated property/unit class has at least one independent
+    # tenant/operator arrangement; add a deterministic wider mix as well.
+    first_tenant_by_unit_class = {}
+    for candidate_id in business_ids:
+        candidate_establishment = establishments[businesses[candidate_id]["primary_establishment_id"]]
+        candidate_unit_class = units[candidate_establishment["unit_id"]]["unit_class"]
+        first_tenant_by_unit_class.setdefault(candidate_unit_class, candidate_id)
+    independent_operator_tenants = set(first_tenant_by_unit_class.values())
+    for sequence, business_id in enumerate(business_ids, 1):
         business = businesses[business_id]
         establishment = establishments[business["primary_establishment_id"]]
         unit_id = establishment["unit_id"]
@@ -162,6 +172,10 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         agreement_id = f"SWAGR-{sequence:06d}"
         agreement_by_business[business_id] = agreement_id
         sector = business["sector"]
+        operator_business_id = business_id
+        if business_id in independent_operator_tenants or _number(business_id + "-independent-operator", 1, 4) == 1:
+            operator_offset = 1 + _number(business_id + "-operator-partner", 0, len(business_ids) - 2)
+            operator_business_id = business_ids[(business_position[business_id] + operator_offset) % len(business_ids)]
         agreement_type = {
             "transport_logistics": "logistics_operating_lease",
             "maritime_trade": "port_or_maritime_concession",
@@ -179,7 +193,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "unit_id": unit_id,
             "landlord_organisation_id": interest["owner_organisation_id"],
             "tenant_business_id": business_id,
-            "operator_business_id": business_id,
+            "operator_business_id": operator_business_id,
             "establishment_id": establishment["establishment_id"],
             "managing_organisation_id": manager_by_property[property_id],
             "commencement_year": start_year,
@@ -533,4 +547,12 @@ def audit_property_tenure_role_separation(
         "business_identities_checked": len(business_by_id),
         "organisation_identities_checked": len(organisation_ids),
         "person_records_created": tenure.get("summary", {}).get("person_records_created", 0),
+        "independent_operator_agreement_count": sum(
+            agreement.get("tenant_business_id") != agreement.get("operator_business_id")
+            for agreement in agreement_by_id.values()
+        ),
+        "same_tenant_operator_agreement_count": sum(
+            agreement.get("tenant_business_id") == agreement.get("operator_business_id")
+            for agreement in agreement_by_id.values()
+        ),
     }
