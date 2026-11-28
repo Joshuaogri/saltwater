@@ -17,7 +17,7 @@ BEGIN
   FROM sw_property.source_dataset_collection;
   IF v_datasets <> 14 THEN RAISE EXCEPTION 'expected 14 archived source datasets, found %', v_datasets; END IF;
   IF v_collections <> 107 THEN RAISE EXCEPTION 'expected 107 source collection ledger rows, found %', v_collections; END IF;
-  IF v_source_rows <> 1950939 THEN RAISE EXCEPTION 'expected 1950939 source records, found %', v_source_rows; END IF;
+  IF v_source_rows <> 1950947 THEN RAISE EXCEPTION 'expected 1950947 source records, found %', v_source_rows; END IF;
 
   SELECT count(*) INTO v_count FROM sw_property.letting_authority;
   IF v_count <> 8 THEN RAISE EXCEPTION 'expected 8 canonical letting authorities, found %', v_count; END IF;
