@@ -26,6 +26,8 @@ The BP04 design decisions are resolved. NPCs make ordinary fictional decisions a
 
 **BP04 remains in progress:** the strict 48-criterion audit now records 18 PASS, 15 PARTIAL, 1 BLOCKED, 14 NOT VERIFIED and 0 FAIL. Continue from the remaining criteria; do not rebuild the accepted spatial integration.
 
+**BP04 NPC ownership/tenancy update — 2026-11-28:** the tenure generator now creates independent tenant/operator business pairs across every generated unit class while retaining self-operated cases. Both direct-owner and third-party manager appointments remain represented. The canonical tenure archive was regenerated on `main`; all 14 focused tests passed in [workflow 46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). AC-C01 remains PARTIAL because independent landlord/title-holder and occupant/tenant combinations still need broader coverage. No production Neon write occurred.
+
 
 ## BP04 spatial integration — passed (2026-11-28)
 
@@ -64,7 +66,7 @@ All 16 Saltwater generated-data workflows now use bounded fetch/rebase/push retr
 
 ## BP04 ownership and occupancy role audit — passed (2026-11-28)
 
-A new runtime audit validates the generated owner, manager, landlord, tenant, operator and occupant relationships against canonical organisation, business, property and establishment identities. It checks 420 ownership interests and management appointments, all generated agreements and 10,000 current occupancies. Four adversarial tests reject cross-domain role substitution and occupant/tenant mismatch. Both direct-owner and third-party management arrangements are represented, and property occupancy creates no person identities. The [property tenure build](https://github.com/Joshuaogri/saltwater/actions/runs/46135724758) and [full Python regression suite](https://github.com/Joshuaogri/saltwater/actions/runs/46135724768) passed. AC-C01 remains PARTIAL because the complete independent-role and third-party-occupancy matrix is still open; BP04 remains IN_PROGRESS. No production Neon write occurred.
+The runtime audit validates generated owner, manager, landlord, tenant, operator and occupant references against canonical organisation, business, property and establishment identities. It checks 420 ownership interests and management appointments, all generated agreements and 10,000 current occupancies. Both direct-owner and third-party management arrangements are represented, and property occupancy creates no person identities. The later generator update now adds independent tenant/operator business pairs across every generated unit class while retaining self-operated cases; all 14 focused tests passed and the canonical tenure archive was regenerated in [workflow 46145870349](https://github.com/Joshuaogri/saltwater/actions/runs/46145870349). AC-C01 remains PARTIAL because independent landlord/title-holder and occupant/tenant combinations and broader database-level role coverage remain open. No production Neon write occurred.
 
 
 ## BP04 record-level business/property/geography lineage — 23 tests passed (2026-11-28)
