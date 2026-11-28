@@ -53,13 +53,16 @@ DECLARE
   v_transaction_id text;
   v_payload jsonb;
   v_rows integer;
+  v_latest_effective bigint;
+  v_latest_recorded bigint;
 BEGIN
   IF p_property_id IS NULL OR p_expected_owner_organisation_id IS NULL
      OR p_new_owner_organisation_id IS NULL
      OR p_expected_owner_organisation_id=p_new_owner_organisation_id
      OR p_effective_tick IS NULL OR p_effective_tick<0
      OR p_recorded_tick IS NULL OR p_recorded_tick<0
-     OR p_effective_year IS NULL OR p_recorded_year IS NULL
+     OR p_effective_year IS NULL OR p_effective_year<1
+     OR p_recorded_year IS NULL OR p_recorded_year<p_effective_year
      OR p_actor_ref IS NULL OR length(trim(p_actor_ref)) NOT BETWEEN 1 AND 200
      OR p_source_ref IS NULL OR length(trim(p_source_ref)) NOT BETWEEN 1 AND 200
      OR p_idempotency_key IS NULL OR p_idempotency_key !~ '^[A-Za-z0-9][A-Za-z0-9:._/-]{0,127}$'
@@ -106,6 +109,7 @@ BEGIN
        OR v_prior.evidence_class<>p_evidence_class
        OR v_prior.event_payload->>'prior_owner_organisation_id' IS DISTINCT FROM p_expected_owner_organisation_id
        OR v_prior.event_payload->>'new_owner_organisation_id' IS DISTINCT FROM p_new_owner_organisation_id
+       OR v_prior.event_payload->>'ownership_interest_id' IS DISTINCT FROM v_interest.ownership_interest_id
        OR v_prior.event_payload->>'financial_transaction_created' IS DISTINCT FROM 'false'
        OR v_prior.event_payload->>'tenancy_and_occupancy_mutated' IS DISTINCT FROM 'false' THEN
       RAISE EXCEPTION 'property ownership transfer idempotency key conflicts with prior event';
@@ -118,6 +122,17 @@ BEGIN
      OR v_title.registered_proprietor_organisation_id<>p_expected_owner_organisation_id
      OR v_interest.owner_organisation_id<>p_expected_owner_organisation_id THEN
     RAISE EXCEPTION 'current title and ownership-interest owner do not match expected transferor';
+  END IF;
+
+  SELECT max(effective_tick),max(recorded_tick)
+  INTO v_latest_effective,v_latest_recorded
+  FROM sw_property.property_lifecycle_event
+  WHERE property_id=p_property_id;
+  IF v_latest_effective IS NOT NULL AND p_effective_tick<v_latest_effective THEN
+    RAISE EXCEPTION 'property lifecycle effective tick cannot move backwards';
+  END IF;
+  IF v_latest_recorded IS NOT NULL AND p_recorded_tick<v_latest_recorded THEN
+    RAISE EXCEPTION 'property lifecycle recorded tick cannot move backwards';
   END IF;
 
   v_event_id := 'SWPLE-GAME-' || replace(gen_random_uuid()::text,'-','');
@@ -169,12 +184,16 @@ BEGIN
   SET owner_organisation_id=p_new_owner_organisation_id
   WHERE ownership_interest_id=v_interest.ownership_interest_id
     AND owner_organisation_id=p_expected_owner_organisation_id;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer did not update exactly one ownership interest'; END IF;
 
   UPDATE sw_property.property_title_register
   SET registered_proprietor_organisation_id=p_new_owner_organisation_id,
       registration_tick=p_recorded_tick
   WHERE title_register_id=v_title.title_register_id
     AND registered_proprietor_organisation_id=p_expected_owner_organisation_id;
+  GET DIAGNOSTICS v_rows = ROW_COUNT;
+  IF v_rows<>1 THEN RAISE EXCEPTION 'ownership transfer did not update exactly one title register'; END IF;
 
   UPDATE sw_property.property_interest_record
   SET interest_holder_organisation_id=p_new_owner_organisation_id
