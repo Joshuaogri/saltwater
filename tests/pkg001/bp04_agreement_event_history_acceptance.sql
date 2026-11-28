@@ -311,6 +311,18 @@ BEGIN
          WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-01' THEN
     RAISE EXCEPTION 'assignment did not preserve separate operator identity';
   END IF;
+
+  UPDATE sw_property.occupancy_agreement
+  SET operator_business_id='SWTEST-BUS-02'
+  WHERE agreement_id='SWTEST-AGR-04';
+  PERFORM * FROM sw_property.assign_occupancy_agreement_tenant(
+    'SWTEST-AGR-04','SWTEST-BUS-01','SWTEST-BUS-02',7,7,
+    'actor:test','source:test:assignment','test:assignment:1','gameplay_action'
+  );
+  IF (SELECT operator_business_id FROM sw_property.occupancy_agreement
+      WHERE agreement_id='SWTEST-AGR-04')<>'SWTEST-BUS-02' THEN
+    RAISE EXCEPTION 'assignment replay rewrote a later operator change';
+  END IF;
   IF (SELECT occupant_business_id FROM sw_property.occupancy
       WHERE occupancy_id='SWTEST-OCC-02')<>'SWTEST-BUS-01'
      OR (SELECT business_id FROM sw_property.business_unit_link
