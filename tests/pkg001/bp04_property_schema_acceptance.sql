@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 100 THEN
-    RAISE EXCEPTION 'expected 100 BP04 tables including agreement event, subletting, occupancy handover, occupancy disputes, joint-title transfer mapping and consent lifecycle, found %', v_count;
+  IF v_count <> 110 THEN
+    RAISE EXCEPTION 'expected 110 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links and facility service profiles, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
