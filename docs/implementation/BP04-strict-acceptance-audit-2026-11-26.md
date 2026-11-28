@@ -174,11 +174,12 @@ A pre-insert guard on occupancy relationships enforces the permission at the act
 
 | Result | Count |
 |---|---:|
-| PASS | 18 |
-| PARTIAL | 15 |
+| PASS | 22 |
+| PARTIAL | 18 |
 | BLOCKED | 1 |
-| NOT VERIFIED | 14 |
-| FAIL | 0 |\n| **Total** | **48** |
+| NOT VERIFIED | 7 |
+| FAIL | 0 |
+| **Total** | **48** |
 
 A criterion marked NOT VERIFIED is not presumed satisfied. The division cannot be declared complete while any required criterion remains PARTIAL, BLOCKED or NOT VERIFIED.
 
