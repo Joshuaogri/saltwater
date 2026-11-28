@@ -17,6 +17,7 @@ on:
       - "db/migrations/0013_bp04_agreement_event_history.sql"
       - "db/migrations/0014_bp04_agreement_lifecycle_transitions.sql"
       - "db/migrations/0015_bp04_subletting_occupancy_relationships.sql"
+      - "db/migrations/0016_bp04_agreement_assignment.sql"
       - "tests/pkg001/bp04_agreement_event_history_acceptance.sql"
       - "runtime/bp04_property_stack_importer.py"
       - "tests/pkg001/bp04_property_schema_acceptance.sql"
