@@ -28,6 +28,16 @@ CREATE TABLE sw_property.property_title_transfer_interest (
 CREATE INDEX property_title_transfer_interest_property_idx
   ON sw_property.property_title_transfer_interest(property_id,effective_tick);
 
+CREATE FUNCTION sw_property.reject_property_title_transfer_interest_mutation()
+RETURNS trigger LANGUAGE plpgsql AS $bp04$
+BEGIN
+  RAISE EXCEPTION 'joint title transfer interest history is append-only';
+END
+$bp04$;
+CREATE TRIGGER property_title_transfer_interest_immutable
+BEFORE UPDATE OR DELETE ON sw_property.property_title_transfer_interest
+FOR EACH ROW EXECUTE FUNCTION sw_property.reject_property_title_transfer_interest_mutation();
+
 CREATE FUNCTION sw_property.transfer_joint_property_ownership(
   p_property_id text,
   p_interest_transfers jsonb,
@@ -231,6 +241,10 @@ BEGIN
     RAISE EXCEPTION 'title register lead proprietor must match its current registered interest';
   END IF;
 
+  IF v_title.title_status<>'registered_current' THEN
+    RAISE EXCEPTION 'joint title transfer requires a registered current title';
+  END IF;
+
   IF v_title.active_dispute_count>0 OR v_title.unresolved_title_issue_count>0 THEN
     RAISE EXCEPTION 'joint title transfer is blocked by active title disputes or unresolved title issues';
   END IF;
@@ -257,6 +271,9 @@ BEGIN
       AND oi.property_id=p_property_id
     FOR UPDATE;
     IF NOT FOUND THEN RAISE EXCEPTION 'joint transfer interest disappeared during lock acquisition'; END IF;
+    IF p_effective_tick<=v_interest.effective_from_tick OR p_recorded_tick<v_interest.recorded_tick THEN
+      RAISE EXCEPTION 'joint transfer ticks must follow every outgoing interest start and recorded tick';
+    END IF;
 
     SELECT pir.* INTO v_interest_record
     FROM sw_property.property_interest_record AS pir
@@ -438,6 +455,7 @@ END
 $bp04$;
 
 REVOKE ALL ON sw_property.property_title_transfer_interest FROM PUBLIC;
+REVOKE ALL ON FUNCTION sw_property.reject_property_title_transfer_interest_mutation() FROM PUBLIC;
 REVOKE ALL ON FUNCTION sw_property.transfer_joint_property_ownership(
   text,jsonb,bigint,bigint,integer,integer,text,text,text,text
 ) FROM PUBLIC;
