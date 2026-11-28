@@ -6,6 +6,10 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## BP04 record-level business/property/geography lineage — 23 tests passed (2026-11-28)
+
+The business registry audit now cross-checks all 10,000 establishments against the canonical property-world archive: property, building, premises, unit and address identities must resolve and agree through their parent lineage. Each business's registered address must resolve to its primary establishment's property, and each address's district/neighbourhood must exist in BP02 geography and match the establishment. The audit reports 10,000 businesses, 10,000 establishments and zero exceptions; deliberately unknown address references fail closed. The focused [BP04 audit workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46133779256) passed all 23 tests. AC-A03 is now PASS; BP04 remains IN_PROGRESS because other criteria remain open.
+
 ## CI separation — Python regression and database acceptance
 
 The Python regression suite now runs independently for runtime, test, data, migration, proposal and script changes in [`.github/workflows/python-regression.yml`](.github/workflows/python-regression.yml). PKG-001 is narrowed to explicit database-acceptance paths, so a Python-only audit/test change no longer queues the 20,000-name disposable PostgreSQL reservation suite. Migration validation is likewise scoped to migration/proposal/runner/database-test changes. The new [Python regression workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46133282609) passed, and [database migration validation](https://github.com/Joshuaogri/saltwater/actions/runs/46133289518) passed. Database-backed naming acceptance remains enabled for its explicit schema, adapter and acceptance paths.
