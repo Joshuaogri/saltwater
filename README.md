@@ -6,6 +6,10 @@ Saltwater has exactly one human player: the user, who controls one individual po
 
 The binding rule is recorded in the [Saltwater Master Blueprint](docs/blueprint/SALTWATER-MASTER-BLUEPRINT.md).
 
+## CI separation — Python regression and database acceptance
+
+The Python regression suite now runs independently for runtime, test, data, migration, proposal and script changes in [`.github/workflows/python-regression.yml`](.github/workflows/python-regression.yml). PKG-001 is narrowed to explicit database-acceptance paths, so a Python-only audit/test change no longer queues the 20,000-name disposable PostgreSQL reservation suite. Migration validation is likewise scoped to migration/proposal/runner/database-test changes. The new [Python regression workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46133282609) passed, and [database migration validation](https://github.com/Joshuaogri/saltwater/actions/runs/46133289518) passed. Database-backed naming acceptance remains enabled for its explicit schema, adapter and acceptance paths.
+
 ## BP04 subletting and tenant-assignment serialization — PostgreSQL 16/18 passed (2026-11-28)
 
 New migration [0020](db/migrations/0020_bp04_subletting_handover_serialization.sql) aligns subletting creation with the physical unit-before-agreement lock order. A two-session race test blocks both subletting creation and contractual tenant assignment on the same agreement rows, then verifies exactly one succeeds: a newly active subletting relationship blocks assignment, or a successful assignment expires the former tenant's subletting permission and blocks the stale subletting request. The [95-table BP04 disposable schema/archive workflow](https://github.com/Joshuaogri/saltwater/actions/runs/46132997130) passed on PostgreSQL 16 and 18, including all three concurrency tests, archive-only import, gameplay lookup and repeat-import storage stability. [Migration-ledger validation](https://github.com/Joshuaogri/saltwater/actions/runs/46132917277) passed. No production Neon write occurred. BP04 remains IN_PROGRESS; title-transfer and subletting start/end interleavings plus broader cross-register tests remain open.
