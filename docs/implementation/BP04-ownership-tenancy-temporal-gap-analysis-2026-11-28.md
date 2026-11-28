@@ -20,20 +20,20 @@ All database acceptance above used disposable PostgreSQL. No production Neon mig
 
 | Acceptance area | Current status | Remaining work |
 |---|---|---|
-| AC-C01 — role separation | PARTIAL | Complete the independent NPC role-combination matrix across owner, landlord, manager, tenant, operator and occupant, including third-party occupiers; keep all identities within their BP03/BP04 domains. |
+| AC-C01 — role separation | PARTIAL | The new 110-table acceptance demonstrates separate owner/landlord organisation, tenant business, independent operator business and third-party organisation/person occupants, plus a single BP03 NPC holding multiple BP33 jobs. Remaining: a complete manager appointment and owner/manager/landlord combination matrix across all generated property classes. |
 | AC-C02 — joint, disputed and time-bounded interests | PARTIAL | Migrations 0021–0023 and PostgreSQL 16/18 acceptance now cover two 50% co-owners, disputed beneficial and occupancy claims, effective intervals, share-cap enforcement, fail-closed single-interest transfer and coordinated joint-title transfer. The joint writer closes every outgoing interest historically, creates same-share successor interests, reconciles title/rights/interest records, records all transferor/transferee pairs and preserves continuing tenancy. Remaining: broader overlapping-interest lifecycle cases and adversarial multi-party temporal sequences. |
-| AC-C03 — agreement lifecycle and history | PARTIAL | Joint-title transfer now has PostgreSQL 16/18 acceptance proving the existing agreement and physical occupancy remain unchanged. Remaining: subletting start/end interleavings under concurrency, broader title/tenancy/occupancy transitions across registers and multi-register rollback. Preserve historic source unknowns (1,232 source agreements include unresolved counterparties and no recorded execution dates); do not invent evidence. |
-| AC-C04 — subletting and third-party occupancy | PARTIAL | Migration 0024 provides the NPC consent lifecycle and named-authority enforcement. Migrations 0025–0026 serialize end transitions and exact replays with starts; two-session interleavings passed on PostgreSQL 16/18 in [workflow 46141933273](https://github.com/Joshuaogri/saltwater/actions/runs/46141933273). Remaining: broader third-party occupancy types and independent NPC role combinations. |
-| AC-C05 — rent/payment separation | NOT VERIFIED | Prove BP04 agreement and occupancy events remain separate from BP34 rent, arrears, deposits, payments and settlement postings. |
-| AC-E01/E02 — staff and person linkage | NOT VERIFIED | Verify BP03 person and BP33 employment references, deduplication and population-cap behaviour without BP04 creating people. |
+| AC-C03 — agreement lifecycle and history | PARTIAL | Migrations 0025–0026 and two-session PostgreSQL 16/18 tests now cover exact subletting-start replay versus end and new-start versus prior-end interleavings. The full [110-table workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed. Remaining: broader title/tenancy/occupancy transitions across registers, multi-register rollback beyond current writers, and historical source reconciliation. Preserve historic source unknowns (1,232 source agreements include unresolved counterparties and no recorded execution dates); do not invent evidence. |
+| AC-C04 — subletting and third-party occupancy | PASS | Migrations 0024–0029 provide authority-bound consent, explicit business/organisation/person third-party occupancy, use types (licence, concession, desk/room share, storage, contractor, service provider, temporary use, event vendor and residential guest), append-only lifecycle events, and unit-first end/start/replay serialization. The complete [110-table PostgreSQL 16/18 workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466) passed. |
+| AC-C05 — rent/payment separation | PASS | Migrations 0031–0032 create BP34-owned rent schedules, charges, immutable payments/allocations and derived charge/agreement balances. PostgreSQL 16/18 acceptance verifies partial payment, full settlement, exact payment replay, overpayment rejection and unchanged BP04 agreement/physical occupancy states. Evidence: [workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466). |
+| AC-E01/E02 — staff and person linkage | PASS | Migration 0030 adds BP33 NPC employment records and validates BP04 staff-role references against both the canonical BP03 person and BP33 employment record. Acceptance creates one NPC with two independent employer roles, confirms one population count, and verifies ending one employment does not change identity or occupancy. Evidence: [workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466). |
 
-## Execution order
+## Remaining work outside the requested NPC integration batch
 
-1. Implement the missing subletting end/start concurrency cases using disposable PostgreSQL and real independent sessions.
-2. Add joint/disputed/time-bounded ownership-interest fixtures and acceptance.
-3. Complete the independent NPC owner/landlord/manager/tenant/operator/occupant matrix.
-4. Add BP03/BP33/BP34 cross-register acceptance and rollback coverage.
-5. Update the strict 48-criterion audit only when each criterion has direct repeatable evidence.
+1. Complete the independent manager appointment and owner/manager/landlord combination matrix across generated property classes.
+2. Broaden overlapping ownership-interest lifecycle and adversarial multi-party temporal sequences; extend multi-register rollback beyond the current writers.
+3. Reconcile historic source agreements without inventing unresolved counterparties or execution dates.
+4. Complete service-availability/closure and dependency-disruption propagation, including verified BP02 route geometry and BP37 operational timetable bindings.
+5. Close the remaining unrelated audit criteria: public-authority separation, stock/supplier workflows, police access and hidden-truth leakage, full drift reporting, and database-backed performance/storage evidence.
 
 ## Guardrails
 
@@ -53,3 +53,8 @@ Migration `0025_bp04_subletting_end_start_serialization.sql` changes the sublett
 ## BP04 subletting end/start serialization — disposable acceptance passed (2026-11-28)
 
 Migration 0025 makes subletting termination lock the physical unit before the relationship row. Migration 0026 also makes exact start replays acquire that same unit lock before returning prior state, preventing a stale `active` replay from racing a concurrent end. Two-session tests cover (1) exact start replay versus end and (2) new start versus prior relationship end at the same effective tick, on both PostgreSQL 16 and 18. Both versions passed the complete 100-table schema/archive workflow, including the new interleavings, 10k lookup benchmark, archive import, gameplay lookup and repeat-import storage stability: [workflow https://github.com/Joshuaogri/saltwater/actions/runs/46141933273]. No production Neon write occurred. AC-C03/C04 remain PARTIAL because broader third-party occupancy types and the independent NPC role matrix are still outstanding.
+
+
+## Requested NPC integration batch — cleared
+
+All five requested workstreams are implemented and accepted on disposable PostgreSQL 16 and 18 in [workflow 46142915466](https://github.com/Joshuaogri/saltwater/actions/runs/46142915466): subletting start/end concurrency; third-party occupancy and independent NPC roles; BP03/BP33 person/employment integration; BP34 rent/payment separation; and organisation/facility/healthcare/transport service interfaces. The complete 110-table schema/archive, lookup, archive import and repeat-import checks also passed. No production Neon write occurred. The wider BP04 48-criterion status remains IN_PROGRESS until the unrelated items above are resolved.
