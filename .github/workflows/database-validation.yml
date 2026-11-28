@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "db/migrations/**"
+      - "tests/pkg001/bp04_letting_authority_acceptance.sql"
       - "db/proposals/0002_runtime_city_population.sql"
       - "db/proposals/0003_legacy_checksum_adoption.sql"
       - "scripts/migrate.py"
