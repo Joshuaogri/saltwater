@@ -48,7 +48,13 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         interests = {x["property_id"]: x for x in w["ownership_interests"]}
         self.assertEqual(len(addresses), len(w["properties"]))
         self.assertEqual(len(interests), len(w["properties"]))
+        self.assertEqual(len({p["bp02_parcel_id"] for p in w["properties"]}), len(w["properties"]))
+        self.assertEqual(len({p["bp02_address_id"] for p in w["properties"]}), len(w["properties"]))
         for p in w["properties"]:
+            self.assertTrue(p["bp02_parcel_id"].startswith("SWP-"))
+            self.assertTrue(p["bp02_address_id"].startswith("SWA-"))
+            self.assertEqual(addresses[p["address_id"]]["bp02_parcel_id"], p["bp02_parcel_id"])
+            self.assertEqual(addresses[p["address_id"]]["bp02_address_id"], p["bp02_address_id"])
             self.assertIn(p["address_id"], addresses)
             self.assertIn(p["property_id"], interests)
             self.assertIn(interests[p["property_id"]]["owner_organisation_id"], owners)
@@ -73,6 +79,16 @@ class CanonicalPropertyWorldTests(unittest.TestCase):
         buildings = {x["building_id"] for x in self.world["buildings"]}
         properties = {x["property_id"] for x in self.world["properties"]}
         for a in self.world["access_points"]:
+            self.assertTrue(a["access_point_id"])
+            self.assertEqual(a["effective_from_tick"], 0)
+            self.assertIn(a["canonical_status"], ("active", "ACTIVE"))
+            self.assertIn(a["bp02_locator_status"], ("BOUND_TO_BP02_ACCESS_POINT", "BP04_SITE_LOCATOR_IN_BP02_LOCAL_CRS"))
+            self.assertEqual(len(a["point_m"]), 2)
+            self.assertTrue(all(isinstance(value, (int, float)) for value in a["point_m"]))
+            if a["bp02_locator_status"] == "BOUND_TO_BP02_ACCESS_POINT":
+                self.assertEqual(a["bp02_access_point_id"], a["access_point_id"])
+            else:
+                self.assertIsNone(a["bp02_access_point_id"])
             self.assertIn(a["property_id"], properties)
             if a["building_id"] is not None:
                 self.assertIn(a["building_id"], buildings)
