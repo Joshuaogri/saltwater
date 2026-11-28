@@ -270,6 +270,56 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "person_ids": [],
         })
 
+
+    # Append-only generated agreement history. Execution dates remain unknown:
+    # commencement years are canon fields, not evidence of signing.
+    agreement_event_history = []
+    for agreement in agreements:
+        aid = agreement["agreement_id"]
+        agreement_event_history.append({
+            "agreement_event_id": f"SWA-EVT-{_slug(aid)}-BASE",
+            "agreement_id": aid,
+            "event_type": "agreement_baseline_registered",
+            "effective_year": None,
+            "recorded_tick": 0,
+            "event_status": "baseline_state_registration",
+            "execution_date": None,
+            "execution_date_status": "not_recorded",
+            "date_precision": "unknown",
+            "source_basis": "generated_fictional_canonical_world_history",
+            "historical_date_known": False,
+            "financial_transaction_created": False,
+        })
+        agreement_event_history.append({
+            "agreement_event_id": f"SWA-EVT-{_slug(aid)}-COMMENCE",
+            "agreement_id": aid,
+            "event_type": "agreement_commenced",
+            "effective_year": agreement["commencement_year"],
+            "recorded_tick": 0,
+            "event_status": "generated_canonical_history",
+            "execution_date": None,
+            "execution_date_status": "not_recorded",
+            "date_precision": "year",
+            "source_basis": "generated_fictional_canonical_world_history",
+            "historical_date_known": True,
+            "financial_transaction_created": False,
+        })
+        if agreement["expiry_year"] is not None:
+            agreement_event_history.append({
+                "agreement_event_id": f"SWA-EVT-{_slug(aid)}-EXPIRE",
+                "agreement_id": aid,
+                "event_type": "agreement_expired",
+                "effective_year": agreement["expiry_year"],
+                "recorded_tick": 0,
+                "event_status": "generated_canonical_history",
+                "execution_date": None,
+                "execution_date_status": "not_recorded",
+                "date_precision": "year",
+                "source_basis": "generated_fictional_canonical_world_history",
+                "historical_date_known": True,
+                "financial_transaction_created": False,
+            })
+
     all_organisations = list(owners.values()) + managers
     body = {
         "schema": "saltwater-property-tenure/1.0",
@@ -288,6 +338,9 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
             "property_manager_organisation_count": len(managers),
             "current_lease_or_concession_count": len(businesses),
             "historical_expired_agreement_count": len(agreements) - len(businesses),
+            "agreement_event_count": len(agreement_event_history),
+            "agreement_execution_date_recorded_count": 0,
+            "agreement_execution_date_unknown_count": len(agreements),
             "current_business_occupancy_count": len(occupancies),
             "unit_occupancy_state_count": len(unit_states),
             "business_occupancy_count": len(business_by_unit),
@@ -299,6 +352,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         "ownership_events": ownership_events,
         "management_appointments": management_appointments,
         "agreements": agreements,
+        "agreement_event_history": agreement_event_history,
         "occupancies": occupancies,
         "unit_occupancy_states": unit_states,
         "lineage": {
@@ -309,7 +363,7 @@ def build_property_tenure(source: dict, property_world: dict | None = None, regi
         },
         "gameplay": {
             "ownership": "Chronological acquisition and transfer events resolve to the current property ownership interest.",
-            "tenancy": "Each registered business establishment has a current lease, licence or operating concession linked to its unit and landlord.",
+            "tenancy": "Each registered business establishment has a current lease, licence or operating concession linked to its unit and landlord. Agreement history is append-only; execution dates remain explicitly unrecorded unless evidenced.",
             "occupancy": "Business occupancy is explicit; residential units remain unallocated until the separate population-allocation process.",
             "population": "No person records, residents, tenants-as-persons, employees or police personnel are created.",
             "finance_boundary": "Rent bands and contract terms are references only; rent postings, balances and accounting remain BP-34.",
