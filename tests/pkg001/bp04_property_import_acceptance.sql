@@ -20,12 +20,37 @@ BEGIN
   IF v_source_rows <> 1978447 THEN RAISE EXCEPTION 'expected 1978447 source records, found %', v_source_rows; END IF;
 
   SELECT count(*) INTO v_count FROM sw_property.letting_authority;
-  IF v_count <> 8 THEN RAISE EXCEPTION 'expected 8 canonical letting authorities, found %', v_count; END IF;
+  IF v_count <> 9 THEN RAISE EXCEPTION 'expected 9 canonical letting authorities, found %', v_count; END IF;
   SELECT count(*) INTO v_count FROM sw_property.letting_authority_event;
-  IF v_count <> 8 THEN RAISE EXCEPTION 'expected 8 immutable letting authority events, found %', v_count; END IF;
+  IF v_count <> 9 THEN RAISE EXCEPTION 'expected 9 immutable letting authority events, found %', v_count; END IF;
   SELECT count(*) INTO v_count FROM sw_property.occupancy_agreement
   WHERE letting_authority_id IS NOT NULL;
-  IF v_count <> 1821 THEN RAISE EXCEPTION 'expected 1821 current non-owner landlord agreements, found %', v_count; END IF;
+  IF v_count <> 1822 THEN RAISE EXCEPTION 'expected 1822 current non-owner landlord agreements, found %', v_count; END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM sw_property.occupancy_agreement a
+    JOIN sw_property.letting_authority l USING (letting_authority_id)
+    LEFT JOIN sw_property.property_title_register t ON t.property_id=a.property_id
+    LEFT JOIN sw_property.organisation grantor ON grantor.organisation_id=l.grantor_organisation_id
+    LEFT JOIN sw_property.organisation grantee ON grantee.organisation_id=l.grantee_organisation_id
+    WHERE a.letting_authority_id IS NOT NULL
+      AND (l.property_id <> a.property_id
+        OR l.grantor_organisation_id <> t.registered_proprietor_organisation_id
+        OR l.grantee_organisation_id <> a.landlord_organisation_id
+        OR l.grantor_organisation_id = l.grantee_organisation_id
+        OR grantor.organisation_id IS NULL OR grantee.organisation_id IS NULL
+        OR (l.unit_id IS NOT NULL AND l.unit_id <> a.unit_id)
+        OR a.commencement_year < l.effective_from_year
+        OR (l.effective_to_year IS NOT NULL AND a.commencement_year > l.effective_to_year))
+  ) THEN RAISE EXCEPTION 'imported non-owner landlord authority does not match title, organisation, unit scope or term'; END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM sw_property.letting_authority l
+    LEFT JOIN sw_property.letting_authority_event e
+      ON e.letting_authority_id=l.letting_authority_id AND e.event_type='authority_granted'
+    WHERE e.letting_authority_event_id IS NULL
+       OR e.effective_year <> l.effective_from_year
+  ) THEN RAISE EXCEPTION 'imported letting authority lacks its matching immutable grant event'; END IF;
 
   SELECT mapping_status, loaded_record_count INTO v_status, v_count
   FROM sw_property.source_dataset_collection
