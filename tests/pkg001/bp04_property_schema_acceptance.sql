@@ -6,8 +6,8 @@ BEGIN
   SELECT count(*) INTO v_count
   FROM information_schema.tables
   WHERE table_schema='sw_property' AND table_type='BASE TABLE';
-  IF v_count <> 113 THEN
-    RAISE EXCEPTION 'expected 113 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links, facility service profiles and letting authority, found %', v_count;
+  IF v_count <> 114 THEN
+    RAISE EXCEPTION 'expected 114 BP04 tables including agreement events, subletting, occupancy handover/disputes, title transfer, consent, third-party occupancy, staff/finance links, facility service profiles and letting authority, found %', v_count;
   END IF;
 
   IF NOT EXISTS (
@@ -22,6 +22,20 @@ BEGIN
       AND tgname='business_operational_event_immutable'
       AND NOT tgisinternal
   ) THEN RAISE EXCEPTION 'business operational event history or observed-state view missing'; END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema='sw_property' AND table_name='third_party_occupancy_relationship'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='sw_property' AND table_name='occupancy'
+      AND column_name='occupant_organisation_id' AND data_type='text'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgrelid='sw_property.third_party_occupancy_relationship'::regclass
+      AND tgname='third_party_occupancy_relationship_guard'
+      AND NOT tgisinternal
+  ) THEN RAISE EXCEPTION 'third-party organisation occupancy party and permission guard schema missing'; END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.tables
