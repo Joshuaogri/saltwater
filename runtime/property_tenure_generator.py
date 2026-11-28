@@ -482,6 +482,27 @@ def audit_property_tenure_role_separation(
     if set(managers_by_property) != property_ids:
         raise ValueError("current management appointments do not cover every canonical property")
 
+    property_unit_classes = {}
+    for unit in property_world.get("units", []):
+        property_unit_classes.setdefault(unit.get("property_id"), set()).add(unit.get("unit_class"))
+    manager_role_coverage = {}
+    for unit_class in sorted({value for values in property_unit_classes.values() for value in values}):
+        class_properties = {
+            property_id for property_id, classes in property_unit_classes.items()
+            if unit_class in classes
+        }
+        manager_role_coverage[unit_class] = {
+            "property_count": len(class_properties),
+            "direct_owner_management_count": sum(
+                managers_by_property[property_id] == owner_by_property[property_id]
+                for property_id in class_properties
+            ),
+            "third_party_management_count": sum(
+                managers_by_property[property_id] != owner_by_property[property_id]
+                for property_id in class_properties
+            ),
+        }
+
     agreement_by_id = {}
     for agreement in tenure["agreements"]:
         agreement_id = agreement.get("agreement_id")
@@ -542,6 +563,7 @@ def audit_property_tenure_role_separation(
         "management_appointments_checked": len(managers_by_property),
         "direct_owner_management_count": direct_owner_management,
         "third_party_management_count": third_party_management,
+        "management_role_coverage_by_unit_class": manager_role_coverage,
         "agreements_checked": len(agreement_by_id),
         "occupancies_checked": len(occupancy_by_agreement),
         "business_identities_checked": len(business_by_id),
