@@ -26,6 +26,27 @@ BEGIN
   SELECT count(*) INTO v_count FROM sw_property.occupancy_agreement
   WHERE letting_authority_id IS NOT NULL;
   IF v_count <> 1822 THEN RAISE EXCEPTION 'expected 1822 current non-owner landlord agreements, found %', v_count; END IF;
+  SELECT count(*) INTO v_count FROM sw_property.third_party_occupancy_relationship;
+  IF v_count <> 420 THEN RAISE EXCEPTION 'expected 420 canonical third-party occupancy relationships, found %', v_count; END IF;
+  SELECT count(*) INTO v_count FROM sw_property.occupancy
+  WHERE occupant_type='organisation' AND occupant_organisation_id IS NOT NULL;
+  IF v_count <> 420 THEN RAISE EXCEPTION 'expected 420 secondary organisation occupancy records, found %', v_count; END IF;
+  IF EXISTS (
+    SELECT 1
+    FROM sw_property.third_party_occupancy_relationship r
+    JOIN sw_property.occupancy o USING (occupancy_id)
+    JOIN sw_property.occupancy_agreement a ON a.agreement_id=r.underlying_agreement_id
+    LEFT JOIN sw_property.organisation receiving ON receiving.organisation_id=r.receiving_organisation_id
+    LEFT JOIN sw_property.business granting ON granting.business_id=r.granting_business_id
+    WHERE o.occupant_type<>'organisation'
+       OR o.occupant_organisation_id IS DISTINCT FROM r.receiving_organisation_id
+       OR receiving.organisation_id IS NULL OR granting.business_id IS NULL
+       OR r.property_id<>a.property_id OR r.unit_id<>a.unit_id
+       OR r.granting_business_id NOT IN (a.tenant_business_id,a.operator_business_id)
+       OR r.relationship_status<>'active' OR r.permission_status<>'not_required'
+       OR r.evidence_class<>'generated_fictional_canon'
+  ) THEN RAISE EXCEPTION 'third-party occupancy relationship does not match its canonical parties, unit or agreement'; END IF;
+
   IF EXISTS (
     SELECT 1
     FROM sw_property.occupancy_agreement a
