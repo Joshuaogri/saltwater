@@ -172,7 +172,9 @@ def build_global_name_inventory() -> dict[str, Any]:
     # focuses on cross-domain near duplicates while excluding multiple names
     # belonging to the same stable entity.
     signatures: list[tuple[frozenset[str], NameCandidate]] = []
-    postings: dict[str, dict[str, list[int]]] = defaultdict(lambda: defaultdict(list))
+    postings: dict[str, dict[int, dict[str, list[int]]]] = defaultdict(
+        lambda: defaultdict(lambda: defaultdict(list))
+    )
     near_pairs: list[dict[str, Any]] = []
     for key, group in sorted(by_key.items()):
         for item in group:
@@ -189,9 +191,13 @@ def build_global_name_inventory() -> dict[str, Any]:
             for prior_domain, domain_index in postings.items():
                 if prior_domain == item.domain:
                     continue
-                for trigram in trigrams:
-                    for prior_index in domain_index.get(trigram, ()):
-                        overlap[prior_index] += 1
+                minimum_size = math.ceil(len(trigrams) * 0.90)
+                maximum_size = math.floor(len(trigrams) / 0.90)
+                for prior_size in range(minimum_size, maximum_size + 1):
+                    size_index = domain_index.get(prior_size, {})
+                    for trigram in trigrams:
+                        for prior_index in size_index.get(trigram, ()):
+                            overlap[prior_index] += 1
             for prior_index, common in overlap.items():
                 prior_trigrams, prior = signatures[prior_index]
                 if item.owner == prior.owner or key == normalize_name(prior.display_name):
@@ -209,7 +215,7 @@ def build_global_name_inventory() -> dict[str, Any]:
             signature_index = len(signatures)
             signatures.append((trigrams, item))
             for trigram in trigrams:
-                postings[item.domain][trigram].append(signature_index)
+                postings[item.domain][len(trigrams)][trigram].append(signature_index)
 
     domain_counts: dict[str, int] = defaultdict(int)
     for item in candidates:
