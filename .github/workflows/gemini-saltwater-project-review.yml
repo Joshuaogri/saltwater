@@ -18,7 +18,7 @@ on:
       active_bp:
         description: "Blueprint division to review (for example BP02)"
         required: true
-        default: "BP03"
+        default: "BP04"
         type: string
       model:
         description: "Gemini model"
@@ -70,7 +70,7 @@ jobs:
             echo "scope=changed" >> "$GITHUB_OUTPUT"
           fi
           echo "model=${DISPATCH_MODEL:-gemini-3.8-flash}" >> "$GITHUB_OUTPUT"
-          echo "active_bp=${DISPATCH_BP:-BP03}" >> "$GITHUB_OUTPUT"
+          echo "active_bp=${DISPATCH_BP:-BP04}" >> "$GITHUB_OUTPUT"
 
       - name: Validate reviewer runner syntax
         run: python -m py_compile scripts/gemini_saltwater_review.py
