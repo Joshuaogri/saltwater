@@ -326,6 +326,7 @@ def test_subletting_creation_serializes_with_tenant_assignment():
     prop, unit, businesses, agreements, superior_occupancy = _seed_fixture(dsn, token)
     sub_occupancy = f"SWCONC-OCC-{token}-SUB"
     right_id = f"SWCONC-RIGHT-{token}-SUB"
+    lease_right_id = f"SWCONC-RIGHT-{token}-LEASE"
     relationship_id = f"SWCONC-REL-{token}-SUB"
     sub_idempotency_key = f"sublet:assignment-race:{token}"
     assignment_idempotency_key = f"assignment:sublet-race:{token}"
