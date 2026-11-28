@@ -75,7 +75,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/proposals/0040_bp04_global_text_id_name_reservations.sql
       - name: Persist all 20,000 business public names in the shared namespace
         run: python -m unittest tests.pkg001.test_business_naming_postgres -v
-      - name: Persist all 20,000 business public names in the same shared namespace
-        run: python -m unittest tests.pkg001.test_business_naming_postgres -v
       - name: Persist and verify every named BP04 property and organisation entity
         run: python -m unittest discover -s tests/pkg001 -p "test_bp04_global_name_reservation.py" -v
