@@ -1,4 +1,4 @@
-name: BP04 canonical property stack — 92-table disposable PostgreSQL 16 benchmark
+name: BP04 canonical property stack — 93-table disposable PostgreSQL 16/18 benchmark
 
 on:
   push:
